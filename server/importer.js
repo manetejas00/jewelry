@@ -27,7 +27,7 @@ export function validate(kind,text){
  if(Number(r.making_percent)>9999)error(n,'making_percent',r.making_percent,'Making percentage exceeds the supported limit');
  if(r.pricing_mode==='FIXED'&&(!num(r.fixed_price)||Number(r.fixed_price)<=0))error(n,'fixed_price',r.fixed_price,'Fixed products need a positive selling price');
  if(r.pricing_mode==='GOLD_LINKED') {if(r.metal.toLowerCase()!=='gold')error(n,'metal',r.metal,'Gold-linked pricing requires gold');if(!purities.includes(r.purity))error(n,'purity',r.purity,'Supply a supported purity-specific gold rate');if(!num(r.net_weight_g)||Number(r.net_weight_g)<=0)error(n,'net_weight_g',r.net_weight_g,'Supply a positive gold weight in grams');if(r.fixed_price!=='')error(n,'fixed_price',r.fixed_price,'Leave empty for gold-linked pricing');}
- if(r.image && !/^https:\/\//.test(r.image))error(n,'image',r.image,'Use an HTTPS image URL');
+ if(r.image && ((!/^https:\/\//.test(r.image)&&!/^\/(uploads|assets)\/[a-zA-Z0-9_./-]+\.(png|jpe?g|webp|gif|svg)$/i.test(r.image))||r.image.includes('..')))error(n,'image',r.image,'Use HTTPS or a saved /uploads/ or /assets/ image');
  }
  if(timestamp(r.source_timestamp))r.source_timestamp=new Date(r.source_timestamp).toISOString();
  const key=kind==='gold'?`${r.supplier}:${r.purity}`:r.sku;if(seen.has(key))error(n,kind==='gold'?'purity':'sku',key,'Remove duplicate entries');seen.add(key);

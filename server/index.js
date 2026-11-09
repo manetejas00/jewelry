@@ -8,7 +8,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 import {db,migrate,preview,now,json,parse} from './db.js';
 import {catalogue,coinCatalogue,calculateCoinPrice,getSilverRate,activeRates,calculatePrice,isFresh,quote,todayIndia,activeOffers,matchOffer} from './pricing.js';
-import {previewImport,publishImport,errorCsv,exportCsv,ordersCsv,schemas} from './importer.js';
+import {previewImport,publishImport,errorCsv,exportCsv,ordersCsv,schemas,validate} from './importer.js';
 import {checkout} from './orders.js';
 import {validatePricingRule} from './pricing-rules.js';
 import {registerCustomer,loginCustomer,customerState,saveCustomerState,mergeGuestState,claimSessionOrders,customerOrders,mayReadOrder,validateState} from './customers.js';
@@ -164,6 +164,7 @@ app.post('/api/admin/coins',auth(['owner','manager']),route(async(req,res)=>{
  const cleanSku=String(sku).trim().toUpperCase();
  const existing=await db('coins').where({sku:cleanSku}).first();
  if(existing)throw Error(`A coin with SKU "${cleanSku}" already exists`);
+ if(await db('products').where({sku:cleanSku}).first())throw Error('This SKU already belongs to jewellery. Choose a unique coin SKU.');
  const nNow=now();
  const coinData={
   sku:cleanSku,
@@ -184,6 +185,7 @@ app.post('/api/admin/coins',auth(['owner','manager']),route(async(req,res)=>{
   created_at:nNow,
   updated_at:nNow
  };
+ const invalid=validate('coins',exportCsv('coins',[{...coinData,stock:String(stock??0)}])).errors[0];if(invalid)throw Error(`${invalid.field}: ${invalid.correction}`);
  await db('coins').insert(coinData);
  await audit(req,'create_coin',{sku:cleanSku,name:coinData.name});
  res.json({ok:true,coin:coinData});
@@ -191,6 +193,7 @@ app.post('/api/admin/coins',auth(['owner','manager']),route(async(req,res)=>{
 app.patch('/api/admin/coins/:sku',auth(['owner','manager']),route(async(req,res)=>{
  const coin=await db('coins').where({sku:req.params.sku}).first();
  if(!coin)return res.status(404).json({error:'Coin not found'});
+ const invalid=validate('coins',exportCsv('coins',[{...coin,...req.body,sku:coin.sku,supplier:coin.supplier}])).errors[0];if(invalid)throw Error(`${invalid.field}: ${invalid.correction}`);
  const patch={updated_at:now(),source_timestamp:now()};
  const fields=['name','metal','coin_type','purity','weight_g','dimension','making_charge','pricing_mode','fixed_price','stock','description','image','status','image_kind'];
  for(const f of fields){

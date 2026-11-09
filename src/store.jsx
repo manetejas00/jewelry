@@ -37,9 +37,9 @@ export function Provider({children}) {
   }, []);
   async function refreshCatalogue({notify=false}={}) {
     const [pieces,coins,currentOffers] = await Promise.all([api('/products'),api('/coins'),api('/offers').catch(()=>[])]);
-    setProducts(pieces);setOffers(currentOffers);setCatalogueRevision(n=>n+1);
+    setProducts(pieces);setError('');setOffers(currentOffers);setCatalogueRevision(n=>n+1);
     const all=[...pieces,...coins];
-    const updatedBag=model.current.bag.map(item=>{const piece=all.find(p=>p.sku===item.sku);return piece?{...item,price:piece.price,unavailable:!piece.checkout_available}:item;});
+    const updatedBag=model.current.bag.map(item=>{const piece=all.find(p=>p.sku===item.sku);return piece?{...item,name:piece.name,image:piece.image,price:piece.price,stock:piece.stock,unavailable:!piece.checkout_available}:{...item,unavailable:true};});
     model.current={...model.current,bag:updatedBag};rawBag(updatedBag);
     if(notify && typeof BroadcastChannel!=='undefined') {
       const channel=new BroadcastChannel('veyora-catalogue');channel.postMessage('prices-updated');channel.close();
@@ -106,7 +106,7 @@ export function Provider({children}) {
   function add(p) {
     setBag(old => {
       const existing = old.find(i => i.sku === p.sku);
-      return existing ? old.map(i => i.sku === p.sku ? {...i,quantity:Math.min(i.quantity+1,p.stock,20)} : i) : [...old,{sku:p.sku,name:p.name,image:p.image,slug:p.slug,size:p.size,price:p.price,quantity:1}];
+      return existing ? old.map(i => i.sku === p.sku ? {...i,quantity:Math.min(i.quantity+1,p.stock,20)} : i) : [...old,{sku:p.sku,name:p.name,image:p.image,slug:p.slug,size:p.size,price:p.price,stock:p.stock,quantity:1}];
     });
     setBagOpen(true);
   }

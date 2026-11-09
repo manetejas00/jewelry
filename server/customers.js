@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import {now, json, parse} from './db.js';
-import {catalogue} from './pricing.js';
+import {catalogue,coinCatalogue} from './pricing.js';
 
 const normalEmail = value => String(value || '').trim().toLowerCase();
 const publicCustomer = row => ({id: row.id, name: row.name, email: row.email});
@@ -46,17 +46,18 @@ export function validateState(input) {
 async function knownState(k, input) {
   const clean = validateState(input);
   const rows = await k('products').select('sku', 'product_code').where({status: 'published'});
-  const skus = new Set(rows.map(p => p.sku)), codes = new Set(rows.map(p => p.product_code));
+  const coins=await k('coins').select('sku').where({status:'published'});
+  const skus = new Set([...rows,...coins].map(p => p.sku)), codes = new Set(rows.map(p => p.product_code));
   return {bag: clean.bag.filter(i => skus.has(i.sku)), saved: clean.saved.filter(code => codes.has(code))};
 }
 export async function customerState(k, customerId) {
   const row = await k('customer_state').where({customer_id: customerId}).first();
   if (!row) throw Error('Customer account not found. Please sign in again.');
-  const items = parse(row.bag, []), products = await catalogue(k);
+  const items = parse(row.bag, []), products = [...await catalogue(k),...(await coinCatalogue(k)).map(c=>({...c,slug:'coins',size:`${c.weight_g}g (${c.purity})`,kind:'coin'}))];
   const bag = items.map(item => {
     const p = products.find(p => p.sku === item.sku);
     if (!p) return {sku: item.sku, quantity: item.quantity, name: 'Unavailable piece', size: item.sku, slug: '', image: '', price: 0, unavailable: true};
-    return {sku: p.sku, quantity: item.quantity, name: p.name, size: p.size, slug: p.slug, image: p.image, price: p.price, unavailable: !p.checkout_available};
+    return {sku: p.sku, quantity: item.quantity, name: p.name, size: p.size, slug: p.slug, image: p.image, price: p.price, stock:p.stock, kind:p.kind, unavailable: !p.checkout_available};
   });
   return {bag, saved: parse(row.saved, []), revision: row.revision};
 }
