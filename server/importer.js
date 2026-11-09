@@ -1,13 +1,15 @@
 import {parse as csvParse} from 'csv-parse/sync';
 import {stringify} from 'csv-stringify/sync';
 import Decimal from 'decimal.js';
+import {validateCoins,previewCoins,publishCoins} from './coin-imports.js';
 import {fingerprint,calculatePrice,activeRates,isFresh,todayIndia} from './pricing.js';
 import {now,parse,json,preview} from './db.js';
-export const schemas={gold:['supplier','purity','currency','unit','rate','effective_date','source_timestamp'],products:['supplier','product_code','sku','name','category','description','metal','purity','net_weight_g','size','finish','image','pricing_mode','fixed_price','making_flat','making_percent','stone_charge','other_charge','stock','status','source_timestamp'],coins:['sku','name','metal','coin_type','purity','weight_g','dimension','making_charge','pricing_mode','fixed_price','stock','description','image','status']};
+export const schemas={gold:['supplier','purity','currency','unit','rate','effective_date','source_timestamp'],products:['supplier','product_code','sku','name','category','description','metal','purity','net_weight_g','size','finish','image','pricing_mode','fixed_price','making_flat','making_percent','stone_charge','other_charge','stock','status','source_timestamp'],coins:['supplier','sku','name','metal','coin_type','purity','weight_g','dimension','making_charge','pricing_mode','fixed_price','stock','description','image','status','image_kind','source_timestamp']};
 const num=v=>/^\d+(\.\d{1,4})?$/.test(v) && Number(v)<=9999999999;
 const timestamp=v=>/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/.test(v)&&!isNaN(Date.parse(v));
 const purities=['24K','22K','18K','14K'];
 export function validate(kind,text){
+ if(kind==='coins')return validateCoins(text,schemas.coins);
  const errors=[];let rows=[];const error=(row,field,value,correction)=>errors.push({row,field,value:String(value??''),correction});
  try{rows=csvParse(text,{columns:headers=>{if(headers.join(',')!==schemas[kind]?.join(','))throw Error('Headers must exactly match the downloadable template');return headers},skip_empty_lines:true,bom:true,trim:true,max_record_size:100000});}catch(e){return {rows:[],errors:[{row:1,field:'file',value:'CSV',correction:e.message}]};}
  if(!rows.length)error(1,'file','','Add at least one data row');if(rows.length>10000)error(1,'file',rows.length,'Maximum 10,000 rows per batch');
@@ -34,6 +36,7 @@ export function validate(kind,text){
 export function normaliseRate(r){return {...r,original_unit:r.unit,original_rate:r.rate,inr_per_gram:new Decimal(r.rate).div(r.unit==='10g'?10:1).toFixed(4)};}
 function productPatch(row,old){const allowed=(process.env.SUPPLIER_OVERWRITE_FIELDS||'stock,fixed_price,net_weight_g,making_flat,stone_charge,other_charge').split(',');const patch={source_timestamp:row.source_timestamp,updated_at:now()};for(const f of allowed)if(schemas.products.includes(f)&&!['sku','supplier','product_code'].includes(f))patch[f]=row[f]===''?null:row[f];return patch;}
 export async function previewImport(k,kind,text,staff=null){
+ if(kind==='coins')return previewCoins(k,text,schemas.coins,staff);
  if(!schemas[kind])throw Error('Unknown import type');const checksum=fingerprint(text);const check=validate(kind,text);const supplier=check.rows[0]?.supplier||'unknown';
  if(!preview&&check.rows.some(r=>r.supplier==='Fictional Preview'))check.errors.push({row:1,field:'supplier',value:'Fictional Preview',correction:'Fictional examples are restricted to test/preview databases'});
  if(check.rows.some(r=>r.supplier!==supplier))check.errors.push({row:1,field:'supplier',value:'mixed',correction:'Use one supplier per batch'});
@@ -49,6 +52,7 @@ export async function previewImport(k,kind,text,staff=null){
  const [id]=await k('import_batches').insert(data);for(const e of check.errors)await k('import_errors').insert({...e,batch_id:id});return {...data,id,summary,errors:check.errors};
 }
 export async function publishImport(k,id,staff=null){
+ const candidate=await k('import_batches').where({id}).first();if(candidate?.kind==='coins')return publishCoins(k,id,schemas.coins,staff);
  return k.transaction(async t=>{
  const b=await t('import_batches').where({id}).first();if(!b)throw Error('Batch not found');if(b.status==='published')return {duplicate:true,...parse(b.summary)};if(b.status!=='staged')throw Error('Correct the rejected CSV and upload again');
  try{await t('import_locks').insert({name:b.kind,acquired_at:now()});}catch{throw Error('An overlapping import is running. Retry later.');}
@@ -69,5 +73,5 @@ export async function publishImport(k,id,staff=null){
  },k.client.config.client==='mysql2'?{isolationLevel:'read committed'}:{});
 }
 export const errorCsv=errors=>stringify(errors,{header:true,columns:['row','field','value','correction'],escape_formulas:true});
-export const exportCsv=(kind,rows)=>{if(kind==='gold')return stringify(rows.map(r=>({supplier:r.supplier,purity:r.purity,currency:r.currency,unit:r.original_unit||r.unit,rate:r.original_rate||r.rate,effective_date:r.effective_date,source_timestamp:r.source_timestamp})),{header:true,columns:schemas.gold,escape_formulas:true});if(kind==='coins')return stringify(rows.map(r=>Object.fromEntries(schemas.coins.map(col=>[col,r[col]??'']))),{header:true,columns:schemas.coins,escape_formulas:true});return stringify(rows.map(r=>Object.fromEntries(schemas.products.map(col=>[col,r[col]??'']))),{header:true,columns:schemas.products,escape_formulas:true});};
+export const exportCsv=(kind,rows)=>{if(kind==='gold')return stringify(rows.map(r=>({supplier:r.supplier,purity:r.purity,currency:r.currency,unit:r.original_unit||r.unit,rate:r.original_rate||r.rate,effective_date:r.effective_date,source_timestamp:r.source_timestamp})),{header:true,columns:schemas.gold,escape_formulas:true});if(kind==='coins')return stringify(rows.map(r=>Object.fromEntries(schemas.coins.map(col=>[col,col==='source_timestamp'?now():col==='supplier'?(r[col]||'Merchant'):col==='image_kind'?(r[col]||'photo'):r[col]??'']))),{header:true,columns:schemas.coins,escape_formulas:true});return stringify(rows.map(r=>Object.fromEntries(schemas.products.map(col=>[col,r[col]??'']))),{header:true,columns:schemas.products,escape_formulas:true});};
 export const ordersCsv=rows=>stringify(rows.map(o=>{const c=parse(o.customer);return {order_id:o.id,created_at:o.created_at,status:o.status,payment_mode:o.payment_mode,customer_name:c.name||'',customer_email:c.email||'',customer_phone:c.phone||'',city:c.city||'',pincode:c.pincode||'',address:c.address||'',subtotal:o.subtotal,shipping:o.shipping,total:o.total};}),{header:true,columns:['order_id','created_at','status','payment_mode','customer_name','customer_email','customer_phone','city','pincode','address','subtotal','shipping','total'],escape_formulas:true});

@@ -26,14 +26,17 @@ export async function fetchLiveGoldRates(customUrl='https://api.gold-api.com/pri
 }
 
 async function readFeed(kind){
-  const url=process.env[kind==='gold'?'GOLD_FEED_URL':'PRODUCT_FEED_URL'];
+  if(!['gold','products','coins'].includes(kind))throw Error('Unknown feed kind');
+  const prefix=kind==='gold'?'GOLD':kind==='coins'?'COIN':'PRODUCT';
+  const url=process.env[prefix+'_FEED_URL'];
+  if(kind==='coins'&&process.env.COIN_FEED_FILE)return fs.readFile(process.env.COIN_FEED_FILE,'utf8');
   if(kind==='products'&&process.env.PRODUCT_FEED_FILE)return fs.readFile(process.env.PRODUCT_FEED_FILE,'utf8');
   if(!url)throw Error('Supplier source is not configured');
   if(kind==='gold'&&(url==='auto'||url.includes('gold-api.com'))){
     return fetchLiveGoldRates(url);
   }
   if(!url.startsWith('https://'))throw Error('Supplier feed requires HTTPS');
-  const token=process.env[kind==='gold'?'GOLD_FEED_TOKEN':'PRODUCT_FEED_TOKEN'];
+  const token=process.env[prefix+'_FEED_TOKEN'];
   const res=await fetch(url,{headers:token?{Authorization:`Bearer ${token}`}:{},signal:AbortSignal.timeout(30000),redirect:'error'});
   if(!res.ok)throw Error(`Supplier returned HTTP ${res.status}`);
   const text=await res.text();
@@ -50,7 +53,8 @@ export async function daily(k,trigger='manual',only=null,staff=null){
    }
    throw Error('Feed automation is currently STOPPED in Admin Settings. Please start the feed in Settings before running.');
  }
- const targets=(only?[only]:['gold','products']).filter(kind=>{
+ const targets=(only?[only]:['gold','products',...(process.env.COIN_FEED_URL||process.env.COIN_FEED_FILE?['coins']:[])]).filter(kind=>{
+   if(kind==='coins'&&process.env.COIN_FEED_ENABLED==='false')return false;
    if(kind==='gold'&&process.env.GOLD_FEED_ENABLED==='false')return false;
    if(kind==='products'&&process.env.PRODUCT_FEED_ENABLED==='false')return false;
    return true;

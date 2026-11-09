@@ -253,7 +253,7 @@ export async function catalogue(k){
     const offer=matchOffer(p,offers);
     let price=null;
     try{price=calculatePrice(p,rates[p.purity],rules,offer)}catch{}
-    const prodImages=imagesByProduct[p.product_code]||imagesByProduct[p.sku]||[];
+    const prodImages=[...(imagesByProduct[p.sku]||[]),...(imagesByProduct[p.product_code]||[])].filter((img,i,all)=>all.findIndex(other=>other.url===img.url)===i);
     return {
       ...p,
       images:prodImages,

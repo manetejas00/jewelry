@@ -14,6 +14,7 @@ import {validatePricingRule} from './pricing-rules.js';
 import {registerCustomer,loginCustomer,customerState,saveCustomerState,mergeGuestState,claimSessionOrders,customerOrders,mayReadOrder,validateState} from './customers.js';
 import {daily} from './daily.js';
 import {loadFeedSettings as readFeedSettings} from './settings.js';
+import {coinArtwork} from './coin-artwork.js';
 import {seed} from '../scripts/seed.js';
 const app=express();const production=process.env.NODE_ENV==='production';
 if(production&&(!process.env.SESSION_SECRET||process.env.SESSION_SECRET.length<32))throw Error('Production requires a strong SESSION_SECRET');
@@ -141,9 +142,9 @@ app.get('/api/admin/products',auth(),route(async(req,res)=>{
    imagesByProduct[k].push(img);
   }
  }
- res.json(products.map(p=>({...p,images:imagesByProduct[p.product_code]||imagesByProduct[p.sku]||[]})));
+ res.json(products.map(p=>({...p,images:[...(imagesByProduct[p.sku]||[]),...(imagesByProduct[p.product_code]||[])].filter((img,i,all)=>all.findIndex(other=>other.url===img.url)===i)})));
 }));
-app.patch('/api/admin/products/:sku',auth(['owner','manager']),route(async(req,res)=>{const {name,description,status,image}=req.body;if(!name||!['published','draft'].includes(status))throw Error('Name and valid publication status required');const patch={name:String(name).slice(0,200),description:String(description||'').slice(0,5000),status,updated_at:now()};if(typeof image==='string'&&image.trim())patch.image=String(image).trim().slice(0,2000);await db('products').where({sku:req.params.sku}).update(patch);await audit(req,'edit_product',{sku:req.params.sku,hasImage:!!image});res.json({ok:true});}));
+app.patch('/api/admin/products/:sku',auth(['owner','manager']),route(async(req,res)=>{const {name,description,status,image}=req.body;if(!name||!['published','draft'].includes(status))throw Error('Name and valid publication status required');const patch={name:String(name).slice(0,200),description:String(description||'').slice(0,5000),status,updated_at:now()};if(typeof image==='string'&&image.trim())patch.image=String(image).trim().slice(0,2000);await db.transaction(async t=>{await t('products').where({sku:req.params.sku}).update(patch);if(patch.image){const hero=await t('product_images').where({sku:req.params.sku,role:'hero'}).whereNull('product_code').first();const photo={url:patch.image,alt_text:patch.name,updated_at:now()};if(hero)await t('product_images').where({id:hero.id}).update(photo);else await t('product_images').insert({...photo,sku:req.params.sku,product_code:null,role:'hero',sort_order:-1,created_at:now()});}});await audit(req,'edit_product',{sku:req.params.sku,hasImage:!!image});res.json({ok:true});}));
 app.get('/api/admin/coins',auth(),route(async(req,res)=>{
  const coins=await db('coins').orderBy('id','desc');
  const [rates,silverRate,rules]=await Promise.all([activeRates(db),getSilverRate(db),db('pricing_rules').orderBy('id','desc').first()]);
@@ -179,6 +180,7 @@ app.post('/api/admin/coins',auth(['owner','manager']),route(async(req,res)=>{
   description:description?String(description).trim().slice(0,5000):null,
   image:image?String(image).trim().slice(0,2000):null,
   status:['published','draft'].includes(status)?status:'published',
+  supplier:'Merchant',source_timestamp:nNow,image_kind:req.body.image_kind==='illustration'?'illustration':'photo',
   created_at:nNow,
   updated_at:nNow
  };
@@ -189,8 +191,8 @@ app.post('/api/admin/coins',auth(['owner','manager']),route(async(req,res)=>{
 app.patch('/api/admin/coins/:sku',auth(['owner','manager']),route(async(req,res)=>{
  const coin=await db('coins').where({sku:req.params.sku}).first();
  if(!coin)return res.status(404).json({error:'Coin not found'});
- const patch={updated_at:now()};
- const fields=['name','metal','coin_type','purity','weight_g','dimension','making_charge','pricing_mode','fixed_price','stock','description','image','status'];
+ const patch={updated_at:now(),source_timestamp:now()};
+ const fields=['name','metal','coin_type','purity','weight_g','dimension','making_charge','pricing_mode','fixed_price','stock','description','image','status','image_kind'];
  for(const f of fields){
   if(req.body[f]!==undefined){
    if(f==='weight_g'||f==='making_charge'||f==='fixed_price')patch[f]=req.body[f]===''||req.body[f]===null?null:Number(req.body[f]);
@@ -315,7 +317,7 @@ app.post('/api/admin/product-images',auth(['owner','manager']),route(async(req,r
  const nowStr=now();
  const sortMap={'hero':1,'front':2,'left':3,'right':4,'model':5,'detail':6};
  const order=sort_order!==undefined?Number(sort_order):sortMap[validRole]||10;
- 
+
  const existing=await db('product_images').where({product_code:targetCode,role:validRole}).first();
  let id;
  if(existing){
@@ -355,7 +357,7 @@ app.delete('/api/admin/product-images/:id',auth(['owner','manager']),route(async
 }));
 
 app.get('/api/admin/media',auth(),route(async(req,res)=>{
- if(!fs.existsSync(uploadsDir))return res.json([]);
+
  const files=fs.readdirSync(uploadsDir).filter(f=>!f.startsWith('.')&&/\.(jpg|jpeg|png|webp|gif|svg)$/i.test(f));
  const host=process.env.APP_URL||'https://test3.avinyacarefoundation.org';
  const list=files.map(f=>{
@@ -368,9 +370,9 @@ app.get('/api/admin/media',auth(),route(async(req,res)=>{
    mtime:stat.mtime
   };
  }).sort((a,b)=>new Date(b.mtime)-new Date(a.mtime));
- res.json(list);
+ res.json([...coinArtwork.map(a=>({name:a.name,filename:a.image.split('/').pop(),url:a.image,image_kind:'illustration'})),...list]);
 }));
-app.get('/api/admin/samples/:file',auth(),(req,res)=>{const allowed=['gold-rates-template.csv','gold-rates-example.csv','products-template.csv','products-example.csv','import-errors-example.csv'];if(!allowed.includes(req.params.file))return res.sendStatus(404);res.download(path.resolve('samples',req.params.file));});
+app.get('/api/admin/samples/:file',auth(),(req,res)=>{const allowed=['gold-rates-template.csv','gold-rates-example.csv','products-template.csv','products-example.csv','coins-template.csv','coins-example.csv','import-errors-example.csv'];if(!allowed.includes(req.params.file))return res.sendStatus(404);res.download(path.resolve('samples',req.params.file));});
 app.get('/api/admin/export/:kind',auth(),route(async(req,res)=>{const k=req.params.kind,d=new Date().toISOString().slice(0,10);if(k==='products'){const rows=await db('products').orderBy('product_code');return res.type('text/csv').attachment(`products-${d}.csv`).send(exportCsv('products',rows));}if(k==='coins'){const rows=await db('coins').orderBy('id','desc');return res.type('text/csv').attachment(`coins-${d}.csv`).send(exportCsv('coins',rows));}if(k==='gold'){const rows=await db('rates').orderBy('id','desc');return res.type('text/csv').attachment(`gold-rates-${d}.csv`).send(exportCsv('gold',rows));}if(k==='orders'){const rows=await db('orders').orderBy('created_at','desc');return res.type('text/csv').attachment(`orders-${d}.csv`).send(ordersCsv(rows));}res.sendStatus(404);}));
 app.post('/api/admin/import/preview',auth(['owner','manager']),route(async(req,res)=>{if(typeof req.body.csv!=='string')throw Error('Upload a UTF-8 CSV file');res.json(await previewImport(db,req.body.kind,req.body.csv,req.session.staff.id));}));
 app.post('/api/admin/import/:id/publish',auth(['owner','manager']),route(async(req,res)=>res.json(await publishImport(db,Number(req.params.id),req.session.staff.id))));

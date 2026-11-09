@@ -112,3 +112,8 @@ test('can add and update product angle shots and delete by id', async () => {
   const deleted = await k('product_images').where({id}).first();
   assert.equal(deleted, undefined);
 });
+
+test('a selected SKU photo leads its gallery while keeping shared angles',async()=>{
+ const stamp=new Date().toISOString();await k('product_images').insert({sku:'TEST-R-12',product_code:null,role:'hero',url:'/uploads/chosen-photo.png',sort_order:-1,created_at:stamp,updated_at:stamp});
+ const product=(await catalogue(k)).find(p=>p.sku==='TEST-R-12');assert.equal(product.images[0].url,'/uploads/chosen-photo.png');assert.ok(product.images.some(i=>i.product_code==='test-ring'));
+});
