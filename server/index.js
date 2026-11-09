@@ -7,7 +7,7 @@ import crypto from 'node:crypto';
 import path from 'node:path';
 import fs from 'node:fs';
 import {db,migrate,preview,now,json,parse} from './db.js';
-import {catalogue,activeRates,calculatePrice,isFresh,quote,todayIndia} from './pricing.js';
+import {catalogue,coinCatalogue,calculateCoinPrice,getSilverRate,activeRates,calculatePrice,isFresh,quote,todayIndia} from './pricing.js';
 import {previewImport,publishImport,errorCsv,exportCsv,ordersCsv,schemas} from './importer.js';
 import {checkout} from './orders.js';
 import {registerCustomer,loginCustomer,customerState,saveCustomerState,mergeGuestState,claimSessionOrders,customerOrders,mayReadOrder,validateState} from './customers.js';
@@ -33,6 +33,7 @@ const auth=(roles=['owner','manager','viewer'])=>(req,res,next)=>req.session.sta
 const audit=async(req,action,details)=>db('audit').insert({staff_id:req.session.staff.id,action,details:json(details),created_at:now()});
 app.get('/api/config',(req,res)=>res.json({brand:process.env.BRAND_NAME||'Veyora Jewels',preview,paymentMode:'test',merchantReady:process.env.MERCHANT_READY==='true',contact:process.env.MERCHANT_EMAIL||'',shippingPolicy:process.env.SHIPPING_POLICY||'',returnsPolicy:process.env.RETURNS_POLICY||''}));
 app.get('/api/products',route(async(req,res)=>res.json(await catalogue(db))));
+app.get('/api/coins',route(async(req,res)=>res.json(await coinCatalogue(db))));
 app.post('/api/quote',route(async(req,res)=>res.json(await quote(db,req.body.items))));
 app.post('/api/checkout',rateLimit({windowMs:60000,limit:20}),route(async(req,res)=>{if(!preview&&(process.env.MERCHANT_READY!=='true'||process.env.PAYMENT_MODE!=='test'))throw Error('Live checkout is awaiting merchant and payment configuration');const result=await checkout(db,req.body,true,req.session.customer?.id||null);req.session.orderIds=[...(req.session.orderIds||[]),result.id];res.json(result);}));
 app.get('/api/orders/:id',route(async(req,res)=>{const order=await db('orders').where({id:req.params.id}).first();if(!mayReadOrder(req.session,order))return res.status(404).json({error:'Order not found'});res.json({...order,customer:parse(order.customer),items:(await db('order_items').where({order_id:order.id})).map(i=>parse(i.snapshot))});}));
@@ -68,9 +69,81 @@ app.post('/api/admin/logout',auth(),route(async(req,res)=>{const customer=req.se
 app.get('/api/admin/dashboard',auth(),route(async(req,res)=>{const [rates,batches,runs,orders,rule,audits,suppliers,rateHistory]=await Promise.all([activeRates(db),db('import_batches').select('id','kind','supplier','source_timestamp','status','summary','created_at').orderBy('id','desc').limit(30),db('daily_runs').orderBy('id','desc').limit(10),db('orders').orderBy('created_at','desc').limit(100),db('pricing_rules').orderBy('id','desc').first(),db('audit').orderBy('id','desc').limit(20),db('import_batches').where({status:'published'}).select('supplier','kind').max('source_timestamp as last_update').groupBy('supplier','kind'),db('rates').orderBy('id','desc').limit(100)]);const scheduled=runs.find(r=>r.trigger==='scheduled');const scheduleMissed=!scheduled||Date.now()-Date.parse(scheduled.started_at)>27*3600000;const todayBatches=batches.filter(b=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(b.created_at))===todayIndia());res.json({rateHistory,scheduleMissed,todayImports:{total:todayBatches.length,failed:todayBatches.filter(b=>b.status==='failed').length,published:todayBatches.filter(b=>b.status==='published').length},rates:Object.values(rates).map(r=>({...r,fresh:isFresh(r)})),batches:batches.map(b=>({...b,summary:parse(b.summary)})),runs:runs.map(r=>({...r,result:parse(r.result)})),orders:orders.map(o=>({...o,customer:parse(o.customer)})),rule,audits,suppliers,maxAgeHours:Number(process.env.GOLD_MAX_AGE_HOURS||48),feedSettings:{goldConfigured:!!process.env.GOLD_FEED_URL,productsConfigured:!!(process.env.PRODUCT_FEED_URL||process.env.PRODUCT_FEED_FILE),inventoryMode:process.env.INVENTORY_MODE||'incremental',overwriteFields:process.env.SUPPLIER_OVERWRITE_FIELDS||'stock,fixed_price,net_weight_g,making_flat,stone_charge,other_charge'},preview});}));
 app.get('/api/admin/products',auth(),route(async(req,res)=>res.json(await db('products').orderBy('product_code'))));
 app.patch('/api/admin/products/:sku',auth(['owner','manager']),route(async(req,res)=>{const {name,description,status,image}=req.body;if(!name||!['published','draft'].includes(status))throw Error('Name and valid publication status required');const patch={name:String(name).slice(0,200),description:String(description||'').slice(0,5000),status,updated_at:now()};if(typeof image==='string'&&image.trim())patch.image=String(image).trim().slice(0,2000);await db('products').where({sku:req.params.sku}).update(patch);await audit(req,'edit_product',{sku:req.params.sku,hasImage:!!image});res.json({ok:true});}));
+app.get('/api/admin/coins',auth(),route(async(req,res)=>{
+ const coins=await db('coins').orderBy('id','desc');
+ const [rates,silverRate,rules]=await Promise.all([activeRates(db),getSilverRate(db),db('pricing_rules').orderBy('id','desc').first()]);
+ res.json({
+  coins:coins.map(c=>{
+   let p=null;
+   try{p=calculateCoinPrice(c,rates,silverRate,rules);}catch{}
+   return {...c,calculated_price:p?.total??null,breakdown:p};
+  }),
+  silverRate,
+  goldRate24k:rates['24K']?.inr_per_gram||null
+ });
+}));
+app.post('/api/admin/coins',auth(['owner','manager']),route(async(req,res)=>{
+ const {sku,name,metal,coin_type,purity,weight_g,dimension,making_charge,pricing_mode,fixed_price,stock,description,image,status}=req.body;
+ if(!sku||!name||!metal||!weight_g)throw Error('SKU, Name, Metal, and Weight in grams are required');
+ const cleanSku=String(sku).trim().toUpperCase();
+ const existing=await db('coins').where({sku:cleanSku}).first();
+ if(existing)throw Error(`A coin with SKU "${cleanSku}" already exists`);
+ const nNow=now();
+ const coinData={
+  sku:cleanSku,
+  name:String(name).trim().slice(0,250),
+  metal:metal==='Silver'?'Silver':'Gold',
+  coin_type:String(coin_type||(metal==='Silver'?'Silver Coin':'Gold Coin')).trim().slice(0,100),
+  purity:String(purity||(metal==='Silver'?'999':'24K')).trim().slice(0,50),
+  weight_g:Number(weight_g),
+  dimension:dimension?String(dimension).trim().slice(0,100):null,
+  making_charge:Number(making_charge||0),
+  pricing_mode:pricing_mode==='FIXED'?'FIXED':'METAL_LINKED',
+  fixed_price:fixed_price?Number(fixed_price):null,
+  stock:Math.max(0,parseInt(stock||0,10)),
+  description:description?String(description).trim().slice(0,5000):null,
+  image:image?String(image).trim().slice(0,2000):null,
+  status:['published','draft'].includes(status)?status:'published',
+  created_at:nNow,
+  updated_at:nNow
+ };
+ await db('coins').insert(coinData);
+ await audit(req,'create_coin',{sku:cleanSku,name:coinData.name});
+ res.json({ok:true,coin:coinData});
+}));
+app.patch('/api/admin/coins/:sku',auth(['owner','manager']),route(async(req,res)=>{
+ const coin=await db('coins').where({sku:req.params.sku}).first();
+ if(!coin)return res.status(404).json({error:'Coin not found'});
+ const patch={updated_at:now()};
+ const fields=['name','metal','coin_type','purity','weight_g','dimension','making_charge','pricing_mode','fixed_price','stock','description','image','status'];
+ for(const f of fields){
+  if(req.body[f]!==undefined){
+   if(f==='weight_g'||f==='making_charge'||f==='fixed_price')patch[f]=req.body[f]===''||req.body[f]===null?null:Number(req.body[f]);
+   else if(f==='stock')patch[f]=Math.max(0,parseInt(req.body[f]||0,10));
+   else patch[f]=req.body[f]===null?null:String(req.body[f]).trim();
+  }
+ }
+ await db('coins').where({sku:req.params.sku}).update(patch);
+ await audit(req,'edit_coin',{sku:req.params.sku,patch});
+ res.json({ok:true});
+}));
+app.delete('/api/admin/coins/:sku',auth(['owner','manager']),route(async(req,res)=>{
+ const coin=await db('coins').where({sku:req.params.sku}).first();
+ if(!coin)return res.status(404).json({error:'Coin not found'});
+ await db('coins').where({sku:req.params.sku}).del();
+ await audit(req,'delete_coin',{sku:req.params.sku});
+ res.json({ok:true});
+}));
+app.post('/api/admin/coins/silver-rate',auth(['owner','manager']),route(async(req,res)=>{
+ const rate=Number(req.body.rate);
+ if(!Number.isFinite(rate)||rate<=0)throw Error('Enter a valid positive silver rate per gram');
+ await db('settings').insert({key:'SILVER_RATE_PER_GRAM',value:String(rate)}).onConflict('key').merge();
+ await audit(req,'update_silver_rate',{rate});
+ res.json({ok:true,rate});
+}));
 app.post('/api/admin/upload-image',auth(['owner','manager']),route(async(req,res)=>{const {name,data}=req.body;if(!data||typeof data!=='string')throw Error('Image data is required');const match=data.match(/^data:image\/([a-zA-Z0-9+]+);base64,(.+)$/);if(!match)throw Error('Invalid image data format. Please upload a PNG, JPG, or WEBP image.');const ext=match[1].toLowerCase().replace('jpeg','jpg');if(!['jpg','png','webp','gif','svg'].includes(ext))throw Error('Supported image formats: JPG, PNG, WEBP, GIF, SVG');const buffer=Buffer.from(match[2],'base64');if(buffer.length>5*1024*1024)throw Error('Maximum image size is 5 MB');const cleanName=String(name||'product').toLowerCase().replace(/\.[^.]+$/,'').replace(/[^a-z0-9_-]+/g,'-').slice(0,40)||'photo';const filename=`${Date.now()}-${cleanName}.${ext}`;fs.writeFileSync(path.join(uploadsDir,filename),buffer);const host=process.env.APP_URL||'https://test3.avinyacarefoundation.org';const url=`/uploads/${filename}`;await audit(req,'upload_image',{filename,size:buffer.length});res.json({ok:true,filename,url,fullUrl:`${host}${url}`});}));
 app.get('/api/admin/samples/:file',auth(),(req,res)=>{const allowed=['gold-rates-template.csv','gold-rates-example.csv','products-template.csv','products-example.csv','import-errors-example.csv'];if(!allowed.includes(req.params.file))return res.sendStatus(404);res.download(path.resolve('samples',req.params.file));});
-app.get('/api/admin/export/:kind',auth(),route(async(req,res)=>{const k=req.params.kind,d=new Date().toISOString().slice(0,10);if(k==='products'){const rows=await db('products').orderBy('product_code');return res.type('text/csv').attachment(`products-${d}.csv`).send(exportCsv('products',rows));}if(k==='gold'){const rows=await db('rates').orderBy('id','desc');return res.type('text/csv').attachment(`gold-rates-${d}.csv`).send(exportCsv('gold',rows));}if(k==='orders'){const rows=await db('orders').orderBy('created_at','desc');return res.type('text/csv').attachment(`orders-${d}.csv`).send(ordersCsv(rows));}res.sendStatus(404);}));
+app.get('/api/admin/export/:kind',auth(),route(async(req,res)=>{const k=req.params.kind,d=new Date().toISOString().slice(0,10);if(k==='products'){const rows=await db('products').orderBy('product_code');return res.type('text/csv').attachment(`products-${d}.csv`).send(exportCsv('products',rows));}if(k==='coins'){const rows=await db('coins').orderBy('id','desc');return res.type('text/csv').attachment(`coins-${d}.csv`).send(exportCsv('coins',rows));}if(k==='gold'){const rows=await db('rates').orderBy('id','desc');return res.type('text/csv').attachment(`gold-rates-${d}.csv`).send(exportCsv('gold',rows));}if(k==='orders'){const rows=await db('orders').orderBy('created_at','desc');return res.type('text/csv').attachment(`orders-${d}.csv`).send(ordersCsv(rows));}res.sendStatus(404);}));
 app.post('/api/admin/import/preview',auth(['owner','manager']),route(async(req,res)=>{if(typeof req.body.csv!=='string')throw Error('Upload a UTF-8 CSV file');res.json(await previewImport(db,req.body.kind,req.body.csv,req.session.staff.id));}));
 app.post('/api/admin/import/:id/publish',auth(['owner','manager']),route(async(req,res)=>res.json(await publishImport(db,Number(req.params.id),req.session.staff.id))));
 app.get('/api/admin/import/:id/errors',auth(),route(async(req,res)=>{res.type('text/csv').attachment(`batch-${req.params.id}-errors.csv`).send(errorCsv(await db('import_errors').where({batch_id:req.params.id})));}));

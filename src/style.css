@@ -19,3 +19,22 @@
 .price-bracket-pill:hover{border-color:var(--ink);background:var(--paper)}
 .price-bracket-pill.active{background:var(--ink);color:var(--ivory);border-color:var(--ink)}
 @media(max-width:768px){.price-bracket-bar{gap:8px;padding:0 2%}.price-bracket-pill{font-size:10px;padding:5px 10px}}
+
+/* Coins & Bullion Styling */
+.coins-market-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;background:var(--paper);border:1px solid var(--line);padding:16px 22px;margin-bottom:24px}
+.coins-market-rates{display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+.coin-rate-tag{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:600}
+.coin-rate-tag.gold{color:#9d7a22}
+.coin-rate-tag.silver{color:#5a6872}
+.coins-subtabs{display:flex;gap:10px;margin-bottom:20px;border-bottom:1px solid var(--line);padding-bottom:12px;flex-wrap:wrap}
+.coins-subtab-btn{background:none;border:none;padding:7px 18px;font-size:11px;font-weight:600;border-radius:20px;color:var(--muted);cursor:pointer;transition:all .2s ease}
+.coins-subtab-btn:hover{color:var(--ink);background:var(--paper)}
+.coins-subtab-btn.active{background:var(--ink);color:var(--ivory)}
+.coin-badge{display:inline-block;font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 7px;border-radius:2px}
+.coin-badge.gold{background:#faecc8;color:#856404;border:1px solid #e3d29a}
+.coin-badge.silver{background:#e8ecef;color:#38464f;border:1px solid #cdd4d9}
+.coin-trust-banner{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;background:#f3f1e9;border:1px solid var(--line);padding:20px;margin:24px 0 32px}
+.coin-trust-item{display:flex;align-items:center;gap:12px;font-size:11px;font-weight:500}
+.coin-trust-item svg{color:var(--gold);flex-shrink:0}
+@media(max-width:768px){.coin-trust-banner{grid-template-columns:1fr;gap:12px}}
+

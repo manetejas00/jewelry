@@ -7,10 +7,18 @@ export async function checkout(k,{items,token,customer,idempotencyKey},testMode=
  if(!customer||!String(customer.name||'').trim()||!/^\S+@\S+\.\S+$/.test(customer.email||'')||!/^\d{10}$/.test(customer.phone||'')||!/^\d{6}$/.test(customer.pincode||'')||String(customer.address||'').trim().length<8||!customer.city)throw Error('Enter your name, email, Indian mobile number, address, city and six-digit PIN code');
  return k.transaction(async t=>{const existing=await t('orders').where({idempotency_key:idempotencyKey}).first();if(existing){if((existing.customer_id??null)!==accountId)throw Error('Payment retry belongs to a different customer.');return {id:existing.id,total:Number(existing.total),duplicate:true};}
  if(!Array.isArray(items))throw Error('Invalid shopping bag');
- await t('products').whereIn('sku',items.map(i=>i.sku)).orderBy('sku').forUpdate();
+ const skus=items.map(i=>i.sku);
+ await t('products').whereIn('sku',skus).orderBy('sku').forUpdate();
+ if(await t.schema.hasTable('coins'))await t('coins').whereIn('sku',skus).orderBy('sku').forUpdate();
  const fresh=await quote(t,items);if(fresh.token!==token){const e=Error('The price has changed. Please review and accept the updated total.');e.quote=fresh;throw e;}
  const id=`VEY-${crypto.randomBytes(6).toString('hex').toUpperCase()}`;
- for(const line of fresh.lines){const updated=await t('products').where({sku:line.sku}).where('stock','>=',line.quantity).decrement('stock',line.quantity);if(updated!==1)throw Error('Stock changed. Please review your bag.');}
+ for(const line of fresh.lines){
+  let updated=await t('products').where({sku:line.sku}).where('stock','>=',line.quantity).decrement('stock',line.quantity);
+  if(updated!==1&&await t.schema.hasTable('coins')){
+   updated=await t('coins').where({sku:line.sku}).where('stock','>=',line.quantity).decrement('stock',line.quantity);
+  }
+  if(updated!==1)throw Error('Stock changed. Please review your bag.');
+ }
  const clean=Object.fromEntries(['name','email','phone','address','city','pincode'].map(f=>[f,String(customer[f]).slice(0,500)]));
  await t('orders').insert({id,customer_id:accountId,idempotency_key:idempotencyKey,status:'paid',customer:json(clean),subtotal:fresh.subtotal,shipping:fresh.shipping,total:fresh.total,payment_mode:'test',created_at:now()});
  for(const line of fresh.lines)await t('order_items').insert({order_id:id,sku:line.sku,quantity:line.quantity,snapshot:json(line)});
