@@ -1,0 +1,4 @@
+row,field,value,correction
+2,unit,tola,Convert to an explicitly supported g or 10g unit
+3,stock,-2,Supply a non-negative integer
+4,sku,VEY-ER-12,Remove duplicate SKU row
