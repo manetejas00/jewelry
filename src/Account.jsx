@@ -3,7 +3,7 @@ import {Link,useSearchParams} from 'react-router-dom';
 import {UserRound,ArrowUpRight,ArrowRight,ShoppingBag,Heart,Package,LogOut,Check,RefreshCw} from 'lucide-react';
 import {useStore} from './store.jsx';
 import {api} from './api.js';
-const money=v=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(v||0);
+const money=v=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:2,minimumFractionDigits:0}).format(v||0);
 const date=v=>new Date(v).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',dateStyle:'medium',timeStyle:'short'});
 export default function Account({Layout,BagLines,ProductCard,grouped}) {
   const {customer,accountReady,authenticate,logoutCustomer,bag,saved,products,refreshAccount,syncStatus,syncError}=useStore();

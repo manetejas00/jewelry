@@ -119,6 +119,42 @@
 .media-url{font-size:9px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
 .media-actions{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:6px;border-top:1px solid var(--line)}
 
+/* Promotional Offers & Ribbons (Mia by Tanishq Inspired) */
+.offer-ribbon-badge{position:absolute;top:0;left:0;z-index:4;background:linear-gradient(135deg,#f39c12 0%,#e67e22 100%);color:#ffffff;font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:5px 12px 5px 8px;clip-path:polygon(0 0, 100% 0, 88% 100%, 0 100%);box-shadow:0 2px 8px rgba(0,0,0,.22);display:inline-flex;align-items:center;gap:4px}
+.offer-ribbon-badge svg{color:#ffeaa7;flex-shrink:0}
+.offer-ribbon-badge.silver{background:linear-gradient(135deg,#607d8b 0%,#455a64 100%)}
+.offer-ribbon-badge.crimson{background:linear-gradient(135deg,#c0392b 0%,#962d22 100%)}
+
+.price-row{display:flex;align-items:baseline;gap:8px;margin-top:8px;flex-wrap:wrap}
+.original-price-del{font-size:11px;color:var(--muted);text-decoration:line-through;font-weight:400}
+.discounted-price{font-size:13px;font-weight:700;color:var(--ink)}
+.offer-save-tag{font-size:8px;font-weight:700;letter-spacing:.6px;background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7;padding:2px 6px;border-radius:2px;display:inline-block}
+
+/* In-Grid Festive Offer Banner Card */
+.festive-grid-banner{grid-column:span 1;background:linear-gradient(135deg,#800020 0%,#4a0011 100%);color:#f8f6f0;padding:28px 22px;border-radius:4px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden;min-height:360px;box-shadow:0 8px 24px rgba(128,0,32,.25)}
+.festive-grid-banner:before{content:'';position:absolute;top:-40px;right:-40px;width:140px;height:140px;border-radius:50%;background:rgba(212,175,55,.15);pointer-events:none}
+.festive-banner-badge{font-size:8px;letter-spacing:2px;text-transform:uppercase;font-weight:700;color:#e8d4a2;display:inline-flex;align-items:center;gap:6px}
+.festive-banner-title{font-family:var(--serif);font-size:32px;line-height:1.1;margin:12px 0 6px;color:#fff}
+.festive-banner-discount{font-size:36px;font-weight:800;color:#f9ca24;letter-spacing:-1px;line-height:1;margin:8px 0}
+.festive-banner-subtext{font-size:11px;color:#e6d3c2;line-height:1.5;margin-bottom:20px}
+.festive-banner-btn{background:#d4af37;color:#18302e;font-size:10px;font-weight:700;letter-spacing:1px;padding:12px 20px;text-align:center;text-transform:uppercase;border-radius:2px;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:all .2s ease}
+.festive-banner-btn:hover{background:#f9ca24;color:#000}
+
+/* Offers Admin Tab */
+.offers-stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.offer-badge-preview{display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#f39c12 0%,#e67e22 100%);color:#fff;font-size:8px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;padding:4px 8px;border-radius:2px}
+.status-pill{display:inline-block;font-size:8px;font-weight:700;padding:3px 8px;border-radius:12px;text-transform:uppercase}
+.status-pill.active{background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7}
+.status-pill.paused{background:#ffebee;color:#c62828;border:1px solid #ef9a9a}
+
+@media(max-width:768px){
+  .offers-stat-grid{grid-template-columns:repeat(2,1fr)}
+  .festive-grid-banner{min-height:280px;padding:20px}
+  .festive-banner-title{font-size:26px}
+  .festive-banner-discount{font-size:28px}
+}
+
+
 
 
 

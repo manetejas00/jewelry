@@ -6,7 +6,8 @@ export const useStore = () => useContext(Store);
 const readList = key => {try {const value = JSON.parse(localStorage.getItem(key) || '[]'); return Array.isArray(value) ? value : [];} catch {return [];}};
 const compact = model => ({bag: model.bag.map(({sku, quantity}) => ({sku, quantity})), saved: [...model.saved]});
 export function Provider({children}) {
-  const [products,setProducts] = useState([]), [config,setConfig] = useState({brand:'Veyora Jewels',preview:true});
+  const [products,setProducts] = useState([]), [offers,setOffers] = useState([]), [config,setConfig] = useState({brand:'Veyora Jewels',preview:true});
+  const [catalogueRevision,setCatalogueRevision] = useState(0);
   const [error,setError] = useState(''), [bag,rawBag] = useState(() => readList('veyora-bag'));
   const [saved,rawSaved] = useState(() => readList('veyora-saved')), [bagOpen,setBagOpen] = useState(false);
   const [customer,setCustomer] = useState(null), [accountReady,setAccountReady] = useState(false);
@@ -28,12 +29,30 @@ export function Provider({children}) {
   }
   useEffect(() => {
     let cancelled = false;
-    Promise.all([api('/products'),api('/config'),api('/account/session')]).then(([p,c,account]) => {
+    Promise.all([api('/products'),api('/config'),api('/account/session'),api('/offers').catch(()=>[])]).then(([p,c,account,o]) => {
       if (cancelled) return;
-      setProducts(p);setConfig(c);adopt(account);
+      setProducts(p);setConfig(c);adopt(account);setOffers(o||[]);
     }).catch(e => {if (!cancelled) setError(e.message);}).finally(() => {if (!cancelled) setAccountReady(true);});
     return () => {cancelled = true;};
   }, []);
+  async function refreshCatalogue({notify=false}={}) {
+    const [pieces,coins,currentOffers] = await Promise.all([api('/products'),api('/coins'),api('/offers').catch(()=>[])]);
+    setProducts(pieces);setOffers(currentOffers);setCatalogueRevision(n=>n+1);
+    const all=[...pieces,...coins];
+    const updatedBag=model.current.bag.map(item=>{const piece=all.find(p=>p.sku===item.sku);return piece?{...item,price:piece.price,unavailable:!piece.checkout_available}:item;});
+    model.current={...model.current,bag:updatedBag};rawBag(updatedBag);
+    if(notify && typeof BroadcastChannel!=='undefined') {
+      const channel=new BroadcastChannel('veyora-catalogue');channel.postMessage('prices-updated');channel.close();
+    }
+  }
+  useEffect(()=>{
+    const reload=()=>{refreshCatalogue().catch(e=>setError(e.message));};
+    const visible=()=>{if(document.visibilityState==='visible')reload();};
+    window.addEventListener('focus',reload);document.addEventListener('visibilitychange',visible);
+    const channel=typeof BroadcastChannel!=='undefined'?new BroadcastChannel('veyora-catalogue'):null;
+    if(channel)channel.onmessage=reload;
+    return()=>{window.removeEventListener('focus',reload);document.removeEventListener('visibilitychange',visible);channel?.close();};
+  },[]);
   useEffect(() => {if (toast) {const timer = setTimeout(() => setToast(''),3500);return () => clearTimeout(timer);}}, [toast]);
   function persist() {
     if (!user.current) {
@@ -91,7 +110,7 @@ export function Provider({children}) {
     });
     setBagOpen(true);
   }
-  return <Store.Provider value={{products,config,error,bag,setBag,add,bagOpen,setBagOpen,saved,toggleSave,setToast,customer,accountReady,authenticate,logoutCustomer,flushAccount,refreshAccount,afterCheckout,syncStatus,syncError}}>
+  return <Store.Provider value={{products,offers,catalogueRevision,refreshCatalogue,config,error,bag,setBag,add,bagOpen,setBagOpen,saved,toggleSave,setToast,customer,accountReady,authenticate,logoutCustomer,flushAccount,refreshAccount,afterCheckout,syncStatus,syncError}}>
     {children}
     {toast && <div className="toast" role="status"><Check size={17}/>{toast}</div>}
   </Store.Provider>;

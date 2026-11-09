@@ -7,9 +7,10 @@ import crypto from 'node:crypto';
 import path from 'node:path';
 import fs from 'node:fs';
 import {db,migrate,preview,now,json,parse} from './db.js';
-import {catalogue,coinCatalogue,calculateCoinPrice,getSilverRate,activeRates,calculatePrice,isFresh,quote,todayIndia} from './pricing.js';
+import {catalogue,coinCatalogue,calculateCoinPrice,getSilverRate,activeRates,calculatePrice,isFresh,quote,todayIndia,activeOffers,matchOffer} from './pricing.js';
 import {previewImport,publishImport,errorCsv,exportCsv,ordersCsv,schemas} from './importer.js';
 import {checkout} from './orders.js';
+import {validatePricingRule} from './pricing-rules.js';
 import {registerCustomer,loginCustomer,customerState,saveCustomerState,mergeGuestState,claimSessionOrders,customerOrders,mayReadOrder,validateState} from './customers.js';
 import {daily} from './daily.js';
 import {loadFeedSettings as readFeedSettings} from './settings.js';
@@ -34,6 +35,67 @@ const audit=async(req,action,details)=>db('audit').insert({staff_id:req.session.
 app.get('/api/config',(req,res)=>res.json({brand:process.env.BRAND_NAME||'Veyora Jewels',preview,paymentMode:'test',merchantReady:process.env.MERCHANT_READY==='true',contact:process.env.MERCHANT_EMAIL||'',shippingPolicy:process.env.SHIPPING_POLICY||'',returnsPolicy:process.env.RETURNS_POLICY||''}));
 app.get('/api/products',route(async(req,res)=>res.json(await catalogue(db))));
 app.get('/api/coins',route(async(req,res)=>res.json(await coinCatalogue(db))));
+app.get('/api/offers',route(async(req,res)=>{
+  const hasOffers=await db.schema.hasTable('offers').catch(()=>false);
+  if(!hasOffers)return res.json([]);
+  const list=await db('offers').where({status:'active'}).orderBy('priority','desc').orderBy('id','desc');
+  res.json(list);
+}));
+app.get('/api/admin/offers',auth(),route(async(req,res)=>{
+  const hasOffers=await db.schema.hasTable('offers').catch(()=>false);
+  if(!hasOffers)return res.json([]);
+  const list=await db('offers').orderBy('priority','desc').orderBy('id','desc');
+  res.json(list);
+}));
+app.post('/api/admin/offers',auth(['owner','manager']),route(async(req,res)=>{
+  const {name,code,badge_text,discount_type,discount_value,applies_to,target_value,banner_headline,banner_subtext,status,priority,show_in_banner,show_in_grid}=req.body;
+  if(!name||!badge_text)throw Error('Offer name and badge text are required');
+  const nowStr=now();
+  const offerData={
+    name:String(name).trim().slice(0,200),
+    code:code?String(code).trim().toUpperCase().slice(0,50):null,
+    badge_text:String(badge_text).trim().slice(0,100),
+    discount_type:['making_percent','total_percent','flat_amount','badge_only'].includes(discount_type)?discount_type:'making_percent',
+    discount_value:Number(discount_value||0),
+    applies_to:['all','products','coins','gold','silver','category','sku'].includes(applies_to)?applies_to:'all',
+    target_value:target_value?String(target_value).trim():null,
+    banner_headline:banner_headline?String(banner_headline).trim().slice(0,250):null,
+    banner_subtext:banner_subtext?String(banner_subtext).trim().slice(0,500):null,
+    status:status==='paused'?'paused':'active',
+    priority:Number(priority||0),
+    show_in_banner:show_in_banner!==undefined?Boolean(show_in_banner):true,
+    show_in_grid:show_in_grid!==undefined?Boolean(show_in_grid):true,
+    created_at:nowStr,
+    updated_at:nowStr
+  };
+  const [id]=await db('offers').insert(offerData);
+  await audit(req,'create_offer',{id,name:offerData.name,badge_text:offerData.badge_text});
+  res.json({ok:true,id,offer:offerData});
+}));
+app.patch('/api/admin/offers/:id',auth(['owner','manager']),route(async(req,res)=>{
+  const offer=await db('offers').where({id:req.params.id}).first();
+  if(!offer)return res.status(404).json({error:'Offer not found'});
+  const patch={updated_at:now()};
+  const fields=['name','code','badge_text','discount_type','discount_value','applies_to','target_value','banner_headline','banner_subtext','status','priority','show_in_banner','show_in_grid'];
+  for(const f of fields){
+    if(req.body[f]!==undefined){
+      if(f==='discount_value'||f==='priority')patch[f]=Number(req.body[f]||0);
+      else if(f==='show_in_banner'||f==='show_in_grid')patch[f]=Boolean(req.body[f]);
+      else if(f==='code')patch[f]=req.body[f]?String(req.body[f]).trim().toUpperCase():null;
+      else patch[f]=req.body[f]===null?null:String(req.body[f]).trim();
+    }
+  }
+  await db('offers').where({id:req.params.id}).update(patch);
+  await audit(req,'update_offer',{id:req.params.id,patch});
+  res.json({ok:true});
+}));
+app.delete('/api/admin/offers/:id',auth(['owner','manager']),route(async(req,res)=>{
+  const offer=await db('offers').where({id:req.params.id}).first();
+  if(!offer)return res.status(404).json({error:'Offer not found'});
+  await db('offers').where({id:req.params.id}).del();
+  await audit(req,'delete_offer',{id:req.params.id,name:offer.name});
+  res.json({ok:true});
+}));
 app.post('/api/quote',route(async(req,res)=>res.json(await quote(db,req.body.items))));
 app.post('/api/checkout',rateLimit({windowMs:60000,limit:20}),route(async(req,res)=>{if(!preview&&(process.env.MERCHANT_READY!=='true'||process.env.PAYMENT_MODE!=='test'))throw Error('Live checkout is awaiting merchant and payment configuration');const result=await checkout(db,req.body,true,req.session.customer?.id||null);req.session.orderIds=[...(req.session.orderIds||[]),result.id];res.json(result);}));
 app.get('/api/orders/:id',route(async(req,res)=>{const order=await db('orders').where({id:req.params.id}).first();if(!mayReadOrder(req.session,order))return res.status(404).json({error:'Order not found'});res.json({...order,customer:parse(order.customer),items:(await db('order_items').where({order_id:order.id})).map(i=>parse(i.snapshot))});}));
@@ -379,8 +441,20 @@ app.post('/api/admin/feed-settings',auth(['owner']),route(async(req,res)=>{
  await loadFeedSettings();
  res.json({ok:true,changes});
 }));
-app.post('/api/admin/rules/preview',auth(['owner']),route(async(req,res)=>{const rule=validateRule(req.body);const rates=await activeRates(db);const products=await db('products');res.json(products.map(p=>{let before=null,after=null;try{before=calculatePrice(p,rates[p.purity],req.body.current||{}).total;after=calculatePrice(p,rates[p.purity],rule).total}catch{}return {sku:p.sku,before,after}}));}));
-function validateRule(r){if(!Number.isFinite(Number(r.tax_percent))||r.tax_percent<0||r.tax_percent>100||![1,0.01,10,100].includes(Number(r.rounding))||!['exclusive','inclusive'].includes(r.tax_treatment))throw Error('Invalid tax or rounding rule');return {tax_percent:Number(r.tax_percent),rounding:Number(r.rounding),tax_treatment:r.tax_treatment};}
+app.post('/api/admin/rules/preview',auth(['owner']),route(async(req,res)=>{
+ const rule=validatePricingRule(req.body);
+ const [rates,silver,products,coins,current,offers]=await Promise.all([activeRates(db),getSilverRate(db),db('products'),db('coins'),db('pricing_rules').orderBy('id','desc').first(),activeOffers(db)]);
+ const changes=[];
+ for(const p of [...products,...coins]){
+  const coin=Boolean(p.coin_type),offer=matchOffer(p,offers);
+  const price=r=>coin?calculateCoinPrice(p,rates,silver,r,offer):calculatePrice(p,rates[p.purity],r,offer);
+  let before=null,after=null,margin=null,warning=null;
+  try{before=price(current).total;const next=price(rule);after=next.total;margin=next.margin;}catch{warning='Awaiting an approved metal rate';}
+  changes.push({sku:p.sku,name:p.name,kind:coin?'Coin':'Jewellery',before,after,margin,warning});
+ }
+ res.json(changes);
+}));
+function validateRule(input){return validatePricingRule(input);}
 app.post('/api/admin/rules',auth(['owner']),route(async(req,res)=>{const rule=validateRule(req.body);await db.transaction(async t=>{await t('pricing_rules').insert({...rule,changed_at:now(),changed_by:req.session.staff.id});await t('audit').insert({staff_id:req.session.staff.id,action:'pricing_rule',details:json(rule),created_at:now()});});res.json({ok:true});}));
 if(!production){const {createServer}=await import('vite');const vite=await createServer({server:{middlewareMode:true},appType:'spa'});app.use(vite.middlewares);}else{app.use(express.static('dist'));app.get('*',(req,res)=>res.sendFile(path.resolve('dist/index.html')));}
 app.use((err,req,res,next)=>{res.status(err.status||(err.quote?409:400)).json({error:err.message,quote:err.quote});});
