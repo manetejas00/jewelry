@@ -19,7 +19,7 @@ if(production&&(!process.env.SESSION_SECRET||process.env.SESSION_SECRET.length<3
 if(preview){await migrate();await seed();}else if(await db('products').where({supplier:'Fictional Preview'}).first())throw Error('Production cannot use the fictional preview database. Configure a clean production database.');
 const loadFeedSettings=()=>readFeedSettings(db);
 await loadFeedSettings();
-app.set('trust proxy',1);app.use(helmet({contentSecurityPolicy:false}));app.use(express.json({limit:'6mb'}));
+app.set('trust proxy',1);app.use(helmet({contentSecurityPolicy:false}));app.use(express.json({limit:'50mb'}));
 const uploadsDir=fs.existsSync(path.resolve('../public_html/uploads'))?path.resolve('../public_html/uploads'):path.resolve('public/uploads');
 fs.mkdirSync(uploadsDir,{recursive:true});
 app.use('/uploads',express.static(uploadsDir));
@@ -67,7 +67,20 @@ app.post('/api/admin/login',rateLimit({windowMs:15*60000,limit:10}),route(async(
 app.get('/api/admin/session',auth(),(req,res)=>res.json({staff:req.session.staff,csrf:req.session.csrf}));
 app.post('/api/admin/logout',auth(),route(async(req,res)=>{const customer=req.session.customer,customerCsrf=req.session.customerCsrf,orderIds=req.session.orderIds;await new Promise((resolve,reject)=>req.session.regenerate(e=>e?reject(e):resolve()));if(customer){req.session.customer=customer;req.session.customerCsrf=customerCsrf;}req.session.orderIds=orderIds;res.json({ok:true});}));
 app.get('/api/admin/dashboard',auth(),route(async(req,res)=>{const [rates,batches,runs,orders,rule,audits,suppliers,rateHistory]=await Promise.all([activeRates(db),db('import_batches').select('id','kind','supplier','source_timestamp','status','summary','created_at').orderBy('id','desc').limit(30),db('daily_runs').orderBy('id','desc').limit(10),db('orders').orderBy('created_at','desc').limit(100),db('pricing_rules').orderBy('id','desc').first(),db('audit').orderBy('id','desc').limit(20),db('import_batches').where({status:'published'}).select('supplier','kind').max('source_timestamp as last_update').groupBy('supplier','kind'),db('rates').orderBy('id','desc').limit(100)]);const scheduled=runs.find(r=>r.trigger==='scheduled');const scheduleMissed=!scheduled||Date.now()-Date.parse(scheduled.started_at)>27*3600000;const todayBatches=batches.filter(b=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(b.created_at))===todayIndia());res.json({rateHistory,scheduleMissed,todayImports:{total:todayBatches.length,failed:todayBatches.filter(b=>b.status==='failed').length,published:todayBatches.filter(b=>b.status==='published').length},rates:Object.values(rates).map(r=>({...r,fresh:isFresh(r)})),batches:batches.map(b=>({...b,summary:parse(b.summary)})),runs:runs.map(r=>({...r,result:parse(r.result)})),orders:orders.map(o=>({...o,customer:parse(o.customer)})),rule,audits,suppliers,maxAgeHours:Number(process.env.GOLD_MAX_AGE_HOURS||48),feedSettings:{goldConfigured:!!process.env.GOLD_FEED_URL,productsConfigured:!!(process.env.PRODUCT_FEED_URL||process.env.PRODUCT_FEED_FILE),inventoryMode:process.env.INVENTORY_MODE||'incremental',overwriteFields:process.env.SUPPLIER_OVERWRITE_FIELDS||'stock,fixed_price,net_weight_g,making_flat,stone_charge,other_charge',feedStatus:process.env.FEED_STATUS||'active',goldFeedEnabled:process.env.GOLD_FEED_ENABLED!=='false',productFeedEnabled:process.env.PRODUCT_FEED_ENABLED!=='false',goldUrl:process.env.GOLD_FEED_URL||'',productUrl:process.env.PRODUCT_FEED_URL||''},preview});}));
-app.get('/api/admin/products',auth(),route(async(req,res)=>res.json(await db('products').orderBy('product_code'))));
+app.get('/api/admin/products',auth(),route(async(req,res)=>{
+ const products=await db('products').orderBy('product_code');
+ const hasImages=await db.schema.hasTable('product_images').catch(()=>false);
+ const images=hasImages?await db('product_images').orderBy('sort_order','asc').orderBy('id','asc'):[];
+ const imagesByProduct={};
+ for(const img of images){
+  const k=img.product_code||img.sku;
+  if(k){
+   if(!imagesByProduct[k])imagesByProduct[k]=[];
+   imagesByProduct[k].push(img);
+  }
+ }
+ res.json(products.map(p=>({...p,images:imagesByProduct[p.product_code]||imagesByProduct[p.sku]||[]})));
+}));
 app.patch('/api/admin/products/:sku',auth(['owner','manager']),route(async(req,res)=>{const {name,description,status,image}=req.body;if(!name||!['published','draft'].includes(status))throw Error('Name and valid publication status required');const patch={name:String(name).slice(0,200),description:String(description||'').slice(0,5000),status,updated_at:now()};if(typeof image==='string'&&image.trim())patch.image=String(image).trim().slice(0,2000);await db('products').where({sku:req.params.sku}).update(patch);await audit(req,'edit_product',{sku:req.params.sku,hasImage:!!image});res.json({ok:true});}));
 app.get('/api/admin/coins',auth(),route(async(req,res)=>{
  const coins=await db('coins').orderBy('id','desc');
@@ -141,7 +154,160 @@ app.post('/api/admin/coins/silver-rate',auth(['owner','manager']),route(async(re
  await audit(req,'update_silver_rate',{rate});
  res.json({ok:true,rate});
 }));
-app.post('/api/admin/upload-image',auth(['owner','manager']),route(async(req,res)=>{const {name,data}=req.body;if(!data||typeof data!=='string')throw Error('Image data is required');const match=data.match(/^data:image\/([a-zA-Z0-9+]+);base64,(.+)$/);if(!match)throw Error('Invalid image data format. Please upload a PNG, JPG, or WEBP image.');const ext=match[1].toLowerCase().replace('jpeg','jpg');if(!['jpg','png','webp','gif','svg'].includes(ext))throw Error('Supported image formats: JPG, PNG, WEBP, GIF, SVG');const buffer=Buffer.from(match[2],'base64');if(buffer.length>5*1024*1024)throw Error('Maximum image size is 5 MB');const cleanName=String(name||'product').toLowerCase().replace(/\.[^.]+$/,'').replace(/[^a-z0-9_-]+/g,'-').slice(0,40)||'photo';const filename=`${Date.now()}-${cleanName}.${ext}`;fs.writeFileSync(path.join(uploadsDir,filename),buffer);const host=process.env.APP_URL||'https://test3.avinyacarefoundation.org';const url=`/uploads/${filename}`;await audit(req,'upload_image',{filename,size:buffer.length});res.json({ok:true,filename,url,fullUrl:`${host}${url}`});}));
+app.post('/api/admin/upload-image',auth(['owner','manager']),route(async(req,res)=>{
+ const {name,data,role,product_code}=req.body;
+ if(!data||typeof data!=='string')throw Error('Image data is required');
+ const match=data.match(/^data:image\/([a-zA-Z0-9+]+);base64,(.+)$/);
+ if(!match)throw Error('Invalid image data format. Please upload a PNG, JPG, or WEBP image.');
+ const ext=match[1].toLowerCase().replace('jpeg','jpg');
+ if(!['jpg','png','webp','gif','svg'].includes(ext))throw Error('Supported image formats: JPG, PNG, WEBP, GIF, SVG');
+ const buffer=Buffer.from(match[2],'base64');
+ if(buffer.length>8*1024*1024)throw Error('Maximum image size is 8 MB');
+ const cleanName=String(name||'product').toLowerCase().replace(/\.[^.]+$/,'').replace(/[^a-z0-9_-]+/g,'-').slice(0,40)||'photo';
+ const filename=`${Date.now()}-${cleanName}.${ext}`;
+ fs.writeFileSync(path.join(uploadsDir,filename),buffer);
+ const host=process.env.APP_URL||'https://test3.avinyacarefoundation.org';
+ const url=`/uploads/${filename}`;
+ let imageRecord=null;
+ if(product_code&&role){
+  const nowStr=now();
+  const validRole=['hero','front','left','right','model','detail'].includes(role)?role:'front';
+  const hasImages=await db.schema.hasTable('product_images').catch(()=>false);
+  if(hasImages){
+   const existing=await db('product_images').where({product_code,role:validRole}).first();
+   if(existing){
+    await db('product_images').where({id:existing.id}).update({url,updated_at:nowStr});
+    imageRecord={...existing,url,updated_at:nowStr};
+   }else{
+    const sortOrder={'hero':1,'front':2,'left':3,'right':4,'model':5,'detail':6}[validRole]||10;
+    const [id]=await db('product_images').insert({product_code,role:validRole,url,sort_order:sortOrder,created_at:nowStr,updated_at:nowStr});
+    imageRecord={id,product_code,role:validRole,url,sort_order:sortOrder};
+   }
+  }
+  if(validRole==='hero'||validRole==='front'){
+   await db('products').where({product_code}).update({image:url,updated_at:nowStr});
+  }
+ }
+ await audit(req,'upload_image',{filename,size:buffer.length,product_code,role});
+ res.json({ok:true,filename,url,fullUrl:`${host}${url}`,image:imageRecord});
+}));
+
+app.post('/api/admin/upload-images',auth(['owner','manager']),route(async(req,res)=>{
+ const files=req.body.files||req.body.images;
+ if(!Array.isArray(files)||!files.length)throw Error('At least one image file is required');
+ if(files.length>30)throw Error('Maximum 30 images can be bulk uploaded at once');
+ const host=process.env.APP_URL||'https://test3.avinyacarefoundation.org';
+ const uploaded=[];
+ const nowStr=now();
+ const hasImages=await db.schema.hasTable('product_images').catch(()=>false);
+ for(let i=0;i<files.length;i++){
+  const file=files[i];
+  const {name,data,role,product_code}=file;
+  if(!data||typeof data!=='string')continue;
+  const match=data.match(/^data:image\/([a-zA-Z0-9+]+);base64,(.+)$/);
+  if(!match)continue;
+  const ext=match[1].toLowerCase().replace('jpeg','jpg');
+  if(!['jpg','png','webp','gif','svg'].includes(ext))continue;
+  const buffer=Buffer.from(match[2],'base64');
+  if(buffer.length>8*1024*1024)continue;
+  const cleanName=String(name||`upload-${i+1}`).toLowerCase().replace(/\.[^.]+$/,'').replace(/[^a-z0-9_-]+/g,'-').slice(0,40)||'photo';
+  const filename=`${Date.now()}-${i}-${cleanName}.${ext}`;
+  fs.writeFileSync(path.join(uploadsDir,filename),buffer);
+  const url=`/uploads/${filename}`;
+  let imageRecord=null;
+  if(product_code&&role&&hasImages){
+   const validRole=['hero','front','left','right','model','detail'].includes(role)?role:'front';
+   const existing=await db('product_images').where({product_code,role:validRole}).first();
+   if(existing){
+    await db('product_images').where({id:existing.id}).update({url,updated_at:nowStr});
+    imageRecord={...existing,url,updated_at:nowStr};
+   }else{
+    const sortOrder={'hero':1,'front':2,'left':3,'right':4,'model':5,'detail':6}[validRole]||10;
+    const [id]=await db('product_images').insert({product_code,role:validRole,url,sort_order:sortOrder,created_at:nowStr,updated_at:nowStr});
+    imageRecord={id,product_code,role:validRole,url,sort_order:sortOrder};
+   }
+   if(validRole==='hero'||validRole==='front'){
+    await db('products').where({product_code}).update({image:url,updated_at:nowStr});
+   }
+  }
+  uploaded.push({filename,url,fullUrl:`${host}${url}`,role:role||null,product_code:product_code||null,image:imageRecord});
+ }
+ await audit(req,'bulk_upload_images',{count:uploaded.length});
+ res.json({ok:true,uploaded,count:uploaded.length});
+}));
+
+app.get('/api/admin/product-images/:product_code',auth(),route(async(req,res)=>{
+ const code=req.params.product_code;
+ const hasImages=await db.schema.hasTable('product_images').catch(()=>false);
+ if(!hasImages)return res.json([]);
+ const images=await db('product_images').where({product_code:code}).orWhere({sku:code}).orderBy('sort_order','asc').orderBy('id','asc');
+ res.json(images);
+}));
+
+app.post('/api/admin/product-images',auth(['owner','manager']),route(async(req,res)=>{
+ const {product_code,sku,role,url,alt_text,sort_order}=req.body;
+ if(!url||typeof url!=='string'||!url.trim())throw Error('Image URL is required');
+ const validRole=['hero','front','left','right','model','detail'].includes(role)?role:'front';
+ const targetCode=product_code||sku;
+ if(!targetCode)throw Error('Product code or SKU is required');
+ const nowStr=now();
+ const sortMap={'hero':1,'front':2,'left':3,'right':4,'model':5,'detail':6};
+ const order=sort_order!==undefined?Number(sort_order):sortMap[validRole]||10;
+ 
+ const existing=await db('product_images').where({product_code:targetCode,role:validRole}).first();
+ let id;
+ if(existing){
+  await db('product_images').where({id:existing.id}).update({
+   url:String(url).trim(),
+   alt_text:alt_text?String(alt_text).trim().slice(0,250):null,
+   sort_order:order,
+   updated_at:nowStr
+  });
+  id=existing.id;
+ }else{
+  const [insertedId]=await db('product_images').insert({
+   product_code:targetCode,
+   sku:sku||null,
+   role:validRole,
+   url:String(url).trim(),
+   alt_text:alt_text?String(alt_text).trim().slice(0,250):null,
+   sort_order:order,
+   created_at:nowStr,
+   updated_at:nowStr
+  });
+  id=insertedId;
+ }
+ if(validRole==='hero'||validRole==='front'){
+  await db('products').where({product_code:targetCode}).update({image:String(url).trim(),updated_at:nowStr});
+ }
+ await audit(req,'assign_product_image',{product_code:targetCode,role:validRole,url});
+ res.json({ok:true,id,product_code:targetCode,role:validRole,url});
+}));
+
+app.delete('/api/admin/product-images/:id',auth(['owner','manager']),route(async(req,res)=>{
+ const img=await db('product_images').where({id:req.params.id}).first();
+ if(!img)return res.status(404).json({error:'Image not found'});
+ await db('product_images').where({id:req.params.id}).del();
+ await audit(req,'delete_product_image',{id:req.params.id,product_code:img.product_code,role:img.role});
+ res.json({ok:true});
+}));
+
+app.get('/api/admin/media',auth(),route(async(req,res)=>{
+ if(!fs.existsSync(uploadsDir))return res.json([]);
+ const files=fs.readdirSync(uploadsDir).filter(f=>!f.startsWith('.')&&/\.(jpg|jpeg|png|webp|gif|svg)$/i.test(f));
+ const host=process.env.APP_URL||'https://test3.avinyacarefoundation.org';
+ const list=files.map(f=>{
+  const stat=fs.statSync(path.join(uploadsDir,f));
+  return {
+   filename:f,
+   url:`/uploads/${f}`,
+   fullUrl:`${host}/uploads/${f}`,
+   size:stat.size,
+   mtime:stat.mtime
+  };
+ }).sort((a,b)=>new Date(b.mtime)-new Date(a.mtime));
+ res.json(list);
+}));
 app.get('/api/admin/samples/:file',auth(),(req,res)=>{const allowed=['gold-rates-template.csv','gold-rates-example.csv','products-template.csv','products-example.csv','import-errors-example.csv'];if(!allowed.includes(req.params.file))return res.sendStatus(404);res.download(path.resolve('samples',req.params.file));});
 app.get('/api/admin/export/:kind',auth(),route(async(req,res)=>{const k=req.params.kind,d=new Date().toISOString().slice(0,10);if(k==='products'){const rows=await db('products').orderBy('product_code');return res.type('text/csv').attachment(`products-${d}.csv`).send(exportCsv('products',rows));}if(k==='coins'){const rows=await db('coins').orderBy('id','desc');return res.type('text/csv').attachment(`coins-${d}.csv`).send(exportCsv('coins',rows));}if(k==='gold'){const rows=await db('rates').orderBy('id','desc');return res.type('text/csv').attachment(`gold-rates-${d}.csv`).send(exportCsv('gold',rows));}if(k==='orders'){const rows=await db('orders').orderBy('created_at','desc');return res.type('text/csv').attachment(`orders-${d}.csv`).send(ordersCsv(rows));}res.sendStatus(404);}));
 app.post('/api/admin/import/preview',auth(['owner','manager']),route(async(req,res)=>{if(typeof req.body.csv!=='string')throw Error('Upload a UTF-8 CSV file');res.json(await previewImport(db,req.body.kind,req.body.csv,req.session.staff.id));}));

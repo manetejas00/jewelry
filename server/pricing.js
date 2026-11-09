@@ -58,7 +58,35 @@ export async function coinCatalogue(k){
   });
 }
 
-export async function catalogue(k){const [products,rates,rules]=await Promise.all([k('products').where({status:'published'}),activeRates(k),k('pricing_rules').orderBy('id','desc').first()]);return products.map(p=>{let price=null;try{price=calculatePrice(p,rates[p.purity],rules)}catch{}return {...p,price:price?.total,breakdown:price,checkout_available:p.stock>0 && (p.pricing_mode==='FIXED'||isFresh(rates[p.purity]))};});}
+export async function catalogue(k){
+  const hasImages=await k.schema.hasTable('product_images').catch(()=>false);
+  const [products,rates,rules,images]=await Promise.all([
+    k('products').where({status:'published'}),
+    activeRates(k),
+    k('pricing_rules').orderBy('id','desc').first(),
+    hasImages?k('product_images').orderBy('sort_order','asc').orderBy('id','asc'):[]
+  ]);
+  const imagesByProduct={};
+  for(const img of images){
+    const key=img.product_code||img.sku;
+    if(key){
+      if(!imagesByProduct[key])imagesByProduct[key]=[];
+      imagesByProduct[key].push(img);
+    }
+  }
+  return products.map(p=>{
+    let price=null;
+    try{price=calculatePrice(p,rates[p.purity],rules)}catch{}
+    const prodImages=imagesByProduct[p.product_code]||imagesByProduct[p.sku]||[];
+    return {
+      ...p,
+      images:prodImages,
+      price:price?.total,
+      breakdown:price,
+      checkout_available:p.stock>0 && (p.pricing_mode==='FIXED'||isFresh(rates[p.purity]))
+    };
+  });
+}
 export async function quote(k,items){
  if(!Array.isArray(items)||!items.length||items.length>50)throw Error('Your bag is empty or too large');
  if(new Set(items.map(i=>i.sku)).size!==items.length)throw Error('Duplicate bag SKU');
