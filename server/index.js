@@ -8,7 +8,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 import {db,migrate,preview,now,json,parse} from './db.js';
 import {catalogue,activeRates,calculatePrice,isFresh,quote,todayIndia} from './pricing.js';
-import {previewImport,publishImport,errorCsv,schemas} from './importer.js';
+import {previewImport,publishImport,errorCsv,exportCsv,ordersCsv,schemas} from './importer.js';
 import {checkout} from './orders.js';
 import {registerCustomer,loginCustomer,customerState,saveCustomerState,mergeGuestState,claimSessionOrders,customerOrders,mayReadOrder,validateState} from './customers.js';
 import {daily} from './daily.js';
@@ -66,6 +66,7 @@ app.get('/api/admin/dashboard',auth(),route(async(req,res)=>{const [rates,batche
 app.get('/api/admin/products',auth(),route(async(req,res)=>res.json(await db('products').orderBy('product_code'))));
 app.patch('/api/admin/products/:sku',auth(['owner','manager']),route(async(req,res)=>{const {name,description,status}=req.body;if(!name||!['published','draft'].includes(status))throw Error('Name and valid publication status required');await db('products').where({sku:req.params.sku}).update({name:String(name).slice(0,200),description:String(description||'').slice(0,5000),status,updated_at:now()});await audit(req,'edit_product',{sku:req.params.sku});res.json({ok:true});}));
 app.get('/api/admin/samples/:file',auth(),(req,res)=>{const allowed=['gold-rates-template.csv','gold-rates-example.csv','products-template.csv','products-example.csv','import-errors-example.csv'];if(!allowed.includes(req.params.file))return res.sendStatus(404);res.download(path.resolve('samples',req.params.file));});
+app.get('/api/admin/export/:kind',auth(),route(async(req,res)=>{const k=req.params.kind,d=new Date().toISOString().slice(0,10);if(k==='products'){const rows=await db('products').orderBy('product_code');return res.type('text/csv').attachment(`products-${d}.csv`).send(exportCsv('products',rows));}if(k==='gold'){const rows=await db('rates').orderBy('id','desc');return res.type('text/csv').attachment(`gold-rates-${d}.csv`).send(exportCsv('gold',rows));}if(k==='orders'){const rows=await db('orders').orderBy('created_at','desc');return res.type('text/csv').attachment(`orders-${d}.csv`).send(ordersCsv(rows));}res.sendStatus(404);}));
 app.post('/api/admin/import/preview',auth(['owner','manager']),route(async(req,res)=>{if(typeof req.body.csv!=='string')throw Error('Upload a UTF-8 CSV file');res.json(await previewImport(db,req.body.kind,req.body.csv,req.session.staff.id));}));
 app.post('/api/admin/import/:id/publish',auth(['owner','manager']),route(async(req,res)=>res.json(await publishImport(db,Number(req.params.id),req.session.staff.id))));
 app.get('/api/admin/import/:id/errors',auth(),route(async(req,res)=>{res.type('text/csv').attachment(`batch-${req.params.id}-errors.csv`).send(errorCsv(await db('import_errors').where({batch_id:req.params.id})));}));
