@@ -42,8 +42,24 @@ async function readFeed(kind){
 }
 export async function daily(k,trigger='manual',only=null,staff=null){
  await loadFeedSettings(k);
+ if(process.env.FEED_STATUS==='stopped'){
+   if(trigger==='scheduled'){
+     const started_at=now();
+     const [id]=await k('daily_runs').insert({started_at,trigger,result:json({message:'Daily feed skipped because feed automation is stopped in Settings'}),finished_at:now()});
+     return {id,started_at,result:{message:'Feed automation is stopped'}};
+   }
+   throw Error('Feed automation is currently STOPPED in Admin Settings. Please start the feed in Settings before running.');
+ }
+ const targets=(only?[only]:['gold','products']).filter(kind=>{
+   if(kind==='gold'&&process.env.GOLD_FEED_ENABLED==='false')return false;
+   if(kind==='products'&&process.env.PRODUCT_FEED_ENABLED==='false')return false;
+   return true;
+ });
+ if(!targets.length){
+   throw Error('All selected feeds are currently disabled in Settings.');
+ }
  try{await k('import_locks').insert({name:'daily',acquired_at:now()});}catch{throw Error('A daily workflow is already running');}
  const started_at=now();const [id]=await k('daily_runs').insert({started_at,trigger,result:'{}'});const result={};
- try{for(const kind of only?[only]:['gold','products']){try{const b=await previewImport(k,kind,await readFeed(kind),staff);if(b.errors.length){const error=Error(`Validation failed in batch ${b.id}`);error.summary=b.summary;error.batch=b.id;throw error;}result[kind]={ok:true,batch:b.id,source_date:b.source_timestamp,...await publishImport(k,b.id,staff)};}catch(e){result[kind]={ok:false,created:0,updated:0,unchanged:0,rejected:e.summary?.rejected||0,batch:e.batch||null,message:e.message.replace(/https?:\/\/\S+/g,'[redacted]')};}}
+ try{for(const kind of targets){try{const b=await previewImport(k,kind,await readFeed(kind),staff);if(b.errors.length){const error=Error(`Validation failed in batch ${b.id}`);error.summary=b.summary;error.batch=b.id;throw error;}result[kind]={ok:true,batch:b.id,source_date:b.source_timestamp,...await publishImport(k,b.id,staff)};}catch(e){result[kind]={ok:false,created:0,updated:0,unchanged:0,rejected:e.summary?.rejected||0,batch:e.batch||null,message:e.message.replace(/https?:\/\/\S+/g,'[redacted]')};}}
  await k('daily_runs').where({id}).update({finished_at:now(),result:json(result)});return {id,started_at,result};}finally{await k('import_locks').where({name:'daily'}).del();}
 }

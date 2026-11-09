@@ -66,7 +66,7 @@ app.post('/api/account/logout',customerAuth,customerCsrf,route(async(req,res)=>{
 app.post('/api/admin/login',rateLimit({windowMs:15*60000,limit:10}),route(async(req,res)=>{const staff=await db('staff').where({email:String(req.body.email).toLowerCase()}).first();if(!staff||!await bcrypt.compare(String(req.body.password),staff.password_hash))return res.status(401).json({error:'Email or password is incorrect'});const customer=req.session.customer,customerCsrf=req.session.customerCsrf,orderIds=req.session.orderIds;await new Promise((resolve,reject)=>req.session.regenerate(e=>e?reject(e):resolve()));if(customer){req.session.customer=customer;req.session.customerCsrf=customerCsrf;}req.session.orderIds=orderIds;req.session.staff={id:staff.id,email:staff.email,role:staff.role};req.session.csrf=crypto.randomBytes(24).toString('hex');res.json({staff:req.session.staff,csrf:req.session.csrf});}));
 app.get('/api/admin/session',auth(),(req,res)=>res.json({staff:req.session.staff,csrf:req.session.csrf}));
 app.post('/api/admin/logout',auth(),route(async(req,res)=>{const customer=req.session.customer,customerCsrf=req.session.customerCsrf,orderIds=req.session.orderIds;await new Promise((resolve,reject)=>req.session.regenerate(e=>e?reject(e):resolve()));if(customer){req.session.customer=customer;req.session.customerCsrf=customerCsrf;}req.session.orderIds=orderIds;res.json({ok:true});}));
-app.get('/api/admin/dashboard',auth(),route(async(req,res)=>{const [rates,batches,runs,orders,rule,audits,suppliers,rateHistory]=await Promise.all([activeRates(db),db('import_batches').select('id','kind','supplier','source_timestamp','status','summary','created_at').orderBy('id','desc').limit(30),db('daily_runs').orderBy('id','desc').limit(10),db('orders').orderBy('created_at','desc').limit(100),db('pricing_rules').orderBy('id','desc').first(),db('audit').orderBy('id','desc').limit(20),db('import_batches').where({status:'published'}).select('supplier','kind').max('source_timestamp as last_update').groupBy('supplier','kind'),db('rates').orderBy('id','desc').limit(100)]);const scheduled=runs.find(r=>r.trigger==='scheduled');const scheduleMissed=!scheduled||Date.now()-Date.parse(scheduled.started_at)>27*3600000;const todayBatches=batches.filter(b=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(b.created_at))===todayIndia());res.json({rateHistory,scheduleMissed,todayImports:{total:todayBatches.length,failed:todayBatches.filter(b=>b.status==='failed').length,published:todayBatches.filter(b=>b.status==='published').length},rates:Object.values(rates).map(r=>({...r,fresh:isFresh(r)})),batches:batches.map(b=>({...b,summary:parse(b.summary)})),runs:runs.map(r=>({...r,result:parse(r.result)})),orders:orders.map(o=>({...o,customer:parse(o.customer)})),rule,audits,suppliers,maxAgeHours:Number(process.env.GOLD_MAX_AGE_HOURS||48),feedSettings:{goldConfigured:!!process.env.GOLD_FEED_URL,productsConfigured:!!(process.env.PRODUCT_FEED_URL||process.env.PRODUCT_FEED_FILE),inventoryMode:process.env.INVENTORY_MODE||'incremental',overwriteFields:process.env.SUPPLIER_OVERWRITE_FIELDS||'stock,fixed_price,net_weight_g,making_flat,stone_charge,other_charge'},preview});}));
+app.get('/api/admin/dashboard',auth(),route(async(req,res)=>{const [rates,batches,runs,orders,rule,audits,suppliers,rateHistory]=await Promise.all([activeRates(db),db('import_batches').select('id','kind','supplier','source_timestamp','status','summary','created_at').orderBy('id','desc').limit(30),db('daily_runs').orderBy('id','desc').limit(10),db('orders').orderBy('created_at','desc').limit(100),db('pricing_rules').orderBy('id','desc').first(),db('audit').orderBy('id','desc').limit(20),db('import_batches').where({status:'published'}).select('supplier','kind').max('source_timestamp as last_update').groupBy('supplier','kind'),db('rates').orderBy('id','desc').limit(100)]);const scheduled=runs.find(r=>r.trigger==='scheduled');const scheduleMissed=!scheduled||Date.now()-Date.parse(scheduled.started_at)>27*3600000;const todayBatches=batches.filter(b=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(b.created_at))===todayIndia());res.json({rateHistory,scheduleMissed,todayImports:{total:todayBatches.length,failed:todayBatches.filter(b=>b.status==='failed').length,published:todayBatches.filter(b=>b.status==='published').length},rates:Object.values(rates).map(r=>({...r,fresh:isFresh(r)})),batches:batches.map(b=>({...b,summary:parse(b.summary)})),runs:runs.map(r=>({...r,result:parse(r.result)})),orders:orders.map(o=>({...o,customer:parse(o.customer)})),rule,audits,suppliers,maxAgeHours:Number(process.env.GOLD_MAX_AGE_HOURS||48),feedSettings:{goldConfigured:!!process.env.GOLD_FEED_URL,productsConfigured:!!(process.env.PRODUCT_FEED_URL||process.env.PRODUCT_FEED_FILE),inventoryMode:process.env.INVENTORY_MODE||'incremental',overwriteFields:process.env.SUPPLIER_OVERWRITE_FIELDS||'stock,fixed_price,net_weight_g,making_flat,stone_charge,other_charge',feedStatus:process.env.FEED_STATUS||'active',goldFeedEnabled:process.env.GOLD_FEED_ENABLED!=='false',productFeedEnabled:process.env.PRODUCT_FEED_ENABLED!=='false',goldUrl:process.env.GOLD_FEED_URL||'',productUrl:process.env.PRODUCT_FEED_URL||''},preview});}));
 app.get('/api/admin/products',auth(),route(async(req,res)=>res.json(await db('products').orderBy('product_code'))));
 app.patch('/api/admin/products/:sku',auth(['owner','manager']),route(async(req,res)=>{const {name,description,status,image}=req.body;if(!name||!['published','draft'].includes(status))throw Error('Name and valid publication status required');const patch={name:String(name).slice(0,200),description:String(description||'').slice(0,5000),status,updated_at:now()};if(typeof image==='string'&&image.trim())patch.image=String(image).trim().slice(0,2000);await db('products').where({sku:req.params.sku}).update(patch);await audit(req,'edit_product',{sku:req.params.sku,hasImage:!!image});res.json({ok:true});}));
 app.get('/api/admin/coins',auth(),route(async(req,res)=>{
@@ -148,12 +148,70 @@ app.post('/api/admin/import/preview',auth(['owner','manager']),route(async(req,r
 app.post('/api/admin/import/:id/publish',auth(['owner','manager']),route(async(req,res)=>res.json(await publishImport(db,Number(req.params.id),req.session.staff.id))));
 app.get('/api/admin/import/:id/errors',auth(),route(async(req,res)=>{res.type('text/csv').attachment(`batch-${req.params.id}-errors.csv`).send(errorCsv(await db('import_errors').where({batch_id:req.params.id})));}));
 app.post('/api/admin/run',auth(['owner','manager']),route(async(req,res)=>{if(req.body.kind&&!schemas[req.body.kind])throw Error('Unknown feed');await audit(req,'run_feed',{kind:req.body.kind||'daily'});res.json(await daily(db,'manual',req.body.kind,req.session.staff.id));}));
+app.post('/api/admin/feed-toggle',auth(['owner','manager']),route(async(req,res)=>{
+ const {status,kind,enabled}=req.body;
+ const changes={};
+ if(status){
+  if(!['active','stopped'].includes(status))throw Error('Status must be active or stopped');
+  changes.FEED_STATUS=status;
+ }
+ if(kind==='gold'&&enabled!==undefined){
+  changes.GOLD_FEED_ENABLED=String(Boolean(enabled));
+ }
+ if(kind==='products'&&enabled!==undefined){
+  changes.PRODUCT_FEED_ENABLED=String(Boolean(enabled));
+ }
+ await db.transaction(async t=>{
+  for(const [key,value] of Object.entries(changes))await t('settings').insert({key,value}).onConflict('key').merge();
+  await t('audit').insert({staff_id:req.session.staff.id,action:'feed_toggle',details:json(changes),created_at:now()});
+ });
+ await loadFeedSettings();
+ res.json({ok:true,changes,feedStatus:process.env.FEED_STATUS||'active',goldFeedEnabled:process.env.GOLD_FEED_ENABLED!=='false',productFeedEnabled:process.env.PRODUCT_FEED_ENABLED!=='false'});
+}));
 app.post('/api/admin/feed-settings',auth(['owner']),route(async(req,res)=>{
- const r=req.body,age=Number(r.maxAgeHours);if(!Number.isFinite(age)||age<1||age>168||!['incremental','full'].includes(r.inventoryMode))throw Error('Choose a rate age between 1 and 168 hours and a supported inventory mode');
- const changes={GOLD_MAX_AGE_HOURS:String(age),INVENTORY_MODE:r.inventoryMode};
- if(typeof r.overwriteFields==='string'){const fields=r.overwriteFields.split(',').map(f=>f.trim());if(fields.some(f=>!schemas.products.includes(f)||['sku','supplier','product_code','source_timestamp'].includes(f)))throw Error('Invalid supplier overwrite field');changes.SUPPLIER_OVERWRITE_FIELDS=fields.join(',');}
- for(const [field,key] of [['goldUrl','GOLD_FEED_URL'],['productUrl','PRODUCT_FEED_URL']])if(r[field]){let u;try{u=new URL(r[field])}catch{throw Error('Enter a valid HTTPS feed URL')}if(u.protocol!=='https:'||u.username||u.password||u.search||u.hash)throw Error('Feed URLs must be HTTPS without embedded credentials or query secrets; use server-side Bearer tokens');changes[key]=u.href;}
- await db.transaction(async t=>{for(const [key,value] of Object.entries(changes))await t('settings').insert({key,value}).onConflict('key').merge();await t('audit').insert({staff_id:req.session.staff.id,action:'feed_settings',details:json({maxAgeHours:age,inventoryMode:r.inventoryMode,fields:changes.SUPPLIER_OVERWRITE_FIELDS,sourceKeysChanged:Object.keys(changes).filter(k=>k.endsWith('_URL'))}),created_at:now()});});await loadFeedSettings();res.json({ok:true});
+ const r=req.body;
+ const changes={};
+ if(r.maxAgeHours!==undefined&&r.maxAgeHours!==''){
+  const age=Number(r.maxAgeHours);
+  if(!Number.isFinite(age)||age<1||age>168)throw Error('Choose a rate age between 1 and 168 hours');
+  changes.GOLD_MAX_AGE_HOURS=String(age);
+ }
+ if(r.inventoryMode){
+  if(!['incremental','full'].includes(r.inventoryMode))throw Error('Choose a supported inventory mode');
+  changes.INVENTORY_MODE=r.inventoryMode;
+ }
+ if(r.feedStatus){
+  if(!['active','stopped'].includes(r.feedStatus))throw Error('Status must be active or stopped');
+  changes.FEED_STATUS=r.feedStatus;
+ }
+ if(r.goldFeedEnabled!==undefined){
+  changes.GOLD_FEED_ENABLED=String(r.goldFeedEnabled==='true'||r.goldFeedEnabled===true);
+ }
+ if(r.productFeedEnabled!==undefined){
+  changes.PRODUCT_FEED_ENABLED=String(r.productFeedEnabled==='true'||r.productFeedEnabled===true);
+ }
+ if(typeof r.overwriteFields==='string'){
+  const fields=r.overwriteFields.split(',').map(f=>f.trim()).filter(Boolean);
+  if(fields.some(f=>!schemas.products.includes(f)||['sku','supplier','product_code','source_timestamp'].includes(f)))throw Error('Invalid supplier overwrite field');
+  changes.SUPPLIER_OVERWRITE_FIELDS=fields.join(',');
+ }
+ for(const [field,key] of [['goldUrl','GOLD_FEED_URL'],['productUrl','PRODUCT_FEED_URL']])if(r[field]!==undefined){
+  if(r[field]===''||r[field]===null){
+   changes[key]='';
+  }else if(field==='goldUrl'&&(r[field]==='auto'||r[field].includes('gold-api.com'))){
+   changes[key]=r[field];
+  }else{
+   let u;try{u=new URL(r[field])}catch{throw Error('Enter a valid HTTPS feed URL')}
+   if(u.protocol!=='https:'||u.username||u.password||u.search||u.hash)throw Error('Feed URLs must be HTTPS without embedded credentials or query secrets; use server-side Bearer tokens');
+   changes[key]=u.href;
+  }
+ }
+ await db.transaction(async t=>{
+  for(const [key,value] of Object.entries(changes))await t('settings').insert({key,value}).onConflict('key').merge();
+  await t('audit').insert({staff_id:req.session.staff.id,action:'feed_settings',details:json({maxAgeHours:r.maxAgeHours,inventoryMode:r.inventoryMode,changes}),created_at:now()});
+ });
+ await loadFeedSettings();
+ res.json({ok:true,changes});
 }));
 app.post('/api/admin/rules/preview',auth(['owner']),route(async(req,res)=>{const rule=validateRule(req.body);const rates=await activeRates(db);const products=await db('products');res.json(products.map(p=>{let before=null,after=null;try{before=calculatePrice(p,rates[p.purity],req.body.current||{}).total;after=calculatePrice(p,rates[p.purity],rule).total}catch{}return {sku:p.sku,before,after}}));}));
 function validateRule(r){if(!Number.isFinite(Number(r.tax_percent))||r.tax_percent<0||r.tax_percent>100||![1,0.01,10,100].includes(Number(r.rounding))||!['exclusive','inclusive'].includes(r.tax_treatment))throw Error('Invalid tax or rounding rule');return {tax_percent:Number(r.tax_percent),rounding:Number(r.rounding),tax_treatment:r.tax_treatment};}

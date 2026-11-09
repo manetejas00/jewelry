@@ -140,3 +140,19 @@ test('bag quote and checkout work with coins and decrement coin stock', async ()
   const updatedCoin = await k('coins').where({sku: 'COIN-AU-1G'}).first();
   assert.equal(updatedCoin.stock, initialStock - 2);
 });
+
+test('feed toggle stops and starts feed automation', async () => {
+  // Stop feeds
+  await k('settings').insert({key: 'FEED_STATUS', value: 'stopped'}).onConflict('key').merge();
+  const {daily} = await import('../server/daily.js');
+  
+  // When stopped, manual daily run throws descriptive error
+  await assert.rejects(daily(k, 'manual'), /STOPPED/);
+  
+  // When stopped, scheduled daily run safely logs skipped message
+  const scheduledRun = await daily(k, 'scheduled');
+  assert.ok(scheduledRun.result.message.includes('stopped'));
+
+  // Restart feeds
+  await k('settings').insert({key: 'FEED_STATUS', value: 'active'}).onConflict('key').merge();
+});
