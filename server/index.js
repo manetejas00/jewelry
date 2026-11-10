@@ -250,7 +250,7 @@ app.post('/api/admin/upload-image',auth(['owner','manager']),route(async(req,res
  let imageRecord=null;
  if(product_code&&role){
   const nowStr=now();
-  const validRole=['hero','front','left','right','model','detail'].includes(role)?role:'front';
+  const validRole=['hero','front','left','right','model','modal','detail'].includes(role)?role:'front';
   const hasImages=await db.schema.hasTable('product_images').catch(()=>false);
   if(hasImages){
    const existing=await db('product_images').where({product_code,role:validRole}).first();
@@ -258,7 +258,7 @@ app.post('/api/admin/upload-image',auth(['owner','manager']),route(async(req,res
     await db('product_images').where({id:existing.id}).update({url,updated_at:nowStr});
     imageRecord={...existing,url,updated_at:nowStr};
    }else{
-    const sortOrder={'hero':1,'front':2,'left':3,'right':4,'model':5,'detail':6}[validRole]||10;
+    const sortOrder={'hero':1,'front':2,'left':3,'right':4,'model':5,'modal':5,'detail':6}[validRole]||10;
     const [id]=await db('product_images').insert({product_code,role:validRole,url,sort_order:sortOrder,created_at:nowStr,updated_at:nowStr});
     imageRecord={id,product_code,role:validRole,url,sort_order:sortOrder};
    }
@@ -295,13 +295,13 @@ app.post('/api/admin/upload-images',auth(['owner','manager']),route(async(req,re
   const url=`/uploads/${filename}`;
   let imageRecord=null;
   if(product_code&&role&&hasImages){
-   const validRole=['hero','front','left','right','model','detail'].includes(role)?role:'front';
+   const validRole=['hero','front','left','right','model','modal','detail'].includes(role)?role:'front';
    const existing=await db('product_images').where({product_code,role:validRole}).first();
    if(existing){
     await db('product_images').where({id:existing.id}).update({url,updated_at:nowStr});
     imageRecord={...existing,url,updated_at:nowStr};
    }else{
-    const sortOrder={'hero':1,'front':2,'left':3,'right':4,'model':5,'detail':6}[validRole]||10;
+    const sortOrder={'hero':1,'front':2,'left':3,'right':4,'model':5,'modal':5,'detail':6}[validRole]||10;
     const [id]=await db('product_images').insert({product_code,role:validRole,url,sort_order:sortOrder,created_at:nowStr,updated_at:nowStr});
     imageRecord={id,product_code,role:validRole,url,sort_order:sortOrder};
    }
@@ -327,11 +327,11 @@ app.get('/api/admin/product-images/:product_code',auth(),route(async(req,res)=>{
 app.post('/api/admin/product-images',auth(['owner','manager']),route(async(req,res)=>{
  const {product_code,sku,role,url,alt_text,sort_order}=req.body;
  if(!url||typeof url!=='string'||!url.trim())throw Error('Image URL is required');
- const validRole=['hero','front','left','right','model','detail'].includes(role)?role:'front';
+ const validRole=['hero','front','left','right','model','modal','detail'].includes(role)?role:'front';
  const targetCode=product_code||sku;
  if(!targetCode)throw Error('Product code or SKU is required');
  const nowStr=now();
- const sortMap={'hero':1,'front':2,'left':3,'right':4,'model':5,'detail':6};
+ const sortMap={'hero':1,'front':2,'left':3,'right':4,'model':5,'modal':5,'detail':6};
  const order=sort_order!==undefined?Number(sort_order):sortMap[validRole]||10;
 
  const existing=await db('product_images').where({product_code:targetCode,role:validRole}).first();

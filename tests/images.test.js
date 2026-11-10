@@ -117,3 +117,15 @@ test('a selected SKU photo leads its gallery while keeping shared angles',async(
  const stamp=new Date().toISOString();await k('product_images').insert({sku:'TEST-R-12',product_code:null,role:'hero',url:'/uploads/chosen-photo.png',sort_order:-1,created_at:stamp,updated_at:stamp});
  const product=(await catalogue(k)).find(p=>p.sku==='TEST-R-12');assert.equal(product.images[0].url,'/uploads/chosen-photo.png');assert.ok(product.images.some(i=>i.product_code==='test-ring'));
 });
+
+test('recreateProductAssets creates all 5 angle roles (hero, front, left, right, modal/model) for all products', async () => {
+  const {recreateProductAssets} = await import('../scripts/recreate-product-assets.js');
+  await recreateProductAssets(k);
+  const testImages = await k('product_images').where({product_code: 'test-ring'});
+  const roles = testImages.map(i => i.role);
+  assert.ok(roles.includes('hero'), 'Must have hero role');
+  assert.ok(roles.includes('front'), 'Must have front role');
+  assert.ok(roles.includes('left'), 'Must have left role');
+  assert.ok(roles.includes('right'), 'Must have right role');
+  assert.ok(roles.includes('modal') || roles.includes('model'), 'Must have modal/model role');
+});
