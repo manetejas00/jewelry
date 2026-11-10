@@ -470,7 +470,7 @@ function Bag(){
 }
 function Checkout(){
   const {bag,setBag,config,customer,flushAccount,afterCheckout}=useStore();
-  const [quote,setQuote]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[accepted,setAccepted]=useState(false),[changed,setChanged]=useState(false),[testFailure,setTestFailure]=useState(false);
+  const [quote,setQuote]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[accepted,setAccepted]=useState(false),[changed,setChanged]=useState(false);
   const key=useRef(crypto.randomUUID());
   const nav=useNavigate();
   const placeholders={name:'e.g. Priya Sharma',email:'e.g. priya@example.com',phone:'10-digit mobile number',pincode:'6-digit PIN code',address:'Flat, house no., building, street',city:'e.g. Mumbai'};
@@ -481,11 +481,10 @@ function Checkout(){
   },[bag]);
   async function pay(e){
     e.preventDefault();if(!accepted||!quote)return;setBusy(true);setError('');
-    if(testFailure){setError('Test payment declined. Your bag is saved. Untick the test failure option to retry.');setBusy(false);return;}
     const customer=Object.fromEntries(new FormData(e.target));
     try{
       await flushAccount();
-      const r=await api('/checkout',{items:bag.map(({sku,quantity})=>({sku,quantity})),token:quote.token,customer,idempotencyKey:key.current});
+      const r=await api('/checkout',{items:bag.map(({sku,quantity})=>({sku,quantity})),token:quote.token,customer,paymentMode:'cod',idempotencyKey:key.current});
       await afterCheckout();
       nav('/order/'+r.id);
     }catch(e){
@@ -495,7 +494,7 @@ function Checkout(){
   }
   return <Layout><section className="section checkout-page">
     <Link className="underlink" to="/bag"><ArrowLeft size={15}/> Back to bag</Link>
-    <div className="section-heading"><div><span className="eyebrow">ONE STEP CLOSER</span><h1>A little wonder, on its way.</h1></div><span className="test-badge">TEST CHECKOUT · NO MONEY COLLECTED</span></div>
+    <div className="section-heading"><div><span className="eyebrow">ONE STEP CLOSER</span><h1>A little wonder, on its way.</h1></div><span className="status-badge" style={{background:'#e8f5e9',color:'#1b5e20',borderColor:'#a5d6a7',fontSize:'10px',fontWeight:700,letterSpacing:'1px'}}>CASH ON DELIVERY (COD)</span></div>
     {!bag.length?<div className="empty"><p>Your bag is empty.</p><Link to="/collections/all">Explore jewellery</Link></div>:<div className="checkout-grid">
       <form onSubmit={pay}>
         <h3>Contact & delivery</h3>
@@ -503,12 +502,20 @@ function Checkout(){
         <div className="form-grid">
           {[['name','Full name','text'],['email','Email address','email'],['phone','Mobile number','tel'],['pincode','PIN code','text'],['address','Address','text'],['city','City','text']].map(([name,label,type])=><label key={name} className={name==='address'?'span-two':''}>{label}<input name={name} type={type} placeholder={placeholders[name]} title={name==='phone'?'10-digit mobile number':name==='pincode'?'6-digit PIN code':undefined} defaultValue={name==='name'?customer?.name:name==='email'?customer?.email:undefined} autoComplete={{name:'name',email:'email',phone:'tel',pincode:'postal-code',address:'street-address',city:'address-level2'}[name]} required maxLength={name==='phone'?10:name==='pincode'?6:200} pattern={name==='phone'?'[0-9]{10}':name==='pincode'?'[0-9]{6}':undefined}/></label>)}
         </div>
-        <div className="checkout-note"><ShieldCheck size={20}/><p>This is a simulated payment. No card or bank details are requested. Delivery and returns are awaiting merchant configuration.</p></div>
-        <label className="checkbox"><input type="checkbox" checked={testFailure} onChange={e=>setTestFailure(e.target.checked)}/> Simulate a failed test payment</label>
+        <div className="payment-method-box" style={{background:'var(--paper)',border:'1px solid var(--line)',padding:'16px 18px',borderRadius:'4px',margin:'22px 0 16px'}}>
+          <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'6px'}}>
+            <span style={{fontSize:'16px'}}>💵</span>
+            <strong style={{fontSize:'12px',letterSpacing:'0.8px',textTransform:'uppercase'}}>Cash on Delivery (COD)</strong>
+            <span className="status-badge" style={{background:'#e8f5e9',color:'#1b5e20',borderColor:'#a5d6a7',fontSize:'9px',marginLeft:'auto'}}>AVAILABLE</span>
+          </div>
+          <p style={{margin:0,fontSize:'11px',color:'var(--muted)',lineHeight:1.6}}>
+            Pay with cash or UPI directly upon delivery at your doorstep. No advance online payment is required.
+          </p>
+        </div>
         {changed&&<div className="notice">The price changed. Review the updated order summary before accepting.</div>}
-        <label className="checkbox consent"><input type="checkbox" disabled={!quote} checked={accepted} onChange={e=>setAccepted(e.target.checked)} required/>{quote?`I accept the displayed total of ${money(quote.total)} for this test order.`:'Waiting for a current order total…'}</label>
+        <label className="checkbox consent"><input type="checkbox" disabled={!quote} checked={accepted} onChange={e=>setAccepted(e.target.checked)} required/>{quote?`I confirm this order with Cash on Delivery and agree to pay ${money(quote.total)} upon arrival.`:'Waiting for a current order total…'}</label>
         {error&&<p className="error" role="alert">{error}</p>}
-        <button className="button dark full" disabled={busy||!quote||!accepted}>{busy?'Confirming…':`Place test order · ${money(quote?.total)}`}<ArrowRight size={17}/></button>
+        <button className="button dark full" disabled={busy||!quote||!accepted}>{busy?'Placing order…':`Place Order with Cash on Delivery · ${money(quote?.total)}`}<ArrowRight size={17}/></button>
       </form>
       <aside className="order-summary">
         <h3>Your chosen pieces</h3>
@@ -516,13 +523,24 @@ function Checkout(){
         {quote?.lines.map(p=><div className="summary-product" key={p.sku}><img src={coinImage(p.image,true)} alt={p.name}/><div><h4>{p.name}</h4><p>{p.size} · Qty {p.quantity}</p><span>{money(p.unit_price*p.quantity)}</span></div></div>)}
         <div className="summary-line"><span>Subtotal</span>{money(quote?.subtotal)}</div>
         <div className="summary-line"><span>Delivery</span>{quote?.shipping===0?'Complimentary':money(quote?.shipping)}</div>
-        <div className="summary-line total"><span>Total payable</span>{money(quote?.total)}</div>
-        <p className="small">Displayed total includes any configured taxes. All orders in this preview are fictional.</p>
+        <div className="summary-line total"><span>Total payable upon arrival</span>{money(quote?.total)}</div>
+        <p className="small">Displayed total includes taxes & doorstep delivery charges. Payable upon arrival.</p>
       </aside>
     </div>}
   </section></Layout>;
 }
-function Order(){const {id}=useParams();const [o,setO]=useState(null),[error,setError]=useState('');useEffect(()=>{setO(null);setError('');api('/orders/'+id).then(setO).catch(e=>setError(e.message))},[id]);return <Layout><section className="order-confirm section">{o&&<CheckCircle2 size={42}/>}<span className="eyebrow">YOUR ORDER</span><h1>{error?'Order unavailable':o?'A little wonder is yours.':'Opening your order…'}</h1>{error?<p className="error">{error}</p>:o?<><p>Your test order is confirmed. No payment has been collected.</p><div className="confirmation-card"><div className="summary-line"><span>Order reference</span><strong>{o.id}</strong></div><div className="summary-line"><span>Placed</span>{date(o.created_at)}</div><div className="summary-line"><span>Saved order total</span>{money(o.total)}</div>{o.items.map(i=><p key={i.sku}>{i.name} · {i.size} × {i.quantity}</p>)}</div></>:<p>Loading your confirmation…</p>}<Link className="button dark" to="/collections/all">Keep discovering <ArrowRight size={17}/></Link></section></Layout>}
+function Order(){
+  const {id}=useParams();
+  const [o,setO]=useState(null),[error,setError]=useState('');
+  useEffect(()=>{setO(null);setError('');api('/orders/'+id).then(setO).catch(e=>setError(e.message))},[id]);
+  return <Layout><section className="order-confirm section">
+    {o&&<CheckCircle2 size={42}/>}
+    <span className="eyebrow">ORDER CONFIRMED</span>
+    <h1>{error?'Order unavailable':o?'A little wonder is on its way.':'Opening your order…'}</h1>
+    {error?<p className="error">{error}</p>:o?<><p>Your order is confirmed with <strong>Cash on Delivery (COD)</strong>. Please have <strong>{money(o.total)}</strong> ready in cash or UPI upon delivery.</p><div className="confirmation-card"><div className="summary-line"><span>Order reference</span><strong>{o.id}</strong></div><div className="summary-line"><span>Placed</span>{date(o.created_at)}</div><div className="summary-line"><span>Payment method</span><span>Cash on Delivery (COD)</span></div><div className="summary-line"><span>Status</span><span className="status-badge" style={{background:'#e8f5e9',color:'#1b5e20',borderColor:'#a5d6a7'}}>Confirmed · Pay on delivery</span></div><div className="summary-line total"><span>Total payable upon arrival</span><strong>{money(o.total)}</strong></div>{o.items.map(i=><p key={i.sku}>{i.name} · {i.size} × {i.quantity}</p>)}</div></>:<p>Loading your confirmation…</p>}
+    <Link className="button dark" to="/collections/all">Keep discovering <ArrowRight size={17}/></Link>
+  </section></Layout>;
+}
 function Information(){
   const {page}=useParams();
   const {config}=useStore();
@@ -557,7 +575,7 @@ function Information(){
   </section></Layout>;
 }
 const adminTabs=[['Dashboard',LayoutDashboard],['Products',Gem],['Coins',CoinsIcon],['Offers',Tag],['Gold Rates',ChartNoAxesCombined],['Pricing Rules',SlidersHorizontal],['Imports',Upload],['Orders',Package],['Settings',Settings]];
-function Admin(){const [staff,setStaff]=useState(null),[loaded,setLoaded]=useState(false),[error,setError]=useState(''),[tab,setTab]=useState('Dashboard'),[data,setData]=useState(null),[products,setProducts]=useState([]),[busy,setBusy]=useState(false);const {config}=useStore();async function refresh(){const [d,p]=await Promise.all([api('/admin/dashboard'),api('/admin/products')]);setData(d);setProducts(p)}useEffect(()=>{api('/admin/session').then(s=>{sessionStorage.setItem('csrf',s.csrf);setStaff(s.staff);return refresh()}).catch(()=>{}).finally(()=>setLoaded(true))},[]);async function login(e){e.preventDefault();setError('');try{const s=await api('/admin/login',Object.fromEntries(new FormData(e.target)));sessionStorage.setItem('csrf',s.csrf);setStaff(s.staff);await refresh()}catch(e){setError(e.message)}}async function run(kind){setBusy(true);setError('');try{const r=await api('/admin/run',{kind});await refresh();if(Object.values(r.result).some(v=>!v.ok))setError(Object.entries(r.result).filter(([,v])=>!v.ok).map(([k,v])=>`${k}: ${v.message}`).join(' · '))}catch(e){setError(e.message)}finally{setBusy(false)}}if(!loaded)return <div className="empty">Opening merchant studio…</div>;if(!staff)return <div className="admin-login"><Link className="underlink" to="/"><ArrowLeft size={16}/>Back to storefront</Link><div className="login-card"><Brand/><span className="eyebrow">THE MERCHANT STUDIO</span><h1>Welcome back.</h1><p>Your collections, thoughtfully managed.</p><form onSubmit={login}><label>Email<input name="email" type="email" autoComplete="username" defaultValue={config.preview?'preview@veyora.local':''} required/></label><label>Password<input name="password" type="password" autoComplete="current-password" defaultValue={config.preview?'preview-veyora-2026':''} required/></label>{error&&<p className="error">{error}</p>}<button className="button dark full">Sign in <ArrowRight size={17}/></button></form>{config.preview&&<p className="small muted">Local preview account is prefilled. Production requires your own staff account.</p>}</div></div>;return <div className="admin-shell"><aside className="admin-sidebar"><Brand/><span className="studio-label">MERCHANT STUDIO</span><nav>{adminTabs.map(([label,Icon])=><button key={label} className={tab===label?'active':''} onClick={()=>{setTab(label);setError('')}}><Icon size={18}/>{label}</button>)}</nav><div className="admin-sidebar-bottom"><Link to="/">View storefront <ArrowUpRight size={15}/></Link><small>{staff.email}<br/>{staff.role}</small><button className="text-button" onClick={async()=>{await api('/admin/logout',{});setStaff(null);sessionStorage.removeItem('csrf')}}><LogOut size={15}/>Sign out</button></div></aside><main className="admin-main"><header className="admin-header"><span>VEYORA / STUDIO / {tab.toUpperCase()}</span><span className="test-badge">{data?.preview?'PREVIEW ENVIRONMENT':'MERCHANT ENVIRONMENT'}</span></header><div className="admin-content"><div className="section-heading"><div><span className="eyebrow">YOUR MAISON, AT A GLANCE</span><h1>{tab==='Dashboard'?'A considered overview.':tab}</h1></div><button className="text-button" onClick={()=>refresh().catch(e=>setError(e.message))}><RefreshCw size={15}/>Refresh</button></div>{error&&<div className="error" role="alert">{error}</div>}{!data?<p>Loading studio…</p>:<>{tab==='Dashboard'&&<><div className="admin-stats"><Stat title="ACTIVE GOLD RATES" value={data.rates.length} detail={`${data.rates.filter(r=>r.fresh).length} within freshness limit`}/><Stat title="CATALOGUE VARIANTS" value={products.length} detail={`${products.filter(p=>p.stock===0).length} out of stock`}/><Stat title="TODAY’S IMPORTS" value={data.todayImports?.failed?'Needs review':'All clear'} detail={`${data.todayImports?.published||0} published · ${data.todayImports?.failed||0} failed`}/><Stat title="ORDERS" value={data.orders.length} detail={`${money(data.orders.reduce((s,o)=>s+Number(o.total),0))} total · includes test orders`}/></div><div className="admin-two"><div className="admin-panel"><div className="panel-title"><h3>Active gold rates</h3><button className="underlink" onClick={()=>setTab('Gold Rates')}>View rates ↗</button></div><RateTable rates={data.rates}/></div><div className="admin-panel"><h3>Needs your attention</h3>{data.feedSettings?.feedStatus==='stopped'&&<div className="attention" style={{borderLeft:'3px solid #c62828',paddingLeft:'12px'}}><AlertCircle size={19} color="#c62828"/><div><strong style={{color:'#c62828'}}>Feed Automation is STOPPED</strong><p>Background syncs and live rates are paused. <button className="underlink" onClick={()=>setTab('Settings')}>Open Settings to start ↗</button></p></div></div>}<div className="attention"><AlertCircle size={19}/><div><strong>{data.rates.some(r=>!r.fresh)?'Gold rates are stale':'Launch configuration pending'}</strong><p>Live payments, merchant policies, original photography and Hostinger verification are still required.</p></div></div>{data.scheduleMissed&&<div className="attention"><AlertCircle size={19}/><div><strong>Daily schedule needs attention</strong><p>Daily imports default to 09:00 India time. A manual run does not verify cron.</p></div></div>}<p className="small">Maximum rate age: {data.maxAgeHours} hours. Stale gold-linked items pause at checkout.</p></div></div><div className="admin-panel"><h3>Supplier freshness</h3><div className="table-wrap"><table><thead><tr><th>Supplier</th><th>Feed</th><th>Last published source</th></tr></thead><tbody>{data.suppliers.map(s=><tr key={s.supplier+s.kind}><td>{s.supplier}</td><td>{s.kind}</td><td>{date(s.last_update)}</td></tr>)}</tbody></table></div></div><BatchTable batches={data.batches.slice(0,6)}/><div className="admin-panel"><h3>Recent staff activity</h3>{data.audits.slice(0,8).map(a=><p className="audit-line" key={a.id}><span>{a.action} · Staff {a.staff_id||'system'}</span><span>{date(a.created_at)}</span></p>)}</div></>}{tab==='Gold Rates'&&<><div className="notice">Rates are explicitly purity-specific. No automatic purity conversion is enabled. Original values and corrections remain in rate history. Maximum age: {data.maxAgeHours} hours.</div><div className="admin-panel"><div className="panel-title"><h3>Approved rates</h3><button disabled={busy||staff.role==='viewer'} className="button dark small-button" onClick={()=>run('gold')}><RefreshCw size={15}/>Run rate feed</button></div><RateTable rates={data.rates}/></div><ImportPanel kind="gold" refresh={refresh} readonly={staff.role==='viewer'}/><div className="admin-panel"><h3>Rate history & corrections</h3><RateTable rates={(data.rateHistory||[]).map(r=>({...r,fresh:data.rates.some(a=>a.id===r.id&&a.fresh)}))}/></div></>}{tab==='Products'&&<><div className="notice">Supplier imports preserve merchant names, descriptions and publication status by default. Stock is an absolute snapshot, adjusted for paid orders after its source timestamp.</div><details className="advanced-media"><summary>Manage multiple photos (optional)</summary><ImageUploader products={products} refreshParent={refresh}/></details><div className="admin-panel"><div className="panel-title" style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'12px',marginBottom:'16px'}}><div><h3 style={{margin:0}}>All Products ({products.length})</h3><span className="small muted">Total variants: {products.length} · In stock: {products.filter(p=>p.stock>0).length} · Out of stock: {products.filter(p=>p.stock===0).length}</span></div><div style={{display:'flex',gap:'10px',alignItems:'center'}}><span className="status-badge">{products.length} Items Listed</span></div></div><div className="table-wrap"><table><thead><tr><th>Piece / SKU</th><th>Pricing</th><th>Weight</th><th>Stock</th><th>Status</th><th></th></tr></thead><tbody>{products.map(p=><ProductRow key={p.id} p={p} readonly={staff.role==='viewer'} refresh={refresh}/>)}</tbody></table></div></div><div style={{display:'flex',gap:'12px',marginTop:'16px'}}><button className="button dark" onClick={()=>setTab('Imports')}>Add products through CSV <Upload size={16}/></button><a className="button secondary" href="/api/admin/export/products" download style={{display:'inline-flex',alignItems:'center',gap:'8px',textDecoration:'none'}}>Export catalogue CSV ({products.length} items) <Download size={16}/></a></div></>}{tab==='Coins'&&<CoinsAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Offers'&&<OffersAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Pricing Rules'&&<Rules rule={data.rule} readonly={staff.role!=='owner'} refresh={refresh}/ >}{tab==='Imports'&&<><div className="admin-two"><div className="admin-panel"><span className="eyebrow">DAILY WORKFLOW</span><h3>Rates first. Catalogue second.</h3><p>09:00 Asia/Kolkata · 03:30 UTC</p><p className="small muted">Feed sources are configured securely on the server. Current inventory mode: {data.feedSettings.inventoryMode}.</p><button className="button dark" disabled={busy||staff.role==='viewer'} onClick={()=>run(null)}>{busy?'Running…':'Run both feeds now'}<RefreshCw size={16}/></button></div><div className="admin-panel"><h3>Source connections</h3><p>Gold feed: <Status text={data.feedSettings.goldConfigured?'Configured':'Not configured'}/></p><p>Product feed: <Status text={data.feedSettings.productsConfigured?'Configured':'Not configured'}/></p><p className="small muted">Private feed URLs and credentials never appear in this screen. Failed rate feeds retain the last verified rate.</p><button className="underlink" disabled={busy||staff.role==='viewer'} onClick={()=>run('products')}>Run product feed only ↗</button></div></div><div className="admin-two"><ImportPanel kind="gold" refresh={refresh} readonly={staff.role==='viewer'}/><ImportPanel kind="products" refresh={refresh} readonly={staff.role==='viewer'}/><ImportPanel kind="coins" refresh={refresh} readonly={staff.role==='viewer'}/></div><details className="advanced-media"><summary>Manage multiple photos (optional)</summary><ImageUploader products={products} refreshParent={refresh}/></details><FeedSettings data={data} refresh={refresh} readonly={staff.role!=='owner'}/><BatchTable batches={data.batches} retry={async b=>{try{await api(`/admin/import/${b.id}/publish`,{});await refresh()}catch(e){setError(e.message)}}} readonly={staff.role==='viewer'}/><div className="admin-panel"><h3>Workflow history</h3>{data.runs.length?data.runs.map(r=><div key={r.id} className="run-record"><strong>Run #{r.id} · {r.trigger} · {date(r.started_at)}</strong>{Object.entries(r.result).map(([k,v])=><p key={k}>{k}: {v.ok?`Succeeded · Source ${v.source_date} · Created ${v.created} / Updated ${v.updated} / Unchanged ${v.unchanged} / Rejected ${v.rejected}`:v.message}</p>)}</div>):<p>No workflow has run. The Hostinger schedule is unverified.</p>}</div></>}{tab==='Orders'&&<div className="admin-panel"><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'12px',marginBottom:'16px'}}><div><h3 style={{margin:0}}>All Orders ({data.orders.length})</h3><span className="small muted">{data.orders.length} total orders recorded</span></div><a className="underlink" href="/api/admin/export/orders" download style={{display:'inline-flex',alignItems:'center',gap:'6px'}}>Export orders CSV ({data.orders.length}) ↓</a></div><div className="table-wrap"><table><thead><tr><th>Order</th><th>Customer</th><th>Placed (India)</th><th>Payment</th><th>Total</th></tr></thead><tbody>{data.orders.map(o=><tr key={o.id}><td><Link to={'/order/'+o.id}>{o.id} ↗</Link></td><td>{o.customer.name}<small>{o.customer.email}</small></td><td>{date(o.created_at)}</td><td><Status text={`${o.payment_mode} · ${o.status}`}/></td><td>{money(o.total)}</td></tr>)}</tbody></table>{!data.orders.length&&<p className="empty">Orders will appear here after checkout.</p>}</div></div>}{tab==='Settings'&&<SettingsAdmin data={data} refresh={refresh} readonly={staff.role!=='owner'}/>}</>}</div></main></div>}
+function Admin(){const [staff,setStaff]=useState(null),[loaded,setLoaded]=useState(false),[error,setError]=useState(''),[tab,setTab]=useState('Dashboard'),[data,setData]=useState(null),[products,setProducts]=useState([]),[busy,setBusy]=useState(false);const {config}=useStore();async function refresh(){const [d,p]=await Promise.all([api('/admin/dashboard'),api('/admin/products')]);setData(d);setProducts(p)}useEffect(()=>{api('/admin/session').then(s=>{sessionStorage.setItem('csrf',s.csrf);setStaff(s.staff);return refresh()}).catch(()=>{}).finally(()=>setLoaded(true))},[]);async function login(e){e.preventDefault();setError('');try{const s=await api('/admin/login',Object.fromEntries(new FormData(e.target)));sessionStorage.setItem('csrf',s.csrf);setStaff(s.staff);await refresh()}catch(e){setError(e.message)}}async function run(kind){setBusy(true);setError('');try{const r=await api('/admin/run',{kind});await refresh();if(Object.values(r.result).some(v=>!v.ok))setError(Object.entries(r.result).filter(([,v])=>!v.ok).map(([k,v])=>`${k}: ${v.message}`).join(' · '))}catch(e){setError(e.message)}finally{setBusy(false)}}if(!loaded)return <div className="empty">Opening merchant studio…</div>;if(!staff)return <div className="admin-login"><Link className="underlink" to="/"><ArrowLeft size={16}/>Back to storefront</Link><div className="login-card"><Brand/><span className="eyebrow">THE MERCHANT STUDIO</span><h1>Welcome back.</h1><p>Your collections, thoughtfully managed.</p><form onSubmit={login}><label>Email<input name="email" type="email" autoComplete="username" defaultValue={config.preview?'preview@veyora.local':''} required/></label><label>Password<input name="password" type="password" autoComplete="current-password" defaultValue={config.preview?'preview-veyora-2026':''} required/></label>{error&&<p className="error">{error}</p>}<button className="button dark full">Sign in <ArrowRight size={17}/></button></form>{config.preview&&<p className="small muted">Local preview account is prefilled. Production requires your own staff account.</p>}</div></div>;return <div className="admin-shell"><aside className="admin-sidebar"><Brand/><span className="studio-label">MERCHANT STUDIO</span><nav>{adminTabs.map(([label,Icon])=><button key={label} className={tab===label?'active':''} onClick={()=>{setTab(label);setError('')}}><Icon size={18}/>{label}</button>)}</nav><div className="admin-sidebar-bottom"><Link to="/">View storefront <ArrowUpRight size={15}/></Link><small>{staff.email}<br/>{staff.role}</small><button className="text-button" onClick={async()=>{await api('/admin/logout',{});setStaff(null);sessionStorage.removeItem('csrf')}}><LogOut size={15}/>Sign out</button></div></aside><main className="admin-main"><header className="admin-header"><span>VEYORA / STUDIO / {tab.toUpperCase()}</span><span className="test-badge">{data?.preview?'PREVIEW ENVIRONMENT':'MERCHANT ENVIRONMENT'}</span></header><div className="admin-content"><div className="section-heading"><div><span className="eyebrow">YOUR MAISON, AT A GLANCE</span><h1>{tab==='Dashboard'?'A considered overview.':tab}</h1></div><button className="text-button" onClick={()=>refresh().catch(e=>setError(e.message))}><RefreshCw size={15}/>Refresh</button></div>{error&&<div className="error" role="alert">{error}</div>}{!data?<p>Loading studio…</p>:<>{tab==='Dashboard'&&<><div className="admin-stats"><Stat title="ACTIVE GOLD RATES" value={data.rates.length} detail={`${data.rates.filter(r=>r.fresh).length} within freshness limit`}/><Stat title="CATALOGUE VARIANTS" value={products.length} detail={`${products.filter(p=>p.stock===0).length} out of stock`}/><Stat title="TODAY’S IMPORTS" value={data.todayImports?.failed?'Needs review':'All clear'} detail={`${data.todayImports?.published||0} published · ${data.todayImports?.failed||0} failed`}/><Stat title="ORDERS" value={data.orders.length} detail={`${money(data.orders.reduce((s,o)=>s+Number(o.total),0))} total order value`}/></div><div className="admin-two"><div className="admin-panel"><div className="panel-title"><h3>Active gold rates</h3><button className="underlink" onClick={()=>setTab('Gold Rates')}>View rates ↗</button></div><RateTable rates={data.rates}/></div><div className="admin-panel"><h3>Needs your attention</h3>{data.feedSettings?.feedStatus==='stopped'&&<div className="attention" style={{borderLeft:'3px solid #c62828',paddingLeft:'12px'}}><AlertCircle size={19} color="#c62828"/><div><strong style={{color:'#c62828'}}>Feed Automation is STOPPED</strong><p>Background syncs and live rates are paused. <button className="underlink" onClick={()=>setTab('Settings')}>Open Settings to start ↗</button></p></div></div>}<div className="attention"><AlertCircle size={19}/><div><strong>{data.rates.some(r=>!r.fresh)?'Gold rates are stale':'Storefront active with Cash on Delivery'}</strong><p>Cash on Delivery is active. Store policies and catalogue photography can be reviewed anytime.</p></div></div><p className="small">Maximum rate age: {data.maxAgeHours} hours. Stale gold-linked items pause at checkout.</p></div></div><div className="admin-panel"><h3>Supplier freshness</h3><div className="table-wrap"><table><thead><tr><th>Supplier</th><th>Feed</th><th>Last published source</th></tr></thead><tbody>{data.suppliers.map(s=><tr key={s.supplier+s.kind}><td>{s.supplier}</td><td>{s.kind}</td><td>{date(s.last_update)}</td></tr>)}</tbody></table></div></div><BatchTable batches={data.batches.slice(0,6)}/><div className="admin-panel"><h3>Recent staff activity</h3>{data.audits.slice(0,8).map(a=><p className="audit-line" key={a.id}><span>{a.action} · Staff {a.staff_id||'system'}</span><span>{date(a.created_at)}</span></p>)}</div></>}{tab==='Gold Rates'&&<><div className="notice">Rates are explicitly purity-specific. No automatic purity conversion is enabled. Original values and corrections remain in rate history. Maximum age: {data.maxAgeHours} hours.</div><div className="admin-panel"><div className="panel-title"><h3>Approved rates</h3><button disabled={busy||staff.role==='viewer'} className="button dark small-button" onClick={()=>run('gold')}><RefreshCw size={15}/>Run rate feed</button></div><RateTable rates={data.rates}/></div><ImportPanel kind="gold" refresh={refresh} readonly={staff.role==='viewer'}/><div className="admin-panel"><h3>Rate history & corrections</h3><RateTable rates={(data.rateHistory||[]).map(r=>({...r,fresh:data.rates.some(a=>a.id===r.id&&a.fresh)}))}/></div></>}{tab==='Products'&&<><div className="notice">Supplier imports preserve merchant names, descriptions and publication status by default. Stock is an absolute snapshot, adjusted for paid orders after its source timestamp.</div><details className="advanced-media"><summary>Manage multiple photos (optional)</summary><ImageUploader products={products} refreshParent={refresh}/></details><div className="admin-panel"><div className="panel-title" style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'12px',marginBottom:'16px'}}><div><h3 style={{margin:0}}>All Products ({products.length})</h3><span className="small muted">Total variants: {products.length} · In stock: {products.filter(p=>p.stock>0).length} · Out of stock: {products.filter(p=>p.stock===0).length}</span></div><div style={{display:'flex',gap:'10px',alignItems:'center'}}><span className="status-badge">{products.length} Items Listed</span></div></div><div className="table-wrap"><table><thead><tr><th>Piece / SKU</th><th>Pricing</th><th>Weight</th><th>Stock</th><th>Status</th><th></th></tr></thead><tbody>{products.map(p=><ProductRow key={p.id} p={p} readonly={staff.role==='viewer'} refresh={refresh}/>)}</tbody></table></div></div><div style={{display:'flex',gap:'12px',marginTop:'16px'}}><button className="button dark" onClick={()=>setTab('Imports')}>Add products through CSV <Upload size={16}/></button><a className="button secondary" href="/api/admin/export/products" download style={{display:'inline-flex',alignItems:'center',gap:'8px',textDecoration:'none'}}>Export catalogue CSV ({products.length} items) <Download size={16}/></a></div></>}{tab==='Coins'&&<CoinsAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Offers'&&<OffersAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Pricing Rules'&&<Rules rule={data.rule} readonly={staff.role!=='owner'} refresh={refresh}/ >}{tab==='Imports'&&<><div className="admin-two"><div className="admin-panel"><span className="eyebrow">FEED SYNCHRONIZATION</span><h3>Rates first. Catalogue second.</h3><p className="small muted">Feed sources are configured on the server. Current inventory mode: {data.feedSettings.inventoryMode}. Synchronize feeds on demand below.</p><button className="button dark" disabled={busy||staff.role==='viewer'} onClick={()=>run(null)}>{busy?'Running…':'Run both feeds now'}<RefreshCw size={16}/></button></div><div className="admin-panel"><h3>Source connections</h3><p>Gold feed: <Status text={data.feedSettings.goldConfigured?'Configured':'Not configured'}/></p><p>Product feed: <Status text={data.feedSettings.productsConfigured?'Configured':'Not configured'}/></p><p className="small muted">Private feed URLs and credentials never appear in this screen. Failed rate feeds retain the last verified rate.</p><button className="underlink" disabled={busy||staff.role==='viewer'} onClick={()=>run('products')}>Run product feed only ↗</button></div></div><div className="admin-two"><ImportPanel kind="gold" refresh={refresh} readonly={staff.role==='viewer'}/><ImportPanel kind="products" refresh={refresh} readonly={staff.role==='viewer'}/><ImportPanel kind="coins" refresh={refresh} readonly={staff.role==='viewer'}/></div><details className="advanced-media"><summary>Manage multiple photos (optional)</summary><ImageUploader products={products} refreshParent={refresh}/></details><FeedSettings data={data} refresh={refresh} readonly={staff.role!=='owner'}/><BatchTable batches={data.batches} retry={async b=>{try{await api(`/admin/import/${b.id}/publish`,{});await refresh()}catch(e){setError(e.message)}}} readonly={staff.role==='viewer'}/><div className="admin-panel"><h3>Workflow history</h3>{data.runs.length?data.runs.map(r=><div key={r.id} className="run-record"><strong>Run #{r.id} · {r.trigger} · {date(r.started_at)}</strong>{Object.entries(r.result).map(([k,v])=><p key={k}>{k}: {v.ok?`Succeeded · Source ${v.source_date} · Created ${v.created} / Updated ${v.updated} / Unchanged ${v.unchanged} / Rejected ${v.rejected}`:v.message}</p>)}</div>):<p className="small muted">No feed sync has been recorded yet.</p>}</div></>}{tab==='Orders'&&<div className="admin-panel"><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'12px',marginBottom:'16px'}}><div><h3 style={{margin:0}}>All Orders ({data.orders.length})</h3><span className="small muted">{data.orders.length} total orders recorded</span></div><a className="underlink" href="/api/admin/export/orders" download style={{display:'inline-flex',alignItems:'center',gap:'6px'}}>Export orders CSV ({data.orders.length}) ↓</a></div><div className="table-wrap"><table><thead><tr><th>Order</th><th>Customer</th><th>Placed (India)</th><th>Payment</th><th>Total</th></tr></thead><tbody>{data.orders.map(o=><tr key={o.id}><td><Link to={'/order/'+o.id}>{o.id} ↗</Link></td><td>{o.customer.name}<small>{o.customer.email}</small></td><td>{date(o.created_at)}</td><td><Status text={`${o.payment_mode} · ${o.status}`}/></td><td>{money(o.total)}</td></tr>)}</tbody></table>{!data.orders.length&&<p className="empty">Orders will appear here after checkout.</p>}</div></div>}{tab==='Settings'&&<SettingsAdmin data={data} refresh={refresh} readonly={staff.role!=='owner'}/>}</>}</div></main></div>}
 function Stat({title,value,detail}){return <div className="stat"><span className="eyebrow">{title}</span><strong>{value}</strong><small>{detail}</small></div>}
 function Status({text}){return <span className={'status-badge '+(/failed|stale|Not configured/.test(text)?'warning':'')}>{text}</span>}
 function RateTable({rates}){return <div className="table-wrap"><table><thead><tr><th>Purity</th><th>INR / gram</th><th>Source / original</th><th>Effective date</th><th>Status</th></tr></thead><tbody>{rates.map(r=><tr key={r.id}><td><strong>{r.purity}</strong></td><td>{money(r.inr_per_gram)}</td><td>{r.supplier}<small>{money(r.original_rate)} / {r.original_unit}</small></td><td>{r.effective_date}<small>{date(r.source_timestamp)}</small></td><td><Status text={r.fresh?'Verified':'stale — checkout paused'}/></td></tr>)}</tbody></table>{!rates.length&&<p>No approved rates. Import a rate file to begin.</p>}</div>}
@@ -627,6 +645,8 @@ function ProductAngleManager({product,readonly,refreshParent}){
     setTimeout(()=>setCopiedId(null),2000);
   }
 
+  const configuredCount=roles.filter(r=>images.some(i=>i.role===r.key||(r.key==='model'&&i.role==='modal'))).length;
+
   return <div className="product-angles-editor">
     <div className="angles-editor-header">
       <div>
@@ -635,8 +655,8 @@ function ProductAngleManager({product,readonly,refreshParent}){
           Upload specific angles for <strong>{product.product_code}</strong>. Customers can interactively switch between Hero, Front, Left, Right, and Model shots on the storefront.
         </p>
       </div>
-      <span className="status-badge" style={{fontSize:'9px',padding:'4px 10px'}}>
-        {images.length}/5 Angles Configured
+      <span className={'status-badge '+(configuredCount===5?'active':'')} style={{fontSize:'9px',padding:'4px 10px'}}>
+        {configuredCount}/5 Angles Configured
       </span>
     </div>
 
@@ -644,45 +664,51 @@ function ProductAngleManager({product,readonly,refreshParent}){
 
     <div className="angle-slots-grid">
       {roles.map(r=>{
-        const img=images.find(i=>i.role===r.key);
+        const img=images.find(i=>i.role===r.key||(r.key==='model'&&i.role==='modal'));
         const isBusy=busyRole===r.key;
         return <div key={r.key} className={'angle-slot-card '+(img?'has-image':'')}>
-          <div style={{display:'flex',justifyContent:'space-between',width:'100%',alignItems:'center'}}>
-            <span className={'role-badge '+r.key}>{r.icon} {r.label}</span>
+          <div className="angle-slot-header">
+            <span className={'role-badge role-badge--'+r.key}>{r.icon} {r.label}</span>
             {img&&<button
               type="button"
-              className="text-button"
-              style={{padding:0,color:'#c62828'}}
+              className="text-button angle-slot-delete-btn"
               title="Remove angle"
               disabled={readonly||isBusy}
               onClick={()=>handleDelete(img.id,r.key)}
             >
-              <Trash2 size={12}/>
+              <Trash2 size={13}/>
             </button>}
           </div>
 
-          {img?<img src={img.url} alt={`${product.name} ${r.label}`} className="angle-slot-preview"/>:<div className="angle-slot-placeholder"><span>{r.desc}</span></div>}
+          {img?(
+            <div className="angle-slot-preview-wrap">
+              <img src={img.url} alt={`${product.name} ${r.label}`} className="angle-slot-preview"/>
+            </div>
+          ):(
+            <div className="angle-slot-placeholder">
+              <span className="angle-slot-placeholder-icon">{r.icon}</span>
+              <span className="angle-slot-placeholder-desc">{r.desc}</span>
+            </div>
+          )}
 
           <div className="angle-slot-actions">
-            <label className="button dark small-button" style={{padding:'4px 8px',minHeight:'28px',cursor:'pointer',fontSize:'8px',gap:'4px'}}>
+            <label className="button dark small-button angle-slot-btn" style={{cursor:readonly||isBusy?'not-allowed':'pointer'}}>
               {isBusy?'Saving…':img?'Change':'+ Upload'}
               <input type="file" accept="image/*" style={{display:'none'}} disabled={readonly||isBusy} onChange={e=>handleSlotUpload(e,r.key)}/>
             </label>
             {img&&<button
               type="button"
-              className="button secondary small-button"
-              style={{padding:'4px 8px',minHeight:'28px',fontSize:'8px',gap:'4px'}}
+              className="button secondary small-button angle-slot-btn"
               onClick={()=>copy(img.url,img.id)}
             >
-              {copiedId===img.id?<><Check size={10}/> Copied</>:<><Copy size={10}/> URL</>}
+              {copiedId===img.id?<><Check size={11}/> Copied</>:<><Copy size={11}/> URL</>}
             </button>}
           </div>
 
-          {!img&&<div style={{display:'flex',gap:'4px',width:'100%',marginTop:'4px'}}>
+          {!img&&<div className="angle-slot-url-row">
             <input
               type="text"
               placeholder="or paste URL"
-              style={{minHeight:'26px',padding:'3px 6px',fontSize:'8px',margin:0}}
               value={urlInputs[r.key]||''}
               disabled={readonly||isBusy}
               onChange={e=>setUrlInputs({...urlInputs,[r.key]:e.target.value})}
@@ -690,7 +716,6 @@ function ProductAngleManager({product,readonly,refreshParent}){
             <button
               type="button"
               className="button dark small-button"
-              style={{minHeight:'26px',padding:'0 6px',fontSize:'8px'}}
               disabled={readonly||isBusy||!urlInputs[r.key]}
               onClick={()=>handleSetUrl(r.key)}
             >
@@ -856,7 +881,7 @@ function ImageUploader({products=[],refreshParent}){
             <span className="media-filename" title={item.filename}>{item.filename}</span>
             <small className="media-url">{item.url}</small>
             <div style={{marginTop:'4px',display:'flex',gap:'6px',flexWrap:'wrap'}}>
-              {item.role&&<span className={'role-badge '+item.role}>{item.role}</span>}
+              {item.role&&<span className={'role-badge role-badge--'+item.role}>{item.role}</span>}
               {item.product_code&&<span className="status-badge" style={{fontSize:'7px'}}>{item.product_code}</span>}
             </div>
           </div>
@@ -1025,8 +1050,8 @@ function SettingsAdmin({data,refresh,readonly}){
           </div>
           <p style={{margin:'8px 0 0',fontSize:'12px',color:'var(--muted)',maxWidth:'540px',lineHeight:'1.6'}}>
             {isStopped
-              ? 'Automatic scheduled daily cron runs and live rate fetches are halted. No external supplier requests or market rate updates will be made until started.'
-              : 'Daily scheduled imports and live gold spot rate synchronization are active. Scheduled runs take place at 09:00 IST.'}
+              ? 'Feed synchronization and live rate fetches are halted. No external requests or market rate updates will be made until started.'
+              : 'Feed synchronization and live gold spot rate updates are active.'}
           </p>
         </div>
         <div>

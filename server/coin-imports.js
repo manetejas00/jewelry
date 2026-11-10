@@ -46,7 +46,7 @@ export async function publishCoins(k,id,headers,staff){return k.transaction(asyn
  const checked=validateCoins(b.private_payload,headers);checked.errors.push(...await checkOwnership(t,checked.rows));if(checked.errors.length)throw Error('Coin data changed since preview. Correct the CSV and preview again.');
  let created=0,updated=0,unchanged=0;
  for(const r of checked.rows){const old=await t('coins').where({sku:r.sku}).forUpdate().first();if(old?.source_timestamp&&r.source_timestamp<old.source_timestamp)throw Error('A newer coin snapshot has been published');
- const sold=await t('order_items').join('orders','orders.id','order_items.order_id').where('order_items.sku',r.sku).where('orders.created_at','>',r.source_timestamp).where('orders.status','paid').sum('order_items.quantity as qty').first();
+ const sold=await t('order_items').join('orders','orders.id','order_items.order_id').where('order_items.sku',r.sku).where('orders.created_at','>',r.source_timestamp).whereIn('orders.status',['paid','confirmed','placed']).sum('order_items.quantity as qty').first();
  const row={...r,stock:Math.max(0,Number(r.stock)-Number(sold.qty||0)),fixed_price:r.fixed_price===''?null:r.fixed_price,updated_at:now()};
  if(old){const changed=Object.entries(row).some(([f,v])=>!['source_timestamp','updated_at'].includes(f)&&String(old[f]??'')!==String(v??''));await t('coins').where({sku:r.sku}).update(row);changed?updated++:unchanged++;}else{await t('coins').insert({...row,created_at:now()});created++;}
  }
