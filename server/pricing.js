@@ -1,3 +1,4 @@
+import {validationError} from './errors.js';
 import {listingThumbnail} from '../src/listing-media.js';
 import Decimal from 'decimal.js';
 import crypto from 'node:crypto';
@@ -7,9 +8,7 @@ export async function activeOffers(k){
   try{
     if(!k.schema||!(await k.schema.hasTable('offers')))return [];
     return await k('offers').where({status:'active'}).orderBy('priority','desc').orderBy('id','desc');
-  }catch{
-    return [];
-  }
+  }catch(e){throw e;}
 }
 
 export function matchOffer(item, offers=[]){
@@ -44,6 +43,7 @@ export function calculatePrice(p,rate,rule={tax_percent:0,rounding:1,tax_treatme
        total=Math.max(0,fixedPrice-discountAmount);
      }
    }
+   total=new Decimal(total).toDecimalPlaces(2).toNumber();discountAmount=new Decimal(discountAmount).toDecimalPlaces(2).toNumber();
    return {
      metal:0,rate:0,weight:Number(p.net_weight_g||0),making:0,stone:0,other:0,
      subtotal:total,tax:0,total,
@@ -54,7 +54,7 @@ export function calculatePrice(p,rate,rule={tax_percent:0,rounding:1,tax_treatme
      mode:'FIXED'
    };
  }
- if(!rate) throw Error('Approved gold rate unavailable');
+ if(!rate) throw validationError('Approved gold rate unavailable');
  const metal=new Decimal(p.net_weight_g).mul(rate.inr_per_gram);
  const fullMaking=new Decimal(p.making_flat||0).add(metal.mul(p.making_percent||0).div(100));
 
@@ -109,19 +109,18 @@ export function calculatePrice(p,rate,rule={tax_percent:0,rounding:1,tax_treatme
 
 export const todayIndia=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 export async function activeRates(k){const rows=await k('rates').orderBy('source_timestamp','desc').orderBy('id','desc');const result={};for(const r of rows)if(!result[r.purity] && r.effective_date<=todayIndia())result[r.purity]=r;return result;}
-export function isFresh(rate,maxAge=Number(process.env.GOLD_MAX_AGE_HOURS||48),time=Date.now()){return !!rate && time-new Date(rate.source_timestamp).getTime()<=maxAge*3600000 && time-new Date(rate.effective_date+'T00:00:00+05:30').getTime()<=maxAge*3600000;}
+export function isFresh(rate,maxAge=Number(process.env.GOLD_MAX_AGE_HOURS||48),time=Date.now()){return !!rate && time-new Date(rate.source_timestamp).getTime()>=-300000 && time-new Date(rate.source_timestamp).getTime()<=maxAge*3600000 && time-new Date(rate.effective_date+'T00:00:00+05:30').getTime()<=maxAge*3600000;}
 export const fingerprint=x=>crypto.createHash('sha256').update(JSON.stringify(x)).digest('hex');
 
 export async function getSilverRate(k){
-  try{
-    const row=await k('settings').where({key:'SILVER_RATE_PER_GRAM'}).first();
-    return row?Number(row.value):98.00;
-  }catch{
-    return 98.00;
-  }
+ const rows=await k('settings').whereIn('key',['SILVER_RATE_PER_GRAM','SILVER_RATE_UPDATED_AT']);
+ const values=Object.fromEntries(rows.map(r=>[r.key,r.value]));
+ if(process.env.NODE_ENV!=='production'&&!values.SILVER_RATE_PER_GRAM)return 98;
+ const rate=Number(values.SILVER_RATE_PER_GRAM),age=Date.now()-Date.parse(values.SILVER_RATE_UPDATED_AT);
+ return Number.isFinite(rate)&&rate>0&&Number.isFinite(age)&&age>=-300000&&age<=Number(process.env.GOLD_MAX_AGE_HOURS||48)*3600000?rate:null;
 }
 
-export function calculateCoinPrice(c,rates,silverRate=98,rule={tax_percent:0,rounding:1,tax_treatment:'exclusive'},offer=null){
+export function calculateCoinPrice(c,rates,silverRate=null,rule={tax_percent:0,rounding:1,tax_treatment:'exclusive'},offer=null){
   const weight=Number(c.weight_g||0);
   if(c.pricing_mode==='FIXED'){
     const baseSubtotal=new Decimal(c.fixed_price||0);
@@ -138,6 +137,7 @@ export function calculateCoinPrice(c,rates,silverRate=98,rule={tax_percent:0,rou
         total=Math.max(0,fixedPrice-discountAmount);
       }
     }
+    total=new Decimal(total).toDecimalPlaces(2).toNumber();discountAmount=new Decimal(discountAmount).toDecimalPlaces(2).toNumber();
     return {
       metal:0,rate:0,weight,making:0,stone:0,other:0,subtotal:total,tax:0,total,
       base_subtotal:baseSubtotal.toNumber(),margin:margin.toNumber(),margin_type:rule.margin_type||'PERCENT',margin_value:Number(rule.margin_value||0),
@@ -149,11 +149,11 @@ export function calculateCoinPrice(c,rates,silverRate=98,rule={tax_percent:0,rou
   const isGold=(c.metal||'').toLowerCase()==='gold';
   let rate=0;
   if(isGold){
-    const r=rates[c.purity]||rates['24K'];
-    if(!r)throw Error('Approved gold rate unavailable');
+    const r=rates[c.purity];
+    if(!r)throw validationError('Approved gold rate unavailable');
     rate=Number(r.inr_per_gram);
   }else{
-    rate=Number(silverRate||98);
+    rate=Number(silverRate);if(!Number.isFinite(rate)||rate<=0)throw validationError('Approved silver rate unavailable');
   }
   const metal=new Decimal(weight).mul(rate);
   const fullMaking=new Decimal(c.making_charge||0);
@@ -201,7 +201,7 @@ export function calculateCoinPrice(c,rates,silverRate=98,rule={tax_percent:0,rou
     discount_amount:Math.max(0,origTotal.sub(total).toNumber()),
     offer:offer?{id:offer.id,name:offer.name,badge_text:offer.badge_text,discount_type:offer.discount_type,discount_value:Number(offer.discount_value)}:null,
     mode:'METAL_LINKED',
-    rate_date:isGold?(rates[c.purity]||rates['24K'])?.effective_date:todayIndia()
+    rate_date:isGold?(rates[c.purity])?.effective_date:todayIndia()
   };
 }
 
@@ -231,7 +231,7 @@ export async function coinCatalogue(k){
     let price=null;
     try{price=calculateCoinPrice(c,rates,silverRate,rules,offer);}catch{}
     const isGold=(c.metal||'').toLowerCase()==='gold';
-    const rateFresh=isGold?(c.pricing_mode==='FIXED'||isFresh(rates[c.purity]||rates['24K'])):true;
+    const rateFresh=c.pricing_mode==='FIXED'||(isGold?isFresh(rates[c.purity]):Number(silverRate)>0);
     const coinImgs=(imagesBySku[c.sku]||[]).filter((img,i,all)=>all.findIndex(other=>other.url===img.url)===i);
     return {
       ...c,
@@ -243,7 +243,7 @@ export async function coinCatalogue(k){
       discount_amount:price?.discount_amount??0,
       offer:price?.offer||(offer?{id:offer.id,name:offer.name,badge_text:offer.badge_text,discount_type:offer.discount_type,discount_value:Number(offer.discount_value)}:null),
       breakdown:price,
-      checkout_available:c.stock>0&&rateFresh
+      checkout_available:c.stock>0&&rateFresh&&Number.isFinite(price?.total)
     };
   });
 }
@@ -283,21 +283,22 @@ export async function catalogue(k){
       discount_amount:price?.discount_amount??0,
       offer:price?.offer||(offer?{id:offer.id,name:offer.name,badge_text:offer.badge_text,discount_type:offer.discount_type,discount_value:Number(offer.discount_value)}:null),
       breakdown:price,
-      checkout_available:p.stock>0 && (p.pricing_mode==='FIXED'||isFresh(rates[p.purity]))
+      checkout_available:p.stock>0 && Number.isFinite(price?.total) && (p.pricing_mode==='FIXED'||isFresh(rates[p.purity]))
     };
   });
 }
 
 export async function quote(k,items){
- if(!Array.isArray(items)||!items.length||items.length>50)throw Error('Your bag is empty or too large');
- if(new Set(items.map(i=>i.sku)).size!==items.length)throw Error('Duplicate bag SKU');
+ if(!Array.isArray(items)||!items.length||items.length>50)throw validationError('Your bag is empty or too large');
+ if(items.some(i=>!i||typeof i.sku!=='string'||!i.sku||i.sku.length>80))throw validationError('Invalid bag item');
+ if(new Set(items.map(i=>i.sku)).size!==items.length)throw validationError('Duplicate bag SKU');
  const [products,coins]=await Promise.all([catalogue(k),coinCatalogue(k)]);
  const allItems=[...products,...coins];
  let subtotal=0;const lines=[];
  for(const i of items){
    const p=allItems.find(p=>p.sku===i.sku);
-   if(!Number.isInteger(i.quantity)||i.quantity<1||i.quantity>20)throw Error('Invalid quantity');
-   if(!p||!p.checkout_available||p.stock<i.quantity)throw Error(`${p?.name||i.sku} is unavailable. Please update your bag.`);
+   if(!Number.isInteger(i.quantity)||i.quantity<1||i.quantity>20)throw validationError('Invalid quantity');
+   if(!p||!p.checkout_available||p.stock<i.quantity)throw validationError(`${p?.name||i.sku} is unavailable. Please update your bag.`);
    const line={
      sku:p.sku,
      name:p.name,
@@ -310,7 +311,7 @@ export async function quote(k,items){
      offer:p.offer,
      breakdown:p.breakdown
    };
-   subtotal+=p.price*i.quantity;
+   subtotal=new Decimal(subtotal).add(new Decimal(p.price).mul(i.quantity)).toDecimalPlaces(2).toNumber();
    lines.push(line);
  }
  const shipping=subtotal>=Number(process.env.FREE_SHIPPING_INR||25000)?0:Number(process.env.SHIPPING_INR||250);

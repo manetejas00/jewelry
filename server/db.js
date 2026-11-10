@@ -1,5 +1,7 @@
 import 'dotenv/config';
 import knex from 'knex';
+import {validateRuntime} from './runtime.js';
+validateRuntime();
 import fs from 'node:fs';
 process.chdir(new URL('../',import.meta.url).pathname);
 fs.mkdirSync('private', {recursive:true, mode:0o700});

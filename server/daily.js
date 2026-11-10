@@ -3,12 +3,16 @@ import {loadFeedSettings} from './settings.js';
 import {previewImport,publishImport} from './importer.js';
 import {now,json} from './db.js';
 export async function fetchLiveGoldRates(customUrl='https://api.gold-api.com/price/XAU/INR'){
+  if(process.env.GOLD_AUTO_CONVERSION_APPROVED!=='true')throw Error('Automatic purity conversion requires GOLD_AUTO_CONVERSION_APPROVED=true after supplier approval; use purity-specific CSV rates instead');
   const target=(customUrl&&customUrl.startsWith('https://'))?customUrl:'https://api.gold-api.com/price/XAU/INR';
-  const res=await fetch(target,{headers:{'Accept':'application/json'},signal:AbortSignal.timeout(15000)});
+  const res=await fetch(target,{redirect:'error',headers:{'Accept':'application/json'},signal:AbortSignal.timeout(15000)});
   if(!res.ok)throw Error(`Live Gold API returned HTTP ${res.status}`);
   const data=await res.json();
   const price=Number(data.price);
   if(!Number.isFinite(price)||price<=0)throw Error('Invalid gold price received from provider');
+  if(data.currency!=='INR'||data.unit!=='troy_ounce')throw Error('Provider must explicitly supply currency INR and unit troy_ounce');
+  const providerTime=Date.parse(data.timestamp);
+  if(!Number.isFinite(providerTime)||Date.now()-providerTime>3600000||providerTime>Date.now()+300000)throw Error('Provider timestamp is missing or stale');
   const gram24k=price/31.1034768;
   const rate24k_10g=(gram24k*10).toFixed(2);
   const rate22k_g=(gram24k*(22/24)).toFixed(2);
@@ -32,16 +36,15 @@ async function readFeed(kind){
   if(kind==='coins'&&process.env.COIN_FEED_FILE)return fs.readFile(process.env.COIN_FEED_FILE,'utf8');
   if(kind==='products'&&process.env.PRODUCT_FEED_FILE)return fs.readFile(process.env.PRODUCT_FEED_FILE,'utf8');
   if(!url)throw Error('Supplier source is not configured');
-  if(kind==='gold'&&(url==='auto'||url.includes('gold-api.com'))){
+  if(kind==='gold'&&(url==='auto'||new URL(url).hostname==='api.gold-api.com')){
     return fetchLiveGoldRates(url);
   }
   if(!url.startsWith('https://'))throw Error('Supplier feed requires HTTPS');
   const token=process.env[prefix+'_FEED_TOKEN'];
   const res=await fetch(url,{headers:token?{Authorization:`Bearer ${token}`}:{},signal:AbortSignal.timeout(30000),redirect:'error'});
   if(!res.ok)throw Error(`Supplier returned HTTP ${res.status}`);
-  const text=await res.text();
-  if(Buffer.byteLength(text)>5*1024*1024)throw Error('Supplier file exceeds 5 MB');
-  return text;
+  const chunks=[];let size=0;for await(const chunk of res.body){size+=chunk.length;if(size>5*1024*1024)throw Error('Supplier file exceeds 5 MB');chunks.push(chunk)}
+  return Buffer.concat(chunks).toString('utf8');
 }
 export async function daily(k,trigger='manual',only=null,staff=null){
  await loadFeedSettings(k);

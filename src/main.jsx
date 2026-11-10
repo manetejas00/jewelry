@@ -487,7 +487,7 @@ function Checkout(){
     return()=>{active=false};
   },[bag]);
   async function pay(e){
-    e.preventDefault();if(!accepted||!quote)return;setBusy(true);setError('');
+    e.preventDefault();if(!accepted||!quote||!config.checkoutEnabled)return;setBusy(true);setError('');
     const customer=Object.fromEntries(new FormData(e.target));
     try{
       await flushAccount();
@@ -516,13 +516,13 @@ function Checkout(){
             <span className="status-badge" style={{background:'#e8f5e9',color:'#1b5e20',borderColor:'#a5d6a7',fontSize:'9px',marginLeft:'auto'}}>AVAILABLE</span>
           </div>
           <p style={{margin:0,fontSize:'11px',color:'var(--muted)',lineHeight:1.6}}>
-            Pay with cash or UPI directly upon delivery at your doorstep. No advance online payment is required.
+            Pay cash upon delivery. No advance online payment is collected by this website.
           </p>
         </div>
-        {changed&&<div className="notice">The price changed. Review the updated order summary before accepting.</div>}
+        {!config.checkoutEnabled&&<p className="notice" role="status">Checkout is awaiting merchant configuration.</p>}{config.preview&&<p className="notice">Preview order only. No payment or delivery will be arranged.</p>}{changed&&<div className="notice">The price changed. Review the updated order summary before accepting.</div>}
         <label className="checkbox consent"><input type="checkbox" disabled={!quote} checked={accepted} onChange={e=>setAccepted(e.target.checked)} required/>{quote?`I confirm this order with Cash on Delivery and agree to pay ${money(quote.total)} upon arrival.`:'Waiting for a current order total…'}</label>
         {error&&<p className="error" role="alert">{error}</p>}
-        <button className="button dark full" disabled={busy||!quote||!accepted}>{busy?'Placing order…':`Place Order with Cash on Delivery · ${money(quote?.total)}`}<ArrowRight size={17}/></button>
+        <button className="button dark full" disabled={busy||!quote||!accepted||!config.checkoutEnabled}>{busy?'Placing order…':`Place Order with Cash on Delivery · ${money(quote?.total)}`}<ArrowRight size={17}/></button>
       </form>
       <aside className="order-summary">
         <h3>Your chosen pieces</h3>
@@ -544,7 +544,7 @@ function Order(){
     {o&&<CheckCircle2 size={42}/>}
     <span className="eyebrow">ORDER CONFIRMED</span>
     <h1>{error?'Order unavailable':o?'A little wonder is on its way.':'Opening your order…'}</h1>
-    {error?<p className="error">{error}</p>:o?<><p>Your order is confirmed with <strong>Cash on Delivery (COD)</strong>. Please have <strong>{money(o.total)}</strong> ready in cash or UPI upon delivery.</p><div className="confirmation-card"><div className="summary-line"><span>Order reference</span><strong>{o.id}</strong></div><div className="summary-line"><span>Placed</span>{date(o.created_at)}</div><div className="summary-line"><span>Payment method</span><span>Cash on Delivery (COD)</span></div><div className="summary-line"><span>Status</span><span className="status-badge" style={{background:'#e8f5e9',color:'#1b5e20',borderColor:'#a5d6a7'}}>Confirmed · Pay on delivery</span></div><div className="summary-line total"><span>Total payable upon arrival</span><strong>{money(o.total)}</strong></div>{o.items.map(i=><p key={i.sku}>{i.name} · {i.size} × {i.quantity}</p>)}</div></>:<p>Loading your confirmation…</p>}
+    {error?<p className="error">{error}</p>:o?<><p>Your order is confirmed with <strong>Cash on Delivery (COD)</strong>. Please have <strong>{money(o.total)}</strong> ready in cash upon delivery.</p><div className="confirmation-card"><div className="summary-line"><span>Order reference</span><strong>{o.id}</strong></div><div className="summary-line"><span>Placed</span>{date(o.created_at)}</div><div className="summary-line"><span>Payment method</span><span>Cash on Delivery (COD)</span></div><div className="summary-line"><span>Status</span><span className="status-badge" style={{background:'#e8f5e9',color:'#1b5e20',borderColor:'#a5d6a7'}}>Confirmed · Pay on delivery</span></div><div className="summary-line total"><span>Total payable upon arrival</span><strong>{money(o.total)}</strong></div>{o.items.map(i=><p key={i.sku}>{i.name} · {i.size} × {i.quantity}</p>)}</div></>:<p>Loading your confirmation…</p>}
     <Link className="button dark" to="/collections/all">Keep discovering <ArrowRight size={17}/></Link>
   </section></Layout>;
 }
@@ -971,14 +971,14 @@ function AdminCatalogueList({items,label,resetKey,renderRow}){
   return <div className="admin-panel"><div className="panel-title" style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'12px',marginBottom:'16px'}}><div><h3 style={{margin:0}}>All {label} ({items.length})</h3><span className="small muted">Total {label==='Products'?'variants':'coins'}: {items.length} · In stock: {items.filter(p=>p.stock>0).length} · Out of stock: {items.filter(p=>p.stock===0).length}</span></div><div style={{display:'flex',gap:'10px',alignItems:'center'}}><span className="status-badge">{items.length} Items Listed</span></div></div><div className="table-wrap"><table><thead><tr><th>Piece / SKU</th><th>Pricing</th><th>Weight</th><th>Stock</th><th>Status</th><th></th></tr></thead><tbody>{pagination.items.map(renderRow)}{!items.length&&<tr><td colSpan="6" className="empty">No {label.toLowerCase()} found.</td></tr>}</tbody></table></div><Pagination pagination={pagination} label={label}/></div>;
 }
 
-function AdminCatalogueRow({item,details,pricing,weight,actions}){
-  return <tr>
+function AdminCatalogueRow({item,details,pricing,weight,actions,children}){
+  return <><tr>
     <td><div style={{display:'flex',alignItems:'center',gap:'10px'}}>
       {item.image?<img src={coinImage(item.image,true)} alt={item.name} style={{width:'36px',height:'36px',objectFit:'cover',borderRadius:'3px',flexShrink:0}}/>:<div style={{width:'36px',height:'36px',background:'var(--paper)',display:'grid',placeItems:'center',borderRadius:'3px',flexShrink:0}}><ImageIcon size={16}/></div>}
       <div><strong>{item.name}</strong><small>{details}</small></div>
     </div></td>
     <td>{pricing}</td><td>{weight}</td><td>{item.stock}</td><td><Status text={item.status}/></td><td>{actions}</td>
-  </tr>;
+  </tr>{children&&<tr><td colSpan="6"><div style={{background:'var(--ivory)',border:'1px solid var(--line)',padding:'20px',borderRadius:'4px',margin:'10px 0'}}>{children}</div></td></tr>}</>;
 }
 
 function ProductRow({p,readonly,refresh}){
@@ -1355,7 +1355,7 @@ function CoinsAdmin({readonly,refreshParent}){
         <button className={'coins-subtab-btn '+(subTab==='silver'?'active':'')} onClick={()=>setSubTab('silver')}>Silver Coins ({silverCount})</button>
       </div>
       <div style={{display:'flex',gap:'10px',alignItems:'center'}}>
-        <button className="button dark small-button" disabled={readonly} onClick={()=>setAddingCoin(true)}>+ Add Coin</button>
+        <button className="button dark small-button" disabled={readonly} onClick={()=>{setEditingCoin(null);setError('');setAddingCoin(true)}}>+ Add Coin</button>
         <a className="underlink" href="/api/admin/export/coins" download style={{display:'inline-flex',alignItems:'center',gap:'6px'}}><Download size={14}/>Export Coins CSV</a>
       </div>
     </div>
@@ -1366,13 +1366,13 @@ function CoinsAdmin({readonly,refreshParent}){
       details={<>{c.sku} · {c.coin_type}</>}
       pricing={<><span className={'coin-badge '+(c.metal==='Silver'?'silver':'gold')}>{c.metal}</span><small>{c.purity} · Live Rate</small><strong>{c.calculated_price!=null?money(c.calculated_price):'Awaiting rate'}</strong>{c.breakdown&&<small>Metal {money(c.breakdown.metal)} + Making {money(c.breakdown.making)}</small>}<small>Making charge: {money(c.making_charge)}</small></>}
       weight={<>{Number(c.weight_g).toFixed(3)} g<small>{c.dimension||'Standard round'}</small></>}
-      actions={<div style={{display:'flex',gap:'10px',alignItems:'center'}}><button className="underlink" disabled={readonly} onClick={()=>setEditingCoin(c)}>Edit</button><button className="text-button" disabled={readonly} style={{color:'#a83232',padding:0}} onClick={()=>deleteCoin(c.sku)} title="Delete coin"><Trash2 size={14}/></button></div>}
-    />}/>
+      actions={<div style={{display:'flex',gap:'10px',alignItems:'center'}}><button className="underlink" disabled={readonly} onClick={()=>{setError('');setEditingCoin(editingCoin?.sku===c.sku?null:c)}}>{editingCoin?.sku===c.sku?'Close':'Edit'}</button><button className="text-button" disabled={readonly} style={{color:'#a83232',padding:0}} onClick={()=>deleteCoin(c.sku)} title="Delete coin"><Trash2 size={14}/></button></div>}
+    >{editingCoin?.sku===c.sku&&<CoinForm key={c.sku} coin={editingCoin} error={error} onClose={()=>setEditingCoin(null)} onSave={saveCoin}/>}</AdminCatalogueRow>}/>
 
     <ImportPanel kind="coins" readonly={readonly} refresh={async()=>{await load();await refreshParent?.();await refreshCatalogue({notify:true})}}/>
-    {/* Modal for Add / Edit Coin */}
-    {(addingCoin||editingCoin)&&<CoinFormModal
-      coin={editingCoin}
+    {/* New coins use a dialog; existing coins edit beneath their row. */}
+    {addingCoin&&<CoinForm
+      modal
       error={error}
       onClose={()=>{setAddingCoin(false);setEditingCoin(null);}}
       onSave={saveCoin}
@@ -1382,12 +1382,11 @@ function CoinsAdmin({readonly,refreshParent}){
   </div>;
 }
 
-function CoinFormModal({coin,onClose,onSave,error}){
+function CoinForm({coin,onClose,onSave,error,modal=false}){
   const [imageUrl,setImageUrl]=useState(coin?.image||''),[imageKind,setImageKind]=useState(coin?.image_kind||'photo'),[photoBusy,setPhotoBusy]=useState(false);
   const [metal,setMetal]=useState(coin?.metal||'Gold');
   const [pricingMode,setPricingMode]=useState(coin?.pricing_mode||'METAL_LINKED');
-  return <Modal title={coin?`Edit ${coin.sku}`:'Add New Coin'} onClose={onClose}>
-    <form onSubmit={onSave} className="coin-form">{error&&<p className="error" role="alert">{error}</p>}
+  const form=<form onSubmit={onSave} className="coin-form">{error&&<p className="error" role="alert">{error}</p>}
       <div className="form-grid">
         <label>SKU (Unique identifier)*
           <input name="sku" defaultValue={coin?.sku||''} placeholder="e.g. COIN-AU-2G" required disabled={!!coin}/>
@@ -1443,8 +1442,8 @@ function CoinFormModal({coin,onClose,onSave,error}){
         <button type="button" className="text-button" onClick={onClose}>Cancel</button>
         <button type="submit" className="button dark" disabled={photoBusy}>{coin?'Save Changes':'Create Coin'} <Check size={16}/></button>
       </div>
-    </form>
-  </Modal>;
+    </form>;
+  return modal?<Modal title="Add New Coin" onClose={onClose}>{form}</Modal>:form;
 }
 
 function OffersAdmin({readonly,refreshParent}){

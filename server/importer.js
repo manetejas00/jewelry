@@ -1,3 +1,4 @@
+import {validationError} from './errors.js';
 import {parse as csvParse} from 'csv-parse/sync';
 import {stringify} from 'csv-stringify/sync';
 import Decimal from 'decimal.js';
@@ -11,7 +12,7 @@ const purities=['24K','22K','18K','14K'];
 export function validate(kind,text){
  if(kind==='coins')return validateCoins(text,schemas.coins);
  const errors=[];let rows=[];const error=(row,field,value,correction)=>errors.push({row,field,value:String(value??''),correction});
- try{rows=csvParse(text,{columns:headers=>{if(headers.join(',')!==schemas[kind]?.join(','))throw Error('Headers must exactly match the downloadable template');return headers},skip_empty_lines:true,bom:true,trim:true,max_record_size:100000});}catch(e){return {rows:[],errors:[{row:1,field:'file',value:'CSV',correction:e.message}]};}
+ try{rows=csvParse(text,{columns:headers=>{if(headers.join(',')!==schemas[kind]?.join(','))throw validationError('Headers must exactly match the downloadable template');return headers},skip_empty_lines:true,bom:true,trim:true,max_record_size:100000});}catch(e){return {rows:[],errors:[{row:1,field:'file',value:'CSV',correction:e.message}]};}
  if(!rows.length)error(1,'file','','Add at least one data row');if(rows.length>10000)error(1,'file',rows.length,'Maximum 10,000 rows per batch');
  const seen=new Set();
  rows.forEach((r,i)=>{const n=i+2;for(const f of kind==='gold'?schemas.gold:['supplier','product_code','sku','name','category','metal','pricing_mode','stock','status','source_timestamp'])if(!r[f])error(n,f,r[f],'Supply a value');
@@ -37,7 +38,7 @@ export function normaliseRate(r){return {...r,original_unit:r.unit,original_rate
 function productPatch(row,old){const allowed=(process.env.SUPPLIER_OVERWRITE_FIELDS||'stock,fixed_price,net_weight_g,making_flat,stone_charge,other_charge').split(',');const patch={source_timestamp:row.source_timestamp,updated_at:now()};for(const f of allowed)if(schemas.products.includes(f)&&!['sku','supplier','product_code'].includes(f))patch[f]=row[f]===''?null:row[f];return patch;}
 export async function previewImport(k,kind,text,staff=null){
  if(kind==='coins')return previewCoins(k,text,schemas.coins,staff);
- if(!schemas[kind])throw Error('Unknown import type');const checksum=fingerprint(text);const check=validate(kind,text);const supplier=check.rows[0]?.supplier||'unknown';
+ if(!schemas[kind])throw validationError('Unknown import type');const checksum=fingerprint(text);const check=validate(kind,text);const supplier=check.rows[0]?.supplier||'unknown';
  if(!preview&&check.rows.some(r=>r.supplier==='Fictional Preview'))check.errors.push({row:1,field:'supplier',value:'Fictional Preview',correction:'Fictional examples are restricted to test/preview databases'});
  if(check.rows.some(r=>r.supplier!==supplier))check.errors.push({row:1,field:'supplier',value:'mixed',correction:'Use one supplier per batch'});
  const existing=await k('import_batches').where({kind,supplier,checksum}).first();if(existing)return {...existing,summary:parse(existing.summary),errors:await k('import_errors').where({batch_id:existing.id}),duplicate:true};
@@ -54,15 +55,15 @@ export async function previewImport(k,kind,text,staff=null){
 export async function publishImport(k,id,staff=null){
  const candidate=await k('import_batches').where({id}).first();if(candidate?.kind==='coins')return publishCoins(k,id,schemas.coins,staff);
  return k.transaction(async t=>{
- const b=await t('import_batches').where({id}).first();if(!b)throw Error('Batch not found');if(b.status==='published')return {duplicate:true,...parse(b.summary)};if(b.status!=='staged')throw Error('Correct the rejected CSV and upload again');
- try{await t('import_locks').insert({name:b.kind,acquired_at:now()});}catch{throw Error('An overlapping import is running. Retry later.');}
+ const b=await t('import_batches').where({id}).first();if(!b)throw validationError('Batch not found');if(b.status==='published')return {duplicate:true,...parse(b.summary)};if(b.status!=='staged')throw validationError('Correct the rejected CSV and upload again');
+ try{await t('import_locks').insert({name:b.kind,acquired_at:now()});}catch{throw validationError('An overlapping import is running. Retry later.');}
  const currentBatch=await t('import_batches').where({id}).forUpdate().first();if(currentBatch.status==='published'){await t('import_locks').where({name:b.kind}).del();return {duplicate:true,...parse(currentBatch.summary)}}
- const last=await t('import_batches').where({kind:b.kind,supplier:b.supplier,status:'published'}).orderBy('source_timestamp','desc').first();if(last && b.source_timestamp<last.source_timestamp)throw Error('A newer batch has been published; preview a fresh file');
- const {rows,errors}=validate(b.kind,b.private_payload);if(errors.length)throw Error('Batch is no longer valid');
- if(b.kind==='gold' && Date.now()-Date.parse(b.source_timestamp)>Number(process.env.GOLD_MAX_AGE_HOURS||48)*3600000)throw Error('Rates became stale before publication');
+ const last=await t('import_batches').where({kind:b.kind,supplier:b.supplier,status:'published'}).orderBy('source_timestamp','desc').first();if(last && b.source_timestamp<last.source_timestamp)throw validationError('A newer batch has been published; preview a fresh file');
+ const {rows,errors}=validate(b.kind,b.private_payload);if(errors.length)throw validationError('Batch is no longer valid');
+ if(b.kind==='gold' && Date.now()-Date.parse(b.source_timestamp)>Number(process.env.GOLD_MAX_AGE_HOURS||48)*3600000)throw validationError('Rates became stale before publication');
  let created=0,updated=0,unchanged=0;
- for(const r of rows){if(b.kind==='gold'){const norm=normaliseRate(r);if(!isFresh(norm))throw Error('Rate effective date is stale');await t('rates').insert({supplier:r.supplier,purity:r.purity,currency:r.currency,original_unit:norm.original_unit,original_rate:norm.original_rate,inr_per_gram:norm.inr_per_gram,effective_date:r.effective_date,source_timestamp:r.source_timestamp,published_at:now(),batch_id:b.id});created++;}else{
- const old=await t('products').where({sku:r.sku}).forUpdate().first();if(old && r.source_timestamp<old.source_timestamp)throw Error('SKU has newer data; preview again');
+ for(const r of rows){if(b.kind==='gold'){const norm=normaliseRate(r);if(!isFresh(norm))throw validationError('Rate effective date is stale');await t('rates').insert({supplier:r.supplier,purity:r.purity,currency:r.currency,original_unit:norm.original_unit,original_rate:norm.original_rate,inr_per_gram:norm.inr_per_gram,effective_date:r.effective_date,source_timestamp:r.source_timestamp,published_at:now(),batch_id:b.id});created++;}else{
+ const old=await t('products').where({sku:r.sku}).forUpdate().first();if(old && r.source_timestamp<old.source_timestamp)throw validationError('SKU has newer data; preview again');
  const slug=r.product_code.toLowerCase().replace(/[^a-z0-9]+/g,'-');const row={...r,slug,updated_at:now()};for(const f of ['net_weight_g','fixed_price','making_flat','making_percent','stone_charge','other_charge'])row[f]=r[f]===''?null:r[f];
  const sold=await t('order_items').join('orders','orders.id','order_items.order_id').where('order_items.sku',r.sku).where('orders.created_at','>',r.source_timestamp).whereIn('orders.status',['paid','confirmed','placed']).sum('order_items.quantity as qty').first();row.stock=Math.max(0,Number(r.stock)-Number(sold.qty||0));
  if(old){const patch=productPatch(row,old);const changed=Object.entries(patch).some(([f,v])=>!['source_timestamp','updated_at'].includes(f)&&String(old[f]??'')!==String(v??''));await t('products').where({sku:r.sku}).update(patch);changed?updated++:unchanged++;}else{await t('products').insert(row);created++;}

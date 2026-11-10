@@ -144,9 +144,16 @@ test('asset recreation keeps model photographs separate from macro details', asy
   const code = 'adeline-laurel-climbers-pearl-earrings';
   const {id, ...product} = original;
   await k('products').insert({...product, product_code: code, slug: code, sku: 'MODEL-GALLERY-TEST'});
-  await recreateProductAssets(k);
-  const images = await k('product_images').where({product_code: code});
-  assert.equal(images.find(image => image.role === 'model').url, `/assets/products/${code}/model.webp`);
-  assert.equal(images.find(image => image.role === 'detail').url, `/assets/products/${code}/modal.webp`);
-  assert.ok(images.find(image => image.role === 'model').sort_order < images.find(image => image.role === 'detail').sort_order);
+  const fs=await import('node:fs/promises'),os=await import('node:os'),path=await import('node:path');
+  const {default:sharp}=await import('sharp');
+  const publicDir=await fs.mkdtemp(path.join(os.tmpdir(),'gallery-fixture-'));
+  try {
+    const folder=path.join(publicDir,'assets/products',code);await fs.mkdir(folder,{recursive:true});
+    for(const [role,color]of [['model','red'],['modal','blue']])await sharp({create:{width:20,height:20,channels:3,background:color}}).webp().toFile(path.join(folder,role+'.webp'));
+    await recreateProductAssets(k,{publicDir});
+    const images = await k('product_images').where({product_code: code});
+    assert.equal(images.find(image => image.role === 'model').url, `/assets/products/${code}/model.webp`);
+    assert.equal(images.find(image => image.role === 'detail').url, `/assets/products/${code}/modal.webp`);
+    assert.ok(images.find(image => image.role === 'model').sort_order < images.find(image => image.role === 'detail').sort_order);
+  }finally{await fs.rm(publicDir,{recursive:true,force:true});}
 });

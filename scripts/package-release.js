@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {execFileSync} from 'node:child_process';
+const files=['package.json','package-lock.json','index.html','vite.config.js','server.js','server.cjs','server','src','migrations','scripts','seeders','tests','samples','dist','public/assets','.env.example','README.md','docs','PROJECT_AUDIT.md','PRODUCTION_READINESS.md','DEPLOYMENT.md','ROLLBACK.md','SECURITY_AUDIT.md','TESTING_REPORT.md','ENV_SETUP.md'];
+for(const file of files)if(!fs.existsSync(file))throw Error(`Missing release file: ${file}`);
+fs.mkdirSync('artifacts',{recursive:true});const target=path.resolve('artifacts/veyora-reviewed-release.tar.gz');
+execFileSync('tar',['-czf',target,'--exclude=.DS_Store',...files],{stdio:'inherit'});
+const listing=execFileSync('tar',['-tzf',target],{encoding:'utf8'}).split('\n');
+if(listing.some(file=>/(^|\/)(node_modules|private|\.git)(\/|$)|(^|\/)\.env$|(^|\/)public\/uploads\//.test(file)))throw Error('Unsafe file in release archive');
+console.log('Release archive created and checked: artifacts/veyora-reviewed-release.tar.gz');

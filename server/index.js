@@ -1,3 +1,9 @@
+import {resetConfigured,requestReset,completeReset} from './password-reset.js';
+import {registerSeo,pageMetadata,renderMetadata} from './seo.js';
+import {validateOffer} from './offers.js';
+import {commerceConfig} from './runtime.js';
+import {errorResponse} from './errors.js';
+import {validationError} from './errors.js';
 import {listingThumbnailFile} from './listing-thumbnails.js';
 import express from 'express';
 import session from 'express-session';
@@ -19,26 +25,35 @@ import {coinArtwork} from './coin-artwork.js';
 import {seed} from '../scripts/seed.js';
 import {saveUploadedImage,ensureThumbnail,thumbnailUrl} from './thumbnails.js';
 import {searchCatalogue,invalidateSearchCache} from './search.js';
+const route=f=>(req,res,next)=>Promise.resolve(f(req,res,next)).catch(next);
 const app=express();const production=process.env.NODE_ENV==='production';
-if(production&&(!process.env.SESSION_SECRET||process.env.SESSION_SECRET.length<32))throw Error('Production requires a strong SESSION_SECRET');
-if(preview){await migrate();await seed();}else if(await db('products').where({supplier:'Fictional Preview'}).first())throw Error('Production cannot use the fictional preview database. Configure a clean production database.');
+if(production&&(!process.env.SESSION_SECRET||process.env.SESSION_SECRET.length<32))throw validationError('Production requires a strong SESSION_SECRET');
+if(preview){await migrate();await seed();}else if(await db('products').whereIn('supplier',['Fictional Preview','Veyora Preview Collection 100']).first()||await db('staff').where({email:'preview@veyora.local'}).first())throw validationError('Production cannot use the fictional preview database. Configure a clean production database.');
 const loadFeedSettings=()=>readFeedSettings(db);
 await loadFeedSettings();
-app.set('trust proxy',1);app.use(helmet({contentSecurityPolicy:false}));app.use(express.json({limit:'50mb'}));
-const uploadsDir=fs.existsSync(path.resolve('../public_html/uploads'))?path.resolve('../public_html/uploads'):path.resolve('public/uploads');
+app.disable('x-powered-by');
+app.set('trust proxy',Number(process.env.TRUST_PROXY||0));
+app.use(helmet({contentSecurityPolicy:production?{directives:{defaultSrc:["'self'"],scriptSrc:["'self'"],scriptSrcAttr:["'none'"],styleSrc:["'self'","'unsafe-inline'",'https://fonts.googleapis.com'],fontSrc:["'self'",'https://fonts.gstatic.com'],imgSrc:["'self'",'data:','blob:','https:'],connectSrc:["'self'"],objectSrc:["'none'"],frameAncestors:["'none'"]}}:false}));
+app.use((req,res,next)=>{req.requestId=crypto.randomUUID();res.set('X-Request-ID',req.requestId);next();});
+app.get('/health/live',(req,res)=>res.json({status:'ok'}));
+app.get('/health/ready',async(req,res)=>{try{await db.raw('SELECT 1');res.set('Cache-Control','no-store').json({status:'ok'});}catch{res.status(503).json({status:'unavailable'});}});
+app.use('/api',rateLimit({windowMs:60000,limit:300,standardHeaders:'draft-7',legacyHeaders:false}));
+app.use('/api',(req,res,next)=>express.json({limit:req.path.startsWith('/admin/upload-')?'50mb':req.path==='/admin/import/preview'?'8mb':'256kb'})(req,res,next));
+const uploadsDir=path.resolve(process.env.UPLOADS_DIR||'public/uploads');
 fs.mkdirSync(uploadsDir,{recursive:true});
-app.get('/uploads/thumbs/:filename.webp',async(req,res)=>{try{const file=await ensureThumbnail(uploadsDir,req.params.filename);res.set('Cache-Control','public, max-age=86400');res.sendFile(file)}catch(e){res.status(e.status||422).json({error:e.message})}});
-app.use('/uploads',express.static(uploadsDir));
+app.get('/uploads/thumbs/:filename.webp',async(req,res)=>{try{const file=await ensureThumbnail(uploadsDir,req.params.filename);res.set('Cache-Control','public, max-age=86400');res.sendFile(file)}catch(e){res.status(e.status||422).json({error:e.status===404?'Image not found':e.expose?e.message:'Image unavailable'})}});
+app.use('/uploads',(req,res,next)=>{res.set('Content-Security-Policy',"default-src 'none'; sandbox");next();},express.static(uploadsDir));
 class DbStore extends session.Store {get(sid,cb){db('sessions').where({sid}).first().then(r=>cb(null,r&&Number(r.expires)>Date.now()?parse(r.data):null)).catch(cb)}set(sid,data,cb){db('sessions').insert({sid,data:json(data),expires:Date.now()+8*3600000}).onConflict('sid').merge().then(()=>cb?.()).catch(cb)}destroy(sid,cb){db('sessions').where({sid}).del().then(()=>cb?.()).catch(cb)}}
 const cookieSecure = process.env.COOKIE_SECURE === 'true' || (production && Boolean(process.env.APP_URL?.startsWith('https:')));
 app.use(session({secret:process.env.SESSION_SECRET||crypto.randomBytes(32).toString('hex'),resave:false,saveUninitialized:false,store:new DbStore(),cookie:{httpOnly:true,sameSite:'strict',secure:cookieSecure,maxAge:8*3600000}}));
+app.use('/api',route(async(req,res,next)=>{if(req.session.customer){const row=await db('customers').where({id:req.session.customer.id}).select('session_version').first();if(!row||(row.session_version||0)!==(req.session.customer.session_version||0)){delete req.session.customer;delete req.session.customerCsrf;}}next();}));
 app.use('/api',routeSettings);
 function routeSettings(req,res,next){loadFeedSettings().then(()=>next()).catch(next)}
-app.use('/api',(req,res,next)=>{res.set('Cache-Control','no-store');if(['POST','PUT','DELETE','PATCH'].includes(req.method)){const origin=req.get('origin');const allowedOrigins=[process.env.APP_URL,'http://localhost:3000','http://127.0.0.1:3000'].filter(Boolean);if(origin && !allowedOrigins.includes(origin))return res.status(403).json({error:'Origin not allowed'});if(req.path!=='/admin/login'&&req.path.startsWith('/admin')&&req.get('x-csrf-token')!==req.session.csrf)return res.status(403).json({error:'Please reload the admin panel'});}next();});
-const route=f=>(req,res,next)=>Promise.resolve(f(req,res,next)).catch(next);
+app.use('/api',(req,res,next)=>{res.set('Cache-Control','no-store');if(['POST','PUT','DELETE','PATCH'].includes(req.method)){const origin=req.get('origin');const allowedOrigins=[process.env.APP_URL?new URL(process.env.APP_URL).origin:null,...(!production?['http://localhost:3000','http://127.0.0.1:3000']:[])].filter(Boolean);if(origin && !allowedOrigins.includes(origin))return res.status(403).json({error:'Origin not allowed'});if(req.get('sec-fetch-site')==='cross-site')return res.status(403).json({error:'Origin not allowed'});if(req.path!=='/admin/login'&&req.path.startsWith('/admin')&&req.get('x-csrf-token')!==req.session.csrf)return res.status(403).json({error:'Please reload the admin panel'});}next();});
+
 const auth=(roles=['owner','manager','viewer'])=>(req,res,next)=>req.session.staff&&roles.includes(req.session.staff.role)?next():res.status(403).json({error:'Staff access required'});
 const audit=async(req,action,details)=>db('audit').insert({staff_id:req.session.staff.id,action,details:json(details),created_at:now()});
-app.get('/api/config',(req,res)=>res.json({brand:process.env.BRAND_NAME||'Veyora Jewels',preview,paymentMode:'cod',merchantReady:true,contact:process.env.MERCHANT_EMAIL||'',shippingPolicy:process.env.SHIPPING_POLICY||'',returnsPolicy:process.env.RETURNS_POLICY||''}));
+app.get('/api/config',(req,res)=>res.json({brand:process.env.BRAND_NAME||'Veyora Jewels',preview,passwordResetEnabled:resetConfigured(),...commerceConfig(process.env,preview),contact:process.env.MERCHANT_EMAIL||'',shippingPolicy:process.env.SHIPPING_POLICY||'',returnsPolicy:process.env.RETURNS_POLICY||''}));
 app.get('/api/thumbnail',async(req,res)=>{
  try{
   const file=await listingThumbnailFile(req.query.source,{publicDir:path.resolve('public'),uploadsDir,cacheDir:path.resolve('private/thumbnail-cache')});
@@ -62,7 +77,7 @@ app.get('/api/admin/offers',auth(),route(async(req,res)=>{
 }));
 app.post('/api/admin/offers',auth(['owner','manager']),route(async(req,res)=>{
   const {name,code,badge_text,discount_type,discount_value,applies_to,target_value,banner_headline,banner_subtext,status,priority,show_in_banner,show_in_grid}=req.body;
-  if(!name||!badge_text)throw Error('Offer name and badge text are required');
+  if(!name||!badge_text)throw validationError('Offer name and badge text are required');
   const nowStr=now();
   const offerData={
     name:String(name).trim().slice(0,200),
@@ -76,11 +91,12 @@ app.post('/api/admin/offers',auth(['owner','manager']),route(async(req,res)=>{
     banner_subtext:banner_subtext?String(banner_subtext).trim().slice(0,500):null,
     status:status==='paused'?'paused':'active',
     priority:Number(priority||0),
-    show_in_banner:show_in_banner!==undefined?Boolean(show_in_banner):true,
-    show_in_grid:show_in_grid!==undefined?Boolean(show_in_grid):true,
+    show_in_banner:show_in_banner!==undefined?show_in_banner:true,
+    show_in_grid:show_in_grid!==undefined?show_in_grid:true,
     created_at:nowStr,
     updated_at:nowStr
   };
+  validateOffer(offerData);
   const [id]=await db('offers').insert(offerData);
   await audit(req,'create_offer',{id,name:offerData.name,badge_text:offerData.badge_text});
   res.json({ok:true,id,offer:offerData});
@@ -93,11 +109,12 @@ app.patch('/api/admin/offers/:id',auth(['owner','manager']),route(async(req,res)
   for(const f of fields){
     if(req.body[f]!==undefined){
       if(f==='discount_value'||f==='priority')patch[f]=Number(req.body[f]||0);
-      else if(f==='show_in_banner'||f==='show_in_grid')patch[f]=Boolean(req.body[f]);
+      else if(f==='show_in_banner'||f==='show_in_grid')patch[f]=req.body[f];
       else if(f==='code')patch[f]=req.body[f]?String(req.body[f]).trim().toUpperCase():null;
       else patch[f]=req.body[f]===null?null:String(req.body[f]).trim();
     }
   }
+  validateOffer({...offer,...patch});
   await db('offers').where({id:req.params.id}).update(patch);
   await audit(req,'update_offer',{id:req.params.id,patch});
   res.json({ok:true});
@@ -110,11 +127,17 @@ app.delete('/api/admin/offers/:id',auth(['owner','manager']),route(async(req,res
   res.json({ok:true});
 }));
 app.post('/api/quote',route(async(req,res)=>res.json(await quote(db,req.body.items))));
-app.post('/api/checkout',rateLimit({windowMs:60000,limit:20}),route(async(req,res)=>{const result=await checkout(db,req.body,true,req.session.customer?.id||null);req.session.orderIds=[...(req.session.orderIds||[]),result.id];res.json(result);}));
+app.post('/api/checkout',rateLimit({windowMs:60000,limit:20}),route(async(req,res)=>{if(!commerceConfig(process.env,preview).checkoutEnabled)return res.status(503).json({error:'Checkout is awaiting merchant configuration.'});req.session.checkoutScope ||= crypto.randomUUID();const result=await checkout(db,req.body,preview,req.session.customer?.id||null,req.session.checkoutScope);req.session.orderIds=[...new Set([...(req.session.orderIds||[]),result.id])].slice(-100);res.json(result);}));
 app.get('/api/orders/:id',route(async(req,res)=>{const order=await db('orders').where({id:req.params.id}).first();if(!mayReadOrder(req.session,order))return res.status(404).json({error:'Order not found'});res.json({...order,customer:parse(order.customer),items:(await db('order_items').where({order_id:order.id})).map(i=>parse(i.snapshot))});}));
 const customerAuth=(req,res,next)=>req.session.customer?next():res.status(401).json({error:'Please sign in to your customer account.'});
 const customerCsrf=(req,res,next)=>req.session.customerCsrf&&req.get('x-customer-csrf')===req.session.customerCsrf?next():res.status(403).json({error:'Please reload and try again.'});
 app.get('/api/account/session',route(async(req,res)=>{req.session.customerCsrf ||= crypto.randomBytes(24).toString('hex');res.json({customer:req.session.customer||null,csrf:req.session.customerCsrf,state:req.session.customer?await customerState(db,req.session.customer.id):null});}));
+const resetLimit=rateLimit({windowMs:15*60000,limit:5});
+app.post('/api/account/forgot-password',resetLimit,customerCsrf,route(async(req,res)=>{
+ if(!resetConfigured())throw validationError('Password recovery is not configured. Contact the merchant.',503);
+ await requestReset(db,req.body.email);res.status(202).json({message:'If this email belongs to an account, a recovery link will be sent.'});
+}));
+app.post('/api/account/reset-password',resetLimit,customerCsrf,route(async(req,res)=>{await completeReset(db,req.body);res.json({ok:true});}));
 const customerLoginLimit=rateLimit({windowMs:15*60000,limit:20});
 async function establishCustomer(req,customer,guest){
  const oldStaff=req.session.staff,adminCsrf=req.session.csrf,guestOrders=req.session.customer?[]:req.session.orderIds||[];
@@ -130,7 +153,7 @@ for(const mode of ['register','login'])app.post('/api/account/'+mode,customerLog
  const customer=await (mode==='register'?registerCustomer:loginCustomer)(db,req.body);
  res.json(await establishCustomer(req,customer,guest));
 }));
-app.get('/api/account/orders',customerAuth,route(async(req,res)=>{const page=Number(req.query.page||1);if(!Number.isInteger(page)||page<1||page>10000)throw Error('Invalid order page');res.json(await customerOrders(db,req.session.customer.id,page));}));
+app.get('/api/account/orders',customerAuth,route(async(req,res)=>{const page=Number(req.query.page||1);if(!Number.isInteger(page)||page<1||page>10000)throw validationError('Invalid order page');res.json(await customerOrders(db,req.session.customer.id,page));}));
 app.put('/api/account/state',customerAuth,customerCsrf,route(async(req,res)=>res.json(await saveCustomerState(db,req.session.customer.id,req.body))));
 app.post('/api/account/logout',customerAuth,customerCsrf,route(async(req,res)=>{
  const staff=req.session.staff,csrf=req.session.csrf;
@@ -141,7 +164,7 @@ app.post('/api/account/logout',customerAuth,customerCsrf,route(async(req,res)=>{
 app.post('/api/admin/login',rateLimit({windowMs:15*60000,limit:10}),route(async(req,res)=>{const staff=await db('staff').where({email:String(req.body.email).toLowerCase()}).first();if(!staff||!await bcrypt.compare(String(req.body.password),staff.password_hash))return res.status(401).json({error:'Email or password is incorrect'});const customer=req.session.customer,customerCsrf=req.session.customerCsrf,orderIds=req.session.orderIds;await new Promise((resolve,reject)=>req.session.regenerate(e=>e?reject(e):resolve()));if(customer){req.session.customer=customer;req.session.customerCsrf=customerCsrf;}req.session.orderIds=orderIds;req.session.staff={id:staff.id,email:staff.email,role:staff.role};req.session.csrf=crypto.randomBytes(24).toString('hex');res.json({staff:req.session.staff,csrf:req.session.csrf});}));
 app.get('/api/admin/session',auth(),(req,res)=>res.json({staff:req.session.staff,csrf:req.session.csrf}));
 app.post('/api/admin/logout',auth(),route(async(req,res)=>{const customer=req.session.customer,customerCsrf=req.session.customerCsrf,orderIds=req.session.orderIds;await new Promise((resolve,reject)=>req.session.regenerate(e=>e?reject(e):resolve()));if(customer){req.session.customer=customer;req.session.customerCsrf=customerCsrf;}req.session.orderIds=orderIds;res.json({ok:true});}));
-app.get('/api/admin/dashboard',auth(),route(async(req,res)=>{const [rates,batches,runs,orders,rule,audits,suppliers,rateHistory]=await Promise.all([activeRates(db),db('import_batches').select('id','kind','supplier','source_timestamp','status','summary','created_at').orderBy('id','desc').limit(30),db('daily_runs').orderBy('id','desc').limit(10),db('orders').orderBy('created_at','desc').limit(100),db('pricing_rules').orderBy('id','desc').first(),db('audit').orderBy('id','desc').limit(20),db('import_batches').where({status:'published'}).select('supplier','kind').max('source_timestamp as last_update').groupBy('supplier','kind'),db('rates').orderBy('id','desc').limit(100)]);const scheduleMissed=false;const todayBatches=batches.filter(b=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(b.created_at))===todayIndia());res.json({rateHistory,scheduleMissed,todayImports:{total:todayBatches.length,failed:todayBatches.filter(b=>b.status==='failed').length,published:todayBatches.filter(b=>b.status==='published').length},rates:Object.values(rates).map(r=>({...r,fresh:isFresh(r)})),batches:batches.map(b=>({...b,summary:parse(b.summary)})),runs:runs.map(r=>({...r,result:parse(r.result)})),orders:orders.map(o=>({...o,customer:parse(o.customer)})),rule,audits,suppliers,maxAgeHours:Number(process.env.GOLD_MAX_AGE_HOURS||48),feedSettings:{goldConfigured:!!process.env.GOLD_FEED_URL,productsConfigured:!!(process.env.PRODUCT_FEED_URL||process.env.PRODUCT_FEED_FILE),inventoryMode:process.env.INVENTORY_MODE||'incremental',overwriteFields:process.env.SUPPLIER_OVERWRITE_FIELDS||'stock,fixed_price,net_weight_g,making_flat,stone_charge,other_charge',feedStatus:process.env.FEED_STATUS||'active',goldFeedEnabled:process.env.GOLD_FEED_ENABLED!=='false',productFeedEnabled:process.env.PRODUCT_FEED_ENABLED!=='false',goldUrl:process.env.GOLD_FEED_URL||'',productUrl:process.env.PRODUCT_FEED_URL||''},preview});}));
+app.get('/api/admin/dashboard',auth(),route(async(req,res)=>{const [rates,batches,runs,orders,rule,audits,suppliers,rateHistory]=await Promise.all([activeRates(db),db('import_batches').select('id','kind','supplier','source_timestamp','status','summary','created_at').orderBy('id','desc').limit(30),db('daily_runs').orderBy('id','desc').limit(10),db('orders').orderBy('created_at','desc').limit(100),db('pricing_rules').orderBy('id','desc').first(),db('audit').orderBy('id','desc').limit(20),db('import_batches').where({status:'published'}).select('supplier','kind').max('source_timestamp as last_update').groupBy('supplier','kind'),db('rates').orderBy('id','desc').limit(100)]);const scheduleMissed=!runs.some(r=>r.trigger==='scheduled'&&r.finished_at&&Date.now()-Date.parse(r.finished_at)<36*3600000);const todayBatches=batches.filter(b=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(b.created_at))===todayIndia());res.json({rateHistory,scheduleMissed,todayImports:{total:todayBatches.length,failed:todayBatches.filter(b=>b.status==='failed').length,published:todayBatches.filter(b=>b.status==='published').length},rates:Object.values(rates).map(r=>({...r,fresh:isFresh(r)})),batches:batches.map(b=>({...b,summary:parse(b.summary)})),runs:runs.map(r=>({...r,result:parse(r.result)})),orders:orders.map(o=>({...o,customer:parse(o.customer)})),rule,audits,suppliers,maxAgeHours:Number(process.env.GOLD_MAX_AGE_HOURS||48),feedSettings:{goldConfigured:!!process.env.GOLD_FEED_URL,productsConfigured:!!(process.env.PRODUCT_FEED_URL||process.env.PRODUCT_FEED_FILE),inventoryMode:process.env.INVENTORY_MODE||'incremental',overwriteFields:process.env.SUPPLIER_OVERWRITE_FIELDS||'stock,fixed_price,net_weight_g,making_flat,stone_charge,other_charge',feedStatus:process.env.FEED_STATUS||'active',goldFeedEnabled:process.env.GOLD_FEED_ENABLED!=='false',productFeedEnabled:process.env.PRODUCT_FEED_ENABLED!=='false',goldUrl:process.env.GOLD_FEED_URL||'',productUrl:process.env.PRODUCT_FEED_URL||''},preview});}));
 app.get('/api/admin/products',auth(),route(async(req,res)=>{
  const products=await db('products').orderBy('product_code');
  const hasImages=await db.schema.hasTable('product_images').catch(()=>false);
@@ -156,7 +179,7 @@ app.get('/api/admin/products',auth(),route(async(req,res)=>{
  }
  res.json(products.map(p=>({...p,images:[...(imagesByProduct[p.sku]||[]),...(imagesByProduct[p.product_code]||[])].filter((img,i,all)=>all.findIndex(other=>other.url===img.url)===i)})));
 }));
-app.patch('/api/admin/products/:sku',auth(['owner','manager']),route(async(req,res)=>{const {name,description,status,image}=req.body;if(!name||!['published','draft'].includes(status))throw Error('Name and valid publication status required');const patch={name:String(name).slice(0,200),description:String(description||'').slice(0,5000),status,updated_at:now()};if(typeof image==='string'&&image.trim())patch.image=String(image).trim().slice(0,2000);await db.transaction(async t=>{await t('products').where({sku:req.params.sku}).update(patch);if(patch.image){const hero=await t('product_images').where({sku:req.params.sku,role:'hero'}).whereNull('product_code').first();const photo={url:patch.image,alt_text:patch.name,updated_at:now()};if(hero)await t('product_images').where({id:hero.id}).update(photo);else await t('product_images').insert({...photo,sku:req.params.sku,product_code:null,role:'hero',sort_order:-1,created_at:now()});}});await audit(req,'edit_product',{sku:req.params.sku,hasImage:!!image});res.json({ok:true});}));
+app.patch('/api/admin/products/:sku',auth(['owner','manager']),route(async(req,res)=>{const {name,description,status,image}=req.body;if(typeof name!=='string'||!name.trim()||!['published','draft'].includes(status))throw validationError('Name and valid publication status required');const patch={name:String(name).slice(0,200),description:String(description||'').slice(0,5000),status,updated_at:now()};if(typeof image==='string'&&image.trim())patch.image=String(image).trim().slice(0,2000);await db.transaction(async t=>{const count=await t('products').where({sku:req.params.sku}).update(patch);if(!count)throw validationError('Product not found',404);if(patch.image){const hero=await t('product_images').where({sku:req.params.sku,role:'hero'}).whereNull('product_code').first();const photo={url:patch.image,alt_text:patch.name,updated_at:now()};if(hero)await t('product_images').where({id:hero.id}).update(photo);else await t('product_images').insert({...photo,sku:req.params.sku,product_code:null,role:'hero',sort_order:-1,created_at:now()});}});await audit(req,'edit_product',{sku:req.params.sku,hasImage:!!image});res.json({ok:true});}));
 app.get('/api/admin/coins',auth(),route(async(req,res)=>{
  const coins=await db('coins').orderBy('id','desc');
  const [rates,silverRate,rules]=await Promise.all([activeRates(db),getSilverRate(db),db('pricing_rules').orderBy('id','desc').first()]);
@@ -172,11 +195,11 @@ app.get('/api/admin/coins',auth(),route(async(req,res)=>{
 }));
 app.post('/api/admin/coins',auth(['owner','manager']),route(async(req,res)=>{
  const {sku,name,metal,coin_type,purity,weight_g,dimension,making_charge,pricing_mode,fixed_price,stock,description,image,status}=req.body;
- if(!sku||!name||!metal||!weight_g)throw Error('SKU, Name, Metal, and Weight in grams are required');
+ if(!sku||!name||!metal||!weight_g)throw validationError('SKU, Name, Metal, and Weight in grams are required');
  const cleanSku=String(sku).trim().toUpperCase();
  const existing=await db('coins').where({sku:cleanSku}).first();
- if(existing)throw Error(`A coin with SKU "${cleanSku}" already exists`);
- if(await db('products').where({sku:cleanSku}).first())throw Error('This SKU already belongs to jewellery. Choose a unique coin SKU.');
+ if(existing)throw validationError(`A coin with SKU "${cleanSku}" already exists`);
+ if(await db('products').where({sku:cleanSku}).first())throw validationError('This SKU already belongs to jewellery. Choose a unique coin SKU.');
  const nNow=now();
  const coinData={
   sku:cleanSku,
@@ -197,7 +220,7 @@ app.post('/api/admin/coins',auth(['owner','manager']),route(async(req,res)=>{
   created_at:nNow,
   updated_at:nNow
  };
- const invalid=validate('coins',exportCsv('coins',[{...coinData,stock:String(stock??0)}])).errors[0];if(invalid)throw Error(`${invalid.field}: ${invalid.correction}`);
+ const invalid=validate('coins',exportCsv('coins',[{...coinData,stock:String(stock??0)}])).errors[0];if(invalid)throw validationError(`${invalid.field}: ${invalid.correction}`);
  await db('coins').insert(coinData);
  await audit(req,'create_coin',{sku:cleanSku,name:coinData.name});
  res.json({ok:true,coin:coinData});
@@ -205,7 +228,7 @@ app.post('/api/admin/coins',auth(['owner','manager']),route(async(req,res)=>{
 app.patch('/api/admin/coins/:sku',auth(['owner','manager']),route(async(req,res)=>{
  const coin=await db('coins').where({sku:req.params.sku}).first();
  if(!coin)return res.status(404).json({error:'Coin not found'});
- const invalid=validate('coins',exportCsv('coins',[{...coin,...req.body,sku:coin.sku,supplier:coin.supplier}])).errors[0];if(invalid)throw Error(`${invalid.field}: ${invalid.correction}`);
+ const invalid=validate('coins',exportCsv('coins',[{...coin,...req.body,sku:coin.sku,supplier:coin.supplier}])).errors[0];if(invalid)throw validationError(`${invalid.field}: ${invalid.correction}`);
  const patch={updated_at:now(),source_timestamp:now()};
  const fields=['name','metal','coin_type','purity','weight_g','dimension','making_charge','pricing_mode','fixed_price','stock','description','image','status','image_kind'];
  for(const f of fields){
@@ -228,24 +251,24 @@ app.delete('/api/admin/coins/:sku',auth(['owner','manager']),route(async(req,res
 }));
 app.post('/api/admin/coins/silver-rate',auth(['owner','manager']),route(async(req,res)=>{
  const rate=Number(req.body.rate);
- if(!Number.isFinite(rate)||rate<=0)throw Error('Enter a valid positive silver rate per gram');
- await db('settings').insert({key:'SILVER_RATE_PER_GRAM',value:String(rate)}).onConflict('key').merge();
+ if(!Number.isFinite(rate)||rate<=0)throw validationError('Enter a valid positive silver rate per gram');
+ await db.transaction(async t=>{for(const [key,value] of [['SILVER_RATE_PER_GRAM',String(rate)],['SILVER_RATE_UPDATED_AT',now()]])await t('settings').insert({key,value}).onConflict('key').merge();});
  await audit(req,'update_silver_rate',{rate});
  res.json({ok:true,rate});
 }));
 app.post('/api/admin/upload-image',auth(['owner','manager']),route(async(req,res)=>{
  const {name,data,role,product_code}=req.body;
- if(!data||typeof data!=='string')throw Error('Image data is required');
+ if(!data||typeof data!=='string')throw validationError('Image data is required');
  const match=data.match(/^data:image\/([a-zA-Z0-9+]+);base64,(.+)$/);
- if(!match)throw Error('Invalid image data format. Please upload a PNG, JPG, or WEBP image.');
+ if(!match)throw validationError('Invalid image data format. Please upload a PNG, JPG, or WEBP image.');
  const ext=match[1].toLowerCase().replace('jpeg','jpg').replace('svg+xml','svg');
- if(!['jpg','png','webp','gif','svg'].includes(ext))throw Error('Supported image formats: JPG, PNG, WEBP, GIF, SVG');
+ if(!['jpg','png','webp','gif','svg'].includes(ext))throw validationError('Supported image formats: JPG, PNG, WEBP, GIF, SVG');
  const buffer=Buffer.from(match[2],'base64');
- if(buffer.length>8*1024*1024)throw Error('Maximum image size is 8 MB');
+ if(buffer.length>8*1024*1024)throw validationError('Maximum image size is 8 MB');
  const cleanName=String(name||'product').toLowerCase().replace(/\.[^.]+$/,'').replace(/[^a-z0-9_-]+/g,'-').slice(0,40)||'photo';
  const filename=`${Date.now()}-${crypto.randomUUID().slice(0,8)}-${cleanName}.${ext}`;
  await saveUploadedImage(uploadsDir,filename,buffer);
- const host=process.env.APP_URL||'https://test3.avinyacarefoundation.org';
+ const host=process.env.APP_URL||'http://localhost:3000';
  const url=`/uploads/${filename}`;
  let imageRecord=null;
  if(product_code&&role){
@@ -273,9 +296,9 @@ app.post('/api/admin/upload-image',auth(['owner','manager']),route(async(req,res
 
 app.post('/api/admin/upload-images',auth(['owner','manager']),route(async(req,res)=>{
  const files=req.body.files||req.body.images;
- if(!Array.isArray(files)||!files.length)throw Error('At least one image file is required');
- if(files.length>30)throw Error('Maximum 30 images can be bulk uploaded at once');
- const host=process.env.APP_URL||'https://test3.avinyacarefoundation.org';
+ if(!Array.isArray(files)||!files.length)throw validationError('At least one image file is required');
+ if(files.length>30)throw validationError('Maximum 30 images can be bulk uploaded at once');
+ const host=process.env.APP_URL||'http://localhost:3000';
  const uploaded=[];
  const nowStr=now();
  const hasImages=await db.schema.hasTable('product_images').catch(()=>false);
@@ -311,7 +334,7 @@ app.post('/api/admin/upload-images',auth(['owner','manager']),route(async(req,re
   }
   uploaded.push({filename,url,thumbnail:thumbnailUrl(url),fullUrl:`${host}${url}`,role:role||null,product_code:product_code||null,image:imageRecord});
  }
- if(!uploaded.length)throw Error('No images could be processed. Choose valid image files no larger than 8 MB each.');
+ if(!uploaded.length)throw validationError('No images could be processed. Choose valid image files no larger than 8 MB each.');
  await audit(req,'bulk_upload_images',{count:uploaded.length});
  res.json({ok:true,uploaded,count:uploaded.length});
 }));
@@ -326,10 +349,10 @@ app.get('/api/admin/product-images/:product_code',auth(),route(async(req,res)=>{
 
 app.post('/api/admin/product-images',auth(['owner','manager']),route(async(req,res)=>{
  const {product_code,sku,role,url,alt_text,sort_order}=req.body;
- if(!url||typeof url!=='string'||!url.trim())throw Error('Image URL is required');
+ if(!url||typeof url!=='string'||!url.trim())throw validationError('Image URL is required');
  const validRole=['hero','front','left','right','model','modal','detail'].includes(role)?role:'front';
  const targetCode=product_code||sku;
- if(!targetCode)throw Error('Product code or SKU is required');
+ if(!targetCode)throw validationError('Product code or SKU is required');
  const nowStr=now();
  const sortMap={'hero':1,'front':2,'left':3,'right':4,'model':5,'modal':5,'detail':6};
  const order=sort_order!==undefined?Number(sort_order):sortMap[validRole]||10;
@@ -375,7 +398,7 @@ app.delete('/api/admin/product-images/:id',auth(['owner','manager']),route(async
 app.get('/api/admin/media',auth(),route(async(req,res)=>{
 
  const files=fs.readdirSync(uploadsDir).filter(f=>!f.startsWith('.')&&/\.(jpg|jpeg|png|webp|gif|svg)$/i.test(f));
- const host=process.env.APP_URL||'https://test3.avinyacarefoundation.org';
+ const host=process.env.APP_URL||'http://localhost:3000';
  const list=files.map(f=>{
   const stat=fs.statSync(path.join(uploadsDir,f));
   return {
@@ -391,15 +414,15 @@ app.get('/api/admin/media',auth(),route(async(req,res)=>{
 }));
 app.get('/api/admin/samples/:file',auth(),(req,res)=>{const allowed=['gold-rates-template.csv','gold-rates-example.csv','products-template.csv','products-example.csv','coins-template.csv','coins-example.csv','import-errors-example.csv'];if(!allowed.includes(req.params.file))return res.sendStatus(404);res.download(path.resolve('samples',req.params.file));});
 app.get('/api/admin/export/:kind',auth(),route(async(req,res)=>{const k=req.params.kind,d=new Date().toISOString().slice(0,10);if(k==='products'){const rows=await db('products').orderBy('product_code');return res.type('text/csv').attachment(`products-${d}.csv`).send(exportCsv('products',rows));}if(k==='coins'){const rows=await db('coins').orderBy('id','desc');return res.type('text/csv').attachment(`coins-${d}.csv`).send(exportCsv('coins',rows));}if(k==='gold'){const rows=await db('rates').orderBy('id','desc');return res.type('text/csv').attachment(`gold-rates-${d}.csv`).send(exportCsv('gold',rows));}if(k==='orders'){const rows=await db('orders').orderBy('created_at','desc');return res.type('text/csv').attachment(`orders-${d}.csv`).send(ordersCsv(rows));}res.sendStatus(404);}));
-app.post('/api/admin/import/preview',auth(['owner','manager']),route(async(req,res)=>{if(typeof req.body.csv!=='string')throw Error('Upload a UTF-8 CSV file');res.json(await previewImport(db,req.body.kind,req.body.csv,req.session.staff.id));}));
+app.post('/api/admin/import/preview',auth(['owner','manager']),route(async(req,res)=>{if(typeof req.body.csv!=='string')throw validationError('Upload a UTF-8 CSV file');res.json(await previewImport(db,req.body.kind,req.body.csv,req.session.staff.id));}));
 app.post('/api/admin/import/:id/publish',auth(['owner','manager']),route(async(req,res)=>{const out=await publishImport(db,Number(req.params.id),req.session.staff.id);invalidateSearchCache();return res.json(out);}));
 app.get('/api/admin/import/:id/errors',auth(),route(async(req,res)=>{res.type('text/csv').attachment(`batch-${req.params.id}-errors.csv`).send(errorCsv(await db('import_errors').where({batch_id:req.params.id})));}));
-app.post('/api/admin/run',auth(['owner','manager']),route(async(req,res)=>{if(req.body.kind&&!schemas[req.body.kind])throw Error('Unknown feed');await audit(req,'run_feed',{kind:req.body.kind||'daily'});res.json(await daily(db,'manual',req.body.kind,req.session.staff.id));}));
+app.post('/api/admin/run',auth(['owner','manager']),route(async(req,res)=>{if(req.body.kind&&!schemas[req.body.kind])throw validationError('Unknown feed');await audit(req,'run_feed',{kind:req.body.kind||'daily'});res.json(await daily(db,'manual',req.body.kind,req.session.staff.id));}));
 app.post('/api/admin/feed-toggle',auth(['owner','manager']),route(async(req,res)=>{
  const {status,kind,enabled}=req.body;
  const changes={};
  if(status){
-  if(!['active','stopped'].includes(status))throw Error('Status must be active or stopped');
+  if(!['active','stopped'].includes(status))throw validationError('Status must be active or stopped');
   changes.FEED_STATUS=status;
  }
  if(kind==='gold'&&enabled!==undefined){
@@ -420,15 +443,15 @@ app.post('/api/admin/feed-settings',auth(['owner']),route(async(req,res)=>{
  const changes={};
  if(r.maxAgeHours!==undefined&&r.maxAgeHours!==''){
   const age=Number(r.maxAgeHours);
-  if(!Number.isFinite(age)||age<1||age>168)throw Error('Choose a rate age between 1 and 168 hours');
+  if(!Number.isFinite(age)||age<1||age>168)throw validationError('Choose a rate age between 1 and 168 hours');
   changes.GOLD_MAX_AGE_HOURS=String(age);
  }
  if(r.inventoryMode){
-  if(!['incremental','full'].includes(r.inventoryMode))throw Error('Choose a supported inventory mode');
+  if(!['incremental','full'].includes(r.inventoryMode))throw validationError('Choose a supported inventory mode');
   changes.INVENTORY_MODE=r.inventoryMode;
  }
  if(r.feedStatus){
-  if(!['active','stopped'].includes(r.feedStatus))throw Error('Status must be active or stopped');
+  if(!['active','stopped'].includes(r.feedStatus))throw validationError('Status must be active or stopped');
   changes.FEED_STATUS=r.feedStatus;
  }
  if(r.goldFeedEnabled!==undefined){
@@ -439,17 +462,17 @@ app.post('/api/admin/feed-settings',auth(['owner']),route(async(req,res)=>{
  }
  if(typeof r.overwriteFields==='string'){
   const fields=r.overwriteFields.split(',').map(f=>f.trim()).filter(Boolean);
-  if(fields.some(f=>!schemas.products.includes(f)||['sku','supplier','product_code','source_timestamp'].includes(f)))throw Error('Invalid supplier overwrite field');
+  if(fields.some(f=>!schemas.products.includes(f)||['sku','supplier','product_code','source_timestamp'].includes(f)))throw validationError('Invalid supplier overwrite field');
   changes.SUPPLIER_OVERWRITE_FIELDS=fields.join(',');
  }
  for(const [field,key] of [['goldUrl','GOLD_FEED_URL'],['productUrl','PRODUCT_FEED_URL']])if(r[field]!==undefined){
   if(r[field]===''||r[field]===null){
    changes[key]='';
-  }else if(field==='goldUrl'&&(r[field]==='auto'||r[field].includes('gold-api.com'))){
+  }else if(field==='goldUrl'&&r[field]==='auto'){
    changes[key]=r[field];
   }else{
-   let u;try{u=new URL(r[field])}catch{throw Error('Enter a valid HTTPS feed URL')}
-   if(u.protocol!=='https:'||u.username||u.password||u.search||u.hash)throw Error('Feed URLs must be HTTPS without embedded credentials or query secrets; use server-side Bearer tokens');
+   let u;try{u=new URL(r[field])}catch{throw validationError('Enter a valid HTTPS feed URL')}
+   if(u.protocol!=='https:'||u.username||u.password||u.search||u.hash)throw validationError('Feed URLs must be HTTPS without embedded credentials or query secrets; use server-side Bearer tokens');
    changes[key]=u.href;
   }
  }
@@ -475,6 +498,11 @@ app.post('/api/admin/rules/preview',auth(['owner']),route(async(req,res)=>{
 }));
 function validateRule(input){return validatePricingRule(input);}
 app.post('/api/admin/rules',auth(['owner']),route(async(req,res)=>{const rule=validateRule(req.body);await db.transaction(async t=>{await t('pricing_rules').insert({...rule,changed_at:now(),changed_by:req.session.staff.id});await t('audit').insert({staff_id:req.session.staff.id,action:'pricing_rule',details:json(rule),created_at:now()});});invalidateSearchCache();res.json({ok:true});}));
-if(!production){const {createServer}=await import('vite');const vite=await createServer({server:{middlewareMode:true},appType:'spa'});app.use(vite.middlewares);}else{app.use(express.static('dist'));app.get('*',(req,res)=>res.sendFile(path.resolve('dist/index.html')));}
-app.use((err,req,res,next)=>{res.status(err.status||(err.quote?409:400)).json({error:err.message,quote:err.quote});});
-const port=Number(process.env.PORT||3000);app.listen(port,production?'0.0.0.0':'127.0.0.1',()=>console.log(`Veyora Jewels: http://localhost:${port} (${preview?'fictional preview':'production'})`));
+registerSeo(app,db,{preview,route});
+app.use('/api',(req,res)=>res.status(404).json({error:'API endpoint not found'}));
+if(!production){const {createServer}=await import('vite');const vite=await createServer({server:{middlewareMode:true},appType:'spa'});app.use(vite.middlewares);}else{app.use(express.static('dist',{index:false,maxAge:'1h'}));app.get('*',route(async(req,res)=>{if(path.extname(req.path))return res.status(404).send('Not found');const meta=await pageMetadata(db,req.path);res.set('Cache-Control','no-cache');if(!meta.indexable)res.set('X-Robots-Tag','noindex, nofollow');res.status(meta.status).type('html').send(renderMetadata(fs.readFileSync('dist/index.html','utf8'),meta));}));}
+app.use((err,req,res,next)=>{if(res.headersSent)return next(err);const out=errorResponse(err);if(out.status>=500)console.error(JSON.stringify({event:'request_failed',requestId:req.requestId,method:req.method,status:out.status}));res.status(out.status).json(out.body);});
+const port=Number(process.env.PORT||3000);const httpServer=app.listen(port,production?'0.0.0.0':'127.0.0.1',()=>console.log(`Veyora Jewels: http://localhost:${port} (${preview?'fictional preview':'production'})`));
+
+const cleanup=setInterval(()=>Promise.all([db('sessions').where('expires','<',Date.now()).del(),db('password_resets').where('expires','<',Date.now()).del()]).catch(()=>console.error(JSON.stringify({event:'session_cleanup_failed'}))),3600000);cleanup.unref();
+for(const signal of ['SIGTERM','SIGINT'])process.once(signal,()=>{clearInterval(cleanup);httpServer.close(async()=>{await db.destroy();process.exit(0)});setTimeout(()=>process.exit(1),10000).unref();});

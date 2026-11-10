@@ -7,12 +7,12 @@ import { db, now } from '../server/db.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
 
-export async function recreateProductAssets(k = db) {
+export async function recreateProductAssets(k = db, {publicDir = path.join(root, 'public')} = {}) {
   const timestamp = now();
 
   // 1. Ensure all physical image files exist on disk
   console.log('Verifying disk assets...');
-  const prodBase = path.join(root, 'public/assets/products');
+  const prodBase = path.join(publicDir, 'assets/products');
   if (fs.existsSync(prodBase)) {
     const prodDirs = fs.readdirSync(prodBase, { withFileTypes: true })
       .filter(d => d.isDirectory())
@@ -30,7 +30,7 @@ export async function recreateProductAssets(k = db) {
     console.log(`Verified disk files for ${prodDirs.length} product folders.`);
   }
 
-  const coinBase = path.join(root, 'public/assets/coins');
+  const coinBase = path.join(publicDir, 'assets/coins');
   if (fs.existsSync(coinBase)) {
     const coinDirs = fs.readdirSync(coinBase, { withFileTypes: true })
       .filter(d => d.isDirectory())
@@ -83,7 +83,7 @@ export async function recreateProductAssets(k = db) {
     for (const p of products) {
       const code = p.product_code;
       const name = p.name;
-      const folder = path.join(root, 'public/assets/products', code);
+      const folder = path.join(publicDir, 'assets/products', code);
 
       const heroExists = fs.existsSync(path.join(folder, 'hero.webp'));
       const frontExists = fs.existsSync(path.join(folder, 'front.webp'));
@@ -173,7 +173,7 @@ export async function recreateProductAssets(k = db) {
     for (const c of coins) {
       const code = (c.sku || '').toLowerCase();
       const name = c.name;
-      const folder = path.join(root, 'public/assets/coins', code);
+      const folder = path.join(publicDir, 'assets/coins', code);
 
       const heroExists = fs.existsSync(path.join(folder, 'hero.webp'));
       const frontExists = fs.existsSync(path.join(folder, 'front.webp'));

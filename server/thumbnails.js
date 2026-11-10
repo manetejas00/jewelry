@@ -1,3 +1,4 @@
+import {validationError} from './errors.js';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -10,9 +11,9 @@ const pending=new Map();let queue=Promise.resolve();
 const enqueue=job=>{const result=queue.then(job);queue=result.catch(()=>{});return result};
 export const thumbnailUrl=url=>typeof url==='string'&&/^\/uploads\/[^/?#]+\.(jpe?g|png|webp|gif|svg)$/i.test(url)?'/uploads/thumbs/'+encodeURIComponent(url.slice('/uploads/'.length))+'.webp':null;
 export async function thumbnailBuffer(buffer){
- if(!Buffer.isBuffer(buffer)||!buffer.length||buffer.length>8*1024*1024)throw Error('Choose an image no larger than 8 MB.');
+ if(!Buffer.isBuffer(buffer)||!buffer.length||buffer.length>8*1024*1024)throw validationError('Choose an image no larger than 8 MB.');
  try{return await sharp(buffer,{limitInputPixels:40000000,failOn:'error',pages:1}).rotate().resize({width:600,height:800,fit:'inside',withoutEnlargement:true}).webp({quality:82,effort:4}).toBuffer()}
- catch{throw Error('This image could not be processed. Choose a valid JPG, PNG, WebP, GIF or SVG image.');}
+ catch{throw validationError('This image could not be processed. Choose a valid JPG, PNG, WebP, GIF or SVG image.');}
 }
 async function writeThumbnail(directory,filename,buffer){
  const thumbs=path.join(directory,'thumbs');await fs.mkdir(thumbs,{recursive:true,mode:0o755});await fs.chmod(thumbs,0o755);
@@ -21,7 +22,9 @@ async function writeThumbnail(directory,filename,buffer){
  return target;
 }
 export async function saveUploadedImage(directory,filename,buffer){
- if(!validName(filename))throw Error('Invalid image file name.');
+ if(!validName(filename)||/\.svg$/i.test(filename))throw validationError('Upload a raster image: JPG, PNG, WebP or GIF.');
+ const metadata=await sharp(buffer,{limitInputPixels:40000000}).metadata().catch(()=>null);
+ if(!metadata||!['jpeg','png','webp','gif'].includes(metadata.format))throw validationError('This image could not be processed. Choose a valid JPG, PNG, WebP or GIF image.');
  const small=await enqueue(()=>thumbnailBuffer(buffer));
  await fs.mkdir(directory,{recursive:true,mode:0o755});
  const original=path.join(directory,filename);await fs.writeFile(original,buffer,{mode:0o644,flag:'wx'});

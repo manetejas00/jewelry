@@ -1,10 +1,11 @@
+import {validationError} from './errors.js';
 import {parse as csvParse} from 'csv-parse/sync';
 import {now,json,parse,preview} from './db.js';
 import {fingerprint,calculateCoinPrice,activeRates,getSilverRate,activeOffers,matchOffer} from './pricing.js';
 const decimal=(v,places=2)=>new RegExp(`^\\d+(\\.\\d{1,${places}})?$`).test(v)&&Number(v)<=999999999;
 export function validateCoins(text,headers){
  const errors=[];let rows=[];const bad=(row,field,value,correction)=>errors.push({row,field,value:String(value??''),correction});
- try{rows=csvParse(text,{columns:h=>{if(h.join(',')!==headers.join(','))throw Error('Headers must exactly match the coin template');return h;},bom:true,trim:true,skip_empty_lines:true,max_record_size:100000});}catch(e){return {rows:[],errors:[{row:1,field:'file',value:'CSV',correction:e.message}]};}
+ try{rows=csvParse(text,{columns:h=>{if(h.join(',')!==headers.join(','))throw validationError('Headers must exactly match the coin template');return h;},bom:true,trim:true,skip_empty_lines:true,max_record_size:100000});}catch(e){return {rows:[],errors:[{row:1,field:'file',value:'CSV',correction:e.message}]};}
  if(!rows.length||rows.length>10000)bad(1,'file',rows.length,'Supply between 1 and 10,000 coin rows');
  const seen=new Set();
  rows.forEach((r,i)=>{const n=i+2;r.sku=(r.sku||'').toUpperCase();for(const f of ['supplier','sku','name','metal','coin_type','purity','weight_g','making_charge','pricing_mode','stock','status','image_kind','source_timestamp'])if(!r[f])bad(n,f,r[f],'Supply the required value');
@@ -41,11 +42,11 @@ export async function previewCoins(k,text,headers,staff){
  const [id]=await k('import_batches').insert(data);for(const e of checked.errors)await k('import_errors').insert({...e,batch_id:id});return {...data,id,summary,errors:checked.errors};
 }
 export async function publishCoins(k,id,headers,staff){return k.transaction(async t=>{
- try{await t('import_locks').insert({name:'coins',acquired_at:now()});}catch{throw Error('An overlapping coin import is running; retry later');}
- const b=await t('import_batches').where({id}).forUpdate().first();if(!b||b.kind!=='coins')throw Error('Coin batch not found');if(b.status==='published'){await t('import_locks').where({name:'coins'}).del();return {duplicate:true,...parse(b.summary)};}if(b.status!=='staged')throw Error('Correct the CSV and upload it again');
- const checked=validateCoins(b.private_payload,headers);checked.errors.push(...await checkOwnership(t,checked.rows));if(checked.errors.length)throw Error('Coin data changed since preview. Correct the CSV and preview again.');
+ try{await t('import_locks').insert({name:'coins',acquired_at:now()});}catch{throw validationError('An overlapping coin import is running; retry later');}
+ const b=await t('import_batches').where({id}).forUpdate().first();if(!b||b.kind!=='coins')throw validationError('Coin batch not found');if(b.status==='published'){await t('import_locks').where({name:'coins'}).del();return {duplicate:true,...parse(b.summary)};}if(b.status!=='staged')throw validationError('Correct the CSV and upload it again');
+ const checked=validateCoins(b.private_payload,headers);checked.errors.push(...await checkOwnership(t,checked.rows));if(checked.errors.length)throw validationError('Coin data changed since preview. Correct the CSV and preview again.');
  let created=0,updated=0,unchanged=0;
- for(const r of checked.rows){const old=await t('coins').where({sku:r.sku}).forUpdate().first();if(old?.source_timestamp&&r.source_timestamp<old.source_timestamp)throw Error('A newer coin snapshot has been published');
+ for(const r of checked.rows){const old=await t('coins').where({sku:r.sku}).forUpdate().first();if(old?.source_timestamp&&r.source_timestamp<old.source_timestamp)throw validationError('A newer coin snapshot has been published');
  const sold=await t('order_items').join('orders','orders.id','order_items.order_id').where('order_items.sku',r.sku).where('orders.created_at','>',r.source_timestamp).whereIn('orders.status',['paid','confirmed','placed']).sum('order_items.quantity as qty').first();
  const row={...r,stock:Math.max(0,Number(r.stock)-Number(sold.qty||0)),fixed_price:r.fixed_price===''?null:r.fixed_price,updated_at:now()};
  if(old){const changed=Object.entries(row).some(([f,v])=>!['source_timestamp','updated_at'].includes(f)&&String(old[f]??'')!==String(v??''));await t('coins').where({sku:r.sku}).update(row);changed?updated++:unchanged++;}else{await t('coins').insert({...row,created_at:now()});created++;}

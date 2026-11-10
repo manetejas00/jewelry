@@ -12,3 +12,13 @@ test('overlapping catalogue reads share a request but subsequent reads get fresh
   const fresh=api('/coins');assert.equal(calls,2);finish();assert.equal((await fresh)[0].price,2);
  }finally{globalThis.fetch=originalFetch;globalThis.sessionStorage=originalStorage;}
 });
+test('unexpected server responses and request timeouts show useful errors',async()=>{
+ const {request}=await import('../src/api.js');const originalFetch=globalThis.fetch,originalStorage=globalThis.sessionStorage;
+ globalThis.sessionStorage={getItem:()=>''};
+ try{
+  globalThis.fetch=async()=>({ok:false,json:async()=>{throw SyntaxError('Unexpected HTML')}});
+  await assert.rejects(request('/products'),/unexpected response/);
+  globalThis.fetch=(_url,{signal})=>new Promise((resolve,reject)=>signal.addEventListener('abort',()=>reject(Object.assign(Error('Aborted'),{name:'AbortError'}))));
+  await assert.rejects(request('/products',undefined,undefined,10),/timed out/);
+ }finally{globalThis.fetch=originalFetch;globalThis.sessionStorage=originalStorage;}
+});

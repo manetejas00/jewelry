@@ -1,12 +1,17 @@
-async function request(url, body, method) {
+export async function request(url, body, method, timeoutMs=30000) {
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),timeoutMs);
+  try {
   const res = await fetch('/api' + url, {
+    signal:controller.signal,
     method: method || (body ? 'POST' : 'GET'),
     headers: {'Content-Type': 'application/json', 'x-csrf-token': sessionStorage.getItem('csrf') || '', 'x-customer-csrf': sessionStorage.getItem('customer-csrf') || ''},
     ...(body ? {body: JSON.stringify(body)} : {})
   });
-  const data = await res.json();
+  let data;try{data=await res.json()}catch{throw Error('The server returned an unexpected response. Please try again.')}
   if (!res.ok) { const error = Error(data.error || 'Something went wrong'); error.quote = data.quote; error.status = res.status; throw error; }
   return data;
+  }catch(e){if(e.name==='AbortError')throw Error('The request timed out. Please try again.');throw e;}finally{clearTimeout(timer)}
 }
 
 // Share overlapping catalogue reads; completed requests are never cached, so prices stay fresh.
