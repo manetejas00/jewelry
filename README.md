@@ -32,3 +32,7 @@ Production uses `npm start`, explicit migrations (`npm run migrate`) and `PREVIE
 [Import guide](docs/import-guide.md) · [Hostinger setup](docs/hostinger-setup.md) · [Audit and change summary](docs/audit.md) · [Verification results](docs/test-results.md)
 
 Live payment integration is deliberately unavailable until the merchant identifies the gateway and supplies its approved server-side integration details. Test checkout is not a payment gateway. There is no claim that the Hostinger database or scheduler is connected. Product structured data is populated from the published catalogue. All certification and hallmarking claims have been omitted.
+
+## Expanded catalogue and image zoom
+
+The 100-product collection uses the existing product, supplier mapping and image tables. Run `npm run seed:products` independently, or `npm run seed:catalogue` through DatabaseSeeder. Both are transactional and repeat-safe; neither removes existing records or resets sold stock. See [collection data, images and verification](docs/products-100.md). Product-image buttons reuse the full-screen viewer, and product-name links keep opening details.

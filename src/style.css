@@ -167,3 +167,15 @@
 .coin-photo-button{display:block;width:100%;padding:0;border:0;text-align:left;color:inherit;font:inherit}
 .coin-name-button{font:inherit;color:inherit;text-align:left;background:none;border:0;padding:0;cursor:pointer}
 :focus-visible{outline:2px solid var(--gold);outline-offset:4px}
+
+/* Preserve the established image boxes; zoom only the image within them. */
+.product-card-zoom{display:block;width:100%;height:100%;border:0;padding:0;background:none;cursor:zoom-in}
+.product-photo,.category-photo,.editorial-image,.detail-image,.coin-zoom-open{overflow:hidden}
+.product-photo img,.category-photo img,.editorial-image img,.detail-image>img,.coin-zoom-open>img{transform-origin:50% 50%;transition:transform .65s cubic-bezier(.2,.65,.3,1),filter .65s ease}
+@media(hover:hover) and (pointer:fine){.product-card:hover .product-photo img,.category-card:hover img,.editorial-image:hover img,.detail-image:hover>img,.coin-zoom-open:hover>img{transform:scale(1.08)}.product-card-zoom:hover,.detail-image:hover,.coin-zoom-open:hover{box-shadow:inset 0 0 24px #1021240d}}
+@media(hover:none){.product-card:hover .product-photo img{transform:none}}
+.image-viewer{animation:viewer-appear .22s ease both}.viewer-stage{animation:viewer-enter .32s cubic-bezier(.2,.65,.3,1) both}
+.viewer-stage>img{transition:transform .18s cubic-bezier(.2,.65,.3,1)}.viewer-stage.is-dragging>img{transition:none}
+@keyframes viewer-appear{from{opacity:0}to{opacity:1}}@keyframes viewer-enter{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+.load-more{text-align:center;margin-top:35px}
+@media(prefers-reduced-motion:reduce){.image-viewer,.viewer-stage{animation:none}.viewer-stage>img,.product-photo img,.category-photo img,.editorial-image img,.detail-image>img,.coin-zoom-open>img{transition:none}}
