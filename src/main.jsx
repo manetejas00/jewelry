@@ -600,7 +600,8 @@ function ProductAngleManager({product,readonly,refreshParent}){
     {key:'front',label:'Front Angle',desc:'Straight direct view',icon:'📷'},
     {key:'left',label:'Left View',desc:'Left side profile angle',icon:'👈'},
     {key:'right',label:'Right View',desc:'Right side profile angle',icon:'👉'},
-    {key:'model',label:'Model Shot',desc:'On-model wearing view',icon:'💃'}
+    {key:'model',label:'Model Shot',desc:'On-model wearing view',icon:'💃'},
+    {key:'detail',label:'Detail Image',desc:'Close-up of the product and its finish',icon:'🔍'}
   ];
 
   const images=product.images||[];
@@ -660,11 +661,11 @@ function ProductAngleManager({product,readonly,refreshParent}){
       <div>
         <h4>Multi-Angle Photography ({product.name})</h4>
         <p className="small muted" style={{margin:'2px 0 0'}}>
-          Upload specific angles for <strong>{product.product_code}</strong>. Customers can interactively switch between Hero, Front, Left, Right, and Model shots on the storefront.
+          Upload specific angles for <strong>{product.product_code}</strong>. Customers can interactively switch between Hero, Front, Left, Right, Model, and Detail images on the storefront.
         </p>
       </div>
-      <span className={'status-badge '+(configuredCount===5?'active':'')} style={{fontSize:'9px',padding:'4px 10px'}}>
-        {configuredCount}/5 Angles Configured
+      <span className={'status-badge '+(configuredCount===roles.length?'active':'')} style={{fontSize:'9px',padding:'4px 10px'}}>
+        {configuredCount}/{roles.length} Images Configured
       </span>
     </div>
 
@@ -871,6 +872,7 @@ function ImageUploader({products=[],refreshParent}){
           <option value="left">👈 Left View</option>
           <option value="right">👉 Right View</option>
           <option value="model">💃 Model Wearing Shot</option>
+          <option value="detail">🔍 Detail / Close-up Image</option>
           <option value="detail">🔍 Detail / Close-up</option>
         </select>
       </label>

@@ -87,7 +87,7 @@
 .angles-editor-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px}
 .angles-editor-header h4{margin:0;font-size:14px;font-weight:600;letter-spacing:0.3px}
 
-.angle-slots-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;align-items:start}
+.angle-slots-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px;align-items:start}
 .angle-slot-card{border:1px dashed var(--line);background:#ffffff;padding:14px 12px;display:flex;flex-direction:column;align-items:center;text-align:center;border-radius:6px;width:100%;box-sizing:border-box;position:relative;transition:all .2s ease;box-shadow:0 1px 3px rgba(0,0,0,0.03)}
 .angle-slot-card:hover{border-color:var(--gold);box-shadow:0 4px 12px rgba(0,0,0,0.06)}
 .angle-slot-card.has-image{border-style:solid;border-color:var(--line);background:#ffffff}
