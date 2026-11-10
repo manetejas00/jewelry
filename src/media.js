@@ -1,6 +1,7 @@
 const coinFiles=new Set(['lakshmi-gold-1g-v1','lakshmi-ganesh-gold-5g-v1','royal-emblem-gold-10g-v1','floral-silver-10g-v1','lakshmi-ganesh-silver-50g-v1','cast-bar-silver-100g-v1']);
 // Existing CSV/image references stay valid; cards download the smaller catalogue copy.
 export function coinImage(url,thumbnail=false){
+ if(thumbnail&&typeof url==='string'&&/^\/assets\/(products|coins)\/[^/]+\/[a-z0-9-]+\.webp$/.test(url)&&!url.endsWith('-thumb.webp'))return url.replace('.webp','-thumb.webp');
  if(thumbnail&&typeof url==='string'&&/^\/assets\/products-100\/[a-z0-9-]+\.webp$/.test(url)&&!url.endsWith('-thumb.webp'))return url.replace('.webp','-thumb.webp');
  if(thumbnail){const uploaded=uploadThumbnail(url);if(uploaded)return uploaded;}
  const match=typeof url==='string'&&url.match(/^\/assets\/coin-art\/([^/]+)\.png$/);

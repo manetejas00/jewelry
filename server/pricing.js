@@ -207,22 +207,36 @@ export function calculateCoinPrice(c,rates,silverRate=98,rule={tax_percent:0,rou
 
 export async function coinCatalogue(k){
   if(!k.schema||!(await k.schema.hasTable('coins')))return [];
-  const [coins,rates,silverRate,rules,offers]=await Promise.all([
+  const hasImages=await k.schema.hasTable('product_images').catch(()=>false);
+  const [coins,rates,silverRate,rules,images,offers]=await Promise.all([
     k('coins').where({status:'published'}),
     activeRates(k),
     getSilverRate(k),
     k('pricing_rules').orderBy('id','desc').first(),
+    hasImages?k('product_images')
+      .select('id','product_code','sku','role','url','alt_text','sort_order')
+      .where(function(){this.whereIn('sku',k('coins').select('sku').where({status:'published'}))})
+      .orderBy('sort_order','asc').orderBy('id','asc'):[],
     activeOffers(k)
   ]);
+  const imagesBySku={};
+  for(const img of images){
+    if(img.sku){
+      if(!imagesBySku[img.sku])imagesBySku[img.sku]=[];
+      imagesBySku[img.sku].push(img);
+    }
+  }
   return coins.map(c=>{
     const offer=matchOffer(c,offers);
     let price=null;
     try{price=calculateCoinPrice(c,rates,silverRate,rules,offer);}catch{}
     const isGold=(c.metal||'').toLowerCase()==='gold';
     const rateFresh=isGold?(c.pricing_mode==='FIXED'||isFresh(rates[c.purity]||rates['24K'])):true;
+    const coinImgs=(imagesBySku[c.sku]||[]).filter((img,i,all)=>all.findIndex(other=>other.url===img.url)===i);
     return {
       ...c,
       thumbnail:listingThumbnail(c),
+      images:coinImgs,
       category:c.coin_type||(isGold?'Gold Coin':'Silver Coin'),
       price:price?.total??null,
       original_price:price?.original_total??null,

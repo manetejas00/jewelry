@@ -10,3 +10,7 @@ private/
 
 # Runtime-generated thumbnail cache
 public/uploads/thumbs/
+public/assets/coins/
+public/assets/products/
+artifacts/
+scratch/

@@ -6,7 +6,7 @@ export const useStore = () => useContext(Store);
 const readList = key => {try {const value = JSON.parse(localStorage.getItem(key) || '[]'); return Array.isArray(value) ? value : [];} catch {return [];}};
 const compact = model => ({bag: model.bag.map(({sku, quantity}) => ({sku, quantity})), saved: [...model.saved]});
 export function Provider({children}) {
-  const [products,setProducts] = useState([]), [offers,setOffers] = useState([]), [config,setConfig] = useState({brand:'Veyora Jewels',preview:true});
+  const [products,setProducts] = useState([]), [coins,setCoins] = useState([]), [offers,setOffers] = useState([]), [config,setConfig] = useState({brand:'Veyora Jewels',preview:true});
   const [catalogueRevision,setCatalogueRevision] = useState(0);
   const [error,setError] = useState(''), [bag,rawBag] = useState(() => readList('veyora-bag'));
   const [saved,rawSaved] = useState(() => readList('veyora-saved')), [bagOpen,setBagOpen] = useState(false);
@@ -29,16 +29,16 @@ export function Provider({children}) {
   }
   useEffect(() => {
     let cancelled = false;
-    Promise.all([api('/products'),api('/config'),api('/account/session'),api('/offers').catch(()=>[])]).then(([p,c,account,o]) => {
+    Promise.all([api('/products'),api('/coins').catch(()=>[]),api('/config'),api('/account/session'),api('/offers').catch(()=>[])]).then(([p,cns,c,account,o]) => {
       if (cancelled) return;
-      setProducts(p);setConfig(c);adopt(account);setOffers(o||[]);
+      setProducts(p);setCoins(cns||[]);setConfig(c);adopt(account);setOffers(o||[]);
     }).catch(e => {if (!cancelled) setError(e.message);}).finally(() => {if (!cancelled) setAccountReady(true);});
     return () => {cancelled = true;};
   }, []);
   async function refreshCatalogue({notify=false}={}) {
-    const [pieces,coins,currentOffers] = await Promise.all([api('/products'),api('/coins'),api('/offers').catch(()=>[])]);
-    setProducts(pieces);setError('');setOffers(currentOffers);setCatalogueRevision(n=>n+1);
-    const all=[...pieces,...coins];
+    const [pieces,coinsData,currentOffers] = await Promise.all([api('/products'),api('/coins').catch(()=>[]),api('/offers').catch(()=>[])]);
+    setProducts(pieces);setCoins(coinsData||[]);setError('');setOffers(currentOffers);setCatalogueRevision(n=>n+1);
+    const all=[...pieces,...(coinsData||[])];
     const updatedBag=model.current.bag.map(item=>{const piece=all.find(p=>p.sku===item.sku);return piece?{...item,name:piece.name,image:piece.image,price:piece.price,stock:piece.stock,unavailable:!piece.checkout_available}:{...item,unavailable:true};});
     model.current={...model.current,bag:updatedBag};rawBag(updatedBag);
     if(notify && typeof BroadcastChannel!=='undefined') {
@@ -76,8 +76,10 @@ export function Provider({children}) {
   }
   function toggleSave(code) {
     const current = model.current.saved;
-    const next = current.includes(code) ? current.filter(x => x !== code) : [...current,code];
+    const isAdding = !current.includes(code);
+    const next = isAdding ? [...current,code] : current.filter(x => x !== code);
     model.current = {...model.current,saved:next};rawSaved(next);persist();
+    setToast(isAdding ? 'Piece saved to your favourites' : 'Piece removed from saved favourites');
   }
   async function flushAccount() {await queue.current;if (syncFailure.current) throw Error(syncFailure.current);}
   async function refreshAccount() {
@@ -110,7 +112,7 @@ export function Provider({children}) {
     });
     setBagOpen(true);
   }
-  return <Store.Provider value={{products,offers,catalogueRevision,refreshCatalogue,config,error,bag,setBag,add,bagOpen,setBagOpen,saved,toggleSave,setToast,customer,accountReady,authenticate,logoutCustomer,flushAccount,refreshAccount,afterCheckout,syncStatus,syncError}}>
+  return <Store.Provider value={{products,coins,offers,catalogueRevision,refreshCatalogue,config,error,bag,setBag,add,bagOpen,setBagOpen,saved,toggleSave,setToast,customer,accountReady,authenticate,logoutCustomer,flushAccount,refreshAccount,afterCheckout,syncStatus,syncError}}>
     {children}
     {toast && <div className="toast" role="status"><Check size={17}/>{toast}</div>}
   </Store.Provider>;

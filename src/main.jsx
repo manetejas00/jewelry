@@ -1,4 +1,4 @@
-import React,{useEffect,useState,useRef,createContext,useContext} from 'react';
+import React,{useEffect,useState,useRef,createContext,useContext,useMemo} from 'react';
 import {createRoot} from 'react-dom/client';
 import {BrowserRouter,Routes,Route,Link,useLocation,useNavigate,useParams,useSearchParams} from 'react-router-dom';
 import {Search,ShoppingBag,UserRound,Menu,X,ArrowRight,ArrowUpRight,Plus,Minus,Heart,ChevronDown,Check,ArrowLeft,ShieldCheck,Package,Truck,SlidersHorizontal,LogOut,LayoutDashboard,Gem,ChartNoAxesCombined,Upload,Settings,Download,RefreshCw,AlertCircle,CheckCircle2,Eye,Mail,MoveRight,Coins as CoinsIcon,CircleDollarSign,Trash2,Sparkles,Play,Pause,Power,Image as ImageIcon,Copy,Layers,Tag,Percent} from 'lucide-react';
@@ -16,11 +16,246 @@ import Account from './Account.jsx';
 import {grouped} from './catalogue.js';
 import {coinImage} from './media.js';
 import ListingImage from './ListingImage.jsx';
+import {galleryPhotos} from './image-zoom.js';
+import {listingThumbnail,imageFallback} from './listing-media.js';
+import {SearchAutocomplete} from './SearchAutocomplete.jsx';
 const priceBrackets=[{label:'All prices',value:''},{label:'Under ₹20,000',value:'0-20000'},{label:'₹20,000 – ₹30,000',value:'20000-30000'},{label:'₹30,000 – ₹50,000',value:'30000-50000'},{label:'Above ₹50,000',value:'50000-'}];
 const matchPrice=(price,bracket)=>{if(!bracket)return true;if(price===null||price===undefined)return false;if(bracket.includes('-')){const [minStr,maxStr]=bracket.split('-');if(minStr&&price<Number(minStr))return false;if(maxStr&&price>Number(maxStr))return false;return true;}return price<=Number(bracket);};
 function Scroll(){const loc=useLocation();useEffect(()=>{if(!loc.pathname.startsWith('/collections'))window.scrollTo(0,0);},[loc.pathname]);return null}
 function Brand(){return <Link className="brand" to="/" aria-label="Veyora Jewels home"><span className="brand-emblem">✳</span><span>VEYORA<small>J E W E L S</small></span></Link>}
-function Header(){const {bag,setBagOpen,saved,customer,syncError,refreshAccount,offers=[]}=useStore();const [menu,setMenu]=useState(false),[search,setSearch]=useState(false),[q,setQ]=useState('');const nav=useNavigate();const location=useLocation();useEffect(()=>{setMenu(false);setSearch(false)},[location.pathname]);useEffect(()=>{const close=e=>{if(e.key==='Escape'){setMenu(false);setSearch(false)}};document.addEventListener('keydown',close);return()=>document.removeEventListener('keydown',close)},[]);const bannerOffer=offers.find(o=>o.show_in_banner&&o.banner_headline)||offers[0];return <><div className="announcement">{bannerOffer?<><Sparkles size={11} color="#f9ca24"/> {bannerOffer.banner_headline} {bannerOffer.code?<span>Code: {bannerOffer.code} <ArrowRight size={12}/></span>:<span>Offer auto-applied <ArrowRight size={12}/></span>}</>:<>A little wonder. An everyday heirloom. <span>Discover the Pearl Edit <ArrowRight size={12}/></span></>}</div><header className="header"><button className="icon mobile-menu" aria-label={menu?'Close menu':'Open menu'} aria-expanded={menu} aria-controls="store-navigation" onClick={()=>setMenu(!menu)}><Menu/></button><Brand/><nav id="store-navigation" className={menu?'nav open':'nav'}><Link to="/collections/all">All jewellery</Link><Link to="/coins">Coins</Link><Link to="/collections/earrings">Earrings</Link><Link to="/collections/necklaces">Necklaces</Link><Link to="/collections/rings">Rings</Link><Link to="/collections/bracelets">Bracelets</Link></nav><div className="header-tools"><Link className="icon account-nav" to="/account" aria-label={customer?"My account":"Sign in or register"}><UserRound size={20}/></Link><button className="icon" aria-label="Search jewellery" onClick={()=>setSearch(!search)}><Search size={20}/></button><Link className="icon save-nav" to="/collections/saved" aria-label="Saved pieces"><Heart size={20}/>{saved.length>0&&<i>{saved.length}</i>}</Link><button className="icon bag-icon" aria-label="Open shopping bag" onClick={()=>setBagOpen(true)}><ShoppingBag size={20}/><span>{bag.reduce((n,p)=>n+p.quantity,0)}</span></button></div></header>{search&&<form className="search-panel" onSubmit={e=>{e.preventDefault();nav('/collections/all?q='+encodeURIComponent(q));setSearch(false)}}><Search size={20}/><input autoFocus aria-label="Search products" placeholder="Find your next favourite piece…" value={q} onChange={e=>setQ(e.target.value)}/><button className="text-button">Search <ArrowRight size={16}/></button><button className="icon" type="button" aria-label="Close search" onClick={()=>setSearch(false)}><X/></button></form>}{syncError&&<div className="account-sync-banner" role="alert">{syncError} <button className="underlink" onClick={()=>refreshAccount().catch(()=>{})}>Reload account</button></div>}</>}
+function Header(){
+  const {bag,setBagOpen,saved,customer,logoutCustomer,syncError,refreshAccount,offers=[],products=[]}=useStore();
+  const [menu,setMenu]=useState(false),[search,setSearch]=useState(false),[q,setQ]=useState('');
+  const [accountOpen,setAccountOpen]=useState(false);
+  const accountRef=useRef(null);
+  const hoverTimer=useRef(null);
+  const nav=useNavigate();
+  const location=useLocation();
+  const searchInputRef=useRef(null);
+
+  useEffect(()=>{setMenu(false);setSearch(false);setAccountOpen(false);},[location.pathname,location.search]);
+  useEffect(()=>{
+    const close=e=>{
+      if(e.key==='Escape'){
+        setMenu(false);
+        setSearch(false);
+        setAccountOpen(false);
+      }
+    };
+    document.addEventListener('keydown',close);
+    return()=>document.removeEventListener('keydown',close);
+  },[]);
+
+  useEffect(()=>{
+    if(!accountOpen)return;
+    const onOutside=e=>{
+      if(accountRef.current&&!accountRef.current.contains(e.target)){
+        setAccountOpen(false);
+      }
+    };
+    document.addEventListener('mousedown',onOutside);
+    document.addEventListener('touchstart',onOutside);
+    return()=>{
+      document.removeEventListener('mousedown',onOutside);
+      document.removeEventListener('touchstart',onOutside);
+    };
+  },[accountOpen]);
+
+  const handleAccountEnter=()=>{
+    if(typeof window!=='undefined'&&window.matchMedia('(hover: hover)').matches){
+      clearTimeout(hoverTimer.current);
+      setAccountOpen(true);
+    }
+  };
+
+  const handleAccountLeave=()=>{
+    if(typeof window!=='undefined'&&window.matchMedia('(hover: hover)').matches){
+      hoverTimer.current=setTimeout(()=>{
+        setAccountOpen(false);
+      },200);
+    }
+  };
+
+  const handleLogout=async()=>{
+    setAccountOpen(false);
+    setMenu(false);
+    try{
+      await logoutCustomer();
+      if(location.pathname==='/account'){
+        nav('/account');
+      }
+    }catch(e){
+      console.error('Logout error:',e);
+    }
+  };
+
+  const bannerOffer=offers.find(o=>o.show_in_banner&&o.banner_headline)||offers[0];
+  const bannerTarget=bannerOffer?(bannerOffer.applies_to==='silver'?'/coins/silver':bannerOffer.applies_to==='coins'?'/coins':'/collections/all'):'/collections/pearls';
+
+  return <>
+    <Link to={bannerTarget} className="announcement" aria-label="Announcement banner">
+      {bannerOffer?<><Sparkles size={11} color="#f9ca24"/> {bannerOffer.banner_headline} {bannerOffer.code?<span>Code: {bannerOffer.code} <ArrowRight size={12}/></span>:<span>Offer auto-applied <ArrowRight size={12}/></span>}</>:<>A little wonder. An everyday heirloom. <span>Discover the Pearl Edit <ArrowRight size={12}/></span></>}
+    </Link>
+    <header className="header">
+      <button className="icon mobile-menu" aria-label={menu?'Close navigation menu':'Open navigation menu'} aria-expanded={menu} aria-controls="store-navigation" onClick={()=>setMenu(!menu)}>
+        {menu?<X size={22}/>:<Menu size={22}/>}
+      </button>
+      <Brand/>
+      <nav id="store-navigation" className={menu?'nav open':'nav'}>
+        <Link onClick={()=>setMenu(false)} to="/collections/all">All jewellery</Link>
+        <Link onClick={()=>setMenu(false)} to="/collections/pearls">The Pearl Edit</Link>
+        <Link onClick={()=>setMenu(false)} to="/coins">Coins</Link>
+        <Link onClick={()=>setMenu(false)} to="/collections/earrings">Earrings</Link>
+        <Link onClick={()=>setMenu(false)} to="/collections/necklaces">Necklaces</Link>
+        <Link onClick={()=>setMenu(false)} to="/collections/rings">Rings</Link>
+        <Link onClick={()=>setMenu(false)} to="/collections/bracelets">Bracelets</Link>
+        {menu&&<div className="mobile-nav-footer">
+          {customer?(
+            <>
+              <div className="mobile-user-card">
+                <span className="account-icon-wrapper">
+                  <UserRound size={18}/>
+                  <span className="auth-indicator" title="Logged in" aria-label="Logged in"/>
+                </span>
+                <div>
+                  <strong>{customer.name}</strong>
+                  <small>{customer.email}</small>
+                </div>
+              </div>
+              <Link onClick={()=>setMenu(false)} to="/account?tab=overview" className="mobile-nav-link">
+                <UserRound size={16}/> My Profile
+              </Link>
+              <Link onClick={()=>setMenu(false)} to="/account?tab=orders" className="mobile-nav-link">
+                <Package size={16}/> My Orders
+              </Link>
+              <Link onClick={()=>setMenu(false)} to="/collections/saved" className="mobile-nav-link">
+                <Heart size={16}/> Saved pieces {saved.length>0&&<span>({saved.length})</span>}
+              </Link>
+              <Link onClick={()=>setMenu(false)} to="/information/shipping" className="mobile-nav-link">
+                <Truck size={16}/> Delivery & returns
+              </Link>
+              <button onClick={handleLogout} className="mobile-nav-link mobile-nav-logout">
+                <LogOut size={16}/> Logout
+              </button>
+            </>
+          ):(
+            <>
+              <Link onClick={()=>setMenu(false)} to="/account?mode=login" className="mobile-nav-link">
+                <UserRound size={16}/> Sign In
+              </Link>
+              <Link onClick={()=>setMenu(false)} to="/account?mode=register" className="mobile-nav-link">
+                <Sparkles size={16}/> Register
+              </Link>
+              <Link onClick={()=>setMenu(false)} to="/collections/saved" className="mobile-nav-link">
+                <Heart size={16}/> Saved pieces {saved.length>0&&<span>({saved.length})</span>}
+              </Link>
+              <Link onClick={()=>setMenu(false)} to="/information/shipping" className="mobile-nav-link">
+                <Truck size={16}/> Delivery & returns
+              </Link>
+            </>
+          )}
+        </div>}
+      </nav>
+      <div className="header-tools">
+        <div
+          className="account-menu-container"
+          ref={accountRef}
+          onMouseEnter={handleAccountEnter}
+          onMouseLeave={handleAccountLeave}
+        >
+          <button
+            type="button"
+            className={`icon account-nav ${customer ? 'logged-in' : ''}`}
+            onClick={()=>setAccountOpen(prev=>!prev)}
+            aria-expanded={accountOpen}
+            aria-haspopup="true"
+            aria-label={customer ? `Account menu for ${customer.name}` : "Account: Sign in or register"}
+          >
+            <span className="account-icon-wrapper">
+              <UserRound size={20}/>
+              {customer&&<span className="auth-indicator" title="Logged in" aria-label="Logged in"/>}
+            </span>
+            {customer&&<span className="account-name-label">{customer.name.split(' ')[0]}</span>}
+            <ChevronDown size={13} className={`account-chevron ${accountOpen?'open':''}`} aria-hidden="true"/>
+          </button>
+          {accountOpen&&(
+            <div className="account-dropdown" role="menu">
+              {customer?(
+                <>
+                  <div className="account-dropdown-header">
+                    <span className="account-dropdown-status"><span className="auth-indicator inline"/> Signed in</span>
+                    <strong className="account-dropdown-name">{customer.name}</strong>
+                    <small className="account-dropdown-email">{customer.email}</small>
+                  </div>
+                  <div className="account-dropdown-divider"/>
+                  <Link
+                    to="/account?tab=overview"
+                    className="account-dropdown-item"
+                    role="menuitem"
+                    onClick={()=>setAccountOpen(false)}
+                  >
+                    <UserRound size={15}/>
+                    <span>My Profile</span>
+                  </Link>
+                  <Link
+                    to="/account?tab=orders"
+                    className="account-dropdown-item"
+                    role="menuitem"
+                    onClick={()=>setAccountOpen(false)}
+                  >
+                    <Package size={15}/>
+                    <span>My Orders</span>
+                  </Link>
+                  <div className="account-dropdown-divider"/>
+                  <button
+                    type="button"
+                    className="account-dropdown-item account-dropdown-logout"
+                    role="menuitem"
+                    onClick={handleLogout}
+                  >
+                    <LogOut size={15}/>
+                    <span>Logout</span>
+                  </button>
+                </>
+              ):(
+                <>
+                  <div className="account-dropdown-header">
+                    <strong className="account-dropdown-title">Account</strong>
+                    <small className="account-dropdown-subtitle">Access your orders & wishlist</small>
+                  </div>
+                  <div className="account-dropdown-divider"/>
+                  <Link
+                    to="/account?mode=login"
+                    className="account-dropdown-item"
+                    role="menuitem"
+                    onClick={()=>setAccountOpen(false)}
+                  >
+                    <UserRound size={15}/>
+                    <span>Sign In</span>
+                  </Link>
+                  <Link
+                    to="/account?mode=register"
+                    className="account-dropdown-item"
+                    role="menuitem"
+                    onClick={()=>setAccountOpen(false)}
+                  >
+                    <Sparkles size={15}/>
+                    <span>Register</span>
+                  </Link>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+        <button className="icon" aria-label="Search jewellery" onClick={()=>setSearch(!search)}><Search size={20}/></button>
+        <Link className="icon save-nav" to="/collections/saved" aria-label="Saved pieces"><Heart size={20}/>{saved.length>0&&<i>{saved.length}</i>}</Link>
+        <button className="icon bag-icon" aria-label="Open shopping bag" onClick={()=>setBagOpen(true)}><ShoppingBag size={20}/><span>{bag.reduce((n,p)=>n+p.quantity,0)}</span></button>
+      </div>
+    </header>
+    {search&&<SearchAutocomplete onClose={()=>setSearch(false)} initialQuery={q} />}
+    {syncError&&<div className="account-sync-banner" role="alert">{syncError} <button className="underlink" onClick={()=>refreshAccount().catch(()=>{})}>Reload account</button></div>}
+  </>;
+}
 function Footer(){const {config}=useStore();return <footer><div className="footer-top"><div><Brand/><p>For the moments that become memories.</p></div><div><h4>EXPLORE</h4><Link to="/collections/all">All jewellery</Link><Link to="/coins">Gold & Silver Coins</Link><Link to="/collections/saved">Your saved pieces</Link><Link to="/bag">Shopping bag</Link><Link to="/account">My account</Link></div><div><h4>HERE TO HELP</h4><Link to="/information/shipping">Delivery & returns</Link><Link to="/information/care">Jewellery care</Link><Link to="/information/contact">Contact us</Link></div><div><h4>A NOTE FROM THE MAISON</h4><p>Beautiful things take time.<br/>Discover a collection made for yours.</p><Link to="/collections/all" className="footer-cta">Find your piece <ArrowUpRight size={17}/></Link></div></div><div className="footer-bottom"><span>© {new Date().getFullYear()} Veyora Jewels</span><span>India · INR ₹</span><Link to="/admin">Merchant studio ↗</Link></div>{config.preview&&<p className="preview-note">Design preview · Fictional catalogue and prices · Reference imagery from the Maison Perle design brief</p>}</footer>}
 function Layout({children}){return <><Header/><main>{children}</main><Footer/><BagDrawer/></>}
 function Home(){const location=useLocation();const {products,error}=useStore();const hero=useRef();const [editorialZoom,setEditorialZoom]=useState(false);useEffect(()=>{if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){const ctx=gsap.context(()=>{gsap.from('.hero-copy > *',{y:22,opacity:0,duration:1.1,stagger:.12,ease:'power2.out'});gsap.from('.hero-photo',{opacity:0,duration:1.6})},hero);return()=>ctx.revert()}},[]);const unique=grouped(products);return <Layout><HeroBanner key={location.key} heroRef={hero}/><div className="value-strip"><span><Gem size={17}/>Considered details</span><span><Heart size={17}/>Pieces to make your own</span><span><Package size={17}/>A moment worth unwrapping</span></div><section id="collections" className="section collection-section"><div className="section-heading"><div><span className="eyebrow">A WORLD OF VEYORA</span><h2>Find your <em>kind of beautiful.</em></h2></div><Link className="underlink" to="/collections/all">Explore all jewellery <ArrowUpRight size={17}/></Link></div><div className="category-grid">{[['Earrings','Lune Pearl Drop','A little movement. A lot of meaning.'],['Necklaces','Atelier Ribbon Collar','Close to your heart.'],['Rings','Eclipse Ring','Your everyday signature.'],['Bracelets','Nocturne Cuff','The finishing touch.']].map(([name,img,sub],i)=><Link className="category-card" to={'/collections/'+name.toLowerCase()} key={name}><div className="category-photo"><img loading="lazy" src={media(img)} alt={`${name} reference collection`}/><span className="category-no">0{i+1}</span><span className="round-arrow"><ArrowUpRight size={21}/></span></div><h3>{name}</h3><p>{sub}</p></Link>)}</div></section><section className="featured section"><div className="section-heading"><div><span className="eyebrow">THE PIECES YOU COME BACK TO</span><h2>Destined to be <em>your favourite.</em></h2></div><Link className="underlink" to="/collections/all">Discover the edit <ArrowUpRight size={17}/></Link></div>{error?<p className="error">{error}</p>:<div className="product-grid home-products">{unique.slice(0,4).map(p=><ProductCard key={p.sku} p={p}/>)}</div>}</section><section className="editorial"><button type="button" className="editorial-image editorial-zoom" aria-label="Zoom editorial jewellery image" onClick={()=>setEditorialZoom(true)}><img loading="lazy" src={media('Fine Jewelry Collection')} alt="Fine jewellery reference study in light and texture"/></button><div className="editorial-copy"><span className="eyebrow">LESS, BUT MORE MEANINGFUL</span><h2>Never just<br/><em>an accessory.</em></h2><p>A first chapter. An everyday ritual. A moment you want to keep close. Find the piece that becomes part of your story.</p><Link className="underlink" to="/collections/all">Meet your next heirloom <ArrowUpRight size={18}/></Link><span className="editorial-flower">✳</span></div></section><section className="closing"><span className="eyebrow">SOMETHING TO TREASURE</span><h2>Good things come in <em>little boxes.</em></h2><p>For someone you love. Including yourself.</p><Link className="button dark" to="/collections/all">Find a little wonder <ArrowUpRight size={17}/></Link></section>{editorialZoom&&<ImageViewer images={[{url:media('Fine Jewelry Collection'),alt_text:'Fine jewellery reference study in light and texture'}]} title="Veyora jewellery study" onClose={()=>setEditorialZoom(false)}/>}</Layout>}
@@ -36,44 +271,158 @@ function FestiveGridBanner({offer}){
     <Link to={offer.applies_to==='silver'?'/coins/silver':offer.applies_to==='coins'?'/coins':'/collections/all'} className="festive-banner-btn">Shop Festive Offers <ArrowRight size={14}/></Link>
   </article>;
 }
+// One information layout for jewellery, bullion and future catalogue categories.
+function CardInfo({product:p,href,specifications,price,note,action}){
+  return <div className="product-info">
+    <Link className="product-card-title" to={href} title={p.name}><h3>{p.name}</h3></Link>
+    <div className="product-card-specifications"><span>{specifications}</span>{p.image_kind==='illustration'&&<small className="illustration-note">Illustrative image</small>}</div>
+    <div className="product-card-price">{p.original_price&&p.original_price>p.price?<div className="price-row"><span className="discounted-price">{money(p.price)}</span><del className="original-price-del">{money(p.original_price)}</del>{p.discount_amount>0&&<span className="offer-save-tag">SAVE {money(p.discount_amount)}</span>}</div>:<p>{price}</p>}</div>
+    <div className="product-card-note">{note}</div>
+    <div className="product-card-actions">{action}</div>
+  </div>;
+}
 function ProductCard({p}){
   const {products,add,saved,toggleSave}=useStore();
-  const hasVariants=products.filter(product=>product.product_code===p.product_code).length>1;
-  const hasRange=p.minPrice&&p.maxPrice&&p.minPrice!==p.maxPrice;
-  const isGoldLinked=p.pricing_mode==='GOLD_LINKED';
-  const hasDiscount=Boolean(p.original_price&&p.original_price>p.price);
+  const isCoin=p.is_coin||!!p.coin_type||p.sku?.startsWith('COIN-');
+  const href=isCoin?'/coins/product/'+encodeURIComponent(p.sku):'/products/'+p.slug;
+  const hasVariants=!isCoin&&products.filter(product=>product.product_code===p.product_code).length>1;
+  const hasRange=!isCoin&&p.minPrice&&p.maxPrice&&p.minPrice!==p.maxPrice;
+  const isGoldLinked=p.pricing_mode==='GOLD_LINKED'||(isCoin&&p.pricing_mode==='METAL_LINKED');
   return <article className="product-card">
     <div className="product-photo">
-      <Link className="product-card-link" to={'/products/'+p.slug} aria-label={`View ${p.name}`}>
-        <ListingImage product={p} alt={`${p.name}, ${p.metal} ${p.purity}, ${p.finish}`}/>
+      <Link className="product-card-link" to={href} aria-label={`View ${p.name}`}>
+        <ListingImage product={p} alt={`${p.name}, ${p.metal} ${p.purity}`}/>
       </Link>
       {p.offer?.badge_text && (
         <span className="offer-ribbon-badge" title={p.offer.name}>
           <Sparkles size={10}/> {p.offer.badge_text}
         </span>
       )}
-      {isGoldLinked&&!p.offer?.badge_text&&<span className="gold-linked-badge" title="Dynamic price linked to live bullion gold rate"><Sparkles size={10}/> GOLD-LINKED RATE</span>}
-      <button className={'save-piece icon '+(saved.includes(p.product_code)?'selected':'')} aria-label={`Save ${p.name}`} aria-pressed={saved.includes(p.product_code)} onClick={()=>toggleSave(p.product_code)}><Heart size={18}/></button>
-      <span className="product-label">{p.stock===0?'CURRENTLY UNAVAILABLE':p.category==='Rings'?'YOUR EVERYDAY SIGNATURE':'THE PEARL EDIT'}</span>
+      {isGoldLinked&&!p.offer?.badge_text&&<span className="gold-linked-badge" title="Dynamic price linked to live bullion rate"><Sparkles size={10}/> {isCoin?'LIVE METAL RATE':'GOLD-LINKED RATE'}</span>}
+      {!isCoin&&<button className={'save-piece icon '+(saved.includes(p.product_code)?'selected':'')} aria-label={`Save ${p.name}`} aria-pressed={saved.includes(p.product_code)} onClick={()=>toggleSave(p.product_code)}><Heart size={18}/></button>}
+      <span className="product-label">{p.stock===0?'CURRENTLY UNAVAILABLE':isCoin?`${p.purity} ${p.metal.toUpperCase()}`:p.category==='Rings'?'YOUR EVERYDAY SIGNATURE':'THE PEARL EDIT'}</span>
     </div>
-    <div className="product-info">
-      <Link to={'/products/'+p.slug}><h3>{p.name}</h3></Link>
-      <span>{p.metal} · {p.purity} · {p.category}</span>
-      {hasDiscount ? (
-        <div className="price-row">
-          <span className="discounted-price">{money(p.price)}</span>
-          <del className="original-price-del">{money(p.original_price)}</del>
-          {p.discount_amount>0&&<span className="offer-save-tag">SAVE {money(p.discount_amount)}</span>}
-        </div>
-      ) : (
-        <p>{p.price===null?'Price awaiting rate':(hasRange?`${money(p.minPrice)} – ${money(p.maxPrice)}`:`${money(p.price)}${p.category==='Rings'?' onwards':''}`)}</p>
-      )}
-      {isGoldLinked&&<span className="gold-linked-subtext">✦ Live Gold-Linked Pricing</span>}
-      {hasVariants?<Link className="button dark product-card-cart" to={'/products/'+p.slug}>Choose options <ArrowRight size={16}/></Link>:<button type="button" className="button dark product-card-cart" disabled={!p.checkout_available} onClick={()=>add(p)}>{p.checkout_available?'Add to cart':p.stock===0?'Out of stock':'Currently unavailable'}<ShoppingBag size={16}/></button>}
-    </div>
+    <CardInfo product={p} href={href}
+      specifications={isCoin?`${p.weight_g}g · ${p.purity} ${p.metal}${p.dimension?` · ${p.dimension}`:''}`:`${p.metal} · ${p.purity} · ${p.category}`}
+      price={p.price===null?'Price awaiting rate':(hasRange?`${money(p.minPrice)} – ${money(p.maxPrice)}`:`${money(p.price)}${p.category==='Rings'?' onwards':''}`)}
+      note={isGoldLinked&&<span className="gold-linked-subtext">✦ Live {isCoin?'Metal':'Gold'}-Linked Pricing</span>}
+      action={hasVariants?<Link className="button dark product-card-cart" to={href}>Choose options <ArrowRight size={16}/></Link>:<button type="button" className="button dark product-card-cart" disabled={!p.checkout_available} onClick={()=>add(isCoin?{sku:p.sku,name:p.name,image:p.image,price:p.price,stock:p.stock,size:`${p.weight_g}g (${p.purity})`,slug:'coins'}:p)}>{p.checkout_available?'Add to cart':p.stock===0?'Out of stock':'Currently unavailable'}<ShoppingBag size={16}/></button>}/>
+
   </article>;
 }
-function Collection(){const {category='all'}=useParams();const {products,saved,offers=[],error,accountReady,refreshCatalogue}=useStore();const [params,setParams]=useSearchParams();const [filters,setFilters]=useState(false);const [visible,setVisible]=useState(24);useEffect(()=>setVisible(24),[category,params.toString()]);const listRef=useRef();useEffect(()=>{document.title=`${category==='all'?'All jewellery':category} | Veyora Jewels`;if(!matchMedia('(prefers-reduced-motion: reduce)').matches)gsap.fromTo(listRef.current,{opacity:0,y:10},{opacity:1,y:0,duration:.5});const key='scroll:'+location.pathname+location.search;requestAnimationFrame(()=>window.scrollTo(0,Number(sessionStorage.getItem(key)||0)));const save=()=>sessionStorage.setItem(key,String(window.scrollY));window.addEventListener('scroll',save);return()=>window.removeEventListener('scroll',save)},[category,params.toString()]);const update=(k,v)=>{const next=new URLSearchParams(params);v?next.set(k,v):next.delete(k);setParams(next,{replace:true})};const q=params.get('q')||'';let items=grouped(products.filter(p=>(['all','pearls','saved'].includes(category)||p.category.toLowerCase()===category)&&(category!=='saved'||saved.includes(p.product_code)))).filter(p=>(p.name+' '+p.description).toLowerCase().includes(q.toLowerCase())&&(!params.get('purity')||p.purity===params.get('purity'))&&(!params.get('stock')||p.stock>0)&&matchPrice(p.price,params.get('price')));if(params.get('sort')==='price-asc')items.sort((a,b)=>a.price-b.price);if(params.get('sort')==='price-desc')items.sort((a,b)=>b.price-a.price);const title={all:'The jewellery collection',pearls:'The Pearl Edit',saved:'Your saved pieces'}[category]||category;const gridOffer=offers.find(o=>o.show_in_grid)||offers[0];return <Layout><div className="collection-intro"><span className="eyebrow">THE VEYORA COLLECTIONS</span><h1>{title}</h1><p>Considered pieces. Quiet statements. Endlessly you.</p><div className="collection-tabs">{['all','earrings','necklaces','rings','bracelets'].map(c=><Link className={category===c?'active':''} key={c} to={'/collections/'+c}>{c==='all'?'All jewellery':c}</Link>)}</div><div className="price-bracket-bar" role="group" aria-label="Filter by price bracket"><span className="price-bracket-title">Price:</span>{priceBrackets.map(b=><button key={b.value} type="button" className={'price-bracket-pill '+((params.get('price')||'')===b.value?'active':'')} onClick={()=>update('price',b.value)} aria-pressed={(params.get('price')||'')===b.value}>{b.label}</button>)}</div></div><section className="section catalogue" ref={listRef}><div className="filter-toolbar"><button className="text-button" onClick={()=>setFilters(!filters)}><SlidersHorizontal size={16}/> Filter & refine {params.size>0&&`(${params.size})`}</button><span>{items.length} pieces</span><label>Sort by <select aria-label="Sort products" value={params.get('sort')||'featured'} onChange={e=>update('sort',e.target.value)}><option value="featured">Featured</option><option value="price-asc">Price: low to high</option><option value="price-desc">Price: high to low</option></select></label></div>{filters&&<div className="filters"><label>Search<input placeholder="Search the collection" value={q} onChange={e=>update('q',e.target.value)}/></label><label>Purity<select value={params.get('purity')||''} onChange={e=>update('purity',e.target.value)}><option value="">All purities</option><option>18K</option><option>22K</option><option>925</option></select></label><label>Price bracket<select value={params.get('price')||''} onChange={e=>update('price',e.target.value)}>{priceBrackets.map(b=><option key={b.value} value={b.value}>{b.label}</option>)}</select></label><label className="checkbox"><input type="checkbox" checked={!!params.get('stock')} onChange={e=>update('stock',e.target.checked?'1':'')}/> In stock only</label><button className="text-button" onClick={()=>setParams({})}>Clear all</button></div>}{error?<div className="empty"><p className="error" role="alert">{error}</p><button className="underlink" onClick={()=>refreshCatalogue().catch(()=>{})}>Try again</button></div>:!accountReady?<p className="empty" role="status">Loading jewellery…</p>:items.length?<><div className="product-grid">{items.slice(0,visible).map((p,idx)=><React.Fragment key={p.sku}>{idx===2&&gridOffer&&<FestiveGridBanner offer={gridOffer}/>}<ProductCard p={p}/></React.Fragment>)}</div>{items.length>visible&&<div className="load-more"><button className="button dark" onClick={()=>setVisible(n=>n+24)}>Load more ({items.length-visible} remaining)</button></div>}</>:<div className="empty"><Gem/><h2>No pieces found</h2><p>Try another filter, or explore the full collection.</p><Link className="button dark" to="/collections/all">Explore all jewellery</Link></div>}</section></Layout>}
+function Collection(){
+  const {category='all'}=useParams();
+  const {products,coins=[],saved,offers=[],error,accountReady,refreshCatalogue}=useStore();
+  const [params,setParams]=useSearchParams();
+  const [filters,setFilters]=useState(false);
+  const [visible,setVisible]=useState(24);
+  useEffect(()=>setVisible(24),[category,params.toString()]);
+  const listRef=useRef();
+  const q=params.get('q')||'';
+  useEffect(()=>{
+    document.title=`${q?`Search: “${q}”`:category==='all'?'All jewellery':category==='pearls'?'The Pearl Edit':category} | Veyora Jewels`;
+    if(!matchMedia('(prefers-reduced-motion: reduce)').matches)gsap.fromTo(listRef.current,{opacity:0,y:10},{opacity:1,y:0,duration:.5});
+    const key='scroll:'+location.pathname+location.search;
+    requestAnimationFrame(()=>window.scrollTo(0,Number(sessionStorage.getItem(key)||0)));
+    const save=()=>sessionStorage.setItem(key,String(window.scrollY));
+    window.addEventListener('scroll',save);
+    return()=>window.removeEventListener('scroll',save);
+  },[category,params.toString()]);
+
+  const update=(k,v)=>{const next=new URLSearchParams(params);v?next.set(k,v):next.delete(k);setParams(next,{replace:true})};
+  const cleanQ=q.trim().toLowerCase();
+  const qTokens=cleanQ.split(/\s+/).filter(Boolean);
+
+  function matchesSearch(item, isCoin) {
+    if(!cleanQ)return true;
+    const name=(item.name||'').toLowerCase();
+    const cat=(item.category||item.coin_type||'').toLowerCase();
+    const sku=(item.sku||'').toLowerCase();
+    const metal=(item.metal||'').toLowerCase();
+    const purity=(item.purity||'').toLowerCase();
+    const desc=(item.description||'').toLowerCase();
+    const weight=isCoin?`${item.weight_g}g ${item.weight_g} gram ${item.weight_g} grams`:(item.net_weight_g?`${item.net_weight_g}g`:'');
+    const fullText=`${name} ${cat} ${sku} ${metal} ${purity} ${weight} ${desc}`;
+
+    return qTokens.every(t=>{
+      const mapped = {
+        peral: 'pearl', perals: 'pearl', perl: 'pearl',
+        neclace: 'necklace', neckless: 'necklace',
+        earings: 'earrings', erring: 'earrings',
+        braclet: 'bracelet', barcelet: 'bracelet',
+        silvr: 'silver', gld: 'gold', laxmi: 'lakshmi',
+        nocturn: 'nocturne', eclise: 'eclipse'
+      }[t] || t;
+      return fullText.includes(t) || fullText.includes(mapped);
+    });
+  }
+
+  const jewelleryItems=grouped(products.filter(p=>(['all','pearls','saved'].includes(category)||p.category.toLowerCase()===category)&&(category!=='saved'||saved.includes(p.product_code))));
+  const coinItems=(coins||[]).map(c=>({...c,is_coin:true}));
+
+  const baseList=q
+    ?(category==='all'?[...jewelleryItems,...coinItems]:jewelleryItems)
+    :jewelleryItems;
+
+  let items=baseList.filter(p=>matchesSearch(p,p.is_coin)&&(!params.get('purity')||p.purity===params.get('purity'))&&(!params.get('stock')||p.stock>0)&&matchPrice(p.price,params.get('price')));
+  if(params.get('sort')==='price-asc')items.sort((a,b)=>a.price-b.price);
+  if(params.get('sort')==='price-desc')items.sort((a,b)=>b.price-a.price);
+  const title=q?`Search results for “${q}”`:({all:'The jewellery collection',pearls:'The Pearl Edit',saved:'Your saved pieces'}[category]||category);
+  const gridOffer=offers.find(o=>o.show_in_grid)||offers[0];
+
+  return <Layout>
+    <div className="collection-intro">
+      <span className="eyebrow">{q?`FOUND ${items.length} MATCHING PIECES`:'THE VEYORA COLLECTIONS'}</span>
+      <h1>{title}</h1>
+      <p>{q?`Showing jewellery and certified minted coins matching “${q}”.`:'Considered pieces. Quiet statements. Endlessly you.'}</p>
+      <div className="collection-tabs">
+        <Link className={category==='all'?'active':''} to="/collections/all">All jewellery</Link>
+        <Link className={category==='pearls'?'active':''} to="/collections/pearls">The Pearl Edit</Link>
+        <Link className={category==='earrings'?'active':''} to="/collections/earrings">Earrings</Link>
+        <Link className={category==='necklaces'?'active':''} to="/collections/necklaces">Necklaces</Link>
+        <Link className={category==='rings'?'active':''} to="/collections/rings">Rings</Link>
+        <Link className={category==='bracelets'?'active':''} to="/collections/bracelets">Bracelets</Link>
+        <Link to="/coins">Coins</Link>
+        {category==='saved'&&<Link className="active" to="/collections/saved">Saved pieces ({saved.length})</Link>}
+      </div>
+      <div className="price-bracket-bar" role="group" aria-label="Filter by price bracket">
+        <span className="price-bracket-title">Price:</span>
+        {priceBrackets.map(b=>{
+          const isActive=(params.get('price')||'')===b.value;
+          return <button key={b.value} type="button" className={'price-bracket-pill '+(isActive?'active':'')} onClick={()=>update('price',isActive&&b.value?'':b.value)} aria-pressed={isActive}>{b.label}</button>;
+        })}
+      </div>
+    </div>
+    <section className="section catalogue" ref={listRef}>
+      <div className="filter-toolbar">
+        <button className="text-button" onClick={()=>setFilters(!filters)}>
+          <SlidersHorizontal size={16}/> Filter & refine {params.size>0&&`(${params.size})`}
+        </button>
+        <span>{items.length} pieces</span>
+        <label>Sort by <select aria-label="Sort products" value={params.get('sort')||'featured'} onChange={e=>update('sort',e.target.value)}>
+          <option value="featured">Featured</option>
+          <option value="price-asc">Price: low to high</option>
+          <option value="price-desc">Price: high to low</option>
+        </select></label>
+      </div>
+      {params.size>0&&<div className="active-filters-row">
+        {params.get('q')&&<button className="active-filter-chip" onClick={()=>update('q','')}>Search: “{params.get('q')}” <X size={12}/></button>}
+        {params.get('purity')&&<button className="active-filter-chip" onClick={()=>update('purity','')}>Purity: {params.get('purity')} <X size={12}/></button>}
+        {params.get('price')&&<button className="active-filter-chip" onClick={()=>update('price','')}>Price: {priceBrackets.find(p=>p.value===params.get('price'))?.label||params.get('price')} <X size={12}/></button>}
+        {params.get('stock')&&<button className="active-filter-chip" onClick={()=>update('stock','')}>In stock only <X size={12}/></button>}
+        <button className="underlink" style={{fontSize:'10px',padding:0}} onClick={()=>setParams({})}>Clear all</button>
+      </div>}
+      {filters&&<div className="filters">
+        <label>Search<input placeholder="Search the collection" value={q} onChange={e=>update('q',e.target.value)}/></label>
+        <label>Purity<select value={params.get('purity')||''} onChange={e=>update('purity',e.target.value)}><option value="">All purities</option><option>18K</option><option>22K</option><option>925</option></select></label>
+        <label>Price bracket<select value={params.get('price')||''} onChange={e=>update('price',e.target.value)}>{priceBrackets.map(b=><option key={b.value} value={b.value}>{b.label}</option>)}</select></label>
+        <label className="checkbox"><input type="checkbox" checked={!!params.get('stock')} onChange={e=>update('stock',e.target.checked?'1':'')}/> In stock only</label>
+        <button className="text-button" onClick={()=>setParams({})}>Clear all</button>
+      </div>}
+      {error?<div className="empty"><p className="error" role="alert">{error}</p><button className="underlink" onClick={()=>refreshCatalogue().catch(()=>{})}>Try again</button></div>:!accountReady?<p className="empty" role="status">Loading jewellery…</p>:items.length?<><div className="product-grid">{items.slice(0,visible).map((p,idx)=><React.Fragment key={p.sku}>{idx===2&&gridOffer&&<FestiveGridBanner offer={gridOffer}/>}<ProductCard p={p}/></React.Fragment>)}</div>{items.length>visible&&<div className="load-more"><button className="button dark" onClick={()=>setVisible(n=>n+24)}>Load more ({items.length-visible} remaining)</button></div>}</>:<div className="empty"><Gem size={36}/><h2>No pieces found</h2><p>Try clearing your filters or exploring our full jewellery catalogue.</p><div style={{display:'flex',gap:'12px',justifyContent:'center',flexWrap:'wrap',marginTop:'18px'}}>{params.size>0&&<button className="button dark" onClick={()=>setParams({})}>Clear all filters</button>}<Link className="button secondary" to="/collections/all">Explore all jewellery</Link></div></div>}
+    </section>
+  </Layout>;
+}
 function Modal({title,children,onClose}){const el=useRef();useEffect(()=>{const prev=document.activeElement;el.current?.focus();const key=e=>{if(!el.current?.contains(document.activeElement))return;if(e.key==='Escape')onClose();if(e.key==='Tab'){const nodes=el.current.querySelectorAll('button:not([disabled]),a[href],input:not([disabled]):not([type="hidden"]),select:not([disabled]),textarea:not([disabled])');const first=nodes[0],last=nodes[nodes.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}}};document.addEventListener('keydown',key);const old=document.body.style.overflow;document.body.style.overflow='hidden';return()=>{document.removeEventListener('keydown',key);document.body.style.overflow=old;prev?.focus()}},[]);return <div className="modal-backdrop" onClick={onClose}><section ref={el} tabIndex={-1} role="dialog" aria-modal="true" aria-label={title} className="modal" onClick={e=>e.stopPropagation()}><div className="modal-heading"><h2>{title}</h2><button className="icon" aria-label="Close dialog" onClick={onClose}><X/></button></div>{children}</section></div>}
 function StructuredProduct({p}){const data={"@context":"https://schema.org","@type":"Product",name:p.name,description:p.description,image:p.image,sku:p.sku,material:p.metal,brand:{"@type":"Brand",name:"Veyora Jewels"},offers:{"@type":"Offer",priceCurrency:"INR",price:p.price,availability:"https://schema.org/"+(p.checkout_available?'InStock':'OutOfStock'),url:window.location.href}};return <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(data).replace(/</g,'\\u003c')}}/>}
 function Product(){
@@ -87,18 +436,128 @@ function Product(){
   useEffect(()=>{if(p)document.title=p.name+' | Veyora Jewels'},[p?.name]);
   if(!p)return <Layout><div className="empty"><h1>{!accountReady?'Finding your piece…':error?'Could not load this piece':'Piece not found'}</h1>{error&&<><p className="error" role="alert">{error}</p><button className="underlink" onClick={()=>refreshCatalogue().catch(()=>{})}>Try again</button></>}<Link to="/collections/all">Back to collection</Link></div></Layout>;
 
-  const angleImages=(p.images&&p.images.length>0)?p.images:(p.image?[{id:'default',role:'hero',url:p.image,alt_text:p.name}]:[]);
-  const activeImage=selectedImage||angleImages[0]?.url||p.image;
+  const photos=galleryPhotos(p.images);
+  const angleImages=photos.length?photos:galleryPhotos([{id:'default',role:'hero',url:p.image,alt_text:p.name}]);
+  const activeImage=angleImages.find(img=>img.url===selectedImage)?.url||angleImages[0]?.url||imageFallback;
 
-  return <Layout><StructuredProduct p={p}/><div className="breadcrumbs section"><Link to="/collections/all">Jewellery</Link><span>/</span><Link to={'/collections/'+p.category.toLowerCase()}>{p.category}</Link><span>/</span><span>{p.name}</span></div><section className="product-detail section"><div className="detail-gallery"><button aria-label="Zoom product photograph" className="detail-image" onClick={()=>setZoom(true)} style={{position:'relative'}}>{p.offer?.badge_text&&<span className="offer-ribbon-badge">{p.offer.badge_text}</span>}<img src={activeImage} alt={`${p.name}, ${p.size}, ${p.purity} ${p.metal}`}/>{p.pricing_mode==='GOLD_LINKED'&&!p.offer?.badge_text&&<span className="gold-linked-badge"><Sparkles size={11}/> LIVE GOLD-LINKED RATE</span>}<span><Plus size={16}/> Click to explore</span></button>{angleImages.length>1&&<div className="product-angle-gallery" role="group" aria-label="Product angle views">{angleImages.map((img,idx)=>{const isSelected=activeImage===img.url;const roleLabels={hero:'Hero Shot',front:'Front Angle',left:'Left View',right:'Right View',model:'Model Shot',detail:'Detail'};const label=roleLabels[img.role]||img.role;return <button key={img.id||idx} type="button" className={'angle-thumb-btn '+(isSelected?'active':'')} onClick={()=>setSelectedImage(img.url)} aria-label={`View ${label}`} title={label}><img src={img.url} alt={img.alt_text||`${p.name} ${label}`}/><span className="angle-label">{img.role}</span></button>;})}</div>}<p className="caption">{angleImages.length>1?'MULTI-ANGLE PHOTOGRAPHY · PREVIEW CATALOGUE':'PRODUCT IMAGE · PREVIEW CATALOGUE'}</p></div><div className="detail-copy"><span className="eyebrow">THE PEARL EDIT</span><h1>{p.name}</h1><p className="material-line">{p.purity} {p.metal} · {p.finish} finish</p><div className="detail-price">{p.original_price&&p.original_price>p.price?<div className="price-row" style={{alignItems:'baseline',gap:'10px',margin:0}}><span className="discounted-price" style={{fontSize:'26px'}}>{money(p.price)}</span><del className="original-price-del" style={{fontSize:'16px'}}>{money(p.original_price)}</del>{p.discount_amount>0&&<span className="offer-save-tag">SAVE {money(p.discount_amount)}</span>}</div>:p.price===null?'Awaiting approved rate':money(p.price)}</div>{p.offer&&<div style={{marginTop:'8px',display:'flex',alignItems:'center',gap:'8px',flexWrap:'wrap'}}><span className="offer-ribbon-badge" style={{position:'static',clipPath:'none',borderRadius:'2px',padding:'4px 10px',fontSize:'10px',boxShadow:'none'}}>✦ {p.offer.name}: {p.offer.badge_text}</span>{p.offer.code&&<span className="status-badge" style={{fontSize:'9px'}}>CODE: {p.offer.code}</span>}</div>}{p.pricing_mode==='GOLD_LINKED'&&<div style={{marginTop:'6px'}}><span className="gold-linked-pill"><Sparkles size={12}/> Live Gold-Linked Rate</span></div>}<p className="small muted">Preview price · Shipping calculated before payment</p><p className="detail-description">{p.description}</p><div className="size-label"><label htmlFor="size">{p.category==='Rings'?'Ring size':'Size / length'}</label><button className="underlink" onClick={()=>setGuide(true)}>Size guide ↗</button></div><select id="size" value={p.sku} onChange={e=>setSku(e.target.value)}>{variants.map(v=><option value={v.sku} key={v.sku}>{v.size}{v.stock===0?' — Out of stock':''}</option>)}</select><p className={'stock '+(!p.checkout_available?'unavailable':'')}><span/>{p.stock===0?'Currently out of stock':!p.checkout_available?'Awaiting a fresh verified gold rate':`${p.stock} available · Ready for your next chapter`}</p><div className="add-row"><button className="button dark" disabled={!p.checkout_available} onClick={()=>add(p)}>{p.checkout_available?'Add to cart':'Currently unavailable'}<ShoppingBag size={18}/></button><button className="wishlist-button" aria-label="Save piece" aria-pressed={saved.includes(p.product_code)} onClick={()=>toggleSave(p.product_code)}><Heart fill={saved.includes(p.product_code)?'currentColor':'none'} size={20}/></button></div><dl className="specs"><div><dt>Metal & purity</dt><dd>{p.metal}, {p.purity}</dd></div><div><dt>Net metal weight</dt><dd>{Number(p.net_weight_g).toFixed(3)} g</dd></div><div><dt>Size / finish</dt><dd>{p.size} / {p.finish}</dd></div><div><dt>SKU</dt><dd>{p.sku}</dd></div></dl><details><summary>Price details <Plus size={15}/></summary>{p.breakdown?.mode==='GOLD_LINKED'?<div className="breakdown">{[['Metal value',p.breakdown.metal],p.breakdown.original_making!==undefined&&p.breakdown.original_making!==p.breakdown.making?['Original making charges',p.breakdown.original_making]:null,p.breakdown.discount_amount>0?['Festive offer savings',-p.breakdown.discount_amount]:null,['Making charges'+(p.offer?' (discounted)':''),p.breakdown.making],['Stone charges',p.breakdown.stone],['Other charges',p.breakdown.other],['Margin',p.breakdown.margin||0],['Tax',p.breakdown.tax]].filter(Boolean).map(([l,v])=><p key={l} style={v<0?{color:'#2e7d32',fontWeight:600}:{}}><span>{l}</span>{v<0?`-${money(Math.abs(v))}`:money(v)}</p>)}{p.offer&&<p className="small" style={{color:'#b7791f',fontWeight:600,marginTop:'8px'}}>✦ Applied offer: {p.offer.name} ({p.offer.badge_text})</p>}<p className="small">Rate: {money(p.breakdown.rate)}/g · {p.breakdown.rate_date}</p></div>:<p>Merchant selling price {money(p.fixed_price)} + margin {money(p.breakdown?.margin||0)}{p.breakdown?.discount_amount>0?` − offer ${money(p.breakdown.discount_amount)}`:''}. Gold-rate changes do not change this fixed base price.</p>}</details><details><summary>Delivery & returns <Plus size={15}/></summary><p>Delivery and return policies are awaiting merchant details. <Link to="/information/shipping">View current information</Link>.</p></details></div></section>{guide&&<Modal title="Find your fit" onClose={()=>setGuide(false)}><p>For a ring, measure the inside diameter of a comfortable ring. These are general reference sizes; confirm the final merchant sizing chart before ordering.</p><table><thead><tr><th>Indian size</th><th>Inside diameter</th></tr></thead><tbody><tr><td>12</td><td>16.5 mm</td></tr><tr><td>14</td><td>17.2 mm</td></tr></tbody></table><p>For necklaces, use a soft tape to check the listed length. Cuff sizing requires the merchant’s wrist measurements.</p></Modal>}{zoom&&<ImageViewer images={angleImages} index={Math.max(0,angleImages.findIndex(i=>i.url===activeImage))} title={p.name} onClose={()=>setZoom(false)}/>}</Layout>}
+  return <Layout><StructuredProduct p={p}/><div className="breadcrumbs section"><Link to="/collections/all">Jewellery</Link><span>/</span><Link to={'/collections/'+p.category.toLowerCase()}>{p.category}</Link><span>/</span><span>{p.name}</span></div><section className="product-detail section"><div className="detail-gallery"><button aria-label="Zoom product photograph" className="detail-image" onClick={()=>setZoom(true)} style={{position:'relative'}}><img onError={e=>{if(e.currentTarget.getAttribute('src')!==imageFallback)e.currentTarget.src=imageFallback}} src={activeImage} alt={`${p.name}, ${p.size}, ${p.purity} ${p.metal}`}/><span><Plus size={16}/> Click to explore</span></button>{angleImages.length>1&&<div className="product-angle-gallery" role="group" aria-label="Product angle views">{angleImages.map((img,idx)=>{const isSelected=activeImage===img.url;const roleLabels={hero:'Hero Shot',front:'Front Angle',left:'Left View',right:'Right View',modal:'Macro Detail',model:'Model Shot',detail:'Detail'};const label=roleLabels[img.role]||img.role;return <button key={img.id||idx} type="button" className={'angle-thumb-btn '+(isSelected?'active':'')} onClick={()=>setSelectedImage(img.url)} aria-pressed={isSelected} aria-label={`View ${label}`} title={label}><img loading="lazy" src={listingThumbnail({image:img.url})} alt={img.alt_text||`${p.name} ${label}`}/><span className="angle-label">{img.role}</span></button>;})}</div>}<p className="caption">{angleImages.length>1?'MULTI-ANGLE PHOTOGRAPHY · PREVIEW CATALOGUE':'PRODUCT IMAGE · PREVIEW CATALOGUE'}</p></div><div className="detail-copy"><span className="eyebrow">THE PEARL EDIT</span><h1>{p.name}</h1><p className="material-line">{p.purity} {p.metal} · {p.finish} finish</p><div className="detail-price">{p.original_price&&p.original_price>p.price?<div className="price-row" style={{alignItems:'baseline',gap:'10px',margin:0}}><span className="discounted-price" style={{fontSize:'26px'}}>{money(p.price)}</span><del className="original-price-del" style={{fontSize:'16px'}}>{money(p.original_price)}</del>{p.discount_amount>0&&<span className="offer-save-tag">SAVE {money(p.discount_amount)}</span>}</div>:p.price===null?'Awaiting approved rate':money(p.price)}</div>{p.offer&&<div style={{marginTop:'8px',display:'flex',alignItems:'center',gap:'8px',flexWrap:'wrap'}}><span className="offer-ribbon-badge" style={{position:'static',clipPath:'none',borderRadius:'2px',padding:'4px 10px',fontSize:'10px',boxShadow:'none'}}>✦ {p.offer.name}: {p.offer.badge_text}</span>{p.offer.code&&<span className="status-badge" style={{fontSize:'9px'}}>CODE: {p.offer.code}</span>}</div>}{p.pricing_mode==='GOLD_LINKED'&&<div style={{marginTop:'6px'}}><span className="gold-linked-pill"><Sparkles size={12}/> Live Gold-Linked Rate</span></div>}<p className="small muted">Preview price · Shipping calculated before payment</p><p className="detail-description">{p.description}</p><div className="size-label"><label htmlFor="size">{p.category==='Rings'?'Ring size':'Size / length'}</label><button className="underlink" onClick={()=>setGuide(true)}>Size guide ↗</button></div><select id="size" value={p.sku} onChange={e=>setSku(e.target.value)}>{variants.map(v=><option value={v.sku} key={v.sku}>{v.size}{v.stock===0?' — Out of stock':''}</option>)}</select><p className={'stock '+(!p.checkout_available?'unavailable':'')}><span/>{p.stock===0?'Currently out of stock':!p.checkout_available?'Awaiting a fresh verified gold rate':`${p.stock} available · Ready for your next chapter`}</p><div className="add-row"><button className="button dark" disabled={!p.checkout_available} onClick={()=>add(p)}>{p.checkout_available?'Add to cart':p.stock===0?'Out of stock':'Currently unavailable'}<ShoppingBag size={18}/></button><button className={'wishlist-button '+(saved.includes(p.product_code)?'selected':'')} aria-label={saved.includes(p.product_code)?`Remove ${p.name} from saved`:`Save ${p.name}`} aria-pressed={saved.includes(p.product_code)} onClick={()=>toggleSave(p.product_code)}><Heart fill={saved.includes(p.product_code)?'currentColor':'none'} size={20}/></button></div><dl className="specs"><div><dt>Metal & purity</dt><dd>{p.metal}, {p.purity}</dd></div><div><dt>Net metal weight</dt><dd>{Number(p.net_weight_g).toFixed(3)} g</dd></div><div><dt>Size / finish</dt><dd>{p.size} / {p.finish}</dd></div><div><dt>SKU</dt><dd>{p.sku}</dd></div></dl><details><summary>Price details <Plus size={15}/></summary>{p.breakdown?.mode==='GOLD_LINKED'?<div className="breakdown">{[['Metal value',p.breakdown.metal],p.breakdown.original_making!==undefined&&p.breakdown.original_making!==p.breakdown.making?['Original making charges',p.breakdown.original_making]:null,p.breakdown.discount_amount>0?['Festive offer savings',-p.breakdown.discount_amount]:null,['Making charges'+(p.offer?' (discounted)':''),p.breakdown.making],['Stone charges',p.breakdown.stone],['Other charges',p.breakdown.other],['Margin',p.breakdown.margin||0],['Tax',p.breakdown.tax]].filter(Boolean).map(([l,v])=><p key={l} style={v<0?{color:'#2e7d32',fontWeight:600}:{}}><span>{l}</span>{v<0?`-${money(Math.abs(v))}`:money(v)}</p>)}{p.offer&&<p className="small" style={{color:'#b7791f',fontWeight:600,marginTop:'8px'}}>✦ Applied offer: {p.offer.name} ({p.offer.badge_text})</p>}<p className="small">Rate: {money(p.breakdown.rate)}/g · {p.breakdown.rate_date}</p></div>:<p>Merchant selling price {money(p.fixed_price)} + margin {money(p.breakdown?.margin||0)}{p.breakdown?.discount_amount>0?` − offer ${money(p.breakdown.discount_amount)}`:''}. Gold-rate changes do not change this fixed base price.</p>}</details><details><summary>Delivery & returns <Plus size={15}/></summary><p>Delivery and return policies are awaiting merchant details. <Link to="/information/shipping">View current information</Link>.</p></details></div></section>{guide&&<Modal title="Find your fit" onClose={()=>setGuide(false)}><p>For a ring, measure the inside diameter of a comfortable ring. These are general reference sizes; confirm the final merchant sizing chart before ordering.</p><table><thead><tr><th>Indian size</th><th>Inside diameter</th></tr></thead><tbody><tr><td>12</td><td>16.5 mm</td></tr><tr><td>14</td><td>17.2 mm</td></tr></tbody></table><p>For necklaces, use a soft tape to check the listed length. Cuff sizing requires the merchant’s wrist measurements.</p></Modal>}{zoom&&<ImageViewer images={angleImages} index={Math.max(0,angleImages.findIndex(i=>i.url===activeImage))} title={p.name} onClose={()=>setZoom(false)}/>}</Layout>}
 function BagLines(){const {bag,setBag,setBagOpen}=useStore();const change=(sku,n)=>setBag(b=>b.map(p=>p.sku===sku?{...p,quantity:p.quantity+n}:p).filter(p=>p.quantity>0));return bag.map(p=><div className="bag-line" key={p.sku}><Link onClick={()=>setBagOpen(false)} to={(p.slug==='coins'||p.kind==='coin'||p.sku?.startsWith('COIN-'))?'/coins/product/'+encodeURIComponent(p.sku):'/products/'+(p.slug||p.sku)}><img src={coinImage(p.image,true)} alt={p.name}/></Link><div><h3>{p.name}</h3><p>{p.size} · {p.sku}</p><strong>{p.price==null?'Price awaiting rate':money(p.price)}</strong>{p.unavailable&&<p className="error">Currently unavailable. Remove this piece to continue.</p>}<div className="quantity"><button aria-label={`Remove one ${p.name}`} onClick={()=>change(p.sku,-1)}><Minus size={13}/></button><span>{p.quantity}</span><button aria-label={`Add one ${p.name}`} onClick={()=>change(p.sku,1)} disabled={p.quantity>=Math.min(20,p.stock??20)||p.unavailable}><Plus size={13}/></button><button className="remove" onClick={()=>setBag(b=>b.filter(x=>x.sku!==p.sku))}>Remove</button></div></div></div>)}
 function BagDrawer(){const {bagOpen,setBagOpen,bag}=useStore();const nav=useNavigate();if(!bagOpen)return null;return <Modal title={`Your bag (${bag.reduce((n,p)=>n+p.quantity,0)})`} onClose={()=>setBagOpen(false)}>{bag.length?<><BagLines/><div className="summary-line"><span>Estimated subtotal</span><strong>{money(bag.reduce((n,p)=>n+p.price*p.quantity,0))}</strong></div><p className="small muted">Current price, availability and delivery charges are checked at checkout.</p><button className="button dark full" onClick={()=>{setBagOpen(false);nav('/checkout')}}>Continue to checkout <ArrowRight size={17}/></button><button className="text-button full" onClick={()=>{setBagOpen(false);nav('/collections/all')}}>Continue discovering</button></>:<div className="empty"><ShoppingBag size={32}/><h3>A little room for wonder.</h3><p>Your bag is waiting for something special.</p><button className="button dark" onClick={()=>{setBagOpen(false);nav('/collections/all')}}>Explore the collection</button></div>}</Modal>}
-function Bag(){const {bag}=useStore();return <Layout><section className="section bag-page"><span className="eyebrow">YOUR LITTLE TREASURES</span><h1>The shopping bag</h1>{bag.length?<><BagLines/><Link className="button dark" to="/checkout">Continue to checkout <ArrowRight size={17}/></Link></>:<div className="empty"><p>Your bag is empty.</p><Link className="button dark" to="/collections/all">Find your piece</Link></div>}</section></Layout>}
-function Checkout(){const {bag,setBag,config,customer,flushAccount,afterCheckout}=useStore();const [quote,setQuote]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[accepted,setAccepted]=useState(false),[changed,setChanged]=useState(false),[testFailure,setTestFailure]=useState(false);const key=useRef(crypto.randomUUID());const nav=useNavigate();useEffect(()=>{let active=true;setAccepted(false);setQuote(null);setError('');if(bag.length)api('/quote',{items:bag.map(({sku,quantity})=>({sku,quantity}))}).then(q=>{if(active)setQuote(q)}).catch(e=>{if(active)setError(e.message)});return()=>{active=false}},[bag]);async function pay(e){e.preventDefault();if(!accepted||!quote)return;setBusy(true);setError('');if(testFailure){setError('Test payment declined. Your bag is saved. Untick the test failure option to retry.');setBusy(false);return;}const customer=Object.fromEntries(new FormData(e.target));try{await flushAccount();const r=await api('/checkout',{items:bag.map(({sku,quantity})=>({sku,quantity})),token:quote.token,customer,idempotencyKey:key.current});await afterCheckout();nav('/order/'+r.id);}catch(e){setError(e.message);if(e.quote){setQuote(e.quote);setChanged(true);setAccepted(false)}}finally{setBusy(false)}}return <Layout><section className="section checkout-page"><Link className="underlink" to="/bag"><ArrowLeft size={15}/> Back to bag</Link><div className="section-heading"><div><span className="eyebrow">ONE STEP CLOSER</span><h1>A little wonder, on its way.</h1></div><span className="test-badge">TEST CHECKOUT · NO MONEY COLLECTED</span></div>{!bag.length?<div className="empty"><p>Your bag is empty.</p><Link to="/collections/all">Explore jewellery</Link></div>:<div className="checkout-grid"><form onSubmit={pay}><h3>Contact & delivery</h3>{customer?<p className="checkout-account-note">Signed in as {customer.email} · This order will appear in your account.</p>:<p className="checkout-account-note"><Link to="/account">Sign in or create an account</Link> to keep your order history. Guest checkout is also available.</p>}<div className="form-grid">{[['name','Full name','text'],['email','Email address','email'],['phone','Mobile number','tel'],['pincode','PIN code','text'],['address','Address','text'],['city','City','text']].map(([name,label,type])=><label key={name} className={name==='address'?'span-two':''}>{label}<input name={name} type={type} defaultValue={name==='name'?customer?.name:name==='email'?customer?.email:undefined} autoComplete={{name:'name',email:'email',phone:'tel',pincode:'postal-code',address:'street-address',city:'address-level2'}[name]} required maxLength={name==='phone'?10:name==='pincode'?6:200} pattern={name==='phone'?'[0-9]{10}':name==='pincode'?'[0-9]{6}':undefined}/></label>)}</div><div className="checkout-note"><ShieldCheck size={20}/><p>This is a simulated payment. No card or bank details are requested. Delivery and returns are awaiting merchant configuration.</p></div><label className="checkbox"><input type="checkbox" checked={testFailure} onChange={e=>setTestFailure(e.target.checked)}/> Simulate a failed test payment</label>{changed&&<div className="notice">The price changed. Review the updated order summary before accepting.</div>}<label className="checkbox consent"><input type="checkbox" disabled={!quote} checked={accepted} onChange={e=>setAccepted(e.target.checked)} required/>{quote?`I accept the displayed total of ${money(quote.total)} for this test order.`:'Waiting for a current order total…'}</label>{error&&<p className="error" role="alert">{error}</p>}<button className="button dark full" disabled={busy||!quote||!accepted}>{busy?'Confirming…':`Place test order · ${money(quote?.total)}`}<ArrowRight size={17}/></button></form><aside className="order-summary"><h3>Your chosen pieces</h3>{!quote&&<p role="status">{error?'The total is unavailable. Update your bag and try again.':'Checking prices and availability…'}</p>}{quote?.lines.map(p=><div className="summary-product" key={p.sku}><img src={coinImage(p.image,true)} alt={p.name}/><div><h4>{p.name}</h4><p>{p.size} · Qty {p.quantity}</p><span>{money(p.unit_price*p.quantity)}</span></div></div>)}<div className="summary-line"><span>Subtotal</span>{money(quote?.subtotal)}</div><div className="summary-line"><span>Delivery</span>{quote?.shipping===0?'Complimentary':money(quote?.shipping)}</div><div className="summary-line total"><span>Total payable</span>{money(quote?.total)}</div><p className="small">Displayed total includes any configured taxes. All orders in this preview are fictional.</p></aside></div>}</section></Layout>}
+function Bag(){
+  const {bag}=useStore();
+  const subtotal=bag.reduce((n,p)=>n+p.price*p.quantity,0);
+  return <Layout><section className="section bag-page">
+    <span className="eyebrow">YOUR LITTLE TREASURES</span>
+    <h1>The shopping bag</h1>
+    {bag.length?<>
+      <BagLines/>
+      <div className="summary-line" style={{marginTop:'25px',paddingTop:'20px',borderTop:'1px solid var(--line)'}}>
+        <span>Estimated subtotal</span>
+        <strong style={{fontSize:'18px'}}>{money(subtotal)}</strong>
+      </div>
+      <p className="small muted">Live metal rates, final delivery, and item availability are confirmed at checkout.</p>
+      <div style={{display:'flex',gap:'18px',flexWrap:'wrap',marginTop:'24px',alignItems:'center'}}>
+        <Link className="button dark" to="/checkout">Continue to checkout <ArrowRight size={17}/></Link>
+        <Link className="underlink" to="/collections/all">Continue discovering <ArrowUpRight size={15}/></Link>
+      </div>
+    </>:<div className="empty">
+      <ShoppingBag size={38} color="var(--gold)"/>
+      <h2>Your bag is empty</h2>
+      <p>Discover beautiful jewellery and coins to start your collection.</p>
+      <Link className="button dark" to="/collections/all" style={{marginTop:'15px'}}>Explore all jewellery</Link>
+    </div>}
+  </section></Layout>;
+}
+function Checkout(){
+  const {bag,setBag,config,customer,flushAccount,afterCheckout}=useStore();
+  const [quote,setQuote]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[accepted,setAccepted]=useState(false),[changed,setChanged]=useState(false),[testFailure,setTestFailure]=useState(false);
+  const key=useRef(crypto.randomUUID());
+  const nav=useNavigate();
+  const placeholders={name:'e.g. Priya Sharma',email:'e.g. priya@example.com',phone:'10-digit mobile number',pincode:'6-digit PIN code',address:'Flat, house no., building, street',city:'e.g. Mumbai'};
+  useEffect(()=>{
+    let active=true;setAccepted(false);setQuote(null);setError('');
+    if(bag.length)api('/quote',{items:bag.map(({sku,quantity})=>({sku,quantity}))}).then(q=>{if(active)setQuote(q)}).catch(e=>{if(active)setError(e.message)});
+    return()=>{active=false};
+  },[bag]);
+  async function pay(e){
+    e.preventDefault();if(!accepted||!quote)return;setBusy(true);setError('');
+    if(testFailure){setError('Test payment declined. Your bag is saved. Untick the test failure option to retry.');setBusy(false);return;}
+    const customer=Object.fromEntries(new FormData(e.target));
+    try{
+      await flushAccount();
+      const r=await api('/checkout',{items:bag.map(({sku,quantity})=>({sku,quantity})),token:quote.token,customer,idempotencyKey:key.current});
+      await afterCheckout();
+      nav('/order/'+r.id);
+    }catch(e){
+      setError(e.message);
+      if(e.quote){setQuote(e.quote);setChanged(true);setAccepted(false);}
+    }finally{setBusy(false);}
+  }
+  return <Layout><section className="section checkout-page">
+    <Link className="underlink" to="/bag"><ArrowLeft size={15}/> Back to bag</Link>
+    <div className="section-heading"><div><span className="eyebrow">ONE STEP CLOSER</span><h1>A little wonder, on its way.</h1></div><span className="test-badge">TEST CHECKOUT · NO MONEY COLLECTED</span></div>
+    {!bag.length?<div className="empty"><p>Your bag is empty.</p><Link to="/collections/all">Explore jewellery</Link></div>:<div className="checkout-grid">
+      <form onSubmit={pay}>
+        <h3>Contact & delivery</h3>
+        {customer?<p className="checkout-account-note">Signed in as {customer.email} · This order will appear in your account.</p>:<p className="checkout-account-note"><Link to="/account">Sign in or create an account</Link> to keep your order history. Guest checkout is also available.</p>}
+        <div className="form-grid">
+          {[['name','Full name','text'],['email','Email address','email'],['phone','Mobile number','tel'],['pincode','PIN code','text'],['address','Address','text'],['city','City','text']].map(([name,label,type])=><label key={name} className={name==='address'?'span-two':''}>{label}<input name={name} type={type} placeholder={placeholders[name]} title={name==='phone'?'10-digit mobile number':name==='pincode'?'6-digit PIN code':undefined} defaultValue={name==='name'?customer?.name:name==='email'?customer?.email:undefined} autoComplete={{name:'name',email:'email',phone:'tel',pincode:'postal-code',address:'street-address',city:'address-level2'}[name]} required maxLength={name==='phone'?10:name==='pincode'?6:200} pattern={name==='phone'?'[0-9]{10}':name==='pincode'?'[0-9]{6}':undefined}/></label>)}
+        </div>
+        <div className="checkout-note"><ShieldCheck size={20}/><p>This is a simulated payment. No card or bank details are requested. Delivery and returns are awaiting merchant configuration.</p></div>
+        <label className="checkbox"><input type="checkbox" checked={testFailure} onChange={e=>setTestFailure(e.target.checked)}/> Simulate a failed test payment</label>
+        {changed&&<div className="notice">The price changed. Review the updated order summary before accepting.</div>}
+        <label className="checkbox consent"><input type="checkbox" disabled={!quote} checked={accepted} onChange={e=>setAccepted(e.target.checked)} required/>{quote?`I accept the displayed total of ${money(quote.total)} for this test order.`:'Waiting for a current order total…'}</label>
+        {error&&<p className="error" role="alert">{error}</p>}
+        <button className="button dark full" disabled={busy||!quote||!accepted}>{busy?'Confirming…':`Place test order · ${money(quote?.total)}`}<ArrowRight size={17}/></button>
+      </form>
+      <aside className="order-summary">
+        <h3>Your chosen pieces</h3>
+        {!quote&&<p role="status">{error?'The total is unavailable. Update your bag and try again.':'Checking prices and availability…'}</p>}
+        {quote?.lines.map(p=><div className="summary-product" key={p.sku}><img src={coinImage(p.image,true)} alt={p.name}/><div><h4>{p.name}</h4><p>{p.size} · Qty {p.quantity}</p><span>{money(p.unit_price*p.quantity)}</span></div></div>)}
+        <div className="summary-line"><span>Subtotal</span>{money(quote?.subtotal)}</div>
+        <div className="summary-line"><span>Delivery</span>{quote?.shipping===0?'Complimentary':money(quote?.shipping)}</div>
+        <div className="summary-line total"><span>Total payable</span>{money(quote?.total)}</div>
+        <p className="small">Displayed total includes any configured taxes. All orders in this preview are fictional.</p>
+      </aside>
+    </div>}
+  </section></Layout>;
+}
 function Order(){const {id}=useParams();const [o,setO]=useState(null),[error,setError]=useState('');useEffect(()=>{setO(null);setError('');api('/orders/'+id).then(setO).catch(e=>setError(e.message))},[id]);return <Layout><section className="order-confirm section">{o&&<CheckCircle2 size={42}/>}<span className="eyebrow">YOUR ORDER</span><h1>{error?'Order unavailable':o?'A little wonder is yours.':'Opening your order…'}</h1>{error?<p className="error">{error}</p>:o?<><p>Your test order is confirmed. No payment has been collected.</p><div className="confirmation-card"><div className="summary-line"><span>Order reference</span><strong>{o.id}</strong></div><div className="summary-line"><span>Placed</span>{date(o.created_at)}</div><div className="summary-line"><span>Saved order total</span>{money(o.total)}</div>{o.items.map(i=><p key={i.sku}>{i.name} · {i.size} × {i.quantity}</p>)}</div></>:<p>Loading your confirmation…</p>}<Link className="button dark" to="/collections/all">Keep discovering <ArrowRight size={17}/></Link></section></Layout>}
-function Information(){const {page}=useParams();const {config}=useStore();return <Layout><section className="section info-page"><span className="eyebrow">AT YOUR SERVICE</span><h1>{page==='shipping'?'Delivery & returns':page==='care'?'Care for your jewellery':'Get in touch'}</h1>{page==='shipping'?<><h3>Delivery</h3><p>{config.shippingPolicy||'The merchant’s delivery areas and timeframes are awaiting confirmation. Preview shipping is ₹250, with complimentary delivery from ₹25,000. The final charge is shown before a test order is placed.'}</p><h3>Returns</h3><p>{config.returnsPolicy||'The merchant’s actual returns, exchange and cancellation policy has not yet been supplied. This preview does not accept live orders.'}</p></>:page==='care'?<p>Store pieces separately in a soft pouch. Avoid perfume, harsh cleaning products and prolonged water exposure. Ask the merchant for material-specific care instructions for your chosen piece.</p>:<p>{config.contact&&!/\.(local|invalid)$/i.test(config.contact)?<a href={'mailto:'+config.contact}>{config.contact}</a>:'The merchant’s contact details will appear here once supplied. This store is currently a design and checkout preview.'}</p>}</section></Layout>}
+function Information(){
+  const {page}=useParams();
+  const {config}=useStore();
+  const pages=[
+    {id:'shipping',label:'Delivery & returns'},
+    {id:'care',label:'Jewellery care'},
+    {id:'contact',label:'Contact us'}
+  ];
+  return <Layout><section className="section info-page">
+    <div className="collection-tabs" style={{justifyContent:'flex-start',marginBottom:'30px',marginTop:0}}>
+      {pages.map(p=><Link key={p.id} to={'/information/'+p.id} className={page===p.id?'active':''}>{p.label}</Link>)}
+    </div>
+    <span className="eyebrow">AT YOUR SERVICE</span>
+    <h1>{page==='shipping'?'Delivery & returns':page==='care'?'Care for your jewellery':'Get in touch'}</h1>
+    {page==='shipping'?<>
+      <h3>Delivery</h3>
+      <p>{config.shippingPolicy||'The merchant’s delivery areas and timeframes are awaiting confirmation. Preview shipping is ₹250, with complimentary delivery from ₹25,000. The final charge is shown before a test order is placed.'}</p>
+      <h3>Returns</h3>
+      <p>{config.returnsPolicy||'The merchant’s actual returns, exchange and cancellation policy has not yet been supplied. This preview does not accept live orders.'}</p>
+    </>:page==='care'?<>
+      <p>Store pieces separately in a soft pouch. Avoid perfume, harsh cleaning products and prolonged water exposure. Ask the merchant for material-specific care instructions for your chosen piece.</p>
+      <h3>General Care Guidelines</h3>
+      <p>Keep your pieces dry and clean them gently with a microfibre cloth. For gold and silver coins, preserve them in their original tamper-evident assay blisters to maintain mint condition and purity value.</p>
+    </>:<>
+      <p>{config.contact&&!/\.(local|invalid)$/i.test(config.contact)?<a href={'mailto:'+config.contact}>{config.contact}</a>:'The merchant’s contact details will appear here once supplied. This store is currently a design and checkout preview.'}</p>
+      <h3>Concierge Assistance</h3>
+      <p>Our concierge team is available to assist you with inquiries regarding sizing, precious metals, or custom orders.</p>
+    </>}
+    <div style={{marginTop:'40px',paddingTop:'25px',borderTop:'1px solid var(--line)'}}>
+      <Link to="/collections/all" className="underlink">Explore all jewellery <ArrowRight size={15}/></Link>
+    </div>
+  </section></Layout>;
+}
 const adminTabs=[['Dashboard',LayoutDashboard],['Products',Gem],['Coins',CoinsIcon],['Offers',Tag],['Gold Rates',ChartNoAxesCombined],['Pricing Rules',SlidersHorizontal],['Imports',Upload],['Orders',Package],['Settings',Settings]];
-function Admin(){const [staff,setStaff]=useState(null),[loaded,setLoaded]=useState(false),[error,setError]=useState(''),[tab,setTab]=useState('Dashboard'),[data,setData]=useState(null),[products,setProducts]=useState([]),[busy,setBusy]=useState(false);const {config}=useStore();async function refresh(){const [d,p]=await Promise.all([api('/admin/dashboard'),api('/admin/products')]);setData(d);setProducts(p)}useEffect(()=>{api('/admin/session').then(s=>{sessionStorage.setItem('csrf',s.csrf);setStaff(s.staff);return refresh()}).catch(()=>{}).finally(()=>setLoaded(true))},[]);async function login(e){e.preventDefault();setError('');try{const s=await api('/admin/login',Object.fromEntries(new FormData(e.target)));sessionStorage.setItem('csrf',s.csrf);setStaff(s.staff);await refresh()}catch(e){setError(e.message)}}async function run(kind){setBusy(true);setError('');try{const r=await api('/admin/run',{kind});await refresh();if(Object.values(r.result).some(v=>!v.ok))setError(Object.entries(r.result).filter(([,v])=>!v.ok).map(([k,v])=>`${k}: ${v.message}`).join(' · '))}catch(e){setError(e.message)}finally{setBusy(false)}}if(!loaded)return <div className="empty">Opening merchant studio…</div>;if(!staff)return <div className="admin-login"><Link className="underlink" to="/"><ArrowLeft size={16}/>Back to storefront</Link><div className="login-card"><Brand/><span className="eyebrow">THE MERCHANT STUDIO</span><h1>Welcome back.</h1><p>Your collections, thoughtfully managed.</p><form onSubmit={login}><label>Email<input name="email" type="email" autoComplete="username" defaultValue={config.preview?'preview@veyora.local':''} required/></label><label>Password<input name="password" type="password" autoComplete="current-password" defaultValue={config.preview?'preview-veyora-2026':''} required/></label>{error&&<p className="error">{error}</p>}<button className="button dark full">Sign in <ArrowRight size={17}/></button></form>{config.preview&&<p className="small muted">Local preview account is prefilled. Production requires your own staff account.</p>}</div></div>;return <div className="admin-shell"><aside className="admin-sidebar"><Brand/><span className="studio-label">MERCHANT STUDIO</span><nav>{adminTabs.map(([label,Icon])=><button key={label} className={tab===label?'active':''} onClick={()=>{setTab(label);setError('')}}><Icon size={18}/>{label}</button>)}</nav><div className="admin-sidebar-bottom"><Link to="/">View storefront <ArrowUpRight size={15}/></Link><small>{staff.email}<br/>{staff.role}</small><button className="text-button" onClick={async()=>{await api('/admin/logout',{});setStaff(null);sessionStorage.removeItem('csrf')}}><LogOut size={15}/>Sign out</button></div></aside><main className="admin-main"><header className="admin-header"><span>VEYORA / STUDIO / {tab.toUpperCase()}</span><span className="test-badge">{data?.preview?'PREVIEW ENVIRONMENT':'MERCHANT ENVIRONMENT'}</span></header><div className="admin-content"><div className="section-heading"><div><span className="eyebrow">YOUR MAISON, AT A GLANCE</span><h1>{tab==='Dashboard'?'A considered overview.':tab}</h1></div><button className="text-button" onClick={()=>refresh().catch(e=>setError(e.message))}><RefreshCw size={15}/>Refresh</button></div>{error&&<div className="error" role="alert">{error}</div>}{!data?<p>Loading studio…</p>:<>{tab==='Dashboard'&&<><div className="admin-stats"><Stat title="ACTIVE GOLD RATES" value={data.rates.length} detail={`${data.rates.filter(r=>r.fresh).length} within freshness limit`}/><Stat title="CATALOGUE VARIANTS" value={products.length} detail={`${products.filter(p=>p.stock===0).length} out of stock`}/><Stat title="TODAY’S IMPORTS" value={data.todayImports?.failed?'Needs review':'All clear'} detail={`${data.todayImports?.published||0} published · ${data.todayImports?.failed||0} failed`}/><Stat title="ORDERS" value={data.orders.length} detail={`${money(data.orders.reduce((s,o)=>s+Number(o.total),0))} total · includes test orders`}/></div><div className="admin-two"><div className="admin-panel"><div className="panel-title"><h3>Active gold rates</h3><button className="underlink" onClick={()=>setTab('Gold Rates')}>View rates ↗</button></div><RateTable rates={data.rates}/></div><div className="admin-panel"><h3>Needs your attention</h3>{data.feedSettings?.feedStatus==='stopped'&&<div className="attention" style={{borderLeft:'3px solid #c62828',paddingLeft:'12px'}}><AlertCircle size={19} color="#c62828"/><div><strong style={{color:'#c62828'}}>Feed Automation is STOPPED</strong><p>Background syncs and live rates are paused. <button className="underlink" onClick={()=>setTab('Settings')}>Open Settings to start ↗</button></p></div></div>}<div className="attention"><AlertCircle size={19}/><div><strong>{data.rates.some(r=>!r.fresh)?'Gold rates are stale':'Launch configuration pending'}</strong><p>Live payments, merchant policies, original photography and Hostinger verification are still required.</p></div></div>{data.scheduleMissed&&<div className="attention"><AlertCircle size={19}/><div><strong>Daily schedule needs attention</strong><p>Daily imports default to 09:00 India time. A manual run does not verify cron.</p></div></div>}<p className="small">Maximum rate age: {data.maxAgeHours} hours. Stale gold-linked items pause at checkout.</p></div></div><div className="admin-panel"><h3>Supplier freshness</h3><div className="table-wrap"><table><thead><tr><th>Supplier</th><th>Feed</th><th>Last published source</th></tr></thead><tbody>{data.suppliers.map(s=><tr key={s.supplier+s.kind}><td>{s.supplier}</td><td>{s.kind}</td><td>{date(s.last_update)}</td></tr>)}</tbody></table></div></div><BatchTable batches={data.batches.slice(0,6)}/><div className="admin-panel"><h3>Recent staff activity</h3>{data.audits.slice(0,8).map(a=><p className="audit-line" key={a.id}><span>{a.action} · Staff {a.staff_id||'system'}</span><span>{date(a.created_at)}</span></p>)}</div></>}{tab==='Gold Rates'&&<><div className="notice">Rates are explicitly purity-specific. No automatic purity conversion is enabled. Original values and corrections remain in rate history. Maximum age: {data.maxAgeHours} hours.</div><div className="admin-panel"><div className="panel-title"><h3>Approved rates</h3><button disabled={busy||staff.role==='viewer'} className="button dark small-button" onClick={()=>run('gold')}><RefreshCw size={15}/>Run rate feed</button></div><RateTable rates={data.rates}/></div><ImportPanel kind="gold" refresh={refresh} readonly={staff.role==='viewer'}/><div className="admin-panel"><h3>Rate history & corrections</h3><RateTable rates={(data.rateHistory||[]).map(r=>({...r,fresh:data.rates.some(a=>a.id===r.id&&a.fresh)}))}/></div></>}{tab==='Products'&&<><div className="notice">Supplier imports preserve merchant names, descriptions and publication status by default. Stock is an absolute snapshot, adjusted for paid orders after its source timestamp.</div><details className="advanced-media"><summary>Manage multiple photos (optional)</summary><ImageUploader products={products} refreshParent={refresh}/></details><div className="admin-panel"><div className="table-wrap"><table><thead><tr><th>Piece / SKU</th><th>Pricing</th><th>Weight</th><th>Stock</th><th>Status</th><th></th></tr></thead><tbody>{products.map(p=><ProductRow key={p.id} p={p} readonly={staff.role==='viewer'} refresh={refresh}/>)}</tbody></table></div></div><div style={{display:'flex',gap:'12px',marginTop:'16px'}}><button className="button dark" onClick={()=>setTab('Imports')}>Add products through CSV <Upload size={16}/></button><a className="button secondary" href="/api/admin/export/products" download style={{display:'inline-flex',alignItems:'center',gap:'8px',textDecoration:'none'}}>Export catalogue CSV <Download size={16}/></a></div></>}{tab==='Coins'&&<CoinsAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Offers'&&<OffersAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Pricing Rules'&&<Rules rule={data.rule} readonly={staff.role!=='owner'} refresh={refresh}/ >}{tab==='Imports'&&<><div className="admin-two"><div className="admin-panel"><span className="eyebrow">DAILY WORKFLOW</span><h3>Rates first. Catalogue second.</h3><p>09:00 Asia/Kolkata · 03:30 UTC</p><p className="small muted">Feed sources are configured securely on the server. Current inventory mode: {data.feedSettings.inventoryMode}.</p><button className="button dark" disabled={busy||staff.role==='viewer'} onClick={()=>run(null)}>{busy?'Running…':'Run both feeds now'}<RefreshCw size={16}/></button></div><div className="admin-panel"><h3>Source connections</h3><p>Gold feed: <Status text={data.feedSettings.goldConfigured?'Configured':'Not configured'}/></p><p>Product feed: <Status text={data.feedSettings.productsConfigured?'Configured':'Not configured'}/></p><p className="small muted">Private feed URLs and credentials never appear in this screen. Failed rate feeds retain the last verified rate.</p><button className="underlink" disabled={busy||staff.role==='viewer'} onClick={()=>run('products')}>Run product feed only ↗</button></div></div><div className="admin-two"><ImportPanel kind="gold" refresh={refresh} readonly={staff.role==='viewer'}/><ImportPanel kind="products" refresh={refresh} readonly={staff.role==='viewer'}/><ImportPanel kind="coins" refresh={refresh} readonly={staff.role==='viewer'}/></div><details className="advanced-media"><summary>Manage multiple photos (optional)</summary><ImageUploader products={products} refreshParent={refresh}/></details><FeedSettings data={data} refresh={refresh} readonly={staff.role!=='owner'}/><BatchTable batches={data.batches} retry={async b=>{try{await api(`/admin/import/${b.id}/publish`,{});await refresh()}catch(e){setError(e.message)}}} readonly={staff.role==='viewer'}/><div className="admin-panel"><h3>Workflow history</h3>{data.runs.length?data.runs.map(r=><div key={r.id} className="run-record"><strong>Run #{r.id} · {r.trigger} · {date(r.started_at)}</strong>{Object.entries(r.result).map(([k,v])=><p key={k}>{k}: {v.ok?`Succeeded · Source ${v.source_date} · Created ${v.created} / Updated ${v.updated} / Unchanged ${v.unchanged} / Rejected ${v.rejected}`:v.message}</p>)}</div>):<p>No workflow has run. The Hostinger schedule is unverified.</p>}</div></>}{tab==='Orders'&&<div className="admin-panel"><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'16px'}}><h3>All Orders</h3><a className="underlink" href="/api/admin/export/orders" download style={{display:'inline-flex',alignItems:'center',gap:'6px'}}>Export orders CSV ↓</a></div><div className="table-wrap"><table><thead><tr><th>Order</th><th>Customer</th><th>Placed (India)</th><th>Payment</th><th>Total</th></tr></thead><tbody>{data.orders.map(o=><tr key={o.id}><td><Link to={'/order/'+o.id}>{o.id} ↗</Link></td><td>{o.customer.name}<small>{o.customer.email}</small></td><td>{date(o.created_at)}</td><td><Status text={`${o.payment_mode} · ${o.status}`}/></td><td>{money(o.total)}</td></tr>)}</tbody></table>{!data.orders.length&&<p className="empty">Orders will appear here after checkout.</p>}</div></div>}{tab==='Settings'&&<SettingsAdmin data={data} refresh={refresh} readonly={staff.role!=='owner'}/>}</>}</div></main></div>}
+function Admin(){const [staff,setStaff]=useState(null),[loaded,setLoaded]=useState(false),[error,setError]=useState(''),[tab,setTab]=useState('Dashboard'),[data,setData]=useState(null),[products,setProducts]=useState([]),[busy,setBusy]=useState(false);const {config}=useStore();async function refresh(){const [d,p]=await Promise.all([api('/admin/dashboard'),api('/admin/products')]);setData(d);setProducts(p)}useEffect(()=>{api('/admin/session').then(s=>{sessionStorage.setItem('csrf',s.csrf);setStaff(s.staff);return refresh()}).catch(()=>{}).finally(()=>setLoaded(true))},[]);async function login(e){e.preventDefault();setError('');try{const s=await api('/admin/login',Object.fromEntries(new FormData(e.target)));sessionStorage.setItem('csrf',s.csrf);setStaff(s.staff);await refresh()}catch(e){setError(e.message)}}async function run(kind){setBusy(true);setError('');try{const r=await api('/admin/run',{kind});await refresh();if(Object.values(r.result).some(v=>!v.ok))setError(Object.entries(r.result).filter(([,v])=>!v.ok).map(([k,v])=>`${k}: ${v.message}`).join(' · '))}catch(e){setError(e.message)}finally{setBusy(false)}}if(!loaded)return <div className="empty">Opening merchant studio…</div>;if(!staff)return <div className="admin-login"><Link className="underlink" to="/"><ArrowLeft size={16}/>Back to storefront</Link><div className="login-card"><Brand/><span className="eyebrow">THE MERCHANT STUDIO</span><h1>Welcome back.</h1><p>Your collections, thoughtfully managed.</p><form onSubmit={login}><label>Email<input name="email" type="email" autoComplete="username" defaultValue={config.preview?'preview@veyora.local':''} required/></label><label>Password<input name="password" type="password" autoComplete="current-password" defaultValue={config.preview?'preview-veyora-2026':''} required/></label>{error&&<p className="error">{error}</p>}<button className="button dark full">Sign in <ArrowRight size={17}/></button></form>{config.preview&&<p className="small muted">Local preview account is prefilled. Production requires your own staff account.</p>}</div></div>;return <div className="admin-shell"><aside className="admin-sidebar"><Brand/><span className="studio-label">MERCHANT STUDIO</span><nav>{adminTabs.map(([label,Icon])=><button key={label} className={tab===label?'active':''} onClick={()=>{setTab(label);setError('')}}><Icon size={18}/>{label}</button>)}</nav><div className="admin-sidebar-bottom"><Link to="/">View storefront <ArrowUpRight size={15}/></Link><small>{staff.email}<br/>{staff.role}</small><button className="text-button" onClick={async()=>{await api('/admin/logout',{});setStaff(null);sessionStorage.removeItem('csrf')}}><LogOut size={15}/>Sign out</button></div></aside><main className="admin-main"><header className="admin-header"><span>VEYORA / STUDIO / {tab.toUpperCase()}</span><span className="test-badge">{data?.preview?'PREVIEW ENVIRONMENT':'MERCHANT ENVIRONMENT'}</span></header><div className="admin-content"><div className="section-heading"><div><span className="eyebrow">YOUR MAISON, AT A GLANCE</span><h1>{tab==='Dashboard'?'A considered overview.':tab}</h1></div><button className="text-button" onClick={()=>refresh().catch(e=>setError(e.message))}><RefreshCw size={15}/>Refresh</button></div>{error&&<div className="error" role="alert">{error}</div>}{!data?<p>Loading studio…</p>:<>{tab==='Dashboard'&&<><div className="admin-stats"><Stat title="ACTIVE GOLD RATES" value={data.rates.length} detail={`${data.rates.filter(r=>r.fresh).length} within freshness limit`}/><Stat title="CATALOGUE VARIANTS" value={products.length} detail={`${products.filter(p=>p.stock===0).length} out of stock`}/><Stat title="TODAY’S IMPORTS" value={data.todayImports?.failed?'Needs review':'All clear'} detail={`${data.todayImports?.published||0} published · ${data.todayImports?.failed||0} failed`}/><Stat title="ORDERS" value={data.orders.length} detail={`${money(data.orders.reduce((s,o)=>s+Number(o.total),0))} total · includes test orders`}/></div><div className="admin-two"><div className="admin-panel"><div className="panel-title"><h3>Active gold rates</h3><button className="underlink" onClick={()=>setTab('Gold Rates')}>View rates ↗</button></div><RateTable rates={data.rates}/></div><div className="admin-panel"><h3>Needs your attention</h3>{data.feedSettings?.feedStatus==='stopped'&&<div className="attention" style={{borderLeft:'3px solid #c62828',paddingLeft:'12px'}}><AlertCircle size={19} color="#c62828"/><div><strong style={{color:'#c62828'}}>Feed Automation is STOPPED</strong><p>Background syncs and live rates are paused. <button className="underlink" onClick={()=>setTab('Settings')}>Open Settings to start ↗</button></p></div></div>}<div className="attention"><AlertCircle size={19}/><div><strong>{data.rates.some(r=>!r.fresh)?'Gold rates are stale':'Launch configuration pending'}</strong><p>Live payments, merchant policies, original photography and Hostinger verification are still required.</p></div></div>{data.scheduleMissed&&<div className="attention"><AlertCircle size={19}/><div><strong>Daily schedule needs attention</strong><p>Daily imports default to 09:00 India time. A manual run does not verify cron.</p></div></div>}<p className="small">Maximum rate age: {data.maxAgeHours} hours. Stale gold-linked items pause at checkout.</p></div></div><div className="admin-panel"><h3>Supplier freshness</h3><div className="table-wrap"><table><thead><tr><th>Supplier</th><th>Feed</th><th>Last published source</th></tr></thead><tbody>{data.suppliers.map(s=><tr key={s.supplier+s.kind}><td>{s.supplier}</td><td>{s.kind}</td><td>{date(s.last_update)}</td></tr>)}</tbody></table></div></div><BatchTable batches={data.batches.slice(0,6)}/><div className="admin-panel"><h3>Recent staff activity</h3>{data.audits.slice(0,8).map(a=><p className="audit-line" key={a.id}><span>{a.action} · Staff {a.staff_id||'system'}</span><span>{date(a.created_at)}</span></p>)}</div></>}{tab==='Gold Rates'&&<><div className="notice">Rates are explicitly purity-specific. No automatic purity conversion is enabled. Original values and corrections remain in rate history. Maximum age: {data.maxAgeHours} hours.</div><div className="admin-panel"><div className="panel-title"><h3>Approved rates</h3><button disabled={busy||staff.role==='viewer'} className="button dark small-button" onClick={()=>run('gold')}><RefreshCw size={15}/>Run rate feed</button></div><RateTable rates={data.rates}/></div><ImportPanel kind="gold" refresh={refresh} readonly={staff.role==='viewer'}/><div className="admin-panel"><h3>Rate history & corrections</h3><RateTable rates={(data.rateHistory||[]).map(r=>({...r,fresh:data.rates.some(a=>a.id===r.id&&a.fresh)}))}/></div></>}{tab==='Products'&&<><div className="notice">Supplier imports preserve merchant names, descriptions and publication status by default. Stock is an absolute snapshot, adjusted for paid orders after its source timestamp.</div><details className="advanced-media"><summary>Manage multiple photos (optional)</summary><ImageUploader products={products} refreshParent={refresh}/></details><div className="admin-panel"><div className="panel-title" style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'12px',marginBottom:'16px'}}><div><h3 style={{margin:0}}>All Products ({products.length})</h3><span className="small muted">Total variants: {products.length} · In stock: {products.filter(p=>p.stock>0).length} · Out of stock: {products.filter(p=>p.stock===0).length}</span></div><div style={{display:'flex',gap:'10px',alignItems:'center'}}><span className="status-badge">{products.length} Items Listed</span></div></div><div className="table-wrap"><table><thead><tr><th>Piece / SKU</th><th>Pricing</th><th>Weight</th><th>Stock</th><th>Status</th><th></th></tr></thead><tbody>{products.map(p=><ProductRow key={p.id} p={p} readonly={staff.role==='viewer'} refresh={refresh}/>)}</tbody></table></div></div><div style={{display:'flex',gap:'12px',marginTop:'16px'}}><button className="button dark" onClick={()=>setTab('Imports')}>Add products through CSV <Upload size={16}/></button><a className="button secondary" href="/api/admin/export/products" download style={{display:'inline-flex',alignItems:'center',gap:'8px',textDecoration:'none'}}>Export catalogue CSV ({products.length} items) <Download size={16}/></a></div></>}{tab==='Coins'&&<CoinsAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Offers'&&<OffersAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Pricing Rules'&&<Rules rule={data.rule} readonly={staff.role!=='owner'} refresh={refresh}/ >}{tab==='Imports'&&<><div className="admin-two"><div className="admin-panel"><span className="eyebrow">DAILY WORKFLOW</span><h3>Rates first. Catalogue second.</h3><p>09:00 Asia/Kolkata · 03:30 UTC</p><p className="small muted">Feed sources are configured securely on the server. Current inventory mode: {data.feedSettings.inventoryMode}.</p><button className="button dark" disabled={busy||staff.role==='viewer'} onClick={()=>run(null)}>{busy?'Running…':'Run both feeds now'}<RefreshCw size={16}/></button></div><div className="admin-panel"><h3>Source connections</h3><p>Gold feed: <Status text={data.feedSettings.goldConfigured?'Configured':'Not configured'}/></p><p>Product feed: <Status text={data.feedSettings.productsConfigured?'Configured':'Not configured'}/></p><p className="small muted">Private feed URLs and credentials never appear in this screen. Failed rate feeds retain the last verified rate.</p><button className="underlink" disabled={busy||staff.role==='viewer'} onClick={()=>run('products')}>Run product feed only ↗</button></div></div><div className="admin-two"><ImportPanel kind="gold" refresh={refresh} readonly={staff.role==='viewer'}/><ImportPanel kind="products" refresh={refresh} readonly={staff.role==='viewer'}/><ImportPanel kind="coins" refresh={refresh} readonly={staff.role==='viewer'}/></div><details className="advanced-media"><summary>Manage multiple photos (optional)</summary><ImageUploader products={products} refreshParent={refresh}/></details><FeedSettings data={data} refresh={refresh} readonly={staff.role!=='owner'}/><BatchTable batches={data.batches} retry={async b=>{try{await api(`/admin/import/${b.id}/publish`,{});await refresh()}catch(e){setError(e.message)}}} readonly={staff.role==='viewer'}/><div className="admin-panel"><h3>Workflow history</h3>{data.runs.length?data.runs.map(r=><div key={r.id} className="run-record"><strong>Run #{r.id} · {r.trigger} · {date(r.started_at)}</strong>{Object.entries(r.result).map(([k,v])=><p key={k}>{k}: {v.ok?`Succeeded · Source ${v.source_date} · Created ${v.created} / Updated ${v.updated} / Unchanged ${v.unchanged} / Rejected ${v.rejected}`:v.message}</p>)}</div>):<p>No workflow has run. The Hostinger schedule is unverified.</p>}</div></>}{tab==='Orders'&&<div className="admin-panel"><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'12px',marginBottom:'16px'}}><div><h3 style={{margin:0}}>All Orders ({data.orders.length})</h3><span className="small muted">{data.orders.length} total orders recorded</span></div><a className="underlink" href="/api/admin/export/orders" download style={{display:'inline-flex',alignItems:'center',gap:'6px'}}>Export orders CSV ({data.orders.length}) ↓</a></div><div className="table-wrap"><table><thead><tr><th>Order</th><th>Customer</th><th>Placed (India)</th><th>Payment</th><th>Total</th></tr></thead><tbody>{data.orders.map(o=><tr key={o.id}><td><Link to={'/order/'+o.id}>{o.id} ↗</Link></td><td>{o.customer.name}<small>{o.customer.email}</small></td><td>{date(o.created_at)}</td><td><Status text={`${o.payment_mode} · ${o.status}`}/></td><td>{money(o.total)}</td></tr>)}</tbody></table>{!data.orders.length&&<p className="empty">Orders will appear here after checkout.</p>}</div></div>}{tab==='Settings'&&<SettingsAdmin data={data} refresh={refresh} readonly={staff.role!=='owner'}/>}</>}</div></main></div>}
 function Stat({title,value,detail}){return <div className="stat"><span className="eyebrow">{title}</span><strong>{value}</strong><small>{detail}</small></div>}
 function Status({text}){return <span className={'status-badge '+(/failed|stale|Not configured/.test(text)?'warning':'')}>{text}</span>}
 function RateTable({rates}){return <div className="table-wrap"><table><thead><tr><th>Purity</th><th>INR / gram</th><th>Source / original</th><th>Effective date</th><th>Status</th></tr></thead><tbody>{rates.map(r=><tr key={r.id}><td><strong>{r.purity}</strong></td><td>{money(r.inr_per_gram)}</td><td>{r.supplier}<small>{money(r.original_rate)} / {r.original_unit}</small></td><td>{r.effective_date}<small>{date(r.source_timestamp)}</small></td><td><Status text={r.fresh?'Verified':'stale — checkout paused'}/></td></tr>)}</tbody></table>{!rates.length&&<p>No approved rates. Import a rate file to begin.</p>}</div>}
@@ -841,6 +1300,13 @@ function CoinsAdmin({readonly,refreshParent}){
 
     {/* Table */}
     <div className="admin-panel">
+      <div className="panel-title" style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'12px',marginBottom:'16px'}}>
+        <div>
+          <h3 style={{margin:0}}>Coin Catalogue ({coins.length})</h3>
+          <span className="small muted">Showing {filteredCoins.length} of {coins.length} coins · Gold: {goldCount} · Silver: {silverCount}</span>
+        </div>
+        <span className="status-badge">{coins.length} Total Coins</span>
+      </div>
       <div className="table-wrap">
         <table>
           <thead>
@@ -1440,30 +1906,15 @@ function CoinsPage(){
               {c.image?<ListingImage product={c}/>:<div style={{height:'100%',display:'grid',placeItems:'center',background:'var(--paper)'}}><CoinsIcon size={48} color="var(--gold)"/></div>}
               <span className={'product-label '+(c.metal==='Silver'?'':'gold')}>{`${c.purity} ${c.metal.toUpperCase()}`}</span>
             </Link>
-            <div className="product-info">
-              <h3><Link to={'/coins/product/'+encodeURIComponent(c.sku)}>{c.name}</Link></h3>
-              {c.image_kind==='illustration'&&<small className="illustration-note">Illustrative image</small>}<span>{c.weight_g}g · {c.purity} {c.metal} {c.dimension?`· ${c.dimension}`:''}</span>
-              {c.original_price&&c.original_price>c.price ? (
-                <div className="price-row">
-                  <span className="discounted-price">{money(c.price)}</span>
-                  <del className="original-price-del">{money(c.original_price)}</del>
-                  {c.discount_amount>0&&<span className="offer-save-tag">SAVE {money(c.discount_amount)}</span>}
-                </div>
-              ) : (
-                <p>{c.price!==null?money(c.price):'Price awaiting rate'}</p>
-              )}
-              {c.breakdown&&<span className="price-suffix" style={{display:'block',marginTop:'3px'}}>Metal {money(c.breakdown.metal)} + Making {money(c.breakdown.making)}</span>}
-              <div style={{marginTop:'12px',display:'flex',gap:'8px'}}>
-                <button
-                  className="button dark full"
-                  style={{minHeight:'40px',fontSize:'10px',padding:'0 16px'}}
-                  disabled={!c.checkout_available}
-                  onClick={()=>add({sku:c.sku,name:c.name,image:c.image,price:c.price,stock:c.stock,size:`${c.weight_g}g (${c.purity})`,slug:'coins'})}
-                >
-                  {c.stock===0?'Out of stock':!c.checkout_available?'Awaiting live rate':'Add to bag'}<ShoppingBag size={14}/>
-                </button>
-              </div>
-            </div>
+            <CardInfo product={c} href={'/coins/product/'+encodeURIComponent(c.sku)}
+              specifications={`${c.weight_g}g · ${c.purity} ${c.metal}${c.dimension?` · ${c.dimension}`:''}`}
+              price={c.price!==null?money(c.price):'Price awaiting rate'}
+              note={c.breakdown&&<span className="price-suffix">Metal {money(c.breakdown.metal)} + Making {money(c.breakdown.making)}</span>}
+              action={<button type="button" className="button dark product-card-cart" disabled={!c.checkout_available}
+                onClick={()=>add({sku:c.sku,name:c.name,image:c.image,price:c.price,stock:c.stock,size:`${c.weight_g}g (${c.purity})`,slug:'coins'})}>
+                {c.stock===0?'Out of stock':!c.checkout_available?'Awaiting live rate':'Add to bag'}<ShoppingBag size={14}/>
+              </button>}/>
+
           </article>
         </React.Fragment>)}
       </div>:<div className="empty">
@@ -1480,27 +1931,30 @@ function CoinsPage(){
 function CoinProduct(){
   const {sku}=useParams();
   const {add,catalogueRevision}=useStore();
-  const [selectedCoin,setSelectedCoin]=useState(null),[zoomCoin,setZoomCoin]=useState(null);
+  const [selectedCoin,setSelectedCoin]=useState(null),[zoomCoin,setZoomCoin]=useState(false);
+  const [selectedImage,setSelectedImage]=useState(null);
   const [loading,setLoading]=useState(true),[error,setError]=useState(''),[retry,setRetry]=useState(0);
   useEffect(()=>{
     let active=true;
-    setLoading(true);setError('');setSelectedCoin(null);setZoomCoin(null);
+    setLoading(true);setError('');setSelectedCoin(null);setZoomCoin(false);setSelectedImage(null);
     api('/coins').then(rows=>{if(active)setSelectedCoin(rows.find(c=>c.sku===sku)||null)}).catch(e=>{if(active)setError(e.message)}).finally(()=>{if(active)setLoading(false)});
     return()=>{active=false};
   },[sku,catalogueRevision,retry]);
   useEffect(()=>{document.title=(selectedCoin?.name||(loading?'Loading coin':error?'Could not load coin':'Coin not found'))+' | Veyora Jewels'},[selectedCoin,loading,error]);
   if(loading||error||!selectedCoin)return <Layout><section className="empty"><h1>{loading?'Finding your coin…':error?'Could not load this coin':'Coin not found'}</h1>{error&&<><p className="error" role="alert">{error}</p><button className="button dark" onClick={()=>setRetry(n=>n+1)}>Try again</button></>}<Link className="underlink" to="/coins">Back to coins</Link></section></Layout>;
   const p=selectedCoin;
+  const photos=galleryPhotos(p.images);
+  const angleImages=photos.length?photos:galleryPhotos([{id:'default',role:'hero',url:p.image,alt_text:p.name}]);
+  const activeImage=angleImages.find(img=>img.url===selectedImage)?.url||angleImages[0]?.url||coinImage(p.image)||imageFallback;
   return <Layout><StructuredProduct p={p}/><div className="breadcrumbs section"><Link to="/coins">Coins</Link><span>/</span><Link to={'/coins/'+p.metal.toLowerCase()}>{p.metal} coins</Link><span>/</span><span>{p.name}</span></div>
     <section className="product-detail section">
       <div className="detail-gallery">
-        {p.image?<button type="button" className="detail-image" style={{position:'relative'}} onClick={()=>setZoomCoin(p)} aria-label="Zoom product photograph">
-          {p.offer?.badge_text&&<span className="offer-ribbon-badge">{p.offer.badge_text}</span>}
-          <img src={coinImage(p.image)} alt={`${p.name}, ${p.weight_g}g, ${p.purity} ${p.metal}`}/>
-          {!p.offer?.badge_text&&<span className="gold-linked-badge"><Sparkles size={11}/> LIVE METAL-LINKED RATE</span>}
+        {activeImage?<button type="button" className="detail-image" style={{position:'relative'}} onClick={()=>setZoomCoin(true)} aria-label="Zoom product photograph">
+          <img onError={e=>{if(e.currentTarget.getAttribute('src')!==imageFallback)e.currentTarget.src=imageFallback}} src={coinImage(activeImage)} alt={`${p.name}, ${p.weight_g}g, ${p.purity} ${p.metal}`}/>
           <span><Plus size={16}/> Click to explore</span>
         </button>:<div className="detail-image" style={{minHeight:300,display:'grid',placeItems:'center'}}><CoinsIcon size={64}/></div>}
-        <p className="caption">{p.image_kind==='illustration'?'ILLUSTRATIVE IMAGE · PREVIEW CATALOGUE':'PRODUCT IMAGE · PREVIEW CATALOGUE'}</p>
+        {angleImages.length>1&&<div className="product-angle-gallery" role="group" aria-label="Coin angle views">{angleImages.map((img,idx)=>{const isSelected=activeImage===img.url;const roleLabels={hero:'Obverse Face',left:'Edge View',right:'Reverse Design',modal:'Macro Detail'};const label=roleLabels[img.role]||img.role;return <button key={img.id||idx} type="button" className={'angle-thumb-btn '+(isSelected?'active':'')} onClick={()=>setSelectedImage(img.url)} aria-pressed={isSelected} aria-label={`View ${label}`} title={label}><img loading="lazy" src={listingThumbnail({image:img.url})} alt={img.alt_text||`${p.name} ${label}`}/><span className="angle-label">{img.role}</span></button>;})}</div>}
+        <p className="caption">{angleImages.length>1?'MULTI-ANGLE PHOTOGRAPHY · PREVIEW CATALOGUE':p.image_kind==='illustration'?'ILLUSTRATIVE IMAGE · PREVIEW CATALOGUE':'PRODUCT IMAGE · PREVIEW CATALOGUE'}</p>
       </div>
       <div className="detail-copy">
         <span className="eyebrow">THE COIN COLLECTION</span>
@@ -1514,7 +1968,7 @@ function CoinProduct(){
         <div className="size-label"><label htmlFor="coin-weight">Weight</label></div>
         <select id="coin-weight" value={p.sku} onChange={()=>{}}><option value={p.sku}>{p.weight_g} g{p.stock===0?' — Out of stock':''}</option></select>
         <p className={'stock '+(!p.checkout_available?'unavailable':'')}><span/>{p.stock===0?'Currently out of stock':!p.checkout_available?'Awaiting a fresh verified metal rate':`${p.stock} available · Ready for your next chapter`}</p>
-        <div className="add-row"><button className="button dark" disabled={!p.checkout_available} onClick={()=>add({...p,size:`${p.weight_g}g (${p.purity})`,slug:'coins'})}>{p.checkout_available?'Add to cart':'Currently unavailable'}<ShoppingBag size={18}/></button></div>
+        <div className="add-row"><button className="button dark" disabled={!p.checkout_available} onClick={()=>add({...p,size:`${p.weight_g}g (${p.purity})`,slug:'coins'})}>{p.checkout_available?'Add to cart':p.stock===0?'Out of stock':'Currently unavailable'}<ShoppingBag size={18}/></button></div>
         <dl className="specs"><div><dt>Metal & purity</dt><dd>{p.metal}, {p.purity}</dd></div><div><dt>Net metal weight</dt><dd>{Number(p.weight_g).toFixed(3)} g</dd></div>{p.dimension&&<div><dt>Dimensions</dt><dd>{p.dimension}</dd></div>}<div><dt>SKU</dt><dd>{p.sku}</dd></div></dl>
         <details><summary>Price details <Plus size={15}/></summary>{p.breakdown?<div className="breakdown">{[
           ['Metal value',p.breakdown.metal],
@@ -1525,9 +1979,9 @@ function CoinProduct(){
         <details><summary>Delivery & returns <Plus size={15}/></summary><p>Delivery and return policies are awaiting merchant details. <Link to="/information/shipping">View current information</Link>.</p></details>
       </div>
     </section>
-    {zoomCoin&&<ImageViewer images={[{url:zoomCoin.image,alt_text:zoomCoin.name}]} title={zoomCoin.name} onClose={()=>setZoomCoin(null)}/>}
+    {zoomCoin&&<ImageViewer images={angleImages} index={Math.max(0,angleImages.findIndex(i=>i.url===activeImage))} title={p.name} onClose={()=>setZoomCoin(false)}/>}
   </Layout>;
 }
 
-function NotFound(){return <Layout><section className="empty"><span className="eyebrow">A SMALL DETOUR</span><h1>This page is yet to be discovered.</h1><Link className="button dark" to="/">Return to the maison</Link></section></Layout>}
+function NotFound(){return <Layout><section className="empty"><span className="eyebrow">A SMALL DETOUR</span><h1>This page is yet to be discovered.</h1><p>The link you followed may have changed, or the piece may have moved.</p><div style={{display:'flex',gap:'14px',justifyContent:'center',flexWrap:'wrap',marginTop:'20px'}}><Link className="button dark" to="/collections/all">Explore all jewellery</Link><Link className="underlink" to="/">Return to home</Link></div></section></Layout>}
 createRoot(document.getElementById('root')).render(<BrowserRouter><Provider><Scroll/><Routes><Route path="/" element={<Home/>}/><Route path="/collections/:category" element={<Collection/>}/><Route path="/products/:slug" element={<Product/>}/><Route path="/coins/product/:sku" element={<CoinProduct/>}/><Route path="/coins" element={<CoinsPage/>}/> <Route path="/coins/:category" element={<CoinsPage/>}/><Route path="/account" element={<Account Layout={Layout} BagLines={BagLines} ProductCard={ProductCard} grouped={grouped}/>}/><Route path="/bag" element={<Bag/>}/><Route path="/checkout" element={<Checkout/>}/><Route path="/order/:id" element={<Order/>}/><Route path="/information/:page" element={<Information/>}/><Route path="/admin/*" element={<Admin/>}/><Route path="*" element={<NotFound/>}/></Routes></Provider></BrowserRouter>);
