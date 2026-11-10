@@ -77,6 +77,7 @@ app.get('/api/admin/offers',auth(),route(async(req,res)=>{
 }));
 app.post('/api/admin/offers',auth(['owner','manager']),route(async(req,res)=>{
   const {name,code,badge_text,discount_type,discount_value,applies_to,target_value,banner_headline,banner_subtext,status,priority,show_in_banner,show_in_grid}=req.body;
+  validateOffer({discount_type:'making_percent',discount_value:0,applies_to:'all',status:'active',priority:0,show_in_banner:true,show_in_grid:true,...req.body});
   if(!name||!badge_text)throw validationError('Offer name and badge text are required');
   const nowStr=now();
   const offerData={

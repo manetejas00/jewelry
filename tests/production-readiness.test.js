@@ -100,6 +100,7 @@ test('HTTP staff login, CSRF and offer CRUD preserve role boundaries',async()=>{
  assert.equal((await staff('/api/admin/offers',{},'POST')).status,403);
  const token={'x-csrf-token':login.data.csrf};const offer={name:'HTTP audit offer',badge_text:'Test',discount_type:'total_percent',discount_value:10,applies_to:'all',status:'paused',priority:0,show_in_banner:false,show_in_grid:false};
  assert.equal((await staff('/api/admin/offers',{...offer,discount_value:-10},'POST',token)).status,400);
+ assert.equal((await staff('/api/admin/offers',{...offer,discount_type:'unknown'},'POST',token)).status,400);
  const created=await staff('/api/admin/offers',offer,'POST',token);assert.equal(created.status,200);
  assert.equal((await staff('/api/admin/offers/'+created.data.id,{discount_value:200},'PATCH',token)).status,400);
  assert.equal((await staff('/api/admin/offers/'+created.data.id,{discount_value:20},'PATCH',token)).status,200);

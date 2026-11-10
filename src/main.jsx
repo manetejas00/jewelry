@@ -273,7 +273,7 @@ function FestiveGridBanner({offer}){
       <span className="festive-banner-badge"><Sparkles size={12}/> FESTIVE CELEBRATION</span>
       <h3 className="festive-banner-title">{offer.banner_headline||offer.name}</h3>
       <div className="festive-banner-discount">{offer.badge_text}</div>
-      <p className="festive-banner-subtext">{offer.banner_subtext||'Special festive discounts auto-applied on plain gold jewellery & certified pure bullion coins'}</p>
+      <p className="festive-banner-subtext">{offer.banner_subtext||'Special festive discounts auto-applied to eligible jewellery and coins'}</p>
     </div>
     <Link to={offer.applies_to==='silver'?'/coins/silver':offer.applies_to==='coins'?'/coins':'/collections/all'} className="festive-banner-btn">Shop Festive Offers <ArrowRight size={14}/></Link>
   </article>;
@@ -381,7 +381,7 @@ function Collection(){
     <div className="collection-intro">
       <span className="eyebrow">{q?`FOUND ${items.length} MATCHING PIECES`:'THE VEYORA COLLECTIONS'}</span>
       <h1>{title}</h1>
-      <p>{q?`Showing jewellery and certified minted coins matching “${q}”.`:'Considered pieces. Quiet statements. Endlessly you.'}</p>
+      <p>{q?`Showing jewellery and coins matching “${q}”.`:'Considered pieces. Quiet statements. Endlessly you.'}</p>
       <div className="collection-tabs">
         <Link className={category==='all'?'active':''} to="/collections/all">All jewellery</Link>
         <Link className={category==='pearls'?'active':''} to="/collections/pearls">The Pearl Edit</Link>
@@ -570,7 +570,7 @@ function Information(){
     </>:page==='care'?<>
       <p>Store pieces separately in a soft pouch. Avoid perfume, harsh cleaning products and prolonged water exposure. Ask the merchant for material-specific care instructions for your chosen piece.</p>
       <h3>General Care Guidelines</h3>
-      <p>Keep your pieces dry and clean them gently with a microfibre cloth. For gold and silver coins, preserve them in their original tamper-evident assay blisters to maintain mint condition and purity value.</p>
+      <p>Keep your pieces dry and clean them gently with a microfibre cloth. For gold and silver coins, retain the supplied packaging and follow the manufacturer’s handling instructions.</p>
     </>:<>
       <p>{config.contact&&!/\.(local|invalid)$/i.test(config.contact)?<a href={'mailto:'+config.contact}>{config.contact}</a>:'The merchant’s contact details will appear here once supplied. This store is currently a design and checkout preview.'}</p>
       <h3>Concierge Assistance</h3>
@@ -1856,7 +1856,7 @@ function CoinsPage(){
     <div className="collection-intro">
       <span className="eyebrow">PURE BULLION & HEIRLOOMS</span>
       <h1>Gold & Silver Coins</h1>
-      <p>Certified 24K 999 pure gold and 999 fine silver minted coins. Encased in tamper-evident assay certification packs for auspicious celebrations, gifting, and generational wealth.</p>
+      <p>Explore the gold and silver coin catalogue. Confirm the manufacturer, listed purity, packaging and supporting documentation with the merchant before ordering.</p>
       
       <div className="collection-tabs">
         <Link className={selectedCategory==='all'?'active':''} to="/coins">All Coins ({coins.length})</Link>
@@ -1876,15 +1876,15 @@ function CoinsPage(){
         <div className="coin-trust-item">
           <ShieldCheck size={24}/>
           <div>
-            <strong>100% Certified Purity</strong>
+            <strong>Listed metal & purity</strong>
             <p className="muted" style={{margin:0,fontSize:'10px'}}>24K 999 Pure Gold & 999 Fine Silver</p>
           </div>
         </div>
         <div className="coin-trust-item">
           <Package size={24}/>
           <div>
-            <strong>Assay Certified Packing</strong>
-            <p className="muted" style={{margin:0,fontSize:'10px'}}>Individual tamper-proof security blister pack</p>
+            <strong>Packaging details</strong>
+            <p className="muted" style={{margin:0,fontSize:'10px'}}>Confirm supplied packaging with the merchant</p>
           </div>
         </div>
         <div className="coin-trust-item">
