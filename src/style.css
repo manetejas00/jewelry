@@ -190,3 +190,6 @@
 .product-photo>.product-label,.product-photo>.offer-ribbon-badge,.product-photo>.gold-linked-badge{pointer-events:none}
 
 .hero-index{text-align:right}.hero-arrows{display:flex;gap:8px;margin-top:12px}.hero-arrows button{display:flex;align-items:center;justify-content:center;width:44px;height:44px;padding:0;border:1px solid #ede7d566;background:#10272a80;color:#ede7d5;border-radius:50%}.hero-arrows button:hover{background:#ede7d526}.hero-arrows button:focus-visible{outline:2px solid #ede7d5;outline-offset:3px}
+
+/* Keep the collection close to the hero benefits strip. */
+.value-strip + .collection-section{padding-top:24px}
