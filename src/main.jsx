@@ -872,7 +872,6 @@ function ImageUploader({products=[],refreshParent}){
           <option value="left">👈 Left View</option>
           <option value="right">👉 Right View</option>
           <option value="model">💃 Model Wearing Shot</option>
-          <option value="detail">🔍 Detail / Close-up Image</option>
           <option value="detail">🔍 Detail / Close-up</option>
         </select>
       </label>
@@ -964,8 +963,22 @@ function ImageUploader({products=[],refreshParent}){
 }
 
 function AdminProductList({products,readonly,refresh}){
-  const pagination=usePagination(products);
-  return <div className="admin-panel"><div className="panel-title" style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'12px',marginBottom:'16px'}}><div><h3 style={{margin:0}}>All Products ({products.length})</h3><span className="small muted">Total variants: {products.length} · In stock: {products.filter(p=>p.stock>0).length} · Out of stock: {products.filter(p=>p.stock===0).length}</span></div><div style={{display:'flex',gap:'10px',alignItems:'center'}}><span className="status-badge">{products.length} Items Listed</span></div></div><div className="table-wrap"><table><thead><tr><th>Piece / SKU</th><th>Pricing</th><th>Weight</th><th>Stock</th><th>Status</th><th></th></tr></thead><tbody>{pagination.items.map(p=><ProductRow key={p.id} p={p} readonly={readonly} refresh={refresh}/>)}</tbody></table></div><Pagination pagination={pagination} label="Products"/></div>;
+  return <AdminCatalogueList items={products} label="Products" renderRow={p=><ProductRow key={p.id} p={p} readonly={readonly} refresh={refresh}/>}/>;
+}
+
+function AdminCatalogueList({items,label,resetKey,renderRow}){
+  const pagination=usePagination(items,resetKey);
+  return <div className="admin-panel"><div className="panel-title" style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'12px',marginBottom:'16px'}}><div><h3 style={{margin:0}}>All {label} ({items.length})</h3><span className="small muted">Total {label==='Products'?'variants':'coins'}: {items.length} · In stock: {items.filter(p=>p.stock>0).length} · Out of stock: {items.filter(p=>p.stock===0).length}</span></div><div style={{display:'flex',gap:'10px',alignItems:'center'}}><span className="status-badge">{items.length} Items Listed</span></div></div><div className="table-wrap"><table><thead><tr><th>Piece / SKU</th><th>Pricing</th><th>Weight</th><th>Stock</th><th>Status</th><th></th></tr></thead><tbody>{pagination.items.map(renderRow)}{!items.length&&<tr><td colSpan="6" className="empty">No {label.toLowerCase()} found.</td></tr>}</tbody></table></div><Pagination pagination={pagination} label={label}/></div>;
+}
+
+function AdminCatalogueRow({item,details,pricing,weight,actions}){
+  return <tr>
+    <td><div style={{display:'flex',alignItems:'center',gap:'10px'}}>
+      {item.image?<img src={coinImage(item.image,true)} alt={item.name} style={{width:'36px',height:'36px',objectFit:'cover',borderRadius:'3px',flexShrink:0}}/>:<div style={{width:'36px',height:'36px',background:'var(--paper)',display:'grid',placeItems:'center',borderRadius:'3px',flexShrink:0}}><ImageIcon size={16}/></div>}
+      <div><strong>{item.name}</strong><small>{details}</small></div>
+    </div></td>
+    <td>{pricing}</td><td>{weight}</td><td>{item.stock}</td><td><Status text={item.status}/></td><td>{actions}</td>
+  </tr>;
 }
 
 function ProductRow({p,readonly,refresh}){
@@ -983,25 +996,11 @@ function ProductRow({p,readonly,refresh}){
     }
   }
   return <>
-    <tr>
-      <td>
-        <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
-          {p.image?<img src={coinImage(p.image,true)} alt={p.name} style={{width:'36px',height:'36px',objectFit:'cover',borderRadius:'3px',flexShrink:0}}/>:<div style={{width:'36px',height:'36px',background:'var(--paper)',display:'grid',placeItems:'center',borderRadius:'3px',flexShrink:0}}><ImageIcon size={16}/></div>}
-          <div>
-            <strong>{p.name}</strong>
-            <small>{p.sku} · {p.product_code}</small>
-          </div>
-        </div>
-      </td>
-      <td>
-        {p.pricing_mode==='GOLD_LINKED'?<span className="coin-badge gold">GOLD_LINKED</span>:<span className="status-badge">FIXED</span>}
-        <small>{p.pricing_mode==='FIXED'?money(p.fixed_price):`${p.purity} · Live Rate`}</small>
-      </td>
-      <td>{p.net_weight_g} g</td>
-      <td>{p.stock}</td>
-      <td><Status text={p.status}/></td>
-      <td><button className="underlink" disabled={readonly} onClick={()=>{setPhoto(p.image||'');setError('');setEditing(!editing)}}>{editing?'Close':'Edit'}</button></td>
-    </tr>
+    <AdminCatalogueRow item={p} details={`${p.sku} · ${p.product_code}`}
+      pricing={<>{p.pricing_mode==='GOLD_LINKED'?<span className="coin-badge gold">GOLD_LINKED</span>:<span className="status-badge">FIXED</span>}<small>{p.pricing_mode==='FIXED'?money(p.fixed_price):`${p.purity} · Live Rate`}</small></>}
+      weight={<>{p.net_weight_g} g</>}
+      actions={<button className="underlink" disabled={readonly} onClick={()=>{setPhoto(p.image||'');setError('');setEditing(!editing)}}>{editing?'Close':'Edit'}</button>}
+    />
     {editing&&<tr>
       <td colSpan="6">
         <div style={{background:'var(--ivory)',border:'1px solid var(--line)',padding:'20px',borderRadius:'4px',margin:'10px 0'}}>
@@ -1321,7 +1320,6 @@ function CoinsAdmin({readonly,refreshParent}){
     return true;
   });
 
-  const pagination=usePagination(filteredCoins,subTab);
 
   const goldCount=coins.filter(c=>(c.metal||'').toLowerCase()==='gold').length;
   const silverCount=coins.filter(c=>(c.metal||'').toLowerCase()==='silver').length;
@@ -1364,68 +1362,12 @@ function CoinsAdmin({readonly,refreshParent}){
 
     {error&&<p className="error">{error}</p>}
 
-    {/* Table */}
-    <div className="admin-panel">
-      <div className="panel-title" style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'12px',marginBottom:'16px'}}>
-        <div>
-          <h3 style={{margin:0}}>Coin Catalogue ({coins.length})</h3>
-          <span className="small muted">Showing {filteredCoins.length} of {coins.length} coins · Gold: {goldCount} · Silver: {silverCount}</span>
-        </div>
-        <span className="status-badge">{coins.length} Total Coins</span>
-      </div>
-      <div className="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Coin / SKU</th>
-              <th>Metal / Purity</th>
-              <th>Weight & Dimensions</th>
-              <th>Making Charge</th>
-              <th>Live Calculated Price</th>
-              <th>Stock</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pagination.items.map(c=><tr key={c.sku}>
-              <td>
-                <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
-                  {c.image?<img src={coinImage(c.image,true)} alt={c.name} style={{width:'40px',height:'40px',objectFit:'cover',borderRadius:'4px'}}/>:<div style={{width:'40px',height:'40px',background:'var(--paper)',display:'grid',placeItems:'center',borderRadius:'4px'}}><CoinsIcon size={18}/></div>}
-                  <div>
-                    <strong>{c.name}</strong>
-                    <small>{c.sku}</small>
-                  </div>
-                </div>
-              </td>
-              <td>
-                <span className={'coin-badge '+(c.metal==='Silver'?'silver':'gold')}>{c.metal}</span>
-                <small>{c.purity} · {c.coin_type}</small>
-              </td>
-              <td>
-                <strong>{Number(c.weight_g).toFixed(3)} g</strong>
-                <small>{c.dimension||'Standard round'}</small>
-              </td>
-              <td>{money(c.making_charge)}</td>
-              <td>
-                <strong>{c.calculated_price!==null?money(c.calculated_price):'Awaiting rate'}</strong>
-                {c.breakdown&&<small>Metal {money(c.breakdown.metal)} + Making {money(c.breakdown.making)}</small>}
-              </td>
-              <td><strong>{c.stock}</strong></td>
-              <td><Status text={c.status}/></td>
-              <td>
-                <div style={{display:'flex',gap:'10px',alignItems:'center'}}>
-                  <button className="underlink" disabled={readonly} onClick={()=>setEditingCoin(c)}>Edit</button>
-                  <button className="text-button" disabled={readonly} style={{color:'#a83232',padding:0}} onClick={()=>deleteCoin(c.sku)} title="Delete coin"><Trash2 size={14}/></button>
-                </div>
-              </td>
-            </tr>)}
-            {!filteredCoins.length&&<tr><td colSpan="8" style={{textAlign:'center',padding:'30px',color:'var(--muted)'}}>No coins found in this category.</td></tr>}
-          </tbody>
-        </table>
-      </div>
-      <Pagination pagination={pagination} label="Coins"/>
-    </div>
+    <AdminCatalogueList items={filteredCoins} label="Coins" resetKey={subTab} renderRow={c=><AdminCatalogueRow key={c.sku} item={c}
+      details={<>{c.sku} · {c.coin_type}</>}
+      pricing={<><span className={'coin-badge '+(c.metal==='Silver'?'silver':'gold')}>{c.metal}</span><small>{c.purity} · Live Rate</small><strong>{c.calculated_price!=null?money(c.calculated_price):'Awaiting rate'}</strong>{c.breakdown&&<small>Metal {money(c.breakdown.metal)} + Making {money(c.breakdown.making)}</small>}<small>Making charge: {money(c.making_charge)}</small></>}
+      weight={<>{Number(c.weight_g).toFixed(3)} g<small>{c.dimension||'Standard round'}</small></>}
+      actions={<div style={{display:'flex',gap:'10px',alignItems:'center'}}><button className="underlink" disabled={readonly} onClick={()=>setEditingCoin(c)}>Edit</button><button className="text-button" disabled={readonly} style={{color:'#a83232',padding:0}} onClick={()=>deleteCoin(c.sku)} title="Delete coin"><Trash2 size={14}/></button></div>}
+    />}/>
 
     <ImportPanel kind="coins" readonly={readonly} refresh={async()=>{await load();await refreshParent?.();await refreshCatalogue({notify:true})}}/>
     {/* Modal for Add / Edit Coin */}
