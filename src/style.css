@@ -164,6 +164,11 @@
 /* In-Grid Festive Offer Banner Card */
 .festive-grid-banner{grid-column:span 1;background:linear-gradient(135deg,#800020 0%,#4a0011 100%);color:#f8f6f0;padding:28px 22px;border-radius:4px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden;min-height:360px;box-shadow:0 8px 24px rgba(128,0,32,.25)}
 .festive-grid-banner:before{content:'';position:absolute;top:-40px;right:-40px;width:140px;height:140px;border-radius:50%;background:rgba(212,175,55,.15);pointer-events:none}
+.festive-grid-banner.festive-grid-banner-artwork{padding:0;min-height:0;align-self:start;background:#570011}
+.festive-grid-banner-artwork:before{display:none}
+.festive-grid-banner-artwork>a{display:block}
+.festive-grid-banner-artwork>a:focus-visible{outline-offset:-5px;outline:3px solid #ffe19a}
+.festive-grid-banner-artwork img{width:100%;height:auto;aspect-ratio:2/3}
 .festive-banner-badge{font-size:8px;letter-spacing:2px;text-transform:uppercase;font-weight:700;color:#e8d4a2;display:inline-flex;align-items:center;gap:6px}
 .festive-banner-title{font-family:var(--serif);font-size:32px;line-height:1.1;margin:12px 0 6px;color:#fff}
 .festive-banner-discount{font-size:36px;font-weight:800;color:#f9ca24;letter-spacing:-1px;line-height:1;margin:8px 0}
