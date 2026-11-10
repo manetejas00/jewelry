@@ -129,3 +129,16 @@ test('recreateProductAssets creates all 5 angle roles (hero, front, left, right,
   assert.ok(roles.includes('right'), 'Must have right role');
   assert.ok(roles.includes('modal') || roles.includes('model'), 'Must have modal/model role');
 });
+
+
+test('asset recreation keeps model photographs separate from macro details', async () => {
+  const {recreateProductAssets} = await import('../scripts/recreate-product-assets.js');
+  const original = await k('products').where({sku: 'TEST-R-12'}).first();
+  const code = 'adeline-laurel-climbers-pearl-earrings';
+  const {id, ...product} = original;
+  await k('products').insert({...product, product_code: code, slug: code, sku: 'MODEL-GALLERY-TEST'});
+  await recreateProductAssets(k);
+  const images = await k('product_images').where({product_code: code});
+  assert.equal(images.find(image => image.role === 'model').url, `/assets/products/${code}/model.webp`);
+  assert.equal(images.find(image => image.role === 'modal').url, `/assets/products/${code}/modal.webp`);
+});

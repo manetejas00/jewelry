@@ -13,7 +13,9 @@
     "import:daily": "node scripts/daily.js",
     "samples": "node scripts/samples.js",
     "seed:products": "node seeders/ProductSeeder.js",
-    "seed:catalogue": "node seeders/DatabaseSeeder.js"
+    "seed:catalogue": "node seeders/DatabaseSeeder.js",
+    "assets:recreate": "node scripts/recreate-product-assets.js",
+    "assets:check": "node scripts/check-product-assets.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",

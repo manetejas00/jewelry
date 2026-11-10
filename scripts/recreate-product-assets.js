@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import sharp from 'sharp';
 import { db, now } from '../server/db.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -63,6 +64,25 @@ export async function recreateProductAssets(k = db) {
     console.log(`Verified disk files for ${coinDirs.length} coin folders.`);
   }
 
+  // Cards and gallery previews request role-specific thumbnails.
+  let thumbnailCount = 0;
+  for (const base of [prodBase, coinBase]) {
+    if (!fs.existsSync(base)) continue;
+    for (const entry of fs.readdirSync(base, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      for (const role of ['hero', 'front', 'left', 'right', 'modal', 'model']) {
+        const source = path.join(base, entry.name, `${role}.webp`);
+        const target = path.join(base, entry.name, `${role}-thumb.webp`);
+        if (!fs.existsSync(source)) continue;
+        if (fs.existsSync(target) && fs.statSync(target).mtimeMs >= fs.statSync(source).mtimeMs) continue;
+        await sharp(source).resize({ width: 600, height: 800, fit: 'inside', withoutEnlargement: true })
+          .webp({ quality: 82 }).toFile(target);
+        thumbnailCount++;
+      }
+    }
+  }
+  console.log(`Created ${thumbnailCount} gallery thumbnails.`);
+
   // 2. Fetch distinct products from database
   const products = await k('products').select('product_code', 'name', 'category', 'image').groupBy('product_code');
   console.log(`Found ${products.length} distinct products in database.`);
@@ -86,6 +106,7 @@ export async function recreateProductAssets(k = db) {
       const leftExists = fs.existsSync(path.join(folder, 'left.webp'));
       const rightExists = fs.existsSync(path.join(folder, 'right.webp'));
       const modalExists = fs.existsSync(path.join(folder, 'modal.webp'));
+      const modelExists = fs.existsSync(path.join(folder, 'model.webp'));
 
       // Clean existing records for this product_code to avoid duplicates
       await t('product_images').where({ product_code: code }).del();
@@ -94,6 +115,7 @@ export async function recreateProductAssets(k = db) {
       const frontUrl = frontExists ? `/assets/products/${code}/front.webp` : heroUrl;
       const leftUrl = leftExists ? `/assets/products/${code}/left.webp` : heroUrl;
       const rightUrl = rightExists ? `/assets/products/${code}/right.webp` : heroUrl;
+      const modelUrl = modelExists ? `/assets/products/${code}/model.webp` : null;
       const modalUrl = modalExists ? `/assets/products/${code}/modal.webp` : heroUrl;
 
       const imagesToInsert = [
@@ -151,7 +173,7 @@ export async function recreateProductAssets(k = db) {
           product_code: code,
           sku: null,
           role: 'model',
-          url: modalUrl,
+          url: modelUrl || modalUrl,
           alt_text: `${name} Model Shot`,
           sort_order: 6,
           created_at: timestamp,
@@ -174,6 +196,7 @@ export async function recreateProductAssets(k = db) {
       const leftExists = fs.existsSync(path.join(folder, 'left.webp'));
       const rightExists = fs.existsSync(path.join(folder, 'right.webp'));
       const modalExists = fs.existsSync(path.join(folder, 'modal.webp'));
+      const modelExists = fs.existsSync(path.join(folder, 'model.webp'));
 
       await t('product_images').where({ sku: c.sku }).orWhere({ product_code: code }).del();
 
@@ -181,6 +204,7 @@ export async function recreateProductAssets(k = db) {
       const frontUrl = frontExists ? `/assets/coins/${code}/front.webp` : heroUrl;
       const leftUrl = leftExists ? `/assets/coins/${code}/left.webp` : heroUrl;
       const rightUrl = rightExists ? `/assets/coins/${code}/right.webp` : heroUrl;
+      const modelUrl = modelExists ? `/assets/coins/${code}/model.webp` : null;
       const modalUrl = modalExists ? `/assets/coins/${code}/modal.webp` : heroUrl;
 
       const coinImages = [
@@ -209,7 +233,7 @@ export async function recreateProductAssets(k = db) {
           sku: c.sku,
           role: 'left',
           url: leftUrl,
-          alt_text: `${name} Edge View`,
+          alt_text: `${name} Left View`,
           sort_order: 3,
           created_at: timestamp,
           updated_at: timestamp,
@@ -219,7 +243,7 @@ export async function recreateProductAssets(k = db) {
           sku: c.sku,
           role: 'right',
           url: rightUrl,
-          alt_text: `${name} Reverse Design`,
+          alt_text: `${name} Right View`,
           sort_order: 4,
           created_at: timestamp,
           updated_at: timestamp,
@@ -238,8 +262,8 @@ export async function recreateProductAssets(k = db) {
           product_code: code,
           sku: c.sku,
           role: 'model',
-          url: modalUrl,
-          alt_text: `${name} High-Resolution Macro Detail`,
+          url: modelUrl || modalUrl,
+          alt_text: `${name} Hand-held Scale View`,
           sort_order: 6,
           created_at: timestamp,
           updated_at: timestamp,
