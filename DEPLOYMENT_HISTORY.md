@@ -20,3 +20,12 @@ Times below are Asia/Kolkata unless otherwise labelled. Backups and sensitive ev
 | Final source/report commits | Review branch updated; main remains unchanged; see Git log and Actions for commit/run identifiers |
 
 The previous 70/100 local estimate is not a live deployment result. Current live estimate is 42/100 with critical blockers open. The recovery restored availability of the legacy application; it did not silently apply the security candidate, change staff credentials, migrate schemas or enable real payments.
+
+
+## Catalogue editor and PDP image update — 11 November 2026
+
+Requested change: jewellery and coin editing share `CatalogueEditForm`, including name, publication status, photo selection, description, validation and save/cancel controls. Coin-specific inventory/pricing fields use the same form through its children. Both editors use the common expandable catalogue row. Detail photographs fill their responsive card with centered cover sizing; original images remain available in the zoom viewer.
+
+Validation before publication: 116 regression tests pass; Vite production build succeeds; diff whitespace check passes. No separate lint/typecheck command is configured. Browser checks confirmed both editors open/cancel and the local coin save closes successfully. Existing generated sample CSV changes are excluded from this commit.
+
+Publication scope: frontend only, from the pushed Git commit, with a private rollback copy of both live HTML entries and compiled assets. The existing backend, environment, database and uploaded media are preserved. The incompatible Hostinger raw-source automatic publisher remains paused; this is a verified Git-sourced publication over the existing SSH access, not an automatic CI/CD success claim. Deployment verification is recorded after publication.

@@ -981,47 +981,54 @@ function AdminCatalogueRow({item,details,pricing,weight,actions,children}){
   </tr>{children&&<tr><td colSpan="6"><div style={{background:'var(--ivory)',border:'1px solid var(--line)',padding:'20px',borderRadius:'4px',margin:'10px 0'}}>{children}</div></td></tr>}</>;
 }
 
+// Shared merchant editor for jewellery and coins. Domain fields are supplied as children.
+function CatalogueEditForm({item,onSave,onClose,error,readonly=false,children,creating=false}){
+  const [photo,setPhoto]=useState(item?.image||''),[kind,setKind]=useState(item?.image_kind||'photo');
+  const [photoBusy,setPhotoBusy]=useState(false),[saving,setSaving]=useState(false);
+  async function submit(e){
+    e.preventDefault();
+    if(saving||photoBusy||readonly)return;
+    setSaving(true);
+    try{await onSave(e)}finally{setSaving(false)}
+  }
+  return <form className="catalogue-edit-form" onSubmit={submit}>
+    <fieldset disabled={readonly||saving}>
+      <div className="form-grid">
+        <label>Name<input name="name" defaultValue={item?.name||''} required maxLength={200}/></label>
+        <label>Status<select name="status" defaultValue={item?.status||'published'}><option>published</option><option>draft</option></select></label>
+        {children}
+        <PhotoPicker value={photo} onChange={setPhoto} kind={kind} onKindChange={setKind} disabled={readonly||saving} onBusyChange={setPhotoBusy}/>
+        <label className="span-two">Description<textarea name="description" defaultValue={item?.description||''} rows="3" maxLength={5000}/></label>
+      </div>
+      {error&&<p className="error" role="alert">{error}</p>}
+      <div className="catalogue-edit-actions">
+        <button type="submit" className="button dark small-button" disabled={photoBusy||saving}>{saving?'Saving…':creating?'Create item':'Save changes'}</button>
+        <button type="button" className="text-button" onClick={onClose}>Cancel</button>
+      </div>
+    </fieldset>
+  </form>;
+}
+
 function ProductRow({p,readonly,refresh}){
   const {refreshCatalogue}=useStore();
-  const [editing,setEditing]=useState(false),[error,setError]=useState(''),[photo,setPhoto]=useState(p.image||''),[photoBusy,setPhotoBusy]=useState(false);
+  const [editing,setEditing]=useState(false),[error,setError]=useState('');
   async function save(e){
-    e.preventDefault();
+    const body=Object.fromEntries(new FormData(e.target));
     try{
-      await api('/admin/products/'+p.sku,Object.fromEntries(new FormData(e.target)),'PATCH');
+      await api('/admin/products/'+encodeURIComponent(p.sku),body,'PATCH');
       setEditing(false);
       await refresh();
       await refreshCatalogue({notify:true});
-    }catch(e){
-      setError(e.message);
-    }
+    }catch(e){setError(e.message)}
   }
-  return <>
-    <AdminCatalogueRow item={p} details={`${p.sku} · ${p.product_code}`}
-      pricing={<>{p.pricing_mode==='GOLD_LINKED'?<span className="coin-badge gold">GOLD_LINKED</span>:<span className="status-badge">FIXED</span>}<small>{p.pricing_mode==='FIXED'?money(p.fixed_price):`${p.purity} · Live Rate`}</small></>}
-      weight={<>{p.net_weight_g} g</>}
-      actions={<button className="underlink" disabled={readonly} onClick={()=>{setPhoto(p.image||'');setError('');setEditing(!editing)}}>{editing?'Close':'Edit'}</button>}
-    />
-    {editing&&<tr>
-      <td colSpan="6">
-        <div style={{background:'var(--ivory)',border:'1px solid var(--line)',padding:'20px',borderRadius:'4px',margin:'10px 0'}}>
-          <form className="product-edit" onSubmit={save}>
-            <label>Name<input name="name" defaultValue={p.name}/></label>
-            <label>Status<select name="status" defaultValue={p.status}><option>published</option><option>draft</option></select></label>
-            <PhotoPicker value={photo} onChange={setPhoto} disabled={readonly} onBusyChange={setPhotoBusy}/>
-            <label className="span-two">Description<textarea name="description" defaultValue={p.description}/></label>
-            {error&&<p className="error span-two">{error}</p>}
-            <div className="span-two" style={{display:'flex',gap:'10px',marginTop:'8px'}}>
-              <button className="button dark small-button" type="submit" disabled={photoBusy}>Save merchant edits</button>
-              <button className="text-button" type="button" onClick={()=>{setPhoto(p.image||'');setEditing(false)}}>Cancel</button>
-            </div>
-          </form>
-
-          {/* Multi-Angle Visual Manager */}
-          <ProductAngleManager product={p} readonly={readonly} refreshParent={refresh}/>
-        </div>
-      </td>
-    </tr>}
-  </>;
+  return <AdminCatalogueRow item={p} details={`${p.sku} · ${p.product_code}`}
+    pricing={<>{p.pricing_mode==='GOLD_LINKED'?<span className="coin-badge gold">GOLD_LINKED</span>:<span className="status-badge">FIXED</span>}<small>{p.pricing_mode==='FIXED'?money(p.fixed_price):`${p.purity} · Live Rate`}</small></>}
+    weight={<>{p.net_weight_g} g</>}
+    actions={<button className="underlink" disabled={readonly} onClick={()=>{setError('');setEditing(!editing)}}>{editing?'Close':'Edit'}</button>}
+  >{editing&&<>
+    <CatalogueEditForm item={p} onSave={save} onClose={()=>setEditing(false)} error={error} readonly={readonly}/>
+    <ProductAngleManager product={p} readonly={readonly} refreshParent={refresh}/>
+  </>}</AdminCatalogueRow>;
 }
 function SettingsAdmin({data,refresh,readonly}){
   const [error,setError]=useState(''),[saved,setSaved]=useState(false),[busy,setBusy]=useState(false);
@@ -1383,16 +1390,11 @@ function CoinsAdmin({readonly,refreshParent}){
 }
 
 function CoinForm({coin,onClose,onSave,error,modal=false}){
-  const [imageUrl,setImageUrl]=useState(coin?.image||''),[imageKind,setImageKind]=useState(coin?.image_kind||'photo'),[photoBusy,setPhotoBusy]=useState(false);
   const [metal,setMetal]=useState(coin?.metal||'Gold');
   const [pricingMode,setPricingMode]=useState(coin?.pricing_mode||'METAL_LINKED');
-  const form=<form onSubmit={onSave} className="coin-form">{error&&<p className="error" role="alert">{error}</p>}
-      <div className="form-grid">
+  const form=<CatalogueEditForm item={coin} onSave={onSave} onClose={onClose} error={error} creating={!coin}>
         <label>SKU (Unique identifier)*
           <input name="sku" defaultValue={coin?.sku||''} placeholder="e.g. COIN-AU-2G" required disabled={!!coin}/>
-        </label>
-        <label>Coin Name*
-          <input name="name" defaultValue={coin?.name||''} placeholder="e.g. 24K Lakshmi 999 Pure Gold Coin" required/>
         </label>
         <label>Metal*
           <select name="metal" value={metal} onChange={e=>setMetal(e.target.value)}>
@@ -1427,22 +1429,7 @@ function CoinForm({coin,onClose,onSave,error,modal=false}){
         <label>Stock snapshot*
           <input name="stock" type="number" min="0" defaultValue={coin?.stock??10} required/>
         </label>
-        <label>Publication Status
-          <select name="status" defaultValue={coin?.status||'published'}>
-            <option value="published">published</option>
-            <option value="draft">draft</option>
-          </select>
-        </label>
-        <PhotoPicker value={imageUrl} onChange={setImageUrl} kind={imageKind} onKindChange={setImageKind} onBusyChange={setPhotoBusy}/>
-        <label className="span-two">Description
-          <textarea name="description" defaultValue={coin?.description||''} placeholder="Describe the coin design, hallmark, tamper-proof packaging, etc." rows="3"/>
-        </label>
-      </div>
-      <div style={{display:'flex',gap:'12px',justifyContent:'flex-end',marginTop:'24px'}}>
-        <button type="button" className="text-button" onClick={onClose}>Cancel</button>
-        <button type="submit" className="button dark" disabled={photoBusy}>{coin?'Save Changes':'Create Coin'} <Check size={16}/></button>
-      </div>
-    </form>;
+    </CatalogueEditForm>;
   return modal?<Modal title="Add New Coin" onClose={onClose}>{form}</Modal>:form;
 }
 
