@@ -74,31 +74,45 @@
 .angle-thumb-btn.active .angle-label{color:var(--gold)}
 
 /* Angle Badges */
-.role-badge{display:inline-block;font-size:7px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 7px;border-radius:2px;background:#e9ecef;color:#495057}
-.role-badge.hero{background:#fdf2d0;color:#856404;border:1px solid #f2db9a}
-.role-badge.front{background:#e2f0d9;color:#285c1e;border:1px solid #c2e0b1}
-.role-badge.left{background:#e3f2fd;color:#0d47a1;border:1px solid #bbdefb}
-.role-badge.right{background:#ede7f6;color:#4a148c;border:1px solid #d1c4e9}
-.role-badge.model{background:#fce4ec;color:#880e4f;border:1px solid #f8bbd0}
-.role-badge.detail{background:#f5f5f5;color:#424242;border:1px solid #e0e0e0}
+.role-badge{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 7px;border-radius:2px;background:#e9ecef;color:#495057;flex-shrink:0;min-height:0;max-height:none;line-height:1.4}
+.role-badge.role-badge--hero,.role-badge--hero{background:#fdf2d0;color:#856404;border:1px solid #f2db9a}
+.role-badge.role-badge--front,.role-badge--front{background:#e2f0d9;color:#285c1e;border:1px solid #c2e0b1}
+.role-badge.role-badge--left,.role-badge--left{background:#e3f2fd;color:#0d47a1;border:1px solid #bbdefb}
+.role-badge.role-badge--right,.role-badge--right{background:#ede7f6;color:#4a148c;border:1px solid #d1c4e9}
+.role-badge.role-badge--model,.role-badge--model,.role-badge--modal{background:#fce4ec;color:#880e4f;border:1px solid #f8bbd0}
+.role-badge.role-badge--detail,.role-badge--detail{background:#f5f5f5;color:#424242;border:1px solid #e0e0e0}
 
 /* Admin Multi-Angle Product Editor */
 .product-angles-editor{background:var(--paper);border:1px solid var(--line);padding:18px;margin:16px 0;border-radius:4px}
 .angles-editor-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px}
 .angles-editor-header h4{margin:0;font-size:14px;font-weight:600}
-.angle-slots-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
-.angle-slot-card{border:1px dashed var(--line);background:var(--ivory);padding:12px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;border-radius:4px;min-height:170px;position:relative}
-.angle-slot-card.has-image{border-style:solid;border-color:var(--line)}
-.angle-slot-preview{width:100%;height:95px;object-fit:cover;border-radius:3px;background:#f8f9fa}
-.angle-slot-placeholder{width:100%;height:95px;background:#eceae2;display:grid;place-items:center;color:var(--muted);border-radius:3px;font-size:10px}
+.angle-slots-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;align-items:stretch}
+.angle-slot-card{border:1px dashed var(--line);background:var(--ivory);padding:12px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;border-radius:4px;min-height:220px;position:relative;transition:all .2s ease}
+.angle-slot-card:hover{border-color:var(--gold)}
+.angle-slot-card.has-image{border-style:solid;border-color:var(--line);background:#ffffff}
+.angle-slot-card.has-image:hover{border-color:var(--ink);box-shadow:0 3px 10px rgba(0,0,0,.04)}
+.angle-slot-header{display:flex;justify-content:space-between;align-items:center;width:100%;min-height:22px;gap:6px}
+.angle-slot-delete-btn{padding:2px 4px;color:#c62828;border-radius:2px;display:inline-flex;align-items:center;justify-content:center;transition:background .15s;line-height:1}
+.angle-slot-delete-btn:hover:not(:disabled){background:#ffebee}
+.angle-slot-preview-wrap{width:100%;height:110px;overflow:hidden;border-radius:3px;background:#f8f9fa;border:1px solid var(--line);display:flex;align-items:center;justify-content:center}
+.angle-slot-preview{width:100%;height:100%;object-fit:cover;display:block}
+.angle-slot-placeholder{width:100%;height:110px;background:#eceae2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--muted);border-radius:3px;border:1px dashed #d5d3c8;font-size:10px;padding:8px}
+.angle-slot-placeholder-icon{font-size:16px;line-height:1}
+.angle-slot-placeholder-desc{font-size:10px;line-height:1.3;color:var(--muted)}
 .angle-slot-actions{display:flex;gap:6px;width:100%;justify-content:center;margin-top:auto}
-.angle-slot-actions button{padding:4px 8px;font-size:9px}
+.angle-slot-actions .angle-slot-btn{padding:4px 8px;min-height:28px;font-size:9px;gap:4px;display:inline-flex;align-items:center;justify-content:center;flex:1}
+.angle-slot-url-row{display:flex;gap:4px;width:100%;margin-top:4px}
+.angle-slot-url-row input{min-height:26px;padding:3px 6px;font-size:8px;margin:0;flex:1;background:var(--paper);border:1px solid var(--line);border-radius:2px}
+.angle-slot-url-row button{min-height:26px;padding:0 8px;font-size:8px;flex-shrink:0}
 
-@media(max-width:900px){
+@media(max-width:1000px){
   .angle-slots-grid{grid-template-columns:repeat(3,1fr)}
 }
-@media(max-width:600px){
+@media(max-width:640px){
   .angle-slots-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:440px){
+  .angle-slots-grid{grid-template-columns:1fr}
 }
 
 /* Bulk Image Uploader & Media Library */
