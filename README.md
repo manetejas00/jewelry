@@ -36,3 +36,11 @@ Live payment integration is deliberately unavailable until the merchant identifi
 ## Expanded catalogue and image zoom
 
 The 100-product collection uses the existing product, supplier mapping and image tables. Run `npm run seed:products` independently, or `npm run seed:catalogue` through DatabaseSeeder. Both are transactional and repeat-safe; neither removes existing records or resets sold stock. See [collection data, images and verification](docs/products-100.md). Product-image buttons reuse the full-screen viewer, and product-name links keep opening details.
+
+## Current production audit
+
+See [project audit](PROJECT_AUDIT.md), [readiness checklist](PRODUCTION_READINESS.md), [deployment](DEPLOYMENT.md), [rollback](ROLLBACK.md), [security](SECURITY_AUDIT.md), [test results](TESTING_REPORT.md) and [environment setup](ENV_SETUP.md). Test3 remains a public preview; the updated source has not been deployed. Do not enable real commerce until the live preview account, database migration, merchant configuration and staging verification gates are resolved.
+
+## Independent live verification
+
+The active Test3 database is MySQL; the earlier SQLite inference was corrected through read-only SSH checks. See [live audit](LIVE_AUDIT_REPORT.md), [current blockers](PRODUCTION_BLOCKERS.md), [deployment verification](LIVE_DEPLOYMENT_VERIFICATION.md), and [Git/CI status](CI_CD_SETUP.md). A raw Git publication caused an outage during the audit; the legacy app and original images were recovered without commerce-record changes. The incompatible auto-publisher is paused; the tested security candidate is on the review branch, not main/live.
