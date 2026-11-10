@@ -63,10 +63,10 @@ export function SearchAutocomplete({ onClose, initialQuery = '' }) {
     return () => { active = false; };
   }, []);
 
-  // Fetch search suggestions with 300ms debounce and request cancellation
+  // Fetch search suggestions with 150ms debounce and request cancellation
   useEffect(() => {
     const trimmed = query.trim();
-    if (trimmed.length < 2) {
+    if (trimmed.length < 1) {
       setData(null);
       setLoading(false);
       setError('');
@@ -95,7 +95,7 @@ export function SearchAutocomplete({ onClose, initialQuery = '' }) {
             setLoading(false);
           }
         });
-    }, 300);
+    }, 150);
 
     return () => {
       clearTimeout(timer);
@@ -120,7 +120,7 @@ export function SearchAutocomplete({ onClose, initialQuery = '' }) {
 
   // Flatten selectable items for keyboard navigation
   const selectableItems = useMemo(() => {
-    if (query.trim().length < 2) {
+    if (query.trim().length < 1) {
       const items = [];
       for (const phrase of emptyMeta.popularSearches) {
         items.push({
