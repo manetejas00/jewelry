@@ -437,17 +437,210 @@
   .product-thumb{width:46px;height:46px}
 }
 
-/* Admin Panel Overflow & Scroll Styling */
-.admin-panel{overflow:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
-.admin-panel-scroll,.admin-panel.scrollable{max-height:75vh;overflow:auto;-webkit-overflow-scrolling:touch}
-.admin-panel::-webkit-scrollbar,.table-wrap::-webkit-scrollbar,.admin-panel-scroll::-webkit-scrollbar{width:6px;height:6px}
-.admin-panel::-webkit-scrollbar-track,.table-wrap::-webkit-scrollbar-track,.admin-panel-scroll::-webkit-scrollbar-track{background:transparent}
-.admin-panel::-webkit-scrollbar-thumb,.table-wrap::-webkit-scrollbar-thumb,.admin-panel-scroll::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
-.admin-panel::-webkit-scrollbar-thumb:hover,.table-wrap::-webkit-scrollbar-thumb:hover,.admin-panel-scroll::-webkit-scrollbar-thumb:hover{background:var(--muted)}
-.admin-sidebar{overflow-y:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.2) transparent}
-.admin-sidebar::-webkit-scrollbar{width:5px;height:5px}
-.admin-sidebar::-webkit-scrollbar-track{background:transparent}
-.admin-sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:4px}
-.admin-sidebar::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.35)}
-.admin-main{min-width:0;overflow-x:hidden}
+/* Admin Studio Shell, Sidebar, and Listing Overflow Layout */
+.admin-shell {
+  display: flex !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  max-height: 100vh !important;
+  max-height: 100dvh !important;
+  width: 100% !important;
+  overflow: hidden !important;
+  background: #f2f1e9;
+  position: relative;
+}
+
+.admin-sidebar {
+  width: 240px !important;
+  min-width: 240px !important;
+  max-width: 240px !important;
+  height: 100% !important;
+  height: 100dvh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 35px 22px !important;
+  background: #18312e !important;
+  color: #dfe5d7 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent !important;
+}
+
+.admin-main {
+  flex: 1 !important;
+  min-width: 0 !important;
+  height: 100% !important;
+  height: 100dvh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: var(--line) transparent !important;
+  background: #f2f1e9 !important;
+}
+
+.admin-header {
+  height: 75px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 0 38px;
+  border-bottom: 1px solid var(--line);
+  background: var(--ivory);
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 20 !important;
+  flex-shrink: 0 !important;
+}
+
+.admin-content {
+  padding: 36px 40px;
+  min-width: 0;
+  flex: 1;
+}
+
+/* Admin Panel & Listing Table Overflow Scroll Styling */
+.admin-panel {
+  background: var(--ivory);
+  border: 1px solid var(--line);
+  padding: 24px;
+  margin-bottom: 24px;
+  min-width: 0;
+  border-radius: 4px;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.admin-panel .table-wrap,
+.admin-panel-scroll,
+.admin-panel.scrollable {
+  max-height: calc(100vh - 270px);
+  overflow-y: auto !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #ffffff;
+}
+
+.admin-panel .table-wrap table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.admin-panel .table-wrap thead th {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 5 !important;
+  background: #f8f6f0 !important;
+  border-bottom: 1px solid var(--line) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.admin-panel .table-wrap tbody tr:hover {
+  background: #faf9f5;
+}
+
+/* Sleek Scrollbars */
+.admin-panel::-webkit-scrollbar,
+.table-wrap::-webkit-scrollbar,
+.admin-panel-scroll::-webkit-scrollbar,
+.admin-main::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.admin-panel::-webkit-scrollbar-track,
+.table-wrap::-webkit-scrollbar-track,
+.admin-panel-scroll::-webkit-scrollbar-track,
+.admin-main::-webkit-scrollbar-track {
+  background: transparent;
+}
+.admin-panel::-webkit-scrollbar-thumb,
+.table-wrap::-webkit-scrollbar-thumb,
+.admin-panel-scroll::-webkit-scrollbar-thumb,
+.admin-main::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 4px;
+}
+.admin-panel::-webkit-scrollbar-thumb:hover,
+.table-wrap::-webkit-scrollbar-thumb:hover,
+.admin-panel-scroll::-webkit-scrollbar-thumb:hover,
+.admin-main::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+.admin-sidebar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.admin-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.admin-sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+.admin-sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/* Mobile responsive admin adjustments */
+@media(max-width:800px) {
+  .admin-shell {
+    display: flex !important;
+    flex-direction: column !important;
+    height: auto !important;
+    min-height: 100dvh !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  .admin-sidebar {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: auto !important;
+    position: relative !important;
+    padding: 20px !important;
+    overflow-y: visible !important;
+  }
+  .admin-sidebar nav {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 3px;
+    max-width: 100%;
+  }
+  .admin-main {
+    height: auto !important;
+    overflow-y: visible !important;
+  }
+  .admin-header {
+    height: 55px;
+    padding: 0 20px;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 10 !important;
+  }
+  .admin-content {
+    padding: 25px 18px;
+  }
+  .admin-panel .table-wrap {
+    max-height: 70vh;
+  }
+}
 
