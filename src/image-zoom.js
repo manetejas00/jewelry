@@ -12,3 +12,7 @@ export function pinchImage(start,from,to,box){
  return scale===1?{scale:1,x:0,y:0}:constrain({scale,x:b.x+(start.x-a.x)*ratio,y:b.y+(start.y-a.y)*ratio},box);
 }
 export const wheelZoom=(view,deltaY,point,box)=>zoomAt(view,view.scale*Math.exp(-clamp(deltaY,-100,100)*.0025),point,box);
+
+// Firefox commonly reports lines; other browsers report pixels or pages.
+export const wheelPixels=(delta,mode=0,pageHeight=800)=>Number.isFinite(delta)?delta*(mode===1?16:mode===2?pageHeight:1):0;
+export function galleryPhotos(images){return (Array.isArray(images)?images:[]).filter(p=>p&&typeof p==='object').map(p=>({...p,url:typeof p.url==='string'&&p.url.trim()?p.url.trim():typeof p.image==='string'?p.image.trim():''})).filter(p=>p.url)}

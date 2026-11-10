@@ -179,3 +179,9 @@
 @keyframes viewer-appear{from{opacity:0}to{opacity:1}}@keyframes viewer-enter{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
 .load-more{text-align:center;margin-top:35px}
 @media(prefers-reduced-motion:reduce){.image-viewer,.viewer-stage{animation:none}.viewer-stage>img,.product-photo img,.category-photo img,.editorial-image img,.detail-image>img,.coin-zoom-open>img{transition:none}}
+
+.editorial-zoom{display:block;border:0;padding:0;background:none;text-align:inherit;cursor:zoom-in}
+.viewer-stage{overscroll-behavior:contain}.image-viewer{overscroll-behavior:none}
+@media(hover:hover) and (pointer:fine){.product-photo,.category-photo,.detail-image,.coin-zoom-open,.editorial-zoom{transition:box-shadow .65s cubic-bezier(.2,.65,.3,1)}.product-photo:hover,.category-card:hover .category-photo,.detail-image:hover,.coin-zoom-open:hover,.editorial-zoom:hover{box-shadow:0 9px 22px #10212412}}
+@media(prefers-reduced-motion:reduce){.product-photo,.category-photo,.detail-image,.coin-zoom-open,.editorial-zoom{transition:none}}
+.image-viewer>header,.viewer-controls,.viewer-help{touch-action:none}.viewer-thumbnails{touch-action:pan-x;overscroll-behavior:contain}
