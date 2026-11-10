@@ -52,6 +52,11 @@ test('product_images table exists and seeds multi-angle shots with roles', async
   assert.ok(roles.has('left'), 'Must have left role');
   assert.ok(roles.has('right'), 'Must have right role');
   assert.ok(roles.has('model'), 'Must have model role');
+  assert.ok(!roles.has('modal'), 'Seeded details must use the detail role');
+  for (const model of images.filter(image => image.role === 'model')) {
+    assert.ok(model.url.endsWith('/model.webp'), 'Model entries must point to wearing photographs');
+    assert.ok(!images.some(image => image.role === 'detail' && image.url === model.url), 'Model and detail must not share a photo');
+  }
 
   // Verify eclipse-ring has all 5 angles
   const eclipseImages = images.filter(img => img.product_code === 'eclipse-ring');
@@ -118,7 +123,7 @@ test('a selected SKU photo leads its gallery while keeping shared angles',async(
  const product=(await catalogue(k)).find(p=>p.sku==='TEST-R-12');assert.equal(product.images[0].url,'/uploads/chosen-photo.png');assert.ok(product.images.some(i=>i.product_code==='test-ring'));
 });
 
-test('recreateProductAssets creates all 5 angle roles (hero, front, left, right, modal/model) for all products', async () => {
+test('asset recreation never presents a detail fallback as a model photograph', async () => {
   const {recreateProductAssets} = await import('../scripts/recreate-product-assets.js');
   await recreateProductAssets(k);
   const testImages = await k('product_images').where({product_code: 'test-ring'});
@@ -127,7 +132,9 @@ test('recreateProductAssets creates all 5 angle roles (hero, front, left, right,
   assert.ok(roles.includes('front'), 'Must have front role');
   assert.ok(roles.includes('left'), 'Must have left role');
   assert.ok(roles.includes('right'), 'Must have right role');
-  assert.ok(roles.includes('modal') || roles.includes('model'), 'Must have modal/model role');
+  assert.ok(roles.includes('detail'), 'Must have an explicit detail role');
+  assert.ok(!roles.includes('modal'), 'Must not create the confusing legacy modal role');
+  assert.ok(!roles.includes('model'), 'Must not fabricate a model view for a product without a model image');
 });
 
 
@@ -140,5 +147,6 @@ test('asset recreation keeps model photographs separate from macro details', asy
   await recreateProductAssets(k);
   const images = await k('product_images').where({product_code: code});
   assert.equal(images.find(image => image.role === 'model').url, `/assets/products/${code}/model.webp`);
-  assert.equal(images.find(image => image.role === 'modal').url, `/assets/products/${code}/modal.webp`);
+  assert.equal(images.find(image => image.role === 'detail').url, `/assets/products/${code}/modal.webp`);
+  assert.ok(images.find(image => image.role === 'model').sort_order < images.find(image => image.role === 'detail').sort_order);
 });

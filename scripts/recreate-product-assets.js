@@ -22,17 +22,9 @@ export async function recreateProductAssets(k = db) {
       const dir = path.join(prodBase, d);
       const hero = path.join(dir, 'hero.webp');
       const front = path.join(dir, 'front.webp');
-      const modal = path.join(dir, 'modal.webp');
-      const model = path.join(dir, 'model.webp');
 
       if (fs.existsSync(hero) && !fs.existsSync(front)) {
         fs.copyFileSync(hero, front);
-      }
-      if (fs.existsSync(modal) && !fs.existsSync(model)) {
-        fs.copyFileSync(modal, model);
-      }
-      if (fs.existsSync(model) && !fs.existsSync(modal)) {
-        fs.copyFileSync(model, modal);
       }
     }
     console.log(`Verified disk files for ${prodDirs.length} product folders.`);
@@ -48,17 +40,9 @@ export async function recreateProductAssets(k = db) {
       const dir = path.join(coinBase, d);
       const hero = path.join(dir, 'hero.webp');
       const front = path.join(dir, 'front.webp');
-      const modal = path.join(dir, 'modal.webp');
-      const model = path.join(dir, 'model.webp');
 
       if (fs.existsSync(hero) && !fs.existsSync(front)) {
         fs.copyFileSync(hero, front);
-      }
-      if (fs.existsSync(modal) && !fs.existsSync(model)) {
-        fs.copyFileSync(modal, model);
-      }
-      if (fs.existsSync(model) && !fs.existsSync(modal)) {
-        fs.copyFileSync(model, modal);
       }
     }
     console.log(`Verified disk files for ${coinDirs.length} coin folders.`);
@@ -162,10 +146,10 @@ export async function recreateProductAssets(k = db) {
         {
           product_code: code,
           sku: null,
-          role: 'modal',
+          role: 'detail',
           url: modalUrl,
           alt_text: `${name} Macro Detail`,
-          sort_order: 5,
+          sort_order: 6,
           created_at: timestamp,
           updated_at: timestamp,
         },
@@ -173,13 +157,13 @@ export async function recreateProductAssets(k = db) {
           product_code: code,
           sku: null,
           role: 'model',
-          url: modelUrl || modalUrl,
+          url: modelUrl,
           alt_text: `${name} Model Shot`,
-          sort_order: 6,
+          sort_order: 5,
           created_at: timestamp,
           updated_at: timestamp,
         }
-      ];
+      ].filter(image => image.url);
 
       await t('product_images').insert(imagesToInsert);
       insertedImages += imagesToInsert.length;
@@ -251,10 +235,10 @@ export async function recreateProductAssets(k = db) {
         {
           product_code: code,
           sku: c.sku,
-          role: 'modal',
+          role: 'detail',
           url: modalUrl,
           alt_text: `${name} Macro Detail`,
-          sort_order: 5,
+          sort_order: 6,
           created_at: timestamp,
           updated_at: timestamp,
         },
@@ -262,13 +246,13 @@ export async function recreateProductAssets(k = db) {
           product_code: code,
           sku: c.sku,
           role: 'model',
-          url: modelUrl || modalUrl,
+          url: modelUrl,
           alt_text: `${name} Hand-held Scale View`,
-          sort_order: 6,
+          sort_order: 5,
           created_at: timestamp,
           updated_at: timestamp,
         }
-      ];
+      ].filter(image => image.url);
 
       await t('product_images').insert(coinImages);
       insertedImages += coinImages.length;
