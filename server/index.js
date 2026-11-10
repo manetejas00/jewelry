@@ -1,3 +1,4 @@
+import {listingThumbnailFile} from './listing-thumbnails.js';
 import express from 'express';
 import session from 'express-session';
 import rateLimit from 'express-rate-limit';
@@ -36,6 +37,12 @@ const route=f=>(req,res,next)=>Promise.resolve(f(req,res,next)).catch(next);
 const auth=(roles=['owner','manager','viewer'])=>(req,res,next)=>req.session.staff&&roles.includes(req.session.staff.role)?next():res.status(403).json({error:'Staff access required'});
 const audit=async(req,action,details)=>db('audit').insert({staff_id:req.session.staff.id,action,details:json(details),created_at:now()});
 app.get('/api/config',(req,res)=>res.json({brand:process.env.BRAND_NAME||'Veyora Jewels',preview,paymentMode:'test',merchantReady:process.env.MERCHANT_READY==='true',contact:process.env.MERCHANT_EMAIL||'',shippingPolicy:process.env.SHIPPING_POLICY||'',returnsPolicy:process.env.RETURNS_POLICY||''}));
+app.get('/api/thumbnail',async(req,res)=>{
+ try{
+  const file=await listingThumbnailFile(req.query.source,{publicDir:path.resolve('public'),uploadsDir,cacheDir:path.resolve('private/thumbnail-cache')});
+  res.set('Cache-Control','public, max-age=86400').sendFile(file);
+ }catch{res.set('Cache-Control','no-store').sendFile(path.resolve('public/assets/product-placeholder.svg'));}
+});
 app.get('/api/products',route(async(req,res)=>res.json(await catalogue(db))));
 app.get('/api/coins',route(async(req,res)=>res.json(await coinCatalogue(db))));
 app.get('/api/offers',route(async(req,res)=>{

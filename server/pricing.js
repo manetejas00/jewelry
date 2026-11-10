@@ -1,3 +1,4 @@
+import {listingThumbnail} from '../src/listing-media.js';
 import Decimal from 'decimal.js';
 import crypto from 'node:crypto';
 import {calculateMargin} from './pricing-rules.js';
@@ -221,6 +222,7 @@ export async function coinCatalogue(k){
     const rateFresh=isGold?(c.pricing_mode==='FIXED'||isFresh(rates[c.purity]||rates['24K'])):true;
     return {
       ...c,
+      thumbnail:listingThumbnail(c),
       category:c.coin_type||(isGold?'Gold Coin':'Silver Coin'),
       price:price?.total??null,
       original_price:price?.original_total??null,
@@ -238,7 +240,11 @@ export async function catalogue(k){
     k('products').where({status:'published'}),
     activeRates(k),
     k('pricing_rules').orderBy('id','desc').first(),
-    hasImages?k('product_images').orderBy('sort_order','asc').orderBy('id','asc'):[],
+    hasImages?k('product_images')
+      .select('id','product_code','sku','role','url','alt_text','sort_order')
+      .where(function(){this.whereIn('sku',k('products').select('sku').where({status:'published'}))
+        .orWhereIn('product_code',k('products').select('product_code').where({status:'published'}))})
+      .orderBy('sort_order','asc').orderBy('id','asc'):[],
     activeOffers(k)
   ]);
   const imagesByProduct={};
@@ -256,6 +262,7 @@ export async function catalogue(k){
     const prodImages=[...(imagesByProduct[p.sku]||[]),...(imagesByProduct[p.product_code]||[])].filter((img,i,all)=>all.findIndex(other=>other.url===img.url)===i);
     return {
       ...p,
+      thumbnail:listingThumbnail(p),
       images:prodImages,
       price:price?.total,
       original_price:price?.original_total??null,

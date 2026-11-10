@@ -15,6 +15,7 @@ import {Provider,useStore} from './store.jsx';
 import Account from './Account.jsx';
 import {grouped} from './catalogue.js';
 import {coinImage} from './media.js';
+import ListingImage from './ListingImage.jsx';
 const priceBrackets=[{label:'All prices',value:''},{label:'Under ₹20,000',value:'0-20000'},{label:'₹20,000 – ₹30,000',value:'20000-30000'},{label:'₹30,000 – ₹50,000',value:'30000-50000'},{label:'Above ₹50,000',value:'50000-'}];
 const matchPrice=(price,bracket)=>{if(!bracket)return true;if(price===null||price===undefined)return false;if(bracket.includes('-')){const [minStr,maxStr]=bracket.split('-');if(minStr&&price<Number(minStr))return false;if(maxStr&&price>Number(maxStr))return false;return true;}return price<=Number(bracket);};
 function Scroll(){const loc=useLocation();useEffect(()=>{if(!loc.pathname.startsWith('/collections'))window.scrollTo(0,0);},[loc.pathname]);return null}
@@ -44,7 +45,7 @@ function ProductCard({p}){
   return <article className="product-card">
     <div className="product-photo">
       <Link className="product-card-link" to={'/products/'+p.slug} aria-label={`View ${p.name}`}>
-        <img loading="lazy" src={coinImage(p.image,true)} alt={`${p.name}, ${p.metal} ${p.purity}, ${p.finish}`}/>
+        <ListingImage product={p} alt={`${p.name}, ${p.metal} ${p.purity}, ${p.finish}`}/>
       </Link>
       {p.offer?.badge_text && (
         <span className="offer-ribbon-badge" title={p.offer.name}>
@@ -90,7 +91,7 @@ function Product(){
   const activeImage=selectedImage||angleImages[0]?.url||p.image;
 
   return <Layout><StructuredProduct p={p}/><div className="breadcrumbs section"><Link to="/collections/all">Jewellery</Link><span>/</span><Link to={'/collections/'+p.category.toLowerCase()}>{p.category}</Link><span>/</span><span>{p.name}</span></div><section className="product-detail section"><div className="detail-gallery"><button aria-label="Zoom product photograph" className="detail-image" onClick={()=>setZoom(true)} style={{position:'relative'}}>{p.offer?.badge_text&&<span className="offer-ribbon-badge">{p.offer.badge_text}</span>}<img src={activeImage} alt={`${p.name}, ${p.size}, ${p.purity} ${p.metal}`}/>{p.pricing_mode==='GOLD_LINKED'&&!p.offer?.badge_text&&<span className="gold-linked-badge"><Sparkles size={11}/> LIVE GOLD-LINKED RATE</span>}<span><Plus size={16}/> Click to explore</span></button>{angleImages.length>1&&<div className="product-angle-gallery" role="group" aria-label="Product angle views">{angleImages.map((img,idx)=>{const isSelected=activeImage===img.url;const roleLabels={hero:'Hero Shot',front:'Front Angle',left:'Left View',right:'Right View',model:'Model Shot',detail:'Detail'};const label=roleLabels[img.role]||img.role;return <button key={img.id||idx} type="button" className={'angle-thumb-btn '+(isSelected?'active':'')} onClick={()=>setSelectedImage(img.url)} aria-label={`View ${label}`} title={label}><img src={img.url} alt={img.alt_text||`${p.name} ${label}`}/><span className="angle-label">{img.role}</span></button>;})}</div>}<p className="caption">{angleImages.length>1?'MULTI-ANGLE PHOTOGRAPHY · PREVIEW CATALOGUE':'PRODUCT IMAGE · PREVIEW CATALOGUE'}</p></div><div className="detail-copy"><span className="eyebrow">THE PEARL EDIT</span><h1>{p.name}</h1><p className="material-line">{p.purity} {p.metal} · {p.finish} finish</p><div className="detail-price">{p.original_price&&p.original_price>p.price?<div className="price-row" style={{alignItems:'baseline',gap:'10px',margin:0}}><span className="discounted-price" style={{fontSize:'26px'}}>{money(p.price)}</span><del className="original-price-del" style={{fontSize:'16px'}}>{money(p.original_price)}</del>{p.discount_amount>0&&<span className="offer-save-tag">SAVE {money(p.discount_amount)}</span>}</div>:p.price===null?'Awaiting approved rate':money(p.price)}</div>{p.offer&&<div style={{marginTop:'8px',display:'flex',alignItems:'center',gap:'8px',flexWrap:'wrap'}}><span className="offer-ribbon-badge" style={{position:'static',clipPath:'none',borderRadius:'2px',padding:'4px 10px',fontSize:'10px',boxShadow:'none'}}>✦ {p.offer.name}: {p.offer.badge_text}</span>{p.offer.code&&<span className="status-badge" style={{fontSize:'9px'}}>CODE: {p.offer.code}</span>}</div>}{p.pricing_mode==='GOLD_LINKED'&&<div style={{marginTop:'6px'}}><span className="gold-linked-pill"><Sparkles size={12}/> Live Gold-Linked Rate</span></div>}<p className="small muted">Preview price · Shipping calculated before payment</p><p className="detail-description">{p.description}</p><div className="size-label"><label htmlFor="size">{p.category==='Rings'?'Ring size':'Size / length'}</label><button className="underlink" onClick={()=>setGuide(true)}>Size guide ↗</button></div><select id="size" value={p.sku} onChange={e=>setSku(e.target.value)}>{variants.map(v=><option value={v.sku} key={v.sku}>{v.size}{v.stock===0?' — Out of stock':''}</option>)}</select><p className={'stock '+(!p.checkout_available?'unavailable':'')}><span/>{p.stock===0?'Currently out of stock':!p.checkout_available?'Awaiting a fresh verified gold rate':`${p.stock} available · Ready for your next chapter`}</p><div className="add-row"><button className="button dark" disabled={!p.checkout_available} onClick={()=>add(p)}>{p.checkout_available?'Add to cart':'Currently unavailable'}<ShoppingBag size={18}/></button><button className="wishlist-button" aria-label="Save piece" aria-pressed={saved.includes(p.product_code)} onClick={()=>toggleSave(p.product_code)}><Heart fill={saved.includes(p.product_code)?'currentColor':'none'} size={20}/></button></div><dl className="specs"><div><dt>Metal & purity</dt><dd>{p.metal}, {p.purity}</dd></div><div><dt>Net metal weight</dt><dd>{Number(p.net_weight_g).toFixed(3)} g</dd></div><div><dt>Size / finish</dt><dd>{p.size} / {p.finish}</dd></div><div><dt>SKU</dt><dd>{p.sku}</dd></div></dl><details><summary>Price details <Plus size={15}/></summary>{p.breakdown?.mode==='GOLD_LINKED'?<div className="breakdown">{[['Metal value',p.breakdown.metal],p.breakdown.original_making!==undefined&&p.breakdown.original_making!==p.breakdown.making?['Original making charges',p.breakdown.original_making]:null,p.breakdown.discount_amount>0?['Festive offer savings',-p.breakdown.discount_amount]:null,['Making charges'+(p.offer?' (discounted)':''),p.breakdown.making],['Stone charges',p.breakdown.stone],['Other charges',p.breakdown.other],['Margin',p.breakdown.margin||0],['Tax',p.breakdown.tax]].filter(Boolean).map(([l,v])=><p key={l} style={v<0?{color:'#2e7d32',fontWeight:600}:{}}><span>{l}</span>{v<0?`-${money(Math.abs(v))}`:money(v)}</p>)}{p.offer&&<p className="small" style={{color:'#b7791f',fontWeight:600,marginTop:'8px'}}>✦ Applied offer: {p.offer.name} ({p.offer.badge_text})</p>}<p className="small">Rate: {money(p.breakdown.rate)}/g · {p.breakdown.rate_date}</p></div>:<p>Merchant selling price {money(p.fixed_price)} + margin {money(p.breakdown?.margin||0)}{p.breakdown?.discount_amount>0?` − offer ${money(p.breakdown.discount_amount)}`:''}. Gold-rate changes do not change this fixed base price.</p>}</details><details><summary>Delivery & returns <Plus size={15}/></summary><p>Delivery and return policies are awaiting merchant details. <Link to="/information/shipping">View current information</Link>.</p></details></div></section>{guide&&<Modal title="Find your fit" onClose={()=>setGuide(false)}><p>For a ring, measure the inside diameter of a comfortable ring. These are general reference sizes; confirm the final merchant sizing chart before ordering.</p><table><thead><tr><th>Indian size</th><th>Inside diameter</th></tr></thead><tbody><tr><td>12</td><td>16.5 mm</td></tr><tr><td>14</td><td>17.2 mm</td></tr></tbody></table><p>For necklaces, use a soft tape to check the listed length. Cuff sizing requires the merchant’s wrist measurements.</p></Modal>}{zoom&&<ImageViewer images={angleImages} index={Math.max(0,angleImages.findIndex(i=>i.url===activeImage))} title={p.name} onClose={()=>setZoom(false)}/>}</Layout>}
-function BagLines(){const {bag,setBag,setBagOpen}=useStore();const change=(sku,n)=>setBag(b=>b.map(p=>p.sku===sku?{...p,quantity:p.quantity+n}:p).filter(p=>p.quantity>0));return bag.map(p=><div className="bag-line" key={p.sku}><Link onClick={()=>setBagOpen(false)} to={(p.slug==='coins'||p.kind==='coin'||p.sku?.startsWith('COIN-'))?'/coins':'/products/'+(p.slug||p.sku)}><img src={coinImage(p.image,true)} alt={p.name}/></Link><div><h3>{p.name}</h3><p>{p.size} · {p.sku}</p><strong>{p.price==null?'Price awaiting rate':money(p.price)}</strong>{p.unavailable&&<p className="error">Currently unavailable. Remove this piece to continue.</p>}<div className="quantity"><button aria-label={`Remove one ${p.name}`} onClick={()=>change(p.sku,-1)}><Minus size={13}/></button><span>{p.quantity}</span><button aria-label={`Add one ${p.name}`} onClick={()=>change(p.sku,1)} disabled={p.quantity>=Math.min(20,p.stock??20)||p.unavailable}><Plus size={13}/></button><button className="remove" onClick={()=>setBag(b=>b.filter(x=>x.sku!==p.sku))}>Remove</button></div></div></div>)}
+function BagLines(){const {bag,setBag,setBagOpen}=useStore();const change=(sku,n)=>setBag(b=>b.map(p=>p.sku===sku?{...p,quantity:p.quantity+n}:p).filter(p=>p.quantity>0));return bag.map(p=><div className="bag-line" key={p.sku}><Link onClick={()=>setBagOpen(false)} to={(p.slug==='coins'||p.kind==='coin'||p.sku?.startsWith('COIN-'))?'/coins/product/'+encodeURIComponent(p.sku):'/products/'+(p.slug||p.sku)}><img src={coinImage(p.image,true)} alt={p.name}/></Link><div><h3>{p.name}</h3><p>{p.size} · {p.sku}</p><strong>{p.price==null?'Price awaiting rate':money(p.price)}</strong>{p.unavailable&&<p className="error">Currently unavailable. Remove this piece to continue.</p>}<div className="quantity"><button aria-label={`Remove one ${p.name}`} onClick={()=>change(p.sku,-1)}><Minus size={13}/></button><span>{p.quantity}</span><button aria-label={`Add one ${p.name}`} onClick={()=>change(p.sku,1)} disabled={p.quantity>=Math.min(20,p.stock??20)||p.unavailable}><Plus size={13}/></button><button className="remove" onClick={()=>setBag(b=>b.filter(x=>x.sku!==p.sku))}>Remove</button></div></div></div>)}
 function BagDrawer(){const {bagOpen,setBagOpen,bag}=useStore();const nav=useNavigate();if(!bagOpen)return null;return <Modal title={`Your bag (${bag.reduce((n,p)=>n+p.quantity,0)})`} onClose={()=>setBagOpen(false)}>{bag.length?<><BagLines/><div className="summary-line"><span>Estimated subtotal</span><strong>{money(bag.reduce((n,p)=>n+p.price*p.quantity,0))}</strong></div><p className="small muted">Current price, availability and delivery charges are checked at checkout.</p><button className="button dark full" onClick={()=>{setBagOpen(false);nav('/checkout')}}>Continue to checkout <ArrowRight size={17}/></button><button className="text-button full" onClick={()=>{setBagOpen(false);nav('/collections/all')}}>Continue discovering</button></>:<div className="empty"><ShoppingBag size={32}/><h3>A little room for wonder.</h3><p>Your bag is waiting for something special.</p><button className="button dark" onClick={()=>{setBagOpen(false);nav('/collections/all')}}>Explore the collection</button></div>}</Modal>}
 function Bag(){const {bag}=useStore();return <Layout><section className="section bag-page"><span className="eyebrow">YOUR LITTLE TREASURES</span><h1>The shopping bag</h1>{bag.length?<><BagLines/><Link className="button dark" to="/checkout">Continue to checkout <ArrowRight size={17}/></Link></>:<div className="empty"><p>Your bag is empty.</p><Link className="button dark" to="/collections/all">Find your piece</Link></div>}</section></Layout>}
 function Checkout(){const {bag,setBag,config,customer,flushAccount,afterCheckout}=useStore();const [quote,setQuote]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[accepted,setAccepted]=useState(false),[changed,setChanged]=useState(false),[testFailure,setTestFailure]=useState(false);const key=useRef(crypto.randomUUID());const nav=useNavigate();useEffect(()=>{let active=true;setAccepted(false);setQuote(null);setError('');if(bag.length)api('/quote',{items:bag.map(({sku,quantity})=>({sku,quantity}))}).then(q=>{if(active)setQuote(q)}).catch(e=>{if(active)setError(e.message)});return()=>{active=false}},[bag]);async function pay(e){e.preventDefault();if(!accepted||!quote)return;setBusy(true);setError('');if(testFailure){setError('Test payment declined. Your bag is saved. Untick the test failure option to retry.');setBusy(false);return;}const customer=Object.fromEntries(new FormData(e.target));try{await flushAccount();const r=await api('/checkout',{items:bag.map(({sku,quantity})=>({sku,quantity})),token:quote.token,customer,idempotencyKey:key.current});await afterCheckout();nav('/order/'+r.id);}catch(e){setError(e.message);if(e.quote){setQuote(e.quote);setChanged(true);setAccepted(false)}}finally{setBusy(false)}}return <Layout><section className="section checkout-page"><Link className="underlink" to="/bag"><ArrowLeft size={15}/> Back to bag</Link><div className="section-heading"><div><span className="eyebrow">ONE STEP CLOSER</span><h1>A little wonder, on its way.</h1></div><span className="test-badge">TEST CHECKOUT · NO MONEY COLLECTED</span></div>{!bag.length?<div className="empty"><p>Your bag is empty.</p><Link to="/collections/all">Explore jewellery</Link></div>:<div className="checkout-grid"><form onSubmit={pay}><h3>Contact & delivery</h3>{customer?<p className="checkout-account-note">Signed in as {customer.email} · This order will appear in your account.</p>:<p className="checkout-account-note"><Link to="/account">Sign in or create an account</Link> to keep your order history. Guest checkout is also available.</p>}<div className="form-grid">{[['name','Full name','text'],['email','Email address','email'],['phone','Mobile number','tel'],['pincode','PIN code','text'],['address','Address','text'],['city','City','text']].map(([name,label,type])=><label key={name} className={name==='address'?'span-two':''}>{label}<input name={name} type={type} defaultValue={name==='name'?customer?.name:name==='email'?customer?.email:undefined} autoComplete={{name:'name',email:'email',phone:'tel',pincode:'postal-code',address:'street-address',city:'address-level2'}[name]} required maxLength={name==='phone'?10:name==='pincode'?6:200} pattern={name==='phone'?'[0-9]{10}':name==='pincode'?'[0-9]{6}':undefined}/></label>)}</div><div className="checkout-note"><ShieldCheck size={20}/><p>This is a simulated payment. No card or bank details are requested. Delivery and returns are awaiting merchant configuration.</p></div><label className="checkbox"><input type="checkbox" checked={testFailure} onChange={e=>setTestFailure(e.target.checked)}/> Simulate a failed test payment</label>{changed&&<div className="notice">The price changed. Review the updated order summary before accepting.</div>}<label className="checkbox consent"><input type="checkbox" disabled={!quote} checked={accepted} onChange={e=>setAccepted(e.target.checked)} required/>{quote?`I accept the displayed total of ${money(quote.total)} for this test order.`:'Waiting for a current order total…'}</label>{error&&<p className="error" role="alert">{error}</p>}<button className="button dark full" disabled={busy||!quote||!accepted}>{busy?'Confirming…':`Place test order · ${money(quote?.total)}`}<ArrowRight size={17}/></button></form><aside className="order-summary"><h3>Your chosen pieces</h3>{!quote&&<p role="status">{error?'The total is unavailable. Update your bag and try again.':'Checking prices and availability…'}</p>}{quote?.lines.map(p=><div className="summary-product" key={p.sku}><img src={coinImage(p.image,true)} alt={p.name}/><div><h4>{p.name}</h4><p>{p.size} · Qty {p.quantity}</p><span>{money(p.unit_price*p.quantity)}</span></div></div>)}<div className="summary-line"><span>Subtotal</span>{money(quote?.subtotal)}</div><div className="summary-line"><span>Delivery</span>{quote?.shipping===0?'Complimentary':money(quote?.shipping)}</div><div className="summary-line total"><span>Total payable</span>{money(quote?.total)}</div><p className="small">Displayed total includes any configured taxes. All orders in this preview are fictional.</p></aside></div>}</section></Layout>}
@@ -1354,7 +1355,7 @@ function CoinsPage(){
   const [coins,setCoins]=useState([]);
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState('');
-  const [selectedCoin,setSelectedCoin]=useState(null),[zoomCoin,setZoomCoin]=useState(null);
+
   const {category='all'}=useParams();
   const [params,setParams]=useSearchParams();
   const {add,catalogueRevision,offers=[]}=useStore();
@@ -1362,7 +1363,7 @@ function CoinsPage(){
 
   useEffect(()=>{
     document.title='Gold & Silver Coins | Veyora Jewels';
-    setError('');api('/coins').then(rows=>{setCoins(rows);setSelectedCoin(current=>current?rows.find(c=>c.sku===current.sku)||null:null)}).catch(e=>setError(e.message)).finally(()=>setLoading(false));
+    setError('');api('/coins').then(rows=>{setCoins(rows)}).catch(e=>setError(e.message)).finally(()=>setLoading(false));
   },[catalogueRevision]);
 
   const update=(k,v)=>{const next=new URLSearchParams(params);v?next.set(k,v):next.delete(k);setParams(next,{replace:true});};
@@ -1434,13 +1435,13 @@ function CoinsPage(){
         {items.map((c,idx)=><React.Fragment key={c.sku}>
           {idx===2&&gridOffer&&<FestiveGridBanner offer={gridOffer}/>}
           <article className="product-card">
-            <button type="button" className="product-photo coin-photo-button" aria-label={`Zoom ${c.name}`} onClick={()=>setZoomCoin(c)} style={{cursor:'pointer',position:'relative'}}>
+            <Link to={'/coins/product/'+encodeURIComponent(c.sku)} className="product-photo coin-photo-button" aria-label={`View ${c.name}`} style={{cursor:'pointer',position:'relative'}}>
               {c.offer?.badge_text&&<span className="offer-ribbon-badge">{c.offer.badge_text}</span>}
-              {c.image?<img loading="lazy" src={coinImage(c.image,true)} alt={c.name}/>:<div style={{height:'100%',display:'grid',placeItems:'center',background:'var(--paper)'}}><CoinsIcon size={48} color="var(--gold)"/></div>}
+              {c.image?<ListingImage product={c}/>:<div style={{height:'100%',display:'grid',placeItems:'center',background:'var(--paper)'}}><CoinsIcon size={48} color="var(--gold)"/></div>}
               <span className={'product-label '+(c.metal==='Silver'?'':'gold')}>{`${c.purity} ${c.metal.toUpperCase()}`}</span>
-            </button>
+            </Link>
             <div className="product-info">
-              <h3><button className="coin-name-button" onClick={()=>setSelectedCoin(c)}>{c.name}</button></h3>
+              <h3><Link to={'/coins/product/'+encodeURIComponent(c.sku)}>{c.name}</Link></h3>
               {c.image_kind==='illustration'&&<small className="illustration-note">Illustrative image</small>}<span>{c.weight_g}g · {c.purity} {c.metal} {c.dimension?`· ${c.dimension}`:''}</span>
               {c.original_price&&c.original_price>c.price ? (
                 <div className="price-row">
@@ -1473,60 +1474,60 @@ function CoinsPage(){
       </div>}
     </section>
 
-    {zoomCoin&&<ImageViewer images={[{url:zoomCoin.image,alt_text:zoomCoin.name}]} title={zoomCoin.name} onClose={()=>setZoomCoin(null)}/>}
-    {selectedCoin&&<Modal title={selectedCoin.name} onClose={()=>setSelectedCoin(null)}>
-      <div className="coin-detail-grid">
-        <div>
-          {selectedCoin.image?<button type="button" className="coin-zoom-open" onClick={()=>setZoomCoin(selectedCoin)} aria-label="Zoom coin image"><img src={coinImage(selectedCoin.image,true)} alt={selectedCoin.name}/><span><Plus size={16}/>View close-up</span>{selectedCoin.image_kind==='illustration'&&<small className="illustration-note">Illustrative image</small>}</button>:<div style={{height:'220px',background:'var(--paper)',display:'grid',placeItems:'center'}}><CoinsIcon size={64}/></div>}
-        </div>
-        <div>
-          <span className={'coin-badge '+(selectedCoin.metal==='Silver'?'silver':'gold')}>{selectedCoin.metal} · {selectedCoin.purity}</span>
-          <h3 style={{marginTop:'8px',marginBottom:'12px'}}>{selectedCoin.name}</h3>
-          {selectedCoin.offer&&<div style={{marginBottom:'10px',display:'flex',gap:'8px',alignItems:'center',flexWrap:'wrap'}}>
-            <span className="offer-ribbon-badge" style={{position:'static',clipPath:'none',borderRadius:'2px',padding:'3px 8px',fontSize:'9px',boxShadow:'none'}}>✦ {selectedCoin.offer.name}: {selectedCoin.offer.badge_text}</span>
-            {selectedCoin.offer.code&&<span className="status-badge" style={{fontSize:'8px'}}>CODE: {selectedCoin.offer.code}</span>}
-          </div>}
-          {selectedCoin.original_price&&selectedCoin.original_price>selectedCoin.price ? (
-            <div className="price-row" style={{alignItems:'baseline',gap:'10px',marginBottom:'12px',margin:'0 0 12px 0'}}>
-              <span className="discounted-price" style={{fontSize:'24px'}}>{money(selectedCoin.price)}</span>
-              <del className="original-price-del" style={{fontSize:'16px'}}>{money(selectedCoin.original_price)}</del>
-              {selectedCoin.discount_amount>0&&<span className="offer-save-tag">SAVE {money(selectedCoin.discount_amount)}</span>}
-            </div>
-          ) : (
-            <div style={{fontSize:'22px',fontWeight:600,marginBottom:'12px'}}>{selectedCoin.price!==null?money(selectedCoin.price):'Awaiting rate'}</div>
-          )}
-          <p className="small muted">{selectedCoin.description}</p>
-          <dl className="specs" style={{marginTop:'15px'}}>
-            <div><dt>Weight</dt><dd>{selectedCoin.weight_g} Grams</dd></div>
-            <div><dt>Purity</dt><dd>{selectedCoin.purity}</dd></div>
-            {selectedCoin.dimension&&<div><dt>Dimensions</dt><dd>{selectedCoin.dimension}</dd></div>}
-            <div><dt>SKU</dt><dd>{selectedCoin.sku}</dd></div>
-            <div><dt>Stock</dt><dd>{selectedCoin.stock>0?`${selectedCoin.stock} ready to dispatch`:'Out of stock'}</dd></div>
-          </dl>
-          {selectedCoin.breakdown&&<div style={{background:'var(--paper)',padding:'12px',borderRadius:'4px',margin:'15px 0',fontSize:'11px'}}>
-            <div style={{display:'flex',justifyContent:'space-between',marginBottom:'4px'}}><span>Metal bullion value</span><strong>{money(selectedCoin.breakdown.metal)}</strong></div>
-            {selectedCoin.breakdown.original_making!==undefined&&selectedCoin.breakdown.original_making!==selectedCoin.breakdown.making&&<div style={{display:'flex',justifyContent:'space-between',marginBottom:'4px',color:'var(--muted)'}}><span>Original minting & packaging</span><del>{money(selectedCoin.breakdown.original_making)}</del></div>}
-            {selectedCoin.breakdown.discount_amount>0&&<div style={{display:'flex',justifyContent:'space-between',marginBottom:'4px',color:'#2e7d32',fontWeight:600}}><span>Festive offer savings</span><strong>-{money(selectedCoin.breakdown.discount_amount)}</strong></div>}
-            <div style={{display:'flex',justifyContent:'space-between',marginBottom:'4px'}}><span>Minting & packaging</span><strong>{money(selectedCoin.breakdown.making)}</strong></div>
-            <div style={{display:'flex',justifyContent:'space-between',marginBottom:'4px'}}><span>Margin</span><strong>{money(selectedCoin.breakdown.margin||0)}</strong></div>
-            {selectedCoin.breakdown.tax>0&&<div style={{display:'flex',justifyContent:'space-between',marginBottom:'4px'}}><span>Applicable tax</span><strong>{money(selectedCoin.breakdown.tax)}</strong></div>}
-            <div style={{display:'flex',justifyContent:'space-between',borderTop:'1px solid var(--line)',paddingTop:'6px',marginTop:'6px'}}><span>Total</span><strong>{money(selectedCoin.price)}</strong></div>
-          </div>}
-          <button
-            className="button dark full"
-            disabled={!selectedCoin.checkout_available}
-            onClick={()=>{
-              add({sku:selectedCoin.sku,name:selectedCoin.name,image:selectedCoin.image,price:selectedCoin.price,stock:selectedCoin.stock,size:`${selectedCoin.weight_g}g (${selectedCoin.purity})`,slug:'coins'});
-              setSelectedCoin(null);
-            }}
-          >
-            {selectedCoin.checkout_available?'Add to bag':'Currently unavailable'}<ShoppingBag size={16}/>
-          </button>
-        </div>
+  </Layout>;
+}
+
+function CoinProduct(){
+  const {sku}=useParams();
+  const {add,catalogueRevision}=useStore();
+  const [selectedCoin,setSelectedCoin]=useState(null),[zoomCoin,setZoomCoin]=useState(null);
+  const [loading,setLoading]=useState(true),[error,setError]=useState(''),[retry,setRetry]=useState(0);
+  useEffect(()=>{
+    let active=true;
+    setLoading(true);setError('');setSelectedCoin(null);setZoomCoin(null);
+    api('/coins').then(rows=>{if(active)setSelectedCoin(rows.find(c=>c.sku===sku)||null)}).catch(e=>{if(active)setError(e.message)}).finally(()=>{if(active)setLoading(false)});
+    return()=>{active=false};
+  },[sku,catalogueRevision,retry]);
+  useEffect(()=>{document.title=(selectedCoin?.name||(loading?'Loading coin':error?'Could not load coin':'Coin not found'))+' | Veyora Jewels'},[selectedCoin,loading,error]);
+  if(loading||error||!selectedCoin)return <Layout><section className="empty"><h1>{loading?'Finding your coin…':error?'Could not load this coin':'Coin not found'}</h1>{error&&<><p className="error" role="alert">{error}</p><button className="button dark" onClick={()=>setRetry(n=>n+1)}>Try again</button></>}<Link className="underlink" to="/coins">Back to coins</Link></section></Layout>;
+  const p=selectedCoin;
+  return <Layout><StructuredProduct p={p}/><div className="breadcrumbs section"><Link to="/coins">Coins</Link><span>/</span><Link to={'/coins/'+p.metal.toLowerCase()}>{p.metal} coins</Link><span>/</span><span>{p.name}</span></div>
+    <section className="product-detail section">
+      <div className="detail-gallery">
+        {p.image?<button type="button" className="detail-image" style={{position:'relative'}} onClick={()=>setZoomCoin(p)} aria-label="Zoom product photograph">
+          {p.offer?.badge_text&&<span className="offer-ribbon-badge">{p.offer.badge_text}</span>}
+          <img src={coinImage(p.image)} alt={`${p.name}, ${p.weight_g}g, ${p.purity} ${p.metal}`}/>
+          {!p.offer?.badge_text&&<span className="gold-linked-badge"><Sparkles size={11}/> LIVE METAL-LINKED RATE</span>}
+          <span><Plus size={16}/> Click to explore</span>
+        </button>:<div className="detail-image" style={{minHeight:300,display:'grid',placeItems:'center'}}><CoinsIcon size={64}/></div>}
+        <p className="caption">{p.image_kind==='illustration'?'ILLUSTRATIVE IMAGE · PREVIEW CATALOGUE':'PRODUCT IMAGE · PREVIEW CATALOGUE'}</p>
       </div>
-    </Modal>}
+      <div className="detail-copy">
+        <span className="eyebrow">THE COIN COLLECTION</span>
+        <h1>{p.name}</h1>
+        <p className="material-line">{p.purity} {p.metal} · {p.weight_g} g</p>
+        <div className="detail-price">{p.original_price&&p.original_price>p.price?<div className="price-row" style={{alignItems:'baseline',gap:'10px',margin:0}}><span className="discounted-price" style={{fontSize:'26px'}}>{money(p.price)}</span><del className="original-price-del" style={{fontSize:'16px'}}>{money(p.original_price)}</del>{p.discount_amount>0&&<span className="offer-save-tag">SAVE {money(p.discount_amount)}</span>}</div>:p.price===null?'Awaiting approved rate':money(p.price)}</div>
+        {p.offer&&<div style={{marginTop:'8px',display:'flex',alignItems:'center',gap:'8px',flexWrap:'wrap'}}><span className="offer-ribbon-badge" style={{position:'static',clipPath:'none',borderRadius:'2px',padding:'4px 10px',fontSize:'10px',boxShadow:'none'}}>✦ {p.offer.name}: {p.offer.badge_text}</span>{p.offer.code&&<span className="status-badge" style={{fontSize:'9px'}}>CODE: {p.offer.code}</span>}</div>}
+        <div style={{marginTop:'6px'}}><span className="gold-linked-pill"><Sparkles size={12}/> Live Metal-Linked Rate</span></div>
+        <p className="small muted">Preview price · Shipping calculated before payment</p>
+        <p className="detail-description">{p.description}</p>
+        <div className="size-label"><label htmlFor="coin-weight">Weight</label></div>
+        <select id="coin-weight" value={p.sku} onChange={()=>{}}><option value={p.sku}>{p.weight_g} g{p.stock===0?' — Out of stock':''}</option></select>
+        <p className={'stock '+(!p.checkout_available?'unavailable':'')}><span/>{p.stock===0?'Currently out of stock':!p.checkout_available?'Awaiting a fresh verified metal rate':`${p.stock} available · Ready for your next chapter`}</p>
+        <div className="add-row"><button className="button dark" disabled={!p.checkout_available} onClick={()=>add({...p,size:`${p.weight_g}g (${p.purity})`,slug:'coins'})}>{p.checkout_available?'Add to cart':'Currently unavailable'}<ShoppingBag size={18}/></button></div>
+        <dl className="specs"><div><dt>Metal & purity</dt><dd>{p.metal}, {p.purity}</dd></div><div><dt>Net metal weight</dt><dd>{Number(p.weight_g).toFixed(3)} g</dd></div>{p.dimension&&<div><dt>Dimensions</dt><dd>{p.dimension}</dd></div>}<div><dt>SKU</dt><dd>{p.sku}</dd></div></dl>
+        <details><summary>Price details <Plus size={15}/></summary>{p.breakdown?<div className="breakdown">{[
+          ['Metal value',p.breakdown.metal],
+          p.breakdown.original_making!==undefined&&p.breakdown.original_making!==p.breakdown.making?['Original minting & packaging',p.breakdown.original_making]:null,
+          p.breakdown.discount_amount>0?['Festive offer savings',-p.breakdown.discount_amount]:null,
+          ['Minting & packaging',p.breakdown.making],['Margin',p.breakdown.margin||0],['Tax',p.breakdown.tax||0],['Total',p.price]
+        ].filter(Boolean).map(([label,value])=><p key={label} style={value<0?{color:'#2e7d32',fontWeight:600}:{}}><span>{label}</span>{value<0?`-${money(Math.abs(value))}`:money(value)}</p>)}</div>:<p>Pricing is awaiting an approved metal rate.</p>}</details>
+        <details><summary>Delivery & returns <Plus size={15}/></summary><p>Delivery and return policies are awaiting merchant details. <Link to="/information/shipping">View current information</Link>.</p></details>
+      </div>
+    </section>
+    {zoomCoin&&<ImageViewer images={[{url:zoomCoin.image,alt_text:zoomCoin.name}]} title={zoomCoin.name} onClose={()=>setZoomCoin(null)}/>}
   </Layout>;
 }
 
 function NotFound(){return <Layout><section className="empty"><span className="eyebrow">A SMALL DETOUR</span><h1>This page is yet to be discovered.</h1><Link className="button dark" to="/">Return to the maison</Link></section></Layout>}
-createRoot(document.getElementById('root')).render(<BrowserRouter><Provider><Scroll/><Routes><Route path="/" element={<Home/>}/><Route path="/collections/:category" element={<Collection/>}/><Route path="/products/:slug" element={<Product/>}/><Route path="/coins" element={<CoinsPage/>}/> <Route path="/coins/:category" element={<CoinsPage/>}/><Route path="/account" element={<Account Layout={Layout} BagLines={BagLines} ProductCard={ProductCard} grouped={grouped}/>}/><Route path="/bag" element={<Bag/>}/><Route path="/checkout" element={<Checkout/>}/><Route path="/order/:id" element={<Order/>}/><Route path="/information/:page" element={<Information/>}/><Route path="/admin/*" element={<Admin/>}/><Route path="*" element={<NotFound/>}/></Routes></Provider></BrowserRouter>);
+createRoot(document.getElementById('root')).render(<BrowserRouter><Provider><Scroll/><Routes><Route path="/" element={<Home/>}/><Route path="/collections/:category" element={<Collection/>}/><Route path="/products/:slug" element={<Product/>}/><Route path="/coins/product/:sku" element={<CoinProduct/>}/><Route path="/coins" element={<CoinsPage/>}/> <Route path="/coins/:category" element={<CoinsPage/>}/><Route path="/account" element={<Account Layout={Layout} BagLines={BagLines} ProductCard={ProductCard} grouped={grouped}/>}/><Route path="/bag" element={<Bag/>}/><Route path="/checkout" element={<Checkout/>}/><Route path="/order/:id" element={<Order/>}/><Route path="/information/:page" element={<Information/>}/><Route path="/admin/*" element={<Admin/>}/><Route path="*" element={<NotFound/>}/></Routes></Provider></BrowserRouter>);
