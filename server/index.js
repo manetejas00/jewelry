@@ -16,6 +16,7 @@ import {daily} from './daily.js';
 import {loadFeedSettings as readFeedSettings} from './settings.js';
 import {coinArtwork} from './coin-artwork.js';
 import {seed} from '../scripts/seed.js';
+import {saveUploadedImage,ensureThumbnail,thumbnailUrl} from './thumbnails.js';
 const app=express();const production=process.env.NODE_ENV==='production';
 if(production&&(!process.env.SESSION_SECRET||process.env.SESSION_SECRET.length<32))throw Error('Production requires a strong SESSION_SECRET');
 if(preview){await migrate();await seed();}else if(await db('products').where({supplier:'Fictional Preview'}).first())throw Error('Production cannot use the fictional preview database. Configure a clean production database.');
@@ -24,6 +25,7 @@ await loadFeedSettings();
 app.set('trust proxy',1);app.use(helmet({contentSecurityPolicy:false}));app.use(express.json({limit:'50mb'}));
 const uploadsDir=fs.existsSync(path.resolve('../public_html/uploads'))?path.resolve('../public_html/uploads'):path.resolve('public/uploads');
 fs.mkdirSync(uploadsDir,{recursive:true});
+app.get('/uploads/thumbs/:filename.webp',async(req,res)=>{try{const file=await ensureThumbnail(uploadsDir,req.params.filename);res.set('Cache-Control','public, max-age=86400');res.sendFile(file)}catch(e){res.status(e.status||422).json({error:e.message})}});
 app.use('/uploads',express.static(uploadsDir));
 class DbStore extends session.Store {get(sid,cb){db('sessions').where({sid}).first().then(r=>cb(null,r&&Number(r.expires)>Date.now()?parse(r.data):null)).catch(cb)}set(sid,data,cb){db('sessions').insert({sid,data:json(data),expires:Date.now()+8*3600000}).onConflict('sid').merge().then(()=>cb?.()).catch(cb)}destroy(sid,cb){db('sessions').where({sid}).del().then(()=>cb?.()).catch(cb)}}
 app.use(session({secret:process.env.SESSION_SECRET||crypto.randomBytes(32).toString('hex'),resave:false,saveUninitialized:false,store:new DbStore(),cookie:{httpOnly:true,sameSite:'strict',secure:production,maxAge:8*3600000}}));
@@ -226,13 +228,13 @@ app.post('/api/admin/upload-image',auth(['owner','manager']),route(async(req,res
  if(!data||typeof data!=='string')throw Error('Image data is required');
  const match=data.match(/^data:image\/([a-zA-Z0-9+]+);base64,(.+)$/);
  if(!match)throw Error('Invalid image data format. Please upload a PNG, JPG, or WEBP image.');
- const ext=match[1].toLowerCase().replace('jpeg','jpg');
+ const ext=match[1].toLowerCase().replace('jpeg','jpg').replace('svg+xml','svg');
  if(!['jpg','png','webp','gif','svg'].includes(ext))throw Error('Supported image formats: JPG, PNG, WEBP, GIF, SVG');
  const buffer=Buffer.from(match[2],'base64');
  if(buffer.length>8*1024*1024)throw Error('Maximum image size is 8 MB');
  const cleanName=String(name||'product').toLowerCase().replace(/\.[^.]+$/,'').replace(/[^a-z0-9_-]+/g,'-').slice(0,40)||'photo';
- const filename=`${Date.now()}-${cleanName}.${ext}`;
- fs.writeFileSync(path.join(uploadsDir,filename),buffer);
+ const filename=`${Date.now()}-${crypto.randomUUID().slice(0,8)}-${cleanName}.${ext}`;
+ await saveUploadedImage(uploadsDir,filename,buffer);
  const host=process.env.APP_URL||'https://test3.avinyacarefoundation.org';
  const url=`/uploads/${filename}`;
  let imageRecord=null;
@@ -256,7 +258,7 @@ app.post('/api/admin/upload-image',auth(['owner','manager']),route(async(req,res
   }
  }
  await audit(req,'upload_image',{filename,size:buffer.length,product_code,role});
- res.json({ok:true,filename,url,fullUrl:`${host}${url}`,image:imageRecord});
+ res.json({ok:true,filename,url,thumbnail:thumbnailUrl(url),fullUrl:`${host}${url}`,image:imageRecord});
 }));
 
 app.post('/api/admin/upload-images',auth(['owner','manager']),route(async(req,res)=>{
@@ -268,18 +270,18 @@ app.post('/api/admin/upload-images',auth(['owner','manager']),route(async(req,re
  const nowStr=now();
  const hasImages=await db.schema.hasTable('product_images').catch(()=>false);
  for(let i=0;i<files.length;i++){
-  const file=files[i];
+  const file=files[i];if(!file||typeof file!=='object')continue;
   const {name,data,role,product_code}=file;
   if(!data||typeof data!=='string')continue;
   const match=data.match(/^data:image\/([a-zA-Z0-9+]+);base64,(.+)$/);
   if(!match)continue;
-  const ext=match[1].toLowerCase().replace('jpeg','jpg');
+  const ext=match[1].toLowerCase().replace('jpeg','jpg').replace('svg+xml','svg');
   if(!['jpg','png','webp','gif','svg'].includes(ext))continue;
   const buffer=Buffer.from(match[2],'base64');
   if(buffer.length>8*1024*1024)continue;
   const cleanName=String(name||`upload-${i+1}`).toLowerCase().replace(/\.[^.]+$/,'').replace(/[^a-z0-9_-]+/g,'-').slice(0,40)||'photo';
   const filename=`${Date.now()}-${i}-${cleanName}.${ext}`;
-  fs.writeFileSync(path.join(uploadsDir,filename),buffer);
+  try{await saveUploadedImage(uploadsDir,filename,buffer)}catch{continue;}
   const url=`/uploads/${filename}`;
   let imageRecord=null;
   if(product_code&&role&&hasImages){
@@ -297,8 +299,9 @@ app.post('/api/admin/upload-images',auth(['owner','manager']),route(async(req,re
     await db('products').where({product_code}).update({image:url,updated_at:nowStr});
    }
   }
-  uploaded.push({filename,url,fullUrl:`${host}${url}`,role:role||null,product_code:product_code||null,image:imageRecord});
+  uploaded.push({filename,url,thumbnail:thumbnailUrl(url),fullUrl:`${host}${url}`,role:role||null,product_code:product_code||null,image:imageRecord});
  }
+ if(!uploaded.length)throw Error('No images could be processed. Choose valid image files no larger than 8 MB each.');
  await audit(req,'bulk_upload_images',{count:uploaded.length});
  res.json({ok:true,uploaded,count:uploaded.length});
 }));
@@ -368,6 +371,7 @@ app.get('/api/admin/media',auth(),route(async(req,res)=>{
   return {
    filename:f,
    url:`/uploads/${f}`,
+   thumbnail:thumbnailUrl(`/uploads/${f}`),
    fullUrl:`${host}/uploads/${f}`,
    size:stat.size,
    mtime:stat.mtime

@@ -9,5 +9,5 @@ test('grouped cards keep prices and savings from their actual displayed variant'
  for(const list of [variants,[...variants].reverse()]){const [card]=grouped(list);assert.equal(card.sku,'12');assert.equal(card.price,100);assert.equal(card.original_price,110);assert.equal(card.original_price-card.price,card.discount_amount);assert.equal(card.maxPrice,120)}
 });
 test('optimized coin images exist and materially reduce catalogue download size',()=>{
- let original=0,thumbs=0;for(const a of coinArtwork){original+=fs.statSync('public'+a.image).size;thumbs+=fs.statSync('public'+coinImage(a.image,true)).size;assert.ok(fs.statSync('public'+coinImage(a.image)).size>0)}assert.ok(thumbs<original/10);assert.equal(coinImage('/uploads/custom.png',true),'/uploads/custom.png');
+ let original=0,thumbs=0;for(const a of coinArtwork){original+=fs.statSync('public'+a.image).size;thumbs+=fs.statSync('public'+coinImage(a.image,true)).size;assert.ok(fs.statSync('public'+coinImage(a.image)).size>0)}assert.ok(thumbs<original/10);assert.equal(coinImage('/uploads/custom.png',true),'/uploads/thumbs/custom.png.webp');
 });
