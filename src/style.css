@@ -74,7 +74,7 @@
 .angle-thumb-btn.active .angle-label{color:var(--gold)}
 
 /* Angle Badges */
-.role-badge{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 7px;border-radius:2px;background:#e9ecef;color:#495057;flex-shrink:0;min-height:0;max-height:none;line-height:1.4}
+.role-badge{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 7px;border-radius:2px;background:#e9ecef;color:#495057;flex-shrink:0;height:auto;max-height:22px;min-height:0;line-height:1.4}
 .role-badge.role-badge--hero,.role-badge--hero{background:#fdf2d0;color:#856404;border:1px solid #f2db9a}
 .role-badge.role-badge--front,.role-badge--front{background:#e2f0d9;color:#285c1e;border:1px solid #c2e0b1}
 .role-badge.role-badge--left,.role-badge--left{background:#e3f2fd;color:#0d47a1;border:1px solid #bbdefb}
@@ -83,32 +83,49 @@
 .role-badge.role-badge--detail,.role-badge--detail{background:#f5f5f5;color:#424242;border:1px solid #e0e0e0}
 
 /* Admin Multi-Angle Product Editor */
-.product-angles-editor{background:var(--paper);border:1px solid var(--line);padding:18px;margin:16px 0;border-radius:4px}
-.angles-editor-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px}
-.angles-editor-header h4{margin:0;font-size:14px;font-weight:600}
-.angle-slots-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;align-items:stretch}
-.angle-slot-card{border:1px dashed var(--line);background:var(--ivory);padding:12px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;border-radius:4px;min-height:220px;position:relative;transition:all .2s ease}
-.angle-slot-card:hover{border-color:var(--gold)}
-.angle-slot-card.has-image{border-style:solid;border-color:var(--line);background:#ffffff}
-.angle-slot-card.has-image:hover{border-color:var(--ink);box-shadow:0 3px 10px rgba(0,0,0,.04)}
-.angle-slot-header{display:flex;justify-content:space-between;align-items:center;width:100%;min-height:22px;gap:6px}
-.angle-slot-delete-btn{padding:2px 4px;color:#c62828;border-radius:2px;display:inline-flex;align-items:center;justify-content:center;transition:background .15s;line-height:1}
-.angle-slot-delete-btn:hover:not(:disabled){background:#ffebee}
-.angle-slot-preview-wrap{width:100%;height:110px;overflow:hidden;border-radius:3px;background:#f8f9fa;border:1px solid var(--line);display:flex;align-items:center;justify-content:center}
-.angle-slot-preview{width:100%;height:100%;object-fit:cover;display:block}
-.angle-slot-placeholder{width:100%;height:110px;background:#eceae2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--muted);border-radius:3px;border:1px dashed #d5d3c8;font-size:10px;padding:8px}
-.angle-slot-placeholder-icon{font-size:16px;line-height:1}
-.angle-slot-placeholder-desc{font-size:10px;line-height:1.3;color:var(--muted)}
-.angle-slot-actions{display:flex;gap:6px;width:100%;justify-content:center;margin-top:auto}
-.angle-slot-actions .angle-slot-btn{padding:4px 8px;min-height:28px;font-size:9px;gap:4px;display:inline-flex;align-items:center;justify-content:center;flex:1}
-.angle-slot-url-row{display:flex;gap:4px;width:100%;margin-top:4px}
-.angle-slot-url-row input{min-height:26px;padding:3px 6px;font-size:8px;margin:0;flex:1;background:var(--paper);border:1px solid var(--line);border-radius:2px}
-.angle-slot-url-row button{min-height:26px;padding:0 8px;font-size:8px;flex-shrink:0}
+.product-angles-editor{background:var(--paper);border:1px solid var(--line);padding:20px;margin:18px 0;border-radius:6px}
+.angles-editor-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px}
+.angles-editor-header h4{margin:0;font-size:14px;font-weight:600;letter-spacing:0.3px}
 
-@media(max-width:1000px){
+.angle-slots-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;align-items:start}
+.angle-slot-card{border:1px dashed var(--line);background:#ffffff;padding:14px 12px;display:flex;flex-direction:column;align-items:center;text-align:center;border-radius:6px;width:100%;box-sizing:border-box;position:relative;transition:all .2s ease;box-shadow:0 1px 3px rgba(0,0,0,0.03)}
+.angle-slot-card:hover{border-color:var(--gold);box-shadow:0 4px 12px rgba(0,0,0,0.06)}
+.angle-slot-card.has-image{border-style:solid;border-color:var(--line);background:#ffffff}
+.angle-slot-card.has-image:hover{border-color:var(--gold)}
+
+.angle-slot-header{display:flex;justify-content:space-between;align-items:center;width:100%;height:26px;max-height:26px;gap:6px;margin-bottom:10px;flex-shrink:0}
+.angle-slot-status-dot{width:6px;height:6px;border-radius:50%;background:var(--line);display:inline-block}
+.angle-slot-delete-btn{padding:4px 6px;color:#c62828;background:transparent;border:1px solid transparent;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;transition:all .15s;line-height:1;cursor:pointer}
+.angle-slot-delete-btn:hover:not(:disabled){background:#ffebee;border-color:#ffcdd2}
+
+.angle-slot-preview-wrap{width:100%;aspect-ratio:1 / 1;min-height:150px;max-height:180px;overflow:hidden;border-radius:4px;background:var(--ivory);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:10px}
+.angle-slot-preview{width:100%;height:100%;object-fit:contain;padding:6px;background:#ffffff;display:block;transition:transform .25s ease}
+.angle-slot-preview-wrap:hover .angle-slot-preview{transform:scale(1.04)}
+
+.angle-slot-overlay{position:absolute;inset:0;background:rgba(24,44,44,0.4);opacity:0;display:flex;align-items:center;justify-content:center;transition:opacity .2s ease;border-radius:4px}
+.angle-slot-preview-wrap:hover .angle-slot-overlay{opacity:1}
+.angle-slot-zoom-btn{background:#ffffff;color:var(--ink);font-size:9px;font-weight:600;padding:4px 8px;border-radius:3px;display:inline-flex;align-items:center;gap:4px;text-decoration:none;box-shadow:0 2px 6px rgba(0,0,0,0.2)}
+.angle-slot-zoom-btn:hover{background:var(--ivory)}
+
+.angle-slot-placeholder{width:100%;aspect-ratio:1 / 1;min-height:150px;max-height:180px;background:var(--ivory);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--muted);border-radius:4px;border:1.5px dashed #d5d3c8;padding:12px 8px;margin-bottom:10px;transition:all .2s ease;box-sizing:border-box}
+.angle-slot-placeholder.dragging{border-color:var(--gold);background:#f2eedf;transform:scale(1.02)}
+.angle-slot-placeholder strong{font-size:11px;color:var(--ink);margin-top:2px}
+.angle-slot-placeholder-icon{font-size:24px;line-height:1}
+.angle-slot-placeholder-desc{font-size:9px;line-height:1.35;color:var(--muted);max-width:120px}
+.angle-slot-drop-hint{font-size:8px;letter-spacing:0.5px;color:var(--gold);font-weight:600;text-transform:uppercase;margin-top:4px}
+
+.angle-slot-actions{display:flex;gap:6px;width:100%;justify-content:center}
+.angle-slot-actions .angle-slot-btn{padding:5px 8px;min-height:30px;font-size:10px;font-weight:600;gap:4px;display:inline-flex;align-items:center;justify-content:center;flex:1;border-radius:3px}
+
+.angle-slot-url-row{display:flex;gap:4px;width:100%;margin-top:6px}
+.angle-slot-url-row input{min-height:28px;padding:3px 7px;font-size:9px;margin:0;flex:1;background:var(--paper);border:1px solid var(--line);border-radius:3px;color:var(--ink)}
+.angle-slot-url-row input:focus{border-color:var(--gold);outline:none;background:#ffffff}
+.angle-slot-url-row button{min-height:28px;padding:0 8px;font-size:9px;flex-shrink:0;border-radius:3px}
+
+@media(max-width:1100px){
   .angle-slots-grid{grid-template-columns:repeat(3,1fr)}
 }
-@media(max-width:640px){
+@media(max-width:680px){
   .angle-slots-grid{grid-template-columns:repeat(2,1fr)}
 }
 @media(max-width:440px){

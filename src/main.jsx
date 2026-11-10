@@ -1,7 +1,7 @@
 import React,{useEffect,useState,useRef,createContext,useContext,useMemo} from 'react';
 import {createRoot} from 'react-dom/client';
 import {BrowserRouter,Routes,Route,Link,useLocation,useNavigate,useParams,useSearchParams} from 'react-router-dom';
-import {Search,ShoppingBag,UserRound,Menu,X,ArrowRight,ArrowUpRight,Plus,Minus,Heart,ChevronDown,Check,ArrowLeft,ShieldCheck,Package,Truck,SlidersHorizontal,LogOut,LayoutDashboard,Gem,ChartNoAxesCombined,Upload,Settings,Download,RefreshCw,AlertCircle,CheckCircle2,Eye,Mail,MoveRight,Coins as CoinsIcon,CircleDollarSign,Trash2,Sparkles,Play,Pause,Power,Image as ImageIcon,Copy,Layers,Tag,Percent} from 'lucide-react';
+import {Search,ShoppingBag,UserRound,Menu,X,ArrowRight,ArrowUpRight,Plus,Minus,Heart,ChevronDown,Check,ArrowLeft,ShieldCheck,Package,Truck,SlidersHorizontal,LogOut,LayoutDashboard,Gem,ChartNoAxesCombined,Upload,Settings,Download,RefreshCw,AlertCircle,CheckCircle2,Eye,Mail,MoveRight,Coins as CoinsIcon,CircleDollarSign,Trash2,Sparkles,Play,Pause,Power,Image as ImageIcon,Copy,Layers,Tag,Percent,Maximize2} from 'lucide-react';
 import gsap from 'gsap';
 import './style.css';
 import PhotoPicker from './PhotoPicker.jsx';
@@ -586,6 +586,7 @@ function ProductAngleManager({product,readonly,refreshParent}){
   const [error,setError]=useState('');
   const [urlInputs,setUrlInputs]=useState({});
   const [copiedId,setCopiedId]=useState(null);
+  const [dragRole,setDragRole]=useState(null);
 
   const roles=[
     {key:'hero',label:'Hero Image',desc:'Primary display / catalog shot',icon:'🌟'},
@@ -669,25 +670,47 @@ function ProductAngleManager({product,readonly,refreshParent}){
         return <div key={r.key} className={'angle-slot-card '+(img?'has-image':'')}>
           <div className="angle-slot-header">
             <span className={'role-badge role-badge--'+r.key}>{r.icon} {r.label}</span>
-            {img&&<button
+            {img?<button
               type="button"
-              className="text-button angle-slot-delete-btn"
+              className="angle-slot-delete-btn"
               title="Remove angle"
               disabled={readonly||isBusy}
               onClick={()=>handleDelete(img.id,r.key)}
             >
               <Trash2 size={13}/>
-            </button>}
+            </button>:<span className="angle-slot-status-dot" title="Not configured"></span>}
           </div>
 
           {img?(
             <div className="angle-slot-preview-wrap">
-              <img src={img.url} alt={`${product.name} ${r.label}`} className="angle-slot-preview"/>
+              <img
+                src={coinImage(img.url,true)}
+                alt={`${product.name} ${r.label}`}
+                className="angle-slot-preview"
+                onError={e=>{if(e.currentTarget.getAttribute('src')!=='/assets/product-placeholder.svg')e.currentTarget.src='/assets/product-placeholder.svg'}}
+              />
+              <div className="angle-slot-overlay">
+                <a href={img.url} target="_blank" rel="noopener noreferrer" className="angle-slot-zoom-btn" title="View full photo">
+                  <Maximize2 size={12}/> View
+                </a>
+              </div>
             </div>
           ):(
-            <div className="angle-slot-placeholder">
+            <div
+              className={'angle-slot-placeholder '+(dragRole===r.key?'dragging':'')}
+              onDragOver={e=>{e.preventDefault();setDragRole(r.key);}}
+              onDragLeave={()=>setDragRole(null)}
+              onDrop={e=>{
+                e.preventDefault();
+                setDragRole(null);
+                const file=e.dataTransfer?.files?.[0];
+                if(file)handleSlotUpload({target:{files:[file],value:''}},r.key);
+              }}
+            >
               <span className="angle-slot-placeholder-icon">{r.icon}</span>
+              <strong>{r.label}</strong>
               <span className="angle-slot-placeholder-desc">{r.desc}</span>
+              <span className="angle-slot-drop-hint">Drop photo here</span>
             </div>
           )}
 
@@ -700,6 +723,7 @@ function ProductAngleManager({product,readonly,refreshParent}){
               type="button"
               className="button secondary small-button angle-slot-btn"
               onClick={()=>copy(img.url,img.id)}
+              title="Copy URL"
             >
               {copiedId===img.id?<><Check size={11}/> Copied</>:<><Copy size={11}/> URL</>}
             </button>}
@@ -712,6 +736,7 @@ function ProductAngleManager({product,readonly,refreshParent}){
               value={urlInputs[r.key]||''}
               disabled={readonly||isBusy}
               onChange={e=>setUrlInputs({...urlInputs,[r.key]:e.target.value})}
+              onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();handleSetUrl(r.key);}}}
             />
             <button
               type="button"
