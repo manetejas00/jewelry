@@ -33,3 +33,17 @@ The existing cards are retained. Image buttons open the reused lightbox; product
 ## Verification scope
 
 Local automated checks cover 100 unique identities, positive prices, all image files and hashes, all supplier/image relationships, a second idempotent run, preservation of sold stock/merchant edits, collision rollback and invalid-data rejection. Zoom mathematics is tested for anchored wheel scaling, pinch scaling/translation, aspect-ratio bounds and pan limits. Browser checks cover hover scale, click, controls, gallery navigation, Escape, focus return, scroll lock, search, filters, sorting and Load more. Physical touch-device pinch and native pointer/wheel gestures require a real device test; automated gesture calculations are not a substitute for that test.
+
+## Verified on test3 — 10 November 2026
+
+- Local test suite: **65 passed, 0 failed**; production build passed.
+- Local and live first run: **100 inserted**. Second run: **0 inserted / 100 existing**. Main DatabaseSeeder command also ran locally and skipped all 100 correctly.
+- Live API: 100 added rows, 100 unique SKUs/names/images, all published and positively priced; 100 supplier mappings and matching image relationships.
+- Live categories: 25 additions each. Whole catalogue: **106 jewellery styles / 107 variant rows**, retaining the original six styles. Coins remain separate.
+- All **200** full/thumbnail WebP URLs returned HTTP 200 with image/webp and non-empty bodies.
+- Browser: live Load more expanded 24 to 48 cards; search opened Aurelia’s details with the correct SKU and price; Add to bag added the exact SKU and removal restored the bag. Controls, Escape, background scroll lock and existing multi-image next/previous navigation passed.
+- Responsive checks: 390 px category pages, 768 px product details and 1440 px listing/lightbox; no document overflow in those checked views. No broken loaded images or console errors in the checked live session.
+- Both pre-existing order totals remained unchanged (₹24,750 and ₹32,263). No customer/order records were deleted.
+- The product-image offer badge was kept outside the zoom-caption styling to prevent an oversized dark overlay. Desktop hover scale/easing was measured in the local browser at approximately 1.08 and observed within the requested 1.05–1.15 range on the live site. Wheel/pinch/pan calculations passed automated tests; physical-device gesture verification remains outstanding.
+
+Real payments, manufacturer photography and merchant approval of the seeded specifications/inventory are outside this preview verification. These generated illustrations are not evidence of physical stock or certification.
