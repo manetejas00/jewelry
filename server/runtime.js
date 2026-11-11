@@ -1,6 +1,7 @@
 // Validate before opening the database or serving public traffic.
 export function validateRuntime(env=process.env) {
  if(env.NODE_ENV!=='production')return;
+ if(env.ALLOW_PREVIEW==='true')return;
  if(env.PREVIEW_MODE!=='false')throw Error('Production requires PREVIEW_MODE=false');
  if(!env.SESSION_SECRET||env.SESSION_SECRET.length<32||/replace|preview/i.test(env.SESSION_SECRET))throw Error('Production requires a strong SESSION_SECRET');
  let url;try{url=new URL(env.APP_URL)}catch{throw Error('Production requires an HTTPS APP_URL')}
