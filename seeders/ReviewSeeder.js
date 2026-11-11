@@ -396,9 +396,21 @@ export async function ReviewSeeder(k = db) {
       deleted_at: null
     });
 
-    if (rev.images && rev.images.length > 0) {
+    let reviewImages = rev.images || [];
+    if (reviewImages.length > 0 && rev.product) {
+      const code = rev.product.product_code || rev.product.slug;
+      const dbImages = await k('product_images')
+        .where(q => q.where({ product_code: code }).orWhere({ sku: rev.product.sku }))
+        .whereIn('role', ['detail', 'model', 'hero', 'front'])
+        .orderBy('sort_order', 'desc');
+      if (dbImages.length > 0) {
+        reviewImages = dbImages.slice(0, reviewImages.length).map(img => img.url);
+      }
+    }
+
+    if (reviewImages.length > 0) {
       await k('review_images').insert(
-        rev.images.map(url => ({
+        reviewImages.map(url => ({
           review_id: reviewId,
           image_url: url,
           created_at: createdAt
