@@ -156,3 +156,27 @@ test('feed toggle stops and starts feed automation', async () => {
   // Restart feeds
   await k('settings').insert({key: 'FEED_STATUS', value: 'active'}).onConflict('key').merge();
 });
+
+test('coinCatalogue returns multi-angle images and rating statistics', async () => {
+  const now = new Date().toISOString();
+  await k('product_images').insert([
+    {sku: 'COIN-AU-1G', role: 'front', url: 'https://example.com/coin-front.jpg', sort_order: 2, created_at: now, updated_at: now},
+    {sku: 'COIN-AU-1G', role: 'left', url: 'https://example.com/coin-left.jpg', sort_order: 3, created_at: now, updated_at: now},
+    {sku: 'COIN-AU-1G', role: 'right', url: 'https://example.com/coin-right.jpg', sort_order: 4, created_at: now, updated_at: now},
+    {sku: 'COIN-AU-1G', role: 'model', url: 'https://example.com/coin-model.jpg', sort_order: 5, created_at: now, updated_at: now},
+    {sku: 'COIN-AU-1G', role: 'detail', url: 'https://example.com/coin-detail.jpg', sort_order: 6, created_at: now, updated_at: now}
+  ]);
+
+  const catalogue = await coinCatalogue(k);
+  const coin = catalogue.find(c => c.sku === 'COIN-AU-1G');
+  assert.ok(coin, 'Coin should exist in catalogue');
+  assert.ok(Array.isArray(coin.images), 'Coin should have images array');
+  const roles = coin.images.map(i => i.role);
+  assert.ok(roles.includes('front'));
+  assert.ok(roles.includes('left'));
+  assert.ok(roles.includes('right'));
+  assert.ok(roles.includes('model'));
+  assert.ok(roles.includes('detail'));
+  assert.ok('rating_average' in coin);
+  assert.ok('rating_count' in coin);
+});

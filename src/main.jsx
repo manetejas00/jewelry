@@ -605,16 +605,23 @@ function ProductAngleManager({product,readonly,refreshParent}){
   const [copiedId,setCopiedId]=useState(null);
   const [dragRole,setDragRole]=useState(null);
 
+  const targetCode=product.product_code||product.sku;
+  const isCoin=!!product.metal||!product.product_code;
+
   const roles=[
-    {key:'hero',label:'Hero Image',desc:'Primary display / catalog shot',icon:'🌟'},
-    {key:'front',label:'Front Angle',desc:'Straight direct view',icon:'📷'},
-    {key:'left',label:'Left View',desc:'Left side profile angle',icon:'👈'},
-    {key:'right',label:'Right View',desc:'Right side profile angle',icon:'👉'},
-    {key:'model',label:'Model Shot',desc:'On-model wearing view',icon:'💃'},
-    {key:'detail',label:'Detail Image',desc:'Close-up of the product and its finish',icon:'🔍'}
+    {key:'hero',label:isCoin?'Hero Image (Obverse)':'Hero Image',desc:isCoin?'Primary display / obverse mint face':'Primary display / catalog shot',icon:'🌟'},
+    {key:'front',label:'Front Angle',desc:isCoin?'Straight direct view of the coin face':'Straight direct view',icon:'📷'},
+    {key:'left',label:'Left View',desc:isCoin?'Left side profile / edge angle':'Left side profile angle',icon:'👈'},
+    {key:'right',label:'Right View',desc:isCoin?'Right side profile / edge angle':'Right side profile angle',icon:'👉'},
+    {key:'model',label:isCoin?'Model / In-Hand View':'Model Shot',desc:isCoin?'Hand-held view for scale and thickness':'On-model wearing view',icon:isCoin?'🪙':'💃'},
+    {key:'detail',label:'Detail Image',desc:isCoin?'Assay seal, mint mark, or edge milling detail':'Close-up of the product and its finish',icon:'🔍'}
   ];
 
-  const images=product.images||[];
+  const rawImages=product.images||[];
+  const images=[...rawImages];
+  if(product.image&&!images.some(i=>i.role==='hero'||i.role==='front'||i.url===product.image)){
+    images.unshift({id:'default-hero',role:'hero',url:product.image,alt_text:product.name});
+  }
 
   async function handleSlotUpload(e,role){
     const file=e.target.files?.[0];
@@ -626,10 +633,11 @@ function ProductAngleManager({product,readonly,refreshParent}){
       reader.onload=async ev=>{
         try{
           await api('/admin/upload-image',{
-            name:`${product.product_code}-${role}-${file.name}`,
+            name:`${targetCode}-${role}-${file.name}`,
             data:ev.target.result,
             role,
-            product_code:product.product_code
+            product_code:targetCode,
+            sku:product.sku||targetCode
           });
           if(refreshParent)await refreshParent();
         }catch(err){setError(err.message);}finally{setBusyRole(null);}
@@ -643,7 +651,7 @@ function ProductAngleManager({product,readonly,refreshParent}){
     if(!inputUrl)return;
     setError('');setBusyRole(role);
     try{
-      await api('/admin/product-images',{product_code:product.product_code,role,url:inputUrl});
+      await api('/admin/product-images',{product_code:targetCode,sku:product.sku||targetCode,role,url:inputUrl});
       setUrlInputs(prev=>({...prev,[role]:''}));
       if(refreshParent)await refreshParent();
     }catch(err){setError(err.message);}finally{setBusyRole(null);}
@@ -653,7 +661,15 @@ function ProductAngleManager({product,readonly,refreshParent}){
     if(readonly)return;
     setError('');setBusyRole(role);
     try{
-      await api(`/admin/product-images/${imgId}`,{},'DELETE');
+      if(String(imgId).startsWith('default-')){
+        if(isCoin){
+          await api('/admin/coins/'+encodeURIComponent(targetCode),{image:''},'PATCH');
+        }else{
+          await api('/admin/products/'+encodeURIComponent(targetCode),{image:''},'PATCH');
+        }
+      }else{
+        await api(`/admin/product-images/${imgId}`,{},'DELETE');
+      }
       if(refreshParent)await refreshParent();
     }catch(err){setError(err.message);}finally{setBusyRole(null);}
   }
@@ -671,7 +687,7 @@ function ProductAngleManager({product,readonly,refreshParent}){
       <div>
         <h4>Multi-Angle Photography ({product.name})</h4>
         <p className="small muted" style={{margin:'2px 0 0'}}>
-          Upload specific angles for <strong>{product.product_code}</strong>. Customers can interactively switch between Hero, Front, Left, Right, Model, and Detail images on the storefront.
+          Upload specific angles for <strong>{targetCode}</strong>. Customers can interactively switch between {isCoin?'Hero, Front, Left, Right, In-Hand, and Detail':'Hero, Front, Left, Right, Model, and Detail'} images on the storefront.
         </p>
       </div>
       <span className={'status-badge '+(configuredCount===roles.length?'active':'')} style={{fontSize:'9px',padding:'4px 10px'}}>
@@ -1379,12 +1395,32 @@ function CoinsAdmin({readonly,refreshParent}){
 
     {error&&<p className="error">{error}</p>}
 
+    <details className="advanced-media" style={{marginBottom:'16px'}}>
+      <summary>Manage multiple coin photos (optional)</summary>
+      <ImageUploader products={coins.map(c=>({...c,product_code:c.sku}))} refreshParent={async()=>{await load();if(refreshParent)await refreshParent();}}/>
+    </details>
+
     <AdminCatalogueList items={filteredCoins} label="Coins" resetKey={subTab} renderRow={c=><AdminCatalogueRow key={c.sku} item={c}
       details={<>{c.sku} · {c.coin_type}</>}
       pricing={<><span className={'coin-badge '+(c.metal==='Silver'?'silver':'gold')}>{c.metal}</span><small>{c.purity} · Live Rate</small><strong>{c.calculated_price!=null?money(c.calculated_price):'Awaiting rate'}</strong>{c.breakdown&&<small>Metal {money(c.breakdown.metal)} + Making {money(c.breakdown.making)}</small>}<small>Making charge: {money(c.making_charge)}</small></>}
       weight={<>{Number(c.weight_g).toFixed(3)} g<small>{c.dimension||'Standard round'}</small></>}
       actions={<div style={{display:'flex',gap:'10px',alignItems:'center'}}><button className="underlink" disabled={readonly} onClick={()=>{setError('');setEditingCoin(editingCoin?.sku===c.sku?null:c)}}>{editingCoin?.sku===c.sku?'Close':'Edit'}</button><button className="text-button" disabled={readonly} style={{color:'#a83232',padding:0}} onClick={()=>deleteCoin(c.sku)} title="Delete coin"><Trash2 size={14}/></button></div>}
-    >{editingCoin?.sku===c.sku&&<CoinForm key={c.sku} coin={editingCoin} error={error} onClose={()=>setEditingCoin(null)} onSave={saveCoin}/>}</AdminCatalogueRow>}/>
+    >{editingCoin?.sku===c.sku&&<>
+      <CoinForm key={c.sku} coin={editingCoin} error={error} onClose={()=>setEditingCoin(null)} onSave={saveCoin}/>
+      <ProductAngleManager
+        product={editingCoin}
+        readonly={readonly}
+        refreshParent={async()=>{
+          try{
+            const res=await api('/admin/coins');
+            setData(res);
+            const fresh=(res.coins||[]).find(x=>x.sku===editingCoin.sku);
+            if(fresh)setEditingCoin(fresh);
+            if(refreshParent)await refreshParent();
+          }catch(err){setError(err.message);}
+        }}
+      />
+    </>}</AdminCatalogueRow>}/>
 
     <ImportPanel kind="coins" readonly={readonly} refresh={async()=>{await load();await refreshParent?.();await refreshCatalogue({notify:true})}}/>
     {/* New coins use a dialog; existing coins edit beneath their row. */}
@@ -1965,6 +2001,7 @@ function CoinProduct(){
         <span className="eyebrow">THE COIN COLLECTION</span>
         <h1>{p.name}</h1>
         <p className="material-line">{p.purity} {p.metal} · {p.weight_g} g</p>
+        <div className="pdp-rating-row" style={{marginBottom:'10px'}}><RatingBadge rating={p.rating_average} count={p.rating_count} showEmpty={true} size="md" onClick={()=>{const el=document.getElementById('reviews');if(el)el.scrollIntoView({behavior:'smooth'});}}/></div>
         <div className="detail-price">{p.original_price&&p.original_price>p.price?<div className="price-row" style={{alignItems:'baseline',gap:'10px',margin:0}}><span className="discounted-price" style={{fontSize:'26px'}}>{money(p.price)}</span><del className="original-price-del" style={{fontSize:'16px'}}>{money(p.original_price)}</del>{p.discount_amount>0&&<span className="offer-save-tag">SAVE {money(p.discount_amount)}</span>}</div>:p.price===null?'Awaiting approved rate':money(p.price)}</div>
         {p.offer&&<div style={{marginTop:'8px',display:'flex',alignItems:'center',gap:'8px',flexWrap:'wrap'}}><span className="offer-ribbon-badge" style={{position:'static',clipPath:'none',borderRadius:'2px',padding:'4px 10px',fontSize:'10px',boxShadow:'none'}}>✦ {p.offer.name}: {p.offer.badge_text}</span>{p.offer.code&&<span className="status-badge" style={{fontSize:'9px'}}>CODE: {p.offer.code}</span>}</div>}
         <div style={{marginTop:'6px'}}><span className="gold-linked-pill"><Sparkles size={12}/> Live Metal-Linked Rate</span></div>
@@ -1984,6 +2021,7 @@ function CoinProduct(){
         <details><summary>Delivery & returns <Plus size={15}/></summary><p>Delivery and return policies are awaiting merchant details. <Link to="/information/shipping">View current information</Link>.</p></details>
       </div>
     </section>
+    <ProductReviewsSection product={{...p,product_code:p.sku}}/>
     {zoomCoin&&<ImageViewer images={angleImages} index={Math.max(0,angleImages.findIndex(i=>i.url===activeImage))} title={p.name} onClose={()=>setZoomCoin(false)}/>}
   </Layout>;
 }

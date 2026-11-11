@@ -209,22 +209,28 @@ export function calculateCoinPrice(c,rates,silverRate=null,rule={tax_percent:0,r
 export async function coinCatalogue(k){
   if(!k.schema||!(await k.schema.hasTable('coins')))return [];
   const hasImages=await k.schema.hasTable('product_images').catch(()=>false);
-  const [coins,rates,silverRate,rules,images,offers]=await Promise.all([
+  const hasReviews=await k.schema.hasTable('reviews').catch(()=>false);
+  const [coins,rates,silverRate,rules,images,offers,ratings]=await Promise.all([
     k('coins').where({status:'published'}),
     activeRates(k),
     getSilverRate(k),
     k('pricing_rules').orderBy('id','desc').first(),
     hasImages?k('product_images')
       .select('id','product_code','sku','role','url','alt_text','sort_order')
-      .where(function(){this.whereIn('sku',k('coins').select('sku').where({status:'published'}))})
+      .where(function(){
+        const pub=k('coins').select('sku').where({status:'published'});
+        this.whereIn('sku',pub).orWhereIn('product_code',pub);
+      })
       .orderBy('sort_order','asc').orderBy('id','asc'):[],
-    activeOffers(k)
+    activeOffers(k),
+    hasReviews?getAllProductsRatingSummaries(k):new Map()
   ]);
   const imagesBySku={};
   for(const img of images){
-    if(img.sku){
-      if(!imagesBySku[img.sku])imagesBySku[img.sku]=[];
-      imagesBySku[img.sku].push(img);
+    for(const key of [img.sku,img.product_code]){
+      if(!key)continue;
+      if(!imagesBySku[key])imagesBySku[key]=[];
+      imagesBySku[key].push(img);
     }
   }
   return coins.map(c=>{
@@ -234,6 +240,9 @@ export async function coinCatalogue(k){
     const isGold=(c.metal||'').toLowerCase()==='gold';
     const rateFresh=c.pricing_mode==='FIXED'||(isGold?isFresh(rates[c.purity]):Number(silverRate)>0);
     const coinImgs=(imagesBySku[c.sku]||[]).filter((img,i,all)=>all.findIndex(other=>other.url===img.url)===i);
+    const ratingData=ratings.get(c.sku)||ratings.get(c.id)||null;
+    const rating_average=ratingData?ratingData.average:null;
+    const rating_count=ratingData?ratingData.count:0;
     return {
       ...c,
       thumbnail:listingThumbnail(c),
@@ -244,7 +253,10 @@ export async function coinCatalogue(k){
       discount_amount:price?.discount_amount??0,
       offer:price?.offer||(offer?{id:offer.id,name:offer.name,badge_text:offer.badge_text,discount_type:offer.discount_type,discount_value:Number(offer.discount_value)}:null),
       breakdown:price,
-      checkout_available:c.stock>0&&rateFresh&&Number.isFinite(price?.total)
+      checkout_available:c.stock>0&&rateFresh&&Number.isFinite(price?.total),
+      rating_average,
+      rating_count,
+      rating: { average: rating_average, count: rating_count }
     };
   });
 }

@@ -242,11 +242,25 @@ app.patch('/api/admin/products/:sku',auth(['owner','manager']),route(async(req,r
 app.get('/api/admin/coins',auth(),route(async(req,res)=>{
  const coins=await db('coins').orderBy('id','desc');
  const [rates,silverRate,rules]=await Promise.all([activeRates(db),getSilverRate(db),db('pricing_rules').orderBy('id','desc').first()]);
+ const hasImages=await db.schema.hasTable('product_images').catch(()=>false);
+ const coinSkus=coins.map(c=>c.sku);
+ const coinImages=hasImages&&coinSkus.length?await db('product_images').where(function(){
+  this.whereIn('sku',coinSkus).orWhereIn('product_code',coinSkus);
+ }).orderBy('sort_order','asc').orderBy('id','asc'):[];
+ const imagesByCoin={};
+ for(const img of coinImages){
+  for(const k of [img.sku,img.product_code]){
+   if(!k)continue;
+   if(!imagesByCoin[k])imagesByCoin[k]=[];
+   imagesByCoin[k].push(img);
+  }
+ }
  res.json({
   coins:coins.map(c=>{
    let p=null;
    try{p=calculateCoinPrice(c,rates,silverRate,rules);}catch{}
-   return {...c,calculated_price:p?.total??null,breakdown:p};
+   const cImgs=(imagesByCoin[c.sku]||[]).filter((img,i,all)=>all.findIndex(other=>other.id===img.id)===i);
+   return {...c,calculated_price:p?.total??null,breakdown:p,images:cImgs};
   }),
   silverRate,
   goldRate24k:rates['24K']?.inr_per_gram||null
@@ -298,6 +312,12 @@ app.patch('/api/admin/coins/:sku',auth(['owner','manager']),route(async(req,res)
   }
  }
  await db('coins').where({sku:req.params.sku}).update(patch);
+ if(patch.image){
+  const hero=await db('product_images').where(function(){this.where({product_code:req.params.sku,role:'hero'}).orWhere({sku:req.params.sku,role:'hero'});}).first();
+  const photo={url:patch.image,alt_text:patch.name||coin.name,updated_at:now()};
+  if(hero)await db('product_images').where({id:hero.id}).update(photo);
+  else await db('product_images').insert({...photo,sku:req.params.sku,product_code:req.params.sku,role:'hero',sort_order:1,created_at:now()});
+ }
  await audit(req,'edit_coin',{sku:req.params.sku,patch});
  res.json({ok:true});
 }));
@@ -305,6 +325,7 @@ app.delete('/api/admin/coins/:sku',auth(['owner','manager']),route(async(req,res
  const coin=await db('coins').where({sku:req.params.sku}).first();
  if(!coin)return res.status(404).json({error:'Coin not found'});
  await db('coins').where({sku:req.params.sku}).del();
+ await db('product_images').where(function(){this.where({sku:req.params.sku}).orWhere({product_code:req.params.sku});}).del();
  await audit(req,'delete_coin',{sku:req.params.sku});
  res.json({ok:true});
 }));
@@ -330,26 +351,28 @@ app.post('/api/admin/upload-image',auth(['owner','manager']),route(async(req,res
  const host=process.env.APP_URL||'http://localhost:3000';
  const url=`/uploads/${filename}`;
  let imageRecord=null;
- if(product_code&&role){
+ const targetCode=product_code||req.body.sku;
+ if(targetCode&&role){
   const nowStr=now();
   const validRole=['hero','front','left','right','model','modal','detail'].includes(role)?role:'front';
   const hasImages=await db.schema.hasTable('product_images').catch(()=>false);
   if(hasImages){
-   const existing=await db('product_images').where({product_code,role:validRole}).first();
+   const existing=await db('product_images').where(function(){this.where({product_code:targetCode,role:validRole}).orWhere({sku:targetCode,role:validRole});}).first();
    if(existing){
     await db('product_images').where({id:existing.id}).update({url,updated_at:nowStr});
     imageRecord={...existing,url,updated_at:nowStr};
    }else{
     const sortOrder={'hero':1,'front':2,'left':3,'right':4,'model':5,'modal':5,'detail':6}[validRole]||10;
-    const [id]=await db('product_images').insert({product_code,role:validRole,url,sort_order:sortOrder,created_at:nowStr,updated_at:nowStr});
-    imageRecord={id,product_code,role:validRole,url,sort_order:sortOrder};
+    const [id]=await db('product_images').insert({product_code:targetCode,sku:req.body.sku||targetCode,role:validRole,url,sort_order:sortOrder,created_at:nowStr,updated_at:nowStr});
+    imageRecord={id,product_code:targetCode,sku:req.body.sku||targetCode,role:validRole,url,sort_order:sortOrder};
    }
   }
   if(validRole==='hero'||validRole==='front'){
-   await db('products').where({product_code}).update({image:url,updated_at:nowStr});
+   await db('products').where({product_code:targetCode}).orWhere({sku:targetCode}).update({image:url,updated_at:nowStr});
+   await db('coins').where({sku:targetCode}).update({image:url,updated_at:nowStr});
   }
  }
- await audit(req,'upload_image',{filename,size:buffer.length,product_code,role});
+ await audit(req,'upload_image',{filename,size:buffer.length,product_code:targetCode,role});
  res.json({ok:true,filename,url,thumbnail:thumbnailUrl(url),fullUrl:`${host}${url}`,image:imageRecord});
 }));
 
@@ -376,22 +399,24 @@ app.post('/api/admin/upload-images',auth(['owner','manager']),route(async(req,re
   try{await saveUploadedImage(uploadsDir,filename,buffer)}catch{continue;}
   const url=`/uploads/${filename}`;
   let imageRecord=null;
-  if(product_code&&role&&hasImages){
+  const targetCode=product_code||file.sku;
+  if(targetCode&&role&&hasImages){
    const validRole=['hero','front','left','right','model','modal','detail'].includes(role)?role:'front';
-   const existing=await db('product_images').where({product_code,role:validRole}).first();
+   const existing=await db('product_images').where(function(){this.where({product_code:targetCode,role:validRole}).orWhere({sku:targetCode,role:validRole});}).first();
    if(existing){
     await db('product_images').where({id:existing.id}).update({url,updated_at:nowStr});
     imageRecord={...existing,url,updated_at:nowStr};
    }else{
     const sortOrder={'hero':1,'front':2,'left':3,'right':4,'model':5,'modal':5,'detail':6}[validRole]||10;
-    const [id]=await db('product_images').insert({product_code,role:validRole,url,sort_order:sortOrder,created_at:nowStr,updated_at:nowStr});
-    imageRecord={id,product_code,role:validRole,url,sort_order:sortOrder};
+    const [id]=await db('product_images').insert({product_code:targetCode,sku:file.sku||targetCode,role:validRole,url,sort_order:sortOrder,created_at:nowStr,updated_at:nowStr});
+    imageRecord={id,product_code:targetCode,sku:file.sku||targetCode,role:validRole,url,sort_order:sortOrder};
    }
    if(validRole==='hero'||validRole==='front'){
-    await db('products').where({product_code}).update({image:url,updated_at:nowStr});
+    await db('products').where({product_code:targetCode}).orWhere({sku:targetCode}).update({image:url,updated_at:nowStr});
+    await db('coins').where({sku:targetCode}).update({image:url,updated_at:nowStr});
    }
   }
-  uploaded.push({filename,url,thumbnail:thumbnailUrl(url),fullUrl:`${host}${url}`,role:role||null,product_code:product_code||null,image:imageRecord});
+  uploaded.push({filename,url,thumbnail:thumbnailUrl(url),fullUrl:`${host}${url}`,role:role||null,product_code:targetCode||null,image:imageRecord});
  }
  if(!uploaded.length)throw validationError('No images could be processed. Choose valid image files no larger than 8 MB each.');
  await audit(req,'bulk_upload_images',{count:uploaded.length});
@@ -416,7 +441,7 @@ app.post('/api/admin/product-images',auth(['owner','manager']),route(async(req,r
  const sortMap={'hero':1,'front':2,'left':3,'right':4,'model':5,'modal':5,'detail':6};
  const order=sort_order!==undefined?Number(sort_order):sortMap[validRole]||10;
 
- const existing=await db('product_images').where({product_code:targetCode,role:validRole}).first();
+ const existing=await db('product_images').where(function(){this.where({product_code:targetCode,role:validRole}).orWhere({sku:targetCode,role:validRole});}).first();
  let id;
  if(existing){
   await db('product_images').where({id:existing.id}).update({
@@ -429,7 +454,7 @@ app.post('/api/admin/product-images',auth(['owner','manager']),route(async(req,r
  }else{
   const [insertedId]=await db('product_images').insert({
    product_code:targetCode,
-   sku:sku||null,
+   sku:sku||targetCode,
    role:validRole,
    url:String(url).trim(),
    alt_text:alt_text?String(alt_text).trim().slice(0,250):null,
@@ -440,7 +465,8 @@ app.post('/api/admin/product-images',auth(['owner','manager']),route(async(req,r
   id=insertedId;
  }
  if(validRole==='hero'||validRole==='front'){
-  await db('products').where({product_code:targetCode}).update({image:String(url).trim(),updated_at:nowStr});
+  await db('products').where({product_code:targetCode}).orWhere({sku:targetCode}).update({image:String(url).trim(),updated_at:nowStr});
+  await db('coins').where({sku:targetCode}).update({image:String(url).trim(),updated_at:nowStr});
  }
  await audit(req,'assign_product_image',{product_code:targetCode,role:validRole,url});
  res.json({ok:true,id,product_code:targetCode,role:validRole,url});
