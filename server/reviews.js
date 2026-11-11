@@ -104,6 +104,18 @@ export async function resolveProduct(k, identifier) {
   }
 
   if (!product) {
+    const hasCoins = await k.schema.hasTable('coins').catch(() => false);
+    if (hasCoins) {
+      const coin = (typeof identifier === 'number' || /^\d+$/.test(identifier))
+        ? await k('coins').where({ id: Number(identifier) }).first()
+        : await k('coins').where({ sku: identifier }).first();
+      if (coin) {
+        return {
+          product: { ...coin, product_code: coin.sku },
+          canonicalId: coin.id
+        };
+      }
+    }
     throw validationError('Product not found.', 404);
   }
 
@@ -125,8 +137,10 @@ export async function resolveProduct(k, identifier) {
 export async function checkVerifiedPurchase(k, customerId, productCode) {
   if (!customerId || !productCode) return false;
 
-  const skus = await k('products').where({ product_code: productCode }).pluck('sku');
-  if (!skus.length) return false;
+  let skus = await k('products').where({ product_code: productCode }).pluck('sku');
+  if (!skus.length) {
+    skus = [productCode];
+  }
 
   const orderItem = await k('order_items')
     .join('orders', 'orders.id', 'order_items.order_id')
