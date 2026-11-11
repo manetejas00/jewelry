@@ -493,7 +493,11 @@ function Checkout(){
     return()=>{active=false};
   },[bag]);
   async function pay(e){
-    e.preventDefault();if(!accepted||!quote||!config.checkoutEnabled)return;setBusy(true);setError('');
+    e.preventDefault();
+    if(!config.checkoutEnabled)return;
+    if(!quote){setError('Waiting for current price quote. Please check your bag items.');return;}
+    if(!accepted){setError('Please check the confirmation box above to confirm your Cash on Delivery order.');return;}
+    setBusy(true);setError('');
     const customer=Object.fromEntries(new FormData(e.target));
     try{
       await flushAccount();
@@ -528,7 +532,7 @@ function Checkout(){
         {!config.checkoutEnabled&&<p className="notice" role="status">Checkout is awaiting merchant configuration.</p>}{config.preview&&<p className="notice">Preview order only. No payment or delivery will be arranged.</p>}{changed&&<div className="notice">The price changed. Review the updated order summary before accepting.</div>}
         <label className="checkbox consent"><input type="checkbox" disabled={!quote} checked={accepted} onChange={e=>setAccepted(e.target.checked)} required/>{quote?`I confirm this order with Cash on Delivery and agree to pay ${money(quote.total)} upon arrival.`:'Waiting for a current order total…'}</label>
         {error&&<p className="error" role="alert">{error}</p>}
-        <button className="button dark full" disabled={busy||!quote||!accepted||!config.checkoutEnabled}>{busy?'Placing order…':`Place Order with Cash on Delivery · ${money(quote?.total)}`}<ArrowRight size={17}/></button>
+        <button className="button dark full" disabled={busy||!quote||!config.checkoutEnabled} title={!accepted?'Please check the confirmation box above':undefined}>{busy?'Placing order…':quote?`Place Order with Cash on Delivery · ${money(quote.total)}`:'Checking prices and availability…'}<ArrowRight size={17}/></button>
       </form>
       <aside className="order-summary">
         <h3>Your chosen pieces</h3>
