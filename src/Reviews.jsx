@@ -683,16 +683,19 @@ export function ProductReviewsSection({ product }) {
                 <div className="author-meta">
                   <div className="author-name-wrap">
                     <span className="author-name">{rev.customerName}</span>
-                    {rev.isVerifiedPurchase && (
+                    {rev.isVerifiedPurchase ? (
                       <span className="verified-purchase-tag" title="Verified purchaser of this piece">
-                        <CheckCircle size={12} /> Verified Purchase
+                        <CheckCircle size={11} /> Verified Purchase
                       </span>
-                    )}
-                    {rev.status === 'pending' && (
+                    ) : rev.status === 'approved' ? (
+                      <span className="verified-purchase-tag" title="Verified customer review">
+                        <CheckCircle size={11} /> Verified Review
+                      </span>
+                    ) : rev.status === 'pending' ? (
                       <span className="pending-review-tag" title="Review is awaiting moderator approval">
                         <Clock size={11} /> Pending Review
                       </span>
-                    )}
+                    ) : null}
                   </div>
                   <time className="review-date" dateTime={rev.createdAt}>
                     {formatReviewDate(rev.createdAt)}

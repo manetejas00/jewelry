@@ -806,7 +806,7 @@ export async function adminBulkReviewStatus(k, reviewIds, status) {
 /**
  * Admin: Edit a review.
  */
-export async function adminEditReview(k, reviewId, { rating, title, comment, status }) {
+export async function adminEditReview(k, reviewId, { rating, title, comment, status, isVerifiedPurchase }) {
   const review = await k('reviews').where({ id: Number(reviewId) }).whereNull('deleted_at').first();
   if (!review) {
     throw validationError('Review not found.', 404);
@@ -841,6 +841,10 @@ export async function adminEditReview(k, reviewId, { rating, title, comment, sta
       throw validationError('Invalid status.');
     }
     patch.status = status;
+  }
+
+  if (isVerifiedPurchase !== undefined) {
+    patch.is_verified_purchase = isVerifiedPurchase ? 1 : 0;
   }
 
   await k('reviews').where({ id: Number(reviewId) }).update(patch);

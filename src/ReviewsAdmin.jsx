@@ -160,7 +160,8 @@ export function ReviewsAdmin({ readonly = false, refreshParent = null }) {
         rating: editReviewData.rating,
         title: editReviewData.title,
         comment: editReviewData.comment,
-        status: editReviewData.status
+        status: editReviewData.status,
+        isVerifiedPurchase: Boolean(editReviewData.isVerifiedPurchase)
       }, 'PUT');
       setSuccess(`Review #${editReviewData.id} updated successfully.`);
       setEditReviewData(null);
@@ -771,6 +772,18 @@ export function ReviewsAdmin({ readonly = false, refreshParent = null }) {
                     <option value="approved">Approved</option>
                     <option value="rejected">Rejected</option>
                   </select>
+                </div>
+
+                <div className="form-group checkbox-group" style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '8px 0 14px' }}>
+                  <input
+                    id="edit-verified"
+                    type="checkbox"
+                    checked={Boolean(editReviewData.isVerifiedPurchase)}
+                    onChange={e => setEditReviewData(prev => ({ ...prev, isVerifiedPurchase: e.target.checked }))}
+                  />
+                  <label htmlFor="edit-verified" style={{ margin: 0, cursor: 'pointer', fontSize: '12px', fontWeight: '500' }}>
+                    Mark as Verified Purchase (Shows green Verified Purchase badge)
+                  </label>
                 </div>
 
                 <div className="form-group">

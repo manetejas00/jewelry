@@ -61,7 +61,7 @@ async function runTests() {
     const res = await fetch(`${BASE_URL}/`);
     assert.equal(res.status, 200);
     const html = await res.text();
-    assert.ok(html.includes('index-KXEWx9vQ.js'), 'HTML should link to index-KXEWx9vQ.js');
+    assert.ok(html.includes('index-B3yPr7Ib.js'), 'HTML should link to index-B3yPr7Ib.js');
     assert.ok(html.includes('index-BBAwmS-M.css'), 'HTML should link to index-BBAwmS-M.css');
   });
 
