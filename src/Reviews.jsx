@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useId } from 'react';
 import { Link } from 'react-router-dom';
-import { Star, CheckCircle, Upload, X, AlertCircle, Sparkles, MessageSquare, Image as ImageIcon, ChevronDown } from 'lucide-react';
+import { Star, CheckCircle, Upload, X, AlertCircle, Sparkles, MessageSquare, Image as ImageIcon, ChevronDown, Clock } from 'lucide-react';
 import { api } from './api.js';
 import { useStore } from './store.jsx';
 
@@ -688,6 +688,11 @@ export function ProductReviewsSection({ product }) {
                         <CheckCircle size={12} /> Verified Purchase
                       </span>
                     )}
+                    {rev.status === 'pending' && (
+                      <span className="pending-review-tag" title="Review is awaiting moderator approval">
+                        <Clock size={11} /> Pending Review
+                      </span>
+                    )}
                   </div>
                   <time className="review-date" dateTime={rev.createdAt}>
                     {formatReviewDate(rev.createdAt)}
@@ -697,6 +702,13 @@ export function ProductReviewsSection({ product }) {
                   <StarRating rating={rev.rating} size={15} />
                 </div>
               </div>
+
+              {rev.status === 'pending' && (
+                <div className="review-pending-banner">
+                  <Clock size={13} />
+                  <span>This review is currently awaiting moderation by Veyora Studio.</span>
+                </div>
+              )}
 
               <h4 className="review-title">{rev.title}</h4>
               <p className="review-comment">{rev.comment}</p>

@@ -190,7 +190,8 @@ export async function getProductReviews(k, productIdOrSlug, {
   sort = 'recent',
   ratingFilter = null,
   rating = null,
-  currentCustomerId = null
+  currentCustomerId = null,
+  includePending = false
 } = {}) {
   const hasReviews = await k.schema.hasTable('reviews').catch(() => false);
   if (!hasReviews) {
@@ -235,7 +236,6 @@ export async function getProductReviews(k, productIdOrSlug, {
   let query = k('reviews')
     .join('customers', 'customers.id', 'reviews.user_id')
     .where('reviews.product_id', canonicalId)
-    .where('reviews.status', 'approved')
     .whereNull('reviews.deleted_at')
     .select(
       'reviews.id',
@@ -250,6 +250,12 @@ export async function getProductReviews(k, productIdOrSlug, {
       'reviews.updated_at',
       'customers.name as customer_name'
     );
+
+  if (includePending) {
+    query = query.whereIn('reviews.status', ['approved', 'pending']);
+  } else {
+    query = query.where('reviews.status', 'approved');
+  }
 
   const filterRating = ratingFilter !== null && ratingFilter !== undefined ? ratingFilter : rating;
   if (filterRating && [1, 2, 3, 4, 5].includes(Number(filterRating))) {

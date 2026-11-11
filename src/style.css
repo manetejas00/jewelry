@@ -1342,6 +1342,68 @@
   border: 1px solid #c8e6c9;
 }
 
+.pending-review-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: #b45309;
+  background: #fef3c7;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  border: 1px solid #fde68a;
+}
+
+.review-pending-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 12px 0;
+  padding: 8px 12px;
+  background: #fffbeb;
+  border: 1px dashed #fcd34d;
+  border-radius: 6px;
+  font-size: 11.5px;
+  color: #92400e;
+  line-height: 1.4;
+}
+
+.review-pending-banner svg {
+  flex-shrink: 0;
+  color: #d97706;
+}
+
+.status-badge-review {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.status-badge-review.approved {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
+.status-badge-review.pending {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.status-badge-review.rejected {
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid #ffcdd2;
+}
+
 .review-date {
   font-size: 11px;
   color: var(--muted);

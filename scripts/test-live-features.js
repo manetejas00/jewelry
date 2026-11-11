@@ -183,12 +183,13 @@ async function runTests() {
     assert.equal(dup.status, 409, 'Duplicate review submission must be blocked');
   });
 
-  // 10. Pending review is not visible to public unauthenticated users
-  await test('Pending review is hidden from public review list', async () => {
+  // 10. Pending review is returned with status pending for public display badge
+  await test('Pending review is visible with pending status', async () => {
     const pub = await fetch(`${BASE_URL}/api/products/${testProductId}/reviews`);
     const data = await pub.json();
     const found = data.reviews.find(r => r.id === submittedReviewId);
-    assert.equal(found, undefined, 'Pending review must not appear in public reviews');
+    assert.ok(found, 'Pending review should be visible');
+    assert.equal(found.status, 'pending', 'Pending review must have status: pending');
   });
 
   // 11. Admin login and review moderation
