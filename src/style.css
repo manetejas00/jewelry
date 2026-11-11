@@ -1614,25 +1614,137 @@
 
 .reviews-stats-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 16px;
   margin-bottom: 24px;
 }
 
-.stat-card.pending-card {
-  border-left: 3px solid #e65100;
+.reviews-stats-grid .stat-card {
+  background: #ffffff;
+  border: 1px solid var(--line, #e2e0d8);
+  border-radius: 8px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 112px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-.stat-card.approved-card {
-  border-left: 3px solid #2e7d32;
+.reviews-stats-grid .stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
 }
 
-.stat-card.rejected-card {
-  border-left: 3px solid #c62828;
+.reviews-stats-grid .stat-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
 }
 
-.stat-card.score-card {
-  border-left: 3px solid var(--gold);
+.reviews-stats-grid .stat-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: var(--muted, #62655b);
+}
+
+.reviews-stats-grid .stat-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: var(--paper, #f4f2ea);
+  color: var(--ink, #182c2c);
+  flex-shrink: 0;
+}
+
+.reviews-stats-grid .stat-value {
+  display: block;
+  font-family: var(--serif, 'Cormorant Garamond', Georgia, serif);
+  font-size: 34px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink, #182c2c);
+  margin-bottom: 6px;
+  letter-spacing: -0.5px;
+}
+
+.reviews-stats-grid .stat-detail {
+  display: block;
+  font-size: 11px;
+  color: var(--muted, #73776e);
+  line-height: 1.4;
+  font-weight: 400;
+}
+
+/* Card variants with luxury accents */
+.reviews-stats-grid .stat-card.total-card {
+  border-left: 4px solid #182c2c;
+}
+.reviews-stats-grid .stat-card.total-card .stat-card-icon {
+  background: #f0f3f2;
+  color: #182c2c;
+}
+
+.reviews-stats-grid .stat-card.pending-card {
+  border-left: 4px solid #d97706;
+  background: linear-gradient(135deg, #ffffff 82%, #fef3c7 100%);
+}
+.reviews-stats-grid .stat-card.pending-card .stat-value {
+  color: #b45309;
+}
+.reviews-stats-grid .stat-card.pending-card .stat-card-icon {
+  background: #fef3c7;
+  color: #b45309;
+}
+.reviews-stats-grid .stat-card.pending-card .stat-detail {
+  color: #92400e;
+  font-weight: 500;
+}
+
+.reviews-stats-grid .stat-card.approved-card {
+  border-left: 4px solid #16a34a;
+  background: linear-gradient(135deg, #ffffff 82%, #ecfdf5 100%);
+}
+.reviews-stats-grid .stat-card.approved-card .stat-value {
+  color: #15803d;
+}
+.reviews-stats-grid .stat-card.approved-card .stat-card-icon {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.reviews-stats-grid .stat-card.rejected-card {
+  border-left: 4px solid #dc2626;
+  background: linear-gradient(135deg, #ffffff 82%, #fef2f2 100%);
+}
+.reviews-stats-grid .stat-card.rejected-card .stat-value {
+  color: #b91c1c;
+}
+.reviews-stats-grid .stat-card.rejected-card .stat-card-icon {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.reviews-stats-grid .stat-card.score-card {
+  border-left: 4px solid var(--gold, #ab9162);
+  background: linear-gradient(135deg, #ffffff 82%, #fdfbf7 100%);
+}
+.reviews-stats-grid .stat-card.score-card .stat-value {
+  color: #92753e;
+}
+.reviews-stats-grid .stat-card.score-card .stat-card-icon {
+  background: #f5eedf;
+  color: #92753e;
 }
 
 .reviews-admin-filters-card {

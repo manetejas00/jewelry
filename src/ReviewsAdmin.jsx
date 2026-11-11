@@ -13,7 +13,9 @@ import {
   RotateCcw,
   Sparkles,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Clock,
+  MessageSquare
 } from 'lucide-react';
 import { api } from './api.js';
 
@@ -195,29 +197,44 @@ export function ReviewsAdmin({ readonly = false, refreshParent = null }) {
   return (
     <div className="admin-reviews-panel">
       {/* Top Banner & Stats */}
-      <div className="admin-stats reviews-stats-grid">
-        <div className="stat-card">
-          <span className="stat-label">TOTAL REVIEWS</span>
+      <div className="reviews-stats-grid">
+        <div className="stat-card total-card">
+          <div className="stat-card-header">
+            <span className="stat-label">Total Reviews</span>
+            <span className="stat-card-icon"><MessageSquare size={15} /></span>
+          </div>
           <strong className="stat-value">{stats.total}</strong>
           <span className="stat-detail">Across all collection pieces</span>
         </div>
         <div className="stat-card pending-card">
-          <span className="stat-label">PENDING MODERATION</span>
+          <div className="stat-card-header">
+            <span className="stat-label">Pending Moderation</span>
+            <span className="stat-card-icon"><Clock size={15} /></span>
+          </div>
           <strong className="stat-value">{stats.pending}</strong>
-          <span className="stat-detail">{stats.pending ? 'Awaiting moderation' : 'Queue all clear'}</span>
+          <span className="stat-detail">{stats.pending ? `${stats.pending} awaiting moderation` : 'Queue all clear'}</span>
         </div>
         <div className="stat-card approved-card">
-          <span className="stat-label">APPROVED REVIEWS</span>
+          <div className="stat-card-header">
+            <span className="stat-label">Approved Reviews</span>
+            <span className="stat-card-icon"><CheckCircle size={15} /></span>
+          </div>
           <strong className="stat-value">{stats.approved}</strong>
           <span className="stat-detail">Publicly visible on storefront</span>
         </div>
         <div className="stat-card rejected-card">
-          <span className="stat-label">REJECTED REVIEWS</span>
+          <div className="stat-card-header">
+            <span className="stat-label">Rejected Reviews</span>
+            <span className="stat-card-icon"><X size={15} /></span>
+          </div>
           <strong className="stat-value">{stats.rejected}</strong>
           <span className="stat-detail">Hidden from catalogue</span>
         </div>
         <div className="stat-card score-card">
-          <span className="stat-label">AVERAGE RATING</span>
+          <div className="stat-card-header">
+            <span className="stat-label">Average Rating</span>
+            <span className="stat-card-icon"><Star size={15} fill="var(--gold, #ab9162)" stroke="var(--gold, #ab9162)" /></span>
+          </div>
           <strong className="stat-value">{stats.averageRating ? `${stats.averageRating} ★` : '—'}</strong>
           <span className="stat-detail">Approved reviews only</span>
         </div>
