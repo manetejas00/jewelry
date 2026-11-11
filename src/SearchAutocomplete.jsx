@@ -496,6 +496,13 @@ export function SearchAutocomplete({ onClose, initialQuery = '' }) {
                               <div className="product-meta">
                                 <span className="product-title">{p.name}</span>
                                 <span className="product-category">{specs}</span>
+                                {p.rating_count > 0 ? (
+                                  <span className="search-product-rating">
+                                    ★ {Number(p.rating_average).toFixed(1)} <small>({p.rating_count})</small>
+                                  </span>
+                                ) : (
+                                  <span className="search-product-rating unrated">No reviews yet</span>
+                                )}
                               </div>
                               <div className="product-right">
                                 <div className="product-pricing">

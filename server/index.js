@@ -25,6 +25,17 @@ import {coinArtwork} from './coin-artwork.js';
 import {seed} from '../scripts/seed.js';
 import {saveUploadedImage,ensureThumbnail,thumbnailUrl} from './thumbnails.js';
 import {searchCatalogue,invalidateSearchCache} from './search.js';
+import {
+  getProductReviews,
+  submitReview,
+  updateCustomerReview,
+  getAdminReviews,
+  getAdminReviewById,
+  adminUpdateReviewStatus,
+  adminBulkReviewStatus,
+  adminEditReview,
+  adminDeleteReview
+} from './reviews.js';
 const route=f=>(req,res,next)=>Promise.resolve(f(req,res,next)).catch(next);
 const app=express();const production=process.env.NODE_ENV==='production';
 if(production&&(!process.env.SESSION_SECRET||process.env.SESSION_SECRET.length<32))throw validationError('Production requires a strong SESSION_SECRET');
@@ -38,7 +49,7 @@ app.use((req,res,next)=>{req.requestId=crypto.randomUUID();res.set('X-Request-ID
 app.get('/health/live',(req,res)=>res.json({status:'ok'}));
 app.get('/health/ready',async(req,res)=>{try{await db.raw('SELECT 1');res.set('Cache-Control','no-store').json({status:'ok'});}catch{res.status(503).json({status:'unavailable'});}});
 app.use('/api',rateLimit({windowMs:60000,limit:300,standardHeaders:'draft-7',legacyHeaders:false}));
-app.use('/api',(req,res,next)=>express.json({limit:req.path.startsWith('/admin/upload-')?'50mb':req.path==='/admin/import/preview'?'8mb':'256kb'})(req,res,next));
+app.use('/api',(req,res,next)=>express.json({limit:(req.path.startsWith('/admin/upload-')||req.path==='/reviews/upload-image')?'50mb':req.path==='/admin/import/preview'?'8mb':'256kb'})(req,res,next));
 const uploadsDir=path.resolve(process.env.UPLOADS_DIR||'public/uploads');
 fs.mkdirSync(uploadsDir,{recursive:true});
 app.get('/uploads/thumbs/:filename.webp',async(req,res)=>{try{const file=await ensureThumbnail(uploadsDir,req.params.filename);res.set('Cache-Control','public, max-age=86400');res.sendFile(file)}catch(e){res.status(e.status||422).json({error:e.status===404?'Image not found':e.expose?e.message:'Image unavailable'})}});
@@ -161,6 +172,53 @@ app.post('/api/account/logout',customerAuth,customerCsrf,route(async(req,res)=>{
  await new Promise((resolve,reject)=>req.session.regenerate(e=>e?reject(e):resolve()));
  if(staff){req.session.staff=staff;req.session.csrf=csrf;}
  req.session.customerCsrf=crypto.randomBytes(24).toString('hex');res.json({csrf:req.session.customerCsrf});
+}));
+
+const reviewSubmissionLimit = rateLimit({windowMs:15*60000,limit:25,message:{error:'Too many reviews submitted. Please try again later.'}});
+const reviewUploadLimit = rateLimit({windowMs:15*60000,limit:30,message:{error:'Too many image uploads. Please try again later.'}});
+
+app.get('/api/products/:productId/reviews', route(async (req, res) => {
+  const currentCustomerId = req.session.customer?.id || null;
+  const result = await getProductReviews(db, req.params.productId, {
+    page: req.query.page,
+    limit: req.query.limit,
+    sort: req.query.sort,
+    ratingFilter: req.query.rating,
+    currentCustomerId
+  });
+  res.json(result);
+}));
+
+app.get('/api/products/:productId/ratings', route(async (req, res) => {
+  const result = await getProductReviews(db, req.params.productId, { limit: 1 });
+  res.json(result.summary);
+}));
+
+app.post('/api/products/:productId/reviews', reviewSubmissionLimit, customerAuth, customerCsrf, route(async (req, res) => {
+  const result = await submitReview(db, req.session.customer.id, req.params.productId, req.body);
+  invalidateSearchCache();
+  res.status(201).json(result);
+}));
+
+app.put('/api/reviews/:id', reviewSubmissionLimit, customerAuth, customerCsrf, route(async (req, res) => {
+  const result = await updateCustomerReview(db, req.session.customer.id, req.params.id, req.body);
+  invalidateSearchCache();
+  res.json(result);
+}));
+
+app.post('/api/reviews/upload-image', reviewUploadLimit, customerAuth, customerCsrf, route(async (req, res) => {
+  const { name, data } = req.body;
+  if (!data || typeof data !== 'string') throw validationError('Image data is required');
+  const match = data.match(/^data:image\/([a-zA-Z0-9+]+);base64,(.+)$/);
+  if (!match) throw validationError('Invalid image data format. Please upload a PNG, JPG, or WEBP image.');
+  const ext = match[1].toLowerCase().replace('jpeg', 'jpg');
+  if (!['jpg', 'png', 'webp'].includes(ext)) throw validationError('Supported review image formats: JPG, PNG, WEBP');
+  const buffer = Buffer.from(match[2], 'base64');
+  if (buffer.length > 5 * 1024 * 1024) throw validationError('Maximum review image size is 5 MB');
+  const cleanName = String(name || 'customer-photo').toLowerCase().replace(/\.[^.]+$/, '').replace(/[^a-z0-9_-]+/g, '-').slice(0, 30) || 'review';
+  const filename = `review-${Date.now()}-${crypto.randomUUID().slice(0, 8)}-${cleanName}.${ext}`;
+  const saved = await saveUploadedImage(uploadsDir, filename, buffer);
+  res.json({ ok: true, url: saved.url, thumbnail: saved.thumbnail });
 }));
 app.post('/api/admin/login',rateLimit({windowMs:15*60000,limit:10}),route(async(req,res)=>{const staff=await db('staff').where({email:String(req.body.email).toLowerCase()}).first();if(!staff||!await bcrypt.compare(String(req.body.password),staff.password_hash))return res.status(401).json({error:'Email or password is incorrect'});const customer=req.session.customer,customerCsrf=req.session.customerCsrf,orderIds=req.session.orderIds;await new Promise((resolve,reject)=>req.session.regenerate(e=>e?reject(e):resolve()));if(customer){req.session.customer=customer;req.session.customerCsrf=customerCsrf;}req.session.orderIds=orderIds;req.session.staff={id:staff.id,email:staff.email,role:staff.role};req.session.csrf=crypto.randomBytes(24).toString('hex');res.json({staff:req.session.staff,csrf:req.session.csrf});}));
 app.get('/api/admin/session',auth(),(req,res)=>res.json({staff:req.session.staff,csrf:req.session.csrf}));
@@ -413,6 +471,57 @@ app.get('/api/admin/media',auth(),route(async(req,res)=>{
  }).sort((a,b)=>new Date(b.mtime)-new Date(a.mtime));
  res.json([...coinArtwork.map(a=>({name:a.name,filename:a.image.split('/').pop(),url:a.image,image_kind:'illustration'})),...list]);
 }));
+
+app.get('/api/admin/reviews', auth(), route(async (req, res) => {
+  const result = await getAdminReviews(db, {
+    page: req.query.page,
+    limit: req.query.limit,
+    status: req.query.status,
+    rating: req.query.rating,
+    productId: req.query.productId,
+    search: req.query.search,
+    dateFrom: req.query.dateFrom,
+    dateTo: req.query.dateTo,
+    sort: req.query.sort,
+    order: req.query.order
+  });
+  res.json(result);
+}));
+
+app.get('/api/admin/reviews/:id', auth(), route(async (req, res) => {
+  const review = await getAdminReviewById(db, req.params.id);
+  res.json(review);
+}));
+
+app.patch('/api/admin/reviews/:id/status', auth(['owner', 'manager']), route(async (req, res) => {
+  const result = await adminUpdateReviewStatus(db, req.params.id, req.body.status);
+  await audit(req, 'update_review_status', { reviewId: req.params.id, status: req.body.status });
+  invalidateSearchCache();
+  res.json(result);
+}));
+
+app.post('/api/admin/reviews/bulk-status', auth(['owner', 'manager']), route(async (req, res) => {
+  const result = await adminBulkReviewStatus(db, req.body.reviewIds, req.body.status);
+  await audit(req, 'bulk_update_review_status', { reviewIds: req.body.reviewIds, status: req.body.status, count: result.updatedCount });
+  invalidateSearchCache();
+  res.json(result);
+}));
+
+app.put('/api/admin/reviews/:id', auth(['owner', 'manager']), route(async (req, res) => {
+  const result = await adminEditReview(db, req.params.id, req.body);
+  await audit(req, 'edit_review', { reviewId: req.params.id, patch: req.body });
+  invalidateSearchCache();
+  res.json(result);
+}));
+
+app.delete('/api/admin/reviews/:id', auth(['owner', 'manager']), route(async (req, res) => {
+  const soft = req.query.soft === 'true' || req.body?.soft === true;
+  const result = await adminDeleteReview(db, req.params.id, { soft });
+  await audit(req, 'delete_review', { reviewId: req.params.id, soft });
+  invalidateSearchCache();
+  res.json(result);
+}));
+
 app.get('/api/admin/samples/:file',auth(),(req,res)=>{const allowed=['gold-rates-template.csv','gold-rates-example.csv','products-template.csv','products-example.csv','coins-template.csv','coins-example.csv','import-errors-example.csv'];if(!allowed.includes(req.params.file))return res.sendStatus(404);res.download(path.resolve('samples',req.params.file));});
 app.get('/api/admin/export/:kind',auth(),route(async(req,res)=>{const k=req.params.kind,d=new Date().toISOString().slice(0,10);if(k==='products'){const rows=await db('products').orderBy('product_code');return res.type('text/csv').attachment(`products-${d}.csv`).send(exportCsv('products',rows));}if(k==='coins'){const rows=await db('coins').orderBy('id','desc');return res.type('text/csv').attachment(`coins-${d}.csv`).send(exportCsv('coins',rows));}if(k==='gold'){const rows=await db('rates').orderBy('id','desc');return res.type('text/csv').attachment(`gold-rates-${d}.csv`).send(exportCsv('gold',rows));}if(k==='orders'){const rows=await db('orders').orderBy('created_at','desc');return res.type('text/csv').attachment(`orders-${d}.csv`).send(ordersCsv(rows));}res.sendStatus(404);}));
 app.post('/api/admin/import/preview',auth(['owner','manager']),route(async(req,res)=>{if(typeof req.body.csv!=='string')throw validationError('Upload a UTF-8 CSV file');res.json(await previewImport(db,req.body.kind,req.body.csv,req.session.staff.id));}));

@@ -3,6 +3,7 @@ import {listingThumbnail} from '../src/listing-media.js';
 import Decimal from 'decimal.js';
 import crypto from 'node:crypto';
 import {calculateMargin} from './pricing-rules.js';
+import {getAllProductsRatingSummaries} from './reviews.js';
 
 export async function activeOffers(k){
   try{
@@ -250,7 +251,8 @@ export async function coinCatalogue(k){
 
 export async function catalogue(k){
   const hasImages=await k.schema.hasTable('product_images').catch(()=>false);
-  const [products,rates,rules,images,offers]=await Promise.all([
+  const hasReviews=await k.schema.hasTable('reviews').catch(()=>false);
+  const [products,rates,rules,images,offers,ratings]=await Promise.all([
     k('products').where({status:'published'}),
     activeRates(k),
     k('pricing_rules').orderBy('id','desc').first(),
@@ -259,7 +261,8 @@ export async function catalogue(k){
       .where(function(){this.whereIn('sku',k('products').select('sku').where({status:'published'}))
         .orWhereIn('product_code',k('products').select('product_code').where({status:'published'}))})
       .orderBy('sort_order','asc').orderBy('id','asc'):[],
-    activeOffers(k)
+    activeOffers(k),
+    hasReviews?getAllProductsRatingSummaries(k):new Map()
   ]);
   const imagesByProduct={};
   for(const img of images){
@@ -274,6 +277,9 @@ export async function catalogue(k){
     let price=null;
     try{price=calculatePrice(p,rates[p.purity],rules,offer)}catch{}
     const prodImages=[...(imagesByProduct[p.sku]||[]),...(imagesByProduct[p.product_code]||[])].filter((img,i,all)=>all.findIndex(other=>other.url===img.url)===i);
+    const ratingData=ratings.get(p.product_code)||ratings.get(p.id)||null;
+    const rating_average=ratingData?ratingData.average:null;
+    const rating_count=ratingData?ratingData.count:0;
     return {
       ...p,
       thumbnail:listingThumbnail(p),
@@ -283,7 +289,10 @@ export async function catalogue(k){
       discount_amount:price?.discount_amount??0,
       offer:price?.offer||(offer?{id:offer.id,name:offer.name,badge_text:offer.badge_text,discount_type:offer.discount_type,discount_value:Number(offer.discount_value)}:null),
       breakdown:price,
-      checkout_available:p.stock>0 && Number.isFinite(price?.total) && (p.pricing_mode==='FIXED'||isFresh(rates[p.purity]))
+      checkout_available:p.stock>0 && Number.isFinite(price?.total) && (p.pricing_mode==='FIXED'||isFresh(rates[p.purity])),
+      rating_average,
+      rating_count,
+      rating: { average: rating_average, count: rating_count }
     };
   });
 }
