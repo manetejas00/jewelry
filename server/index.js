@@ -703,7 +703,24 @@ app.post('/api/admin/rules',auth(['owner']),route(async(req,res)=>{const rule=va
 registerSeo(app,db,{preview,route});
 app.use('/api',(req,res)=>res.status(404).json({error:'API endpoint not found'}));
 if(!production){const {createServer}=await import('vite');const vite=await createServer({server:{middlewareMode:true},appType:'spa'});app.use(vite.middlewares);}else{app.use(express.static('dist',{index:false,maxAge:'1h'}));app.use(express.static('public',{maxAge:'1h'}));app.get('*',route(async(req,res)=>{if(path.extname(req.path))return res.status(404).send('Not found');const meta=await pageMetadata(db,req.path);res.set('Cache-Control','no-cache');if(!meta.indexable)res.set('X-Robots-Tag','noindex, nofollow');res.status(meta.status).type('html').send(renderMetadata(fs.readFileSync('dist/index.html','utf8'),meta));}));}
-app.use((err,req,res,next)=>{if(res.headersSent)return next(err);const out=errorResponse(err);if(out.status>=500)console.error(JSON.stringify({event:'request_failed',requestId:req.requestId,method:req.method,status:out.status}));res.status(out.status).json(out.body);});
+app.use((err,req,res,next)=>{
+  if(res.headersSent)return next(err);
+  const out=errorResponse(err);
+  if(out.status>=500){
+    console.error(JSON.stringify({
+      event:'request_failed',
+      requestId:req.requestId,
+      method:req.method,
+      url:req.originalUrl||req.url,
+      status:out.status,
+      message:err?.message||'Unknown error',
+      code:err?.code||undefined,
+      stack:err?.stack,
+      timestamp:new Date().toISOString()
+    }));
+  }
+  res.status(out.status).json(out.body);
+});
 const port=Number(process.env.PORT||3000);const httpServer=app.listen(port,production?'0.0.0.0':'127.0.0.1',()=>console.log(`Veyora Jewels: http://localhost:${port} (${preview?'fictional preview':'production'})`));
 
 const cleanup=setInterval(()=>Promise.all([db('sessions').where('expires','<',Date.now()).del(),db('password_resets').where('expires','<',Date.now()).del()]).catch(()=>console.error(JSON.stringify({event:'session_cleanup_failed'}))),3600000);cleanup.unref();
