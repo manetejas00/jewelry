@@ -47,7 +47,7 @@ export function StarRating({
               <Star
                 size={size}
                 fill={isFilled ? 'var(--gold, #b8860b)' : 'none'}
-                stroke={isFilled ? 'var(--gold, #b8860b)' : 'currentColor'}
+                stroke={isFilled ? 'var(--gold, #b8860b)' : '#d6d1c4'}
               />
             </button>
           );
@@ -58,7 +58,7 @@ export function StarRating({
             <Star
               size={size}
               fill={isFilled ? 'var(--gold, #b8860b)' : isHalf ? 'url(#half-star-grad)' : 'none'}
-              stroke={isFilled || isHalf ? 'var(--gold, #b8860b)' : 'var(--muted, #999)'}
+              stroke={isFilled || isHalf ? 'var(--gold, #b8860b)' : '#d6d1c4'}
             />
           </span>
         );
@@ -678,14 +678,14 @@ export function ProductReviewsSection({ product }) {
             <article key={rev.id} className="review-item-card">
               <div className="review-author-row">
                 <div className="author-avatar" aria-hidden="true">
-                  {rev.customerName[0] || 'C'}
+                  {rev.customerName ? rev.customerName[0].toUpperCase() : 'C'}
                 </div>
                 <div className="author-meta">
                   <div className="author-name-wrap">
                     <span className="author-name">{rev.customerName}</span>
                     {rev.isVerifiedPurchase && (
                       <span className="verified-purchase-tag" title="Verified purchaser of this piece">
-                        <CheckCircle size={12} /> Verified Purchase
+                        <CheckCircle size={11} /> Verified Purchase
                       </span>
                     )}
                     {rev.status === 'pending' && (
@@ -699,7 +699,10 @@ export function ProductReviewsSection({ product }) {
                   </time>
                 </div>
                 <div className="review-star-rating">
-                  <StarRating rating={rev.rating} size={15} />
+                  <div className="review-rating-pill">
+                    <StarRating rating={rev.rating} size={13} />
+                    <span className="rating-pill-score">{Number(rev.rating).toFixed(1)}</span>
+                  </div>
                 </div>
               </div>
 
@@ -710,8 +713,10 @@ export function ProductReviewsSection({ product }) {
                 </div>
               )}
 
-              <h4 className="review-title">{rev.title}</h4>
-              <p className="review-comment">{rev.comment}</p>
+              <div className="review-body-wrap">
+                <h4 className="review-title">{rev.title}</h4>
+                <p className="review-comment">{rev.comment}</p>
+              </div>
 
               {rev.images && rev.images.length > 0 && (
                 <div className="review-attached-photos">
@@ -724,10 +729,20 @@ export function ProductReviewsSection({ product }) {
                       aria-label="View enlarged customer review photograph"
                     >
                       <img src={photoUrl} alt="Customer review photograph" loading="lazy" />
+                      <span className="photo-zoom-hint">
+                        <Sparkles size={11} /> Zoom
+                      </span>
                     </button>
                   ))}
                 </div>
               )}
+
+              <div className="review-card-footer">
+                <div className="review-patron-badge">
+                  <span className="patron-sparkle">✦</span>
+                  <span>{rev.isVerifiedPurchase ? 'Verified Veyora Patron' : 'Client Experience'}</span>
+                </div>
+              </div>
             </article>
           ))}
         </div>

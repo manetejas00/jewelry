@@ -61,8 +61,8 @@ async function runTests() {
     const res = await fetch(`${BASE_URL}/`);
     assert.equal(res.status, 200);
     const html = await res.text();
-    assert.ok(html.includes('index-q4jxooIK.js'), 'HTML should link to index-q4jxooIK.js');
-    assert.ok(html.includes('index-CVTj3D5P.css'), 'HTML should link to index-CVTj3D5P.css');
+    assert.ok(html.includes('index-Qf7MXKas.js'), 'HTML should link to index-Qf7MXKas.js');
+    assert.ok(html.includes('index-xPM6LXYc.css'), 'HTML should link to index-xPM6LXYc.css');
   });
 
   // 2. Commerce config checkoutEnabled
