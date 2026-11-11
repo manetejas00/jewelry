@@ -240,7 +240,71 @@ app.get('/api/admin/products',auth(),route(async(req,res)=>{
  }
  res.json(products.map(p=>({...p,images:[...(imagesByProduct[p.sku]||[]),...(imagesByProduct[p.product_code]||[])].filter((img,i,all)=>all.findIndex(other=>other.url===img.url)===i)})));
 }));
-app.patch('/api/admin/products/:sku',auth(['owner','manager']),route(async(req,res)=>{const {name,description,status,image}=req.body;if(typeof name!=='string'||!name.trim()||!['published','draft'].includes(status))throw validationError('Name and valid publication status required');const patch={name:String(name).slice(0,200),description:String(description||'').slice(0,5000),status,updated_at:now()};if(typeof image==='string'&&image.trim())patch.image=String(image).trim().slice(0,2000);await db.transaction(async t=>{const count=await t('products').where({sku:req.params.sku}).update(patch);if(!count)throw validationError('Product not found',404);if(patch.image){const hero=await t('product_images').where({sku:req.params.sku,role:'hero'}).whereNull('product_code').first();const photo={url:patch.image,alt_text:patch.name,updated_at:now()};if(hero)await t('product_images').where({id:hero.id}).update(photo);else await t('product_images').insert({...photo,sku:req.params.sku,product_code:null,role:'hero',sort_order:-1,created_at:now()});}});await audit(req,'edit_product',{sku:req.params.sku,hasImage:!!image});res.json({ok:true});}));
+app.patch('/api/admin/products/:sku',auth(['owner','manager']),route(async(req,res)=>{const {name,description,status,image,stock,category,net_weight_g,fixed_price}=req.body;if(typeof name!=='string'||!name.trim()||!['published','draft'].includes(status))throw validationError('Name and valid publication status required');const patch={name:String(name).slice(0,200),description:String(description||'').slice(0,5000),status,updated_at:now()};if(typeof image==='string'&&image.trim())patch.image=String(image).trim().slice(0,2000);if(stock!==undefined)patch.stock=Math.max(0,parseInt(stock||0,10));if(category)patch.category=String(category).slice(0,100);if(net_weight_g)patch.net_weight_g=Number(net_weight_g);if(fixed_price)patch.fixed_price=Number(fixed_price);await db.transaction(async t=>{const count=await t('products').where({sku:req.params.sku}).update(patch);if(!count)throw validationError('Product not found',404);if(patch.image){const hero=await t('product_images').where({sku:req.params.sku,role:'hero'}).whereNull('product_code').first();const photo={url:patch.image,alt_text:patch.name,updated_at:now()};if(hero)await t('product_images').where({id:hero.id}).update(photo);else await t('product_images').insert({...photo,sku:req.params.sku,product_code:null,role:'hero',sort_order:-1,created_at:now()});}});await audit(req,'edit_product',{sku:req.params.sku,hasImage:!!image});res.json({ok:true});}));
+app.post('/api/admin/products',auth(['owner','manager']),route(async(req,res)=>{
+ const {sku,product_code,name,category,metal,purity,net_weight_g,size,finish,pricing_mode,fixed_price,making_flat,making_percent,stone_charge,other_charge,stock,description,image,status}=req.body;
+ if(!sku||!name)throw validationError('SKU and Name are required');
+ const cleanSku=String(sku).trim().toUpperCase();
+ const existing=await db('products').where({sku:cleanSku}).first();
+ if(existing)throw validationError(`A product with SKU "${cleanSku}" already exists`);
+ if(await db('coins').where({sku:cleanSku}).first())throw validationError('This SKU already belongs to bullion coins. Choose a unique jewellery SKU.');
+ const cleanCode=String(product_code||cleanSku.toLowerCase()).trim().toLowerCase().replace(/[^a-z0-9_-]+/g,'-');
+ const slug=cleanCode.replace(/[^a-z0-9]+/g,'-');
+ const mode=pricing_mode==='FIXED'?'FIXED':'GOLD_LINKED';
+ const nNow=now();
+ const prodData={
+  supplier:'Merchant',
+  product_code:cleanCode,
+  slug,
+  sku:cleanSku,
+  name:String(name).trim().slice(0,200),
+  category:String(category||'Rings').trim().slice(0,100),
+  description:description?String(description).trim().slice(0,5000):null,
+  metal:String(metal||'Gold').trim().slice(0,50),
+  purity:String(purity||'18K').trim().slice(0,50),
+  net_weight_g:net_weight_g!==undefined&&net_weight_g!==''&&net_weight_g!==null?String(net_weight_g):(mode==='GOLD_LINKED'?'1.0':''),
+  size:size?String(size).trim().slice(0,50):null,
+  finish:finish?String(finish).trim().slice(0,50):null,
+  image:image?String(image).trim().slice(0,2000):'',
+  pricing_mode:mode,
+  fixed_price:mode==='FIXED'&&fixed_price?String(fixed_price):'',
+  making_flat:making_flat!==undefined&&making_flat!==''&&making_flat!==null?String(making_flat):'0',
+  making_percent:making_percent!==undefined&&making_percent!==''&&making_percent!==null?String(making_percent):'0',
+  stone_charge:stone_charge!==undefined&&stone_charge!==''&&stone_charge!==null?String(stone_charge):'0',
+  other_charge:other_charge!==undefined&&other_charge!==''&&other_charge!==null?String(other_charge):'0',
+  stock:Math.max(0,parseInt(stock||0,10)),
+  status:['published','draft'].includes(status)?status:'published',
+  source_timestamp:nNow
+ };
+ const invalid=validate('products',exportCsv('products',[{...prodData,stock:String(prodData.stock)}])).errors[0];
+ if(invalid)throw validationError(`${invalid.field}: ${invalid.correction}`);
+ const dbRow={
+  ...prodData,
+  image:prodData.image||null,
+  net_weight_g:prodData.net_weight_g?Number(prodData.net_weight_g):null,
+  fixed_price:prodData.fixed_price?Number(prodData.fixed_price):null,
+  making_flat:Number(prodData.making_flat||0),
+  making_percent:Number(prodData.making_percent||0),
+  stone_charge:Number(prodData.stone_charge||0),
+  other_charge:Number(prodData.other_charge||0),
+  updated_at:nNow
+ };
+ await db('products').insert(dbRow);
+ if(dbRow.image){
+  const photo={url:dbRow.image,alt_text:dbRow.name,updated_at:nNow};
+  await db('product_images').insert({...photo,sku:cleanSku,product_code:cleanCode,role:'hero',sort_order:-1,created_at:nNow});
+ }
+ await audit(req,'create_product',{sku:cleanSku,name:dbRow.name});
+ res.json({ok:true,product:dbRow});
+}));
+app.delete('/api/admin/products/:sku',auth(['owner','manager']),route(async(req,res)=>{
+ const prod=await db('products').where({sku:req.params.sku}).first();
+ if(!prod)return res.status(404).json({error:'Product not found'});
+ await db('products').where({sku:req.params.sku}).del();
+ await db('product_images').where(function(){this.where({sku:req.params.sku}).orWhere({product_code:req.params.sku});}).del();
+ await audit(req,'delete_product',{sku:req.params.sku});
+ res.json({ok:true});
+}));
 app.get('/api/admin/coins',auth(),route(async(req,res)=>{
  const coins=await db('coins').orderBy('id','desc');
  const [rates,silverRate,rules]=await Promise.all([activeRates(db),getSilverRate(db),db('pricing_rules').orderBy('id','desc').first()]);

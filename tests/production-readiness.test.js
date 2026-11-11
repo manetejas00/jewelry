@@ -105,6 +105,12 @@ test('HTTP staff login, CSRF and offer CRUD preserve role boundaries',async()=>{
  assert.equal((await staff('/api/admin/offers/'+created.data.id,{discount_value:200},'PATCH',token)).status,400);
  assert.equal((await staff('/api/admin/offers/'+created.data.id,{discount_value:20},'PATCH',token)).status,200);
  assert.equal((await staff('/api/admin/offers/'+created.data.id,{},'DELETE',token)).status,200);
+ const testProd={sku:'VEY-TEST-AUDIT-01',name:'HTTP Audit Ring',category:'Rings',metal:'Gold',purity:'18K',pricing_mode:'FIXED',fixed_price:15000,stock:5,status:'published'};
+ const prodCreated=await staff('/api/admin/products',testProd,'POST',token);
+ assert.equal(prodCreated.status,200);
+ assert.equal(prodCreated.data.ok,true);
+ assert.equal((await staff('/api/admin/products',testProd,'POST',token)).status,400);
+ assert.equal((await staff('/api/admin/products/'+testProd.sku,{},'DELETE',token)).status,200);
  assert.equal((await staff('/api/admin/logout',{},'POST',token)).status,200);
  assert.equal((await staff('/api/admin/products')).status,403);
 });
@@ -149,4 +155,5 @@ test('HTTP viewer session cannot mutate merchant records even with a valid CSRF 
  const viewer=browserSession(),login=await viewer('/api/admin/login',{email:'audit-viewer@example.invalid',password:'preview-veyora-2026'},'POST');assert.equal(login.status,200);
  assert.equal((await viewer('/api/admin/products')).status,200);
  assert.equal((await viewer('/api/admin/offers',{},'POST',{'x-csrf-token':login.data.csrf})).status,403);
+ assert.equal((await viewer('/api/admin/products',{},'POST',{'x-csrf-token':login.data.csrf})).status,403);
 });

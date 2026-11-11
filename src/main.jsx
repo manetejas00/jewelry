@@ -1,7 +1,7 @@
 import React,{useEffect,useState,useRef,createContext,useContext,useMemo} from 'react';
 import {createRoot} from 'react-dom/client';
 import {BrowserRouter,Routes,Route,Link,useLocation,useNavigate,useParams,useSearchParams} from 'react-router-dom';
-import {Search,ShoppingBag,UserRound,Menu,X,ArrowRight,ArrowUpRight,Plus,Minus,Heart,ChevronDown,Check,ArrowLeft,ShieldCheck,Package,Truck,SlidersHorizontal,LogOut,LayoutDashboard,Gem,ChartNoAxesCombined,Upload,Settings,Download,RefreshCw,AlertCircle,CheckCircle2,Eye,Mail,MoveRight,Coins as CoinsIcon,CircleDollarSign,Trash2,Sparkles,Play,Pause,Power,Image as ImageIcon,Copy,Layers,Tag,Percent,Maximize2,Star} from 'lucide-react';
+import {Search,ShoppingBag,UserRound,Menu,X,ArrowRight,ArrowUpRight,Plus,Minus,Heart,ChevronDown,Check,ArrowLeft,ShieldCheck,Package,Truck,SlidersHorizontal,LogOut,LayoutDashboard,Gem,ChartNoAxesCombined,Upload,Settings,Download,RefreshCw,AlertCircle,CheckCircle2,Eye,Mail,MoveRight,Coins as CoinsIcon,CircleDollarSign,Trash2,Sparkles,Play,Pause,Power,Image as ImageIcon,Copy,Layers,Tag,Percent,Maximize2,Star,RotateCcw} from 'lucide-react';
 import gsap from 'gsap';
 import './style.css';
 import PhotoPicker from './PhotoPicker.jsx';
@@ -592,7 +592,7 @@ function Information(){
   </section></Layout>;
 }
 const adminTabs=[['Dashboard',LayoutDashboard],['Products',Gem],['Coins',CoinsIcon],['Offers',Tag],['Reviews',Star],['Gold Rates',ChartNoAxesCombined],['Pricing Rules',SlidersHorizontal],['Imports',Upload],['Orders',Package],['Settings',Settings]];
-function Admin(){const [staff,setStaff]=useState(null),[loaded,setLoaded]=useState(false),[error,setError]=useState(''),[tab,setTab]=useState('Dashboard'),[data,setData]=useState(null),[products,setProducts]=useState([]),[busy,setBusy]=useState(false);const {config}=useStore();async function refresh(){const [d,p]=await Promise.all([api('/admin/dashboard'),api('/admin/products')]);setData(d);setProducts(p)}useEffect(()=>{api('/admin/session').then(s=>{sessionStorage.setItem('csrf',s.csrf);setStaff(s.staff);return refresh()}).catch(()=>{}).finally(()=>setLoaded(true))},[]);async function login(e){e.preventDefault();setError('');try{const s=await api('/admin/login',Object.fromEntries(new FormData(e.target)));sessionStorage.setItem('csrf',s.csrf);setStaff(s.staff);await refresh()}catch(e){setError(e.message)}}async function run(kind){setBusy(true);setError('');try{const r=await api('/admin/run',{kind});await refresh();if(Object.values(r.result).some(v=>!v.ok))setError(Object.entries(r.result).filter(([,v])=>!v.ok).map(([k,v])=>`${k}: ${v.message}`).join(' · '))}catch(e){setError(e.message)}finally{setBusy(false)}}if(!loaded)return <div className="empty">Opening merchant studio…</div>;if(!staff)return <div className="admin-login"><Link className="underlink" to="/"><ArrowLeft size={16}/>Back to storefront</Link><div className="login-card"><Brand/><span className="eyebrow">THE MERCHANT STUDIO</span><h1>Welcome back.</h1><p>Your collections, thoughtfully managed.</p><form onSubmit={login}><label>Email<input name="email" type="email" autoComplete="username" defaultValue={config.preview?'preview@veyora.local':''} required/></label><label>Password<input name="password" type="password" autoComplete="current-password" defaultValue={config.preview?'preview-veyora-2026':''} required/></label>{error&&<p className="error">{error}</p>}<button className="button dark full">Sign in <ArrowRight size={17}/></button></form>{config.preview&&<p className="small muted">Local preview account is prefilled. Production requires your own staff account.</p>}</div></div>;return <div className="admin-shell"><aside className="admin-sidebar"><Brand/><span className="studio-label">MERCHANT STUDIO</span><nav>{adminTabs.map(([label,Icon])=><button key={label} className={tab===label?'active':''} onClick={()=>{setTab(label);setError('')}}><Icon size={18}/>{label}</button>)}</nav><div className="admin-sidebar-bottom"><Link to="/">View storefront <ArrowUpRight size={15}/></Link><small>{staff.email}<br/>{staff.role}</small><button className="text-button" onClick={async()=>{await api('/admin/logout',{});setStaff(null);sessionStorage.removeItem('csrf')}}><LogOut size={15}/>Sign out</button></div></aside><main className="admin-main"><header className="admin-header"><span>VEYORA / STUDIO / {tab.toUpperCase()}</span><span className="test-badge">{data?.preview?'PREVIEW ENVIRONMENT':'MERCHANT ENVIRONMENT'}</span></header><div className="admin-content"><div className="section-heading"><div><span className="eyebrow">YOUR MAISON, AT A GLANCE</span><h1>{tab==='Dashboard'?'A considered overview.':tab}</h1></div><button className="text-button" onClick={()=>refresh().catch(e=>setError(e.message))}><RefreshCw size={15}/>Refresh</button></div>{error&&<div className="error" role="alert">{error}</div>}{!data?<p>Loading studio…</p>:<>{tab==='Dashboard'&&<><div className="admin-stats"><Stat title="ACTIVE GOLD RATES" value={data.rates.length} detail={`${data.rates.filter(r=>r.fresh).length} within freshness limit`}/><Stat title="CATALOGUE VARIANTS" value={products.length} detail={`${products.filter(p=>p.stock===0).length} out of stock`}/><Stat title="TODAY’S IMPORTS" value={data.todayImports?.failed?'Needs review':'All clear'} detail={`${data.todayImports?.published||0} published · ${data.todayImports?.failed||0} failed`}/><Stat title="ORDERS" value={data.orders.length} detail={`${money(data.orders.reduce((s,o)=>s+Number(o.total),0))} total order value`}/></div><div className="admin-two"><div className="admin-panel"><div className="panel-title"><h3>Active gold rates</h3><button className="underlink" onClick={()=>setTab('Gold Rates')}>View rates ↗</button></div><RateTable rates={data.rates}/></div><div className="admin-panel"><h3>Needs your attention</h3>{data.feedSettings?.feedStatus==='stopped'&&<div className="attention" style={{borderLeft:'3px solid #c62828',paddingLeft:'12px'}}><AlertCircle size={19} color="#c62828"/><div><strong style={{color:'#c62828'}}>Feed Automation is STOPPED</strong><p>Background syncs and live rates are paused. <button className="underlink" onClick={()=>setTab('Settings')}>Open Settings to start ↗</button></p></div></div>}<div className="attention"><AlertCircle size={19}/><div><strong>{data.rates.some(r=>!r.fresh)?'Gold rates are stale':'Storefront active with Cash on Delivery'}</strong><p>Cash on Delivery is active. Store policies and catalogue photography can be reviewed anytime.</p></div></div><p className="small">Maximum rate age: {data.maxAgeHours} hours. Stale gold-linked items pause at checkout.</p></div></div><div className="admin-panel"><h3>Supplier freshness</h3><div className="table-wrap"><table><thead><tr><th>Supplier</th><th>Feed</th><th>Last published source</th></tr></thead><tbody>{data.suppliers.map(s=><tr key={s.supplier+s.kind}><td>{s.supplier}</td><td>{s.kind}</td><td>{date(s.last_update)}</td></tr>)}</tbody></table></div></div><BatchTable batches={data.batches.slice(0,6)}/><div className="admin-panel"><h3>Recent staff activity</h3>{data.audits.slice(0,8).map(a=><p className="audit-line" key={a.id}><span>{a.action} · Staff {a.staff_id||'system'}</span><span>{date(a.created_at)}</span></p>)}</div></>}{tab==='Gold Rates'&&<><div className="notice">Rates are explicitly purity-specific. No automatic purity conversion is enabled. Original values and corrections remain in rate history. Maximum age: {data.maxAgeHours} hours.</div><div className="admin-panel"><div className="panel-title"><h3>Approved rates</h3><button disabled={busy||staff.role==='viewer'} className="button dark small-button" onClick={()=>run('gold')}><RefreshCw size={15}/>Run rate feed</button></div><RateTable rates={data.rates}/></div><ImportPanel kind="gold" refresh={refresh} readonly={staff.role==='viewer'}/><div className="admin-panel"><h3>Rate history & corrections</h3><RateTable rates={(data.rateHistory||[]).map(r=>({...r,fresh:data.rates.some(a=>a.id===r.id&&a.fresh)}))}/></div></>}{tab==='Products'&&<><div className="notice">Supplier imports preserve merchant names, descriptions and publication status by default. Stock is an absolute snapshot, adjusted for paid orders after its source timestamp.</div><details className="advanced-media"><summary>Manage multiple photos (optional)</summary><ImageUploader products={products} refreshParent={refresh}/></details><AdminProductList products={products} readonly={staff.role==='viewer'} refresh={refresh}/><div style={{display:'flex',gap:'12px',marginTop:'16px'}}><button className="button dark" onClick={()=>setTab('Imports')}>Add products through CSV <Upload size={16}/></button><a className="button secondary" href="/api/admin/export/products" download style={{display:'inline-flex',alignItems:'center',gap:'8px',textDecoration:'none'}}>Export catalogue CSV ({products.length} items) <Download size={16}/></a></div></>}{tab==='Coins'&&<CoinsAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Offers'&&<OffersAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Reviews'&&<ReviewsAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Pricing Rules'&&<Rules rule={data.rule} readonly={staff.role!=='owner'} refresh={refresh}/ >}{tab==='Imports'&&<><div className="admin-two"><div className="admin-panel"><span className="eyebrow">FEED SYNCHRONIZATION</span><h3>Rates first. Catalogue second.</h3><p className="small muted">Feed sources are configured on the server. Current inventory mode: {data.feedSettings.inventoryMode}. Synchronize feeds on demand below.</p><button className="button dark" disabled={busy||staff.role==='viewer'} onClick={()=>run(null)}>{busy?'Running…':'Run both feeds now'}<RefreshCw size={16}/></button></div><div className="admin-panel"><h3>Source connections</h3><p>Gold feed: <Status text={data.feedSettings.goldConfigured?'Configured':'Not configured'}/></p><p>Product feed: <Status text={data.feedSettings.productsConfigured?'Configured':'Not configured'}/></p><p className="small muted">Private feed URLs and credentials never appear in this screen. Failed rate feeds retain the last verified rate.</p><button className="underlink" disabled={busy||staff.role==='viewer'} onClick={()=>run('products')}>Run product feed only ↗</button></div></div><div className="admin-two"><ImportPanel kind="gold" refresh={refresh} readonly={staff.role==='viewer'}/><ImportPanel kind="products" refresh={refresh} readonly={staff.role==='viewer'}/><ImportPanel kind="coins" refresh={refresh} readonly={staff.role==='viewer'}/></div><details className="advanced-media"><summary>Manage multiple photos (optional)</summary><ImageUploader products={products} refreshParent={refresh}/></details><FeedSettings data={data} refresh={refresh} readonly={staff.role!=='owner'}/><BatchTable batches={data.batches} retry={async b=>{try{await api(`/admin/import/${b.id}/publish`,{});await refresh()}catch(e){setError(e.message)}}} readonly={staff.role==='viewer'}/><div className="admin-panel"><h3>Workflow history</h3>{data.runs.length?data.runs.map(r=><div key={r.id} className="run-record"><strong>Run #{r.id} · {r.trigger} · {date(r.started_at)}</strong>{Object.entries(r.result).map(([k,v])=><p key={k}>{k}: {v.ok?`Succeeded · Source ${v.source_date} · Created ${v.created} / Updated ${v.updated} / Unchanged ${v.unchanged} / Rejected ${v.rejected}`:v.message}</p>)}</div>):<p className="small muted">No feed sync has been recorded yet.</p>}</div></>}{tab==='Orders'&&<div className="admin-panel"><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'12px',marginBottom:'16px'}}><div><h3 style={{margin:0}}>All Orders ({data.orders.length})</h3><span className="small muted">{data.orders.length} total orders recorded</span></div><a className="underlink" href="/api/admin/export/orders" download style={{display:'inline-flex',alignItems:'center',gap:'6px'}}>Export orders CSV ({data.orders.length}) ↓</a></div><div className="table-wrap"><table><thead><tr><th>Order</th><th>Customer</th><th>Placed (India)</th><th>Payment</th><th>Total</th></tr></thead><tbody>{data.orders.map(o=><tr key={o.id}><td><Link to={'/order/'+o.id}>{o.id} ↗</Link></td><td>{o.customer.name}<small>{o.customer.email}</small></td><td>{date(o.created_at)}</td><td><Status text={`${o.payment_mode} · ${o.status}`}/></td><td>{money(o.total)}</td></tr>)}</tbody></table>{!data.orders.length&&<p className="empty">Orders will appear here after checkout.</p>}</div></div>}{tab==='Settings'&&<SettingsAdmin data={data} refresh={refresh} readonly={staff.role!=='owner'}/>}</>}</div></main></div>}
+function Admin(){const [staff,setStaff]=useState(null),[loaded,setLoaded]=useState(false),[error,setError]=useState(''),[tab,setTab]=useState('Dashboard'),[data,setData]=useState(null),[products,setProducts]=useState([]),[busy,setBusy]=useState(false);const {config}=useStore();async function refresh(){const [d,p]=await Promise.all([api('/admin/dashboard'),api('/admin/products')]);setData(d);setProducts(p)}useEffect(()=>{api('/admin/session').then(s=>{sessionStorage.setItem('csrf',s.csrf);setStaff(s.staff);return refresh()}).catch(()=>{}).finally(()=>setLoaded(true))},[]);async function login(e){e.preventDefault();setError('');try{const s=await api('/admin/login',Object.fromEntries(new FormData(e.target)));sessionStorage.setItem('csrf',s.csrf);setStaff(s.staff);await refresh()}catch(e){setError(e.message)}}async function run(kind){setBusy(true);setError('');try{const r=await api('/admin/run',{kind});await refresh();if(Object.values(r.result).some(v=>!v.ok))setError(Object.entries(r.result).filter(([,v])=>!v.ok).map(([k,v])=>`${k}: ${v.message}`).join(' · '))}catch(e){setError(e.message)}finally{setBusy(false)}}if(!loaded)return <div className="empty">Opening merchant studio…</div>;if(!staff)return <div className="admin-login"><Link className="underlink" to="/"><ArrowLeft size={16}/>Back to storefront</Link><div className="login-card"><Brand/><span className="eyebrow">THE MERCHANT STUDIO</span><h1>Welcome back.</h1><p>Your collections, thoughtfully managed.</p><form onSubmit={login}><label>Email<input name="email" type="email" autoComplete="username" defaultValue={config.preview?'preview@veyora.local':''} required/></label><label>Password<input name="password" type="password" autoComplete="current-password" defaultValue={config.preview?'preview-veyora-2026':''} required/></label>{error&&<p className="error">{error}</p>}<button className="button dark full">Sign in <ArrowRight size={17}/></button></form>{config.preview&&<p className="small muted">Local preview account is prefilled. Production requires your own staff account.</p>}</div></div>;return <div className="admin-shell"><aside className="admin-sidebar"><Brand/><span className="studio-label">MERCHANT STUDIO</span><nav>{adminTabs.map(([label,Icon])=><button key={label} className={tab===label?'active':''} onClick={()=>{setTab(label);setError('')}}><Icon size={18}/>{label}</button>)}</nav><div className="admin-sidebar-bottom"><Link to="/">View storefront <ArrowUpRight size={15}/></Link><small>{staff.email}<br/>{staff.role}</small><button className="text-button" onClick={async()=>{await api('/admin/logout',{});setStaff(null);sessionStorage.removeItem('csrf')}}><LogOut size={15}/>Sign out</button></div></aside><main className="admin-main"><header className="admin-header"><span>VEYORA / STUDIO / {tab.toUpperCase()}</span><span className="test-badge">{data?.preview?'PREVIEW ENVIRONMENT':'MERCHANT ENVIRONMENT'}</span></header><div className="admin-content"><div className="section-heading"><div><span className="eyebrow">YOUR MAISON, AT A GLANCE</span><h1>{tab==='Dashboard'?'A considered overview.':tab}</h1></div><button className="text-button" onClick={()=>refresh().catch(e=>setError(e.message))}><RefreshCw size={15}/>Refresh</button></div>{error&&<div className="error" role="alert">{error}</div>}{!data?<p>Loading studio…</p>:<>{tab==='Dashboard'&&<><div className="admin-stats"><Stat title="ACTIVE GOLD RATES" value={data.rates.length} detail={`${data.rates.filter(r=>r.fresh).length} within freshness limit`}/><Stat title="CATALOGUE VARIANTS" value={products.length} detail={`${products.filter(p=>p.stock===0).length} out of stock`}/><Stat title="TODAY’S IMPORTS" value={data.todayImports?.failed?'Needs review':'All clear'} detail={`${data.todayImports?.published||0} published · ${data.todayImports?.failed||0} failed`}/><Stat title="ORDERS" value={data.orders.length} detail={`${money(data.orders.reduce((s,o)=>s+Number(o.total),0))} total order value`}/></div><div className="admin-two"><div className="admin-panel"><div className="panel-title"><h3>Active gold rates</h3><button className="underlink" onClick={()=>setTab('Gold Rates')}>View rates ↗</button></div><RateTable rates={data.rates}/></div><div className="admin-panel"><h3>Needs your attention</h3>{data.feedSettings?.feedStatus==='stopped'&&<div className="attention" style={{borderLeft:'3px solid #c62828',paddingLeft:'12px'}}><AlertCircle size={19} color="#c62828"/><div><strong style={{color:'#c62828'}}>Feed Automation is STOPPED</strong><p>Background syncs and live rates are paused. <button className="underlink" onClick={()=>setTab('Settings')}>Open Settings to start ↗</button></p></div></div>}<div className="attention"><AlertCircle size={19}/><div><strong>{data.rates.some(r=>!r.fresh)?'Gold rates are stale':'Storefront active with Cash on Delivery'}</strong><p>Cash on Delivery is active. Store policies and catalogue photography can be reviewed anytime.</p></div></div><p className="small">Maximum rate age: {data.maxAgeHours} hours. Stale gold-linked items pause at checkout.</p></div></div><div className="admin-panel"><h3>Supplier freshness</h3><div className="table-wrap"><table><thead><tr><th>Supplier</th><th>Feed</th><th>Last published source</th></tr></thead><tbody>{data.suppliers.map(s=><tr key={s.supplier+s.kind}><td>{s.supplier}</td><td>{s.kind}</td><td>{date(s.last_update)}</td></tr>)}</tbody></table></div></div><BatchTable batches={data.batches.slice(0,6)}/><div className="admin-panel"><h3>Recent staff activity</h3>{data.audits.slice(0,8).map(a=><p className="audit-line" key={a.id}><span>{a.action} · Staff {a.staff_id||'system'}</span><span>{date(a.created_at)}</span></p>)}</div></>}{tab==='Gold Rates'&&<><div className="notice">Rates are explicitly purity-specific. No automatic purity conversion is enabled. Original values and corrections remain in rate history. Maximum age: {data.maxAgeHours} hours.</div><div className="admin-panel"><div className="panel-title"><h3>Approved rates</h3><button disabled={busy||staff.role==='viewer'} className="button dark small-button" onClick={()=>run('gold')}><RefreshCw size={15}/>Run rate feed</button></div><RateTable rates={data.rates}/></div><ImportPanel kind="gold" refresh={refresh} readonly={staff.role==='viewer'}/><div className="admin-panel"><h3>Rate history & corrections</h3><RateTable rates={(data.rateHistory||[]).map(r=>({...r,fresh:data.rates.some(a=>a.id===r.id&&a.fresh)}))}/></div></>}{tab==='Products'&&<><div className="notice">Supplier imports preserve merchant names, descriptions and publication status by default. Stock is an absolute snapshot, adjusted for paid orders after its source timestamp.</div><details className="advanced-media"><summary>Manage multiple photos (optional)</summary><ImageUploader products={products} refreshParent={refresh}/></details><AdminProductList products={products} readonly={staff.role==='viewer'} refresh={refresh} onOpenImports={()=>setTab('Imports')}/></>}{tab==='Coins'&&<CoinsAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Offers'&&<OffersAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Reviews'&&<ReviewsAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Pricing Rules'&&<Rules rule={data.rule} readonly={staff.role!=='owner'} refresh={refresh}/ >}{tab==='Imports'&&<><div className="admin-two"><div className="admin-panel"><span className="eyebrow">FEED SYNCHRONIZATION</span><h3>Rates first. Catalogue second.</h3><p className="small muted">Feed sources are configured on the server. Current inventory mode: {data.feedSettings.inventoryMode}. Synchronize feeds on demand below.</p><button className="button dark" disabled={busy||staff.role==='viewer'} onClick={()=>run(null)}>{busy?'Running…':'Run both feeds now'}<RefreshCw size={16}/></button></div><div className="admin-panel"><h3>Source connections</h3><p>Gold feed: <Status text={data.feedSettings.goldConfigured?'Configured':'Not configured'}/></p><p>Product feed: <Status text={data.feedSettings.productsConfigured?'Configured':'Not configured'}/></p><p className="small muted">Private feed URLs and credentials never appear in this screen. Failed rate feeds retain the last verified rate.</p><button className="underlink" disabled={busy||staff.role==='viewer'} onClick={()=>run('products')}>Run product feed only ↗</button></div></div><div className="admin-two"><ImportPanel kind="gold" refresh={refresh} readonly={staff.role==='viewer'}/><ImportPanel kind="products" refresh={refresh} readonly={staff.role==='viewer'}/><ImportPanel kind="coins" refresh={refresh} readonly={staff.role==='viewer'}/></div><details className="advanced-media"><summary>Manage multiple photos (optional)</summary><ImageUploader products={products} refreshParent={refresh}/></details><FeedSettings data={data} refresh={refresh} readonly={staff.role!=='owner'}/><BatchTable batches={data.batches} retry={async b=>{try{await api(`/admin/import/${b.id}/publish`,{});await refresh()}catch(e){setError(e.message)}}} readonly={staff.role==='viewer'}/><div className="admin-panel"><h3>Workflow history</h3>{data.runs.length?data.runs.map(r=><div key={r.id} className="run-record"><strong>Run #{r.id} · {r.trigger} · {date(r.started_at)}</strong>{Object.entries(r.result).map(([k,v])=><p key={k}>{k}: {v.ok?`Succeeded · Source ${v.source_date} · Created ${v.created} / Updated ${v.updated} / Unchanged ${v.unchanged} / Rejected ${v.rejected}`:v.message}</p>)}</div>):<p className="small muted">No feed sync has been recorded yet.</p>}</div></>}{tab==='Orders'&&<div className="admin-panel"><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'12px',marginBottom:'16px'}}><div><h3 style={{margin:0}}>All Orders ({data.orders.length})</h3><span className="small muted">{data.orders.length} total orders recorded</span></div><a className="underlink" href="/api/admin/export/orders" download style={{display:'inline-flex',alignItems:'center',gap:'6px'}}>Export orders CSV ({data.orders.length}) ↓</a></div><div className="table-wrap"><table><thead><tr><th>Order</th><th>Customer</th><th>Placed (India)</th><th>Payment</th><th>Total</th></tr></thead><tbody>{data.orders.map(o=><tr key={o.id}><td><Link to={'/order/'+o.id}>{o.id} ↗</Link></td><td>{o.customer.name}<small>{o.customer.email}</small></td><td>{date(o.created_at)}</td><td><Status text={`${o.payment_mode} · ${o.status}`}/></td><td>{money(o.total)}</td></tr>)}</tbody></table>{!data.orders.length&&<p className="empty">Orders will appear here after checkout.</p>}</div></div>}{tab==='Settings'&&<SettingsAdmin data={data} refresh={refresh} readonly={staff.role!=='owner'}/>}</>}</div></main></div>}
 function Stat({title,value,detail}){return <div className="stat"><span className="eyebrow">{title}</span><strong>{value}</strong><small>{detail}</small></div>}
 function Status({text}){return <span className={'status-badge '+(/failed|stale|Not configured/.test(text)?'warning':'')}>{text}</span>}
 function RateTable({rates}){return <div className="table-wrap"><table><thead><tr><th>Purity</th><th>INR / gram</th><th>Source / original</th><th>Effective date</th><th>Status</th></tr></thead><tbody>{rates.map(r=><tr key={r.id}><td><strong>{r.purity}</strong></td><td>{money(r.inr_per_gram)}</td><td>{r.supplier}<small>{money(r.original_rate)} / {r.original_unit}</small></td><td>{r.effective_date}<small>{date(r.source_timestamp)}</small></td><td><Status text={r.fresh?'Verified':'stale — checkout paused'}/></td></tr>)}</tbody></table>{!rates.length&&<p>No approved rates. Import a rate file to begin.</p>}</div>}
@@ -988,13 +988,218 @@ function ImageUploader({products=[],refreshParent}){
   </div>;
 }
 
-function AdminProductList({products,readonly,refresh}){
-  return <AdminCatalogueList items={products} label="Products" renderRow={p=><ProductRow key={p.id} p={p} readonly={readonly} refresh={refresh}/>}/>;
+function AdminProductList({products,readonly,refresh,onOpenImports}){
+  const {refreshCatalogue}=useStore();
+  const [addingProduct,setAddingProduct]=useState(false);
+  const [error,setError]=useState('');
+  const [categoryTab,setCategoryTab]=useState('all');
+  const [search,setSearch]=useState('');
+  const [stockFilter,setStockFilter]=useState('all');
+  const [statusFilter,setStatusFilter]=useState('all');
+  const [pricingFilter,setPricingFilter]=useState('all');
+
+  async function saveProduct(e){
+    e.preventDefault();
+    const form=new FormData(e.target);
+    const body=Object.fromEntries(form);
+    setError('');
+    try{
+      await api('/admin/products',body,'POST');
+      setAddingProduct(false);
+      await refresh();
+      await refreshCatalogue({notify:true});
+    }catch(err){
+      setError(err.message);
+    }
+  }
+
+  async function deleteProduct(sku){
+    if(!window.confirm(`Are you sure you want to delete product SKU ${sku}?`))return;
+    try{
+      await api('/admin/products/'+encodeURIComponent(sku),{},'DELETE');
+      await refresh();
+      await refreshCatalogue({notify:true});
+    }catch(err){
+      setError(err.message);
+    }
+  }
+
+  const categories=useMemo(()=>{
+    const map=new Map();
+    for(const p of products){
+      const cat=p.category||'Other';
+      map.set(cat,(map.get(cat)||0)+1);
+    }
+    return Array.from(map.entries()).sort((a,b)=>b[1]-a[1]);
+  },[products]);
+
+  const filteredProducts=useMemo(()=>{
+    return products.filter(p=>{
+      if(categoryTab!=='all'&&(p.category||'').toLowerCase()!==categoryTab.toLowerCase())return false;
+      if(search.trim()){
+        const q=search.toLowerCase().trim();
+        const match=(p.name||'').toLowerCase().includes(q)||
+                    (p.sku||'').toLowerCase().includes(q)||
+                    (p.product_code||'').toLowerCase().includes(q)||
+                    (p.category||'').toLowerCase().includes(q)||
+                    (p.metal||'').toLowerCase().includes(q)||
+                    (p.purity||'').toLowerCase().includes(q)||
+                    (p.description||'').toLowerCase().includes(q);
+        if(!match)return false;
+      }
+      if(stockFilter==='instock'&&p.stock<=0)return false;
+      if(stockFilter==='outofstock'&&p.stock>0)return false;
+      if(statusFilter!=='all'&&p.status!==statusFilter)return false;
+      if(pricingFilter!=='all'&&p.pricing_mode!==pricingFilter)return false;
+      return true;
+    });
+  },[products,categoryTab,search,stockFilter,statusFilter,pricingFilter]);
+
+  const hasActiveFilters=search.trim()||stockFilter!=='all'||statusFilter!=='all'||pricingFilter!=='all'||categoryTab!=='all';
+
+  function resetFilters(){
+    setSearch('');
+    setStockFilter('all');
+    setStatusFilter('all');
+    setPricingFilter('all');
+    setCategoryTab('all');
+  }
+
+  return <div className="products-admin">
+    {/* Submenu Tabs & Actions */}
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'12px',marginBottom:'18px'}}>
+      <div className="coins-subtabs" style={{margin:0,border:0,padding:0}}>
+        <button className={'coins-subtab-btn '+(categoryTab==='all'?'active':'')} onClick={()=>setCategoryTab('all')}>All Pieces ({products.length})</button>
+        {categories.map(([cat,count])=><button key={cat} className={'coins-subtab-btn '+(categoryTab.toLowerCase()===cat.toLowerCase()?'active':'')} onClick={()=>setCategoryTab(cat)}>{cat} ({count})</button>)}
+      </div>
+      <div style={{display:'flex',gap:'10px',alignItems:'center',flexWrap:'wrap'}}>
+        <button className="button dark small-button" disabled={readonly} onClick={()=>{setError('');setAddingProduct(true)}}><Plus size={14}/> Add Product</button>
+        {onOpenImports&&<button type="button" className="button secondary small-button" onClick={onOpenImports}><Upload size={14}/> Import CSV</button>}
+        <a className="underlink" href="/api/admin/export/products" download style={{display:'inline-flex',alignItems:'center',gap:'6px'}}><Download size={14}/>Export Products CSV</a>
+      </div>
+    </div>
+
+    {/* Filter and Search Bar */}
+    <div className="admin-filter-bar">
+      <div className="search-box">
+        <Search size={14}/>
+        <input type="text" placeholder="Search products by name, SKU, category, purity…" value={search} onChange={e=>setSearch(e.target.value)}/>
+      </div>
+
+      <select className="filter-select" value={statusFilter} onChange={e=>setStatusFilter(e.target.value)} aria-label="Filter products by status">
+        <option value="all">All Statuses</option>
+        <option value="published">Published</option>
+        <option value="draft">Draft</option>
+      </select>
+
+      <select className="filter-select" value={stockFilter} onChange={e=>setStockFilter(e.target.value)} aria-label="Filter products by stock">
+        <option value="all">All Stock</option>
+        <option value="instock">In Stock ({products.filter(p=>p.stock>0).length})</option>
+        <option value="outofstock">Out of Stock ({products.filter(p=>p.stock===0).length})</option>
+      </select>
+
+      <select className="filter-select" value={pricingFilter} onChange={e=>setPricingFilter(e.target.value)} aria-label="Filter products by pricing mode">
+        <option value="all">All Pricing</option>
+        <option value="GOLD_LINKED">Gold Linked</option>
+        <option value="FIXED">Fixed Price</option>
+      </select>
+
+      {hasActiveFilters&&<button type="button" className="reset-filter-btn" onClick={resetFilters}><RotateCcw size={13}/> Reset</button>}
+    </div>
+
+    {error&&<p className="error" role="alert">{error}</p>}
+
+    <AdminCatalogueList
+      items={filteredProducts}
+      label="Products"
+      resetKey={`${categoryTab}-${search}-${stockFilter}-${statusFilter}-${pricingFilter}`}
+      renderRow={p=><ProductRow key={p.id} p={p} readonly={readonly} refresh={refresh} onDelete={()=>deleteProduct(p.sku)}/>}
+    />
+
+    {addingProduct&&<ProductForm modal error={error} onClose={()=>setAddingProduct(false)} onSave={saveProduct}/>}
+  </div>;
+}
+
+function ProductForm({product,onClose,onSave,error,modal=false}){
+  const [metal,setMetal]=useState(product?.metal||'Gold');
+  const [pricingMode,setPricingMode]=useState(product?.pricing_mode||'GOLD_LINKED');
+  const form=<CatalogueEditForm item={product} onSave={onSave} onClose={onClose} error={error} creating={!product}>
+    <label>SKU (Unique identifier)*
+      <input name="sku" defaultValue={product?.sku||''} placeholder="e.g. VEY-RG-01" required disabled={!!product}/>
+    </label>
+    <label>Category*
+      <select name="category" defaultValue={product?.category||'Rings'}>
+        <option value="Rings">Rings</option>
+        <option value="Necklaces">Necklaces</option>
+        <option value="Earrings">Earrings</option>
+        <option value="Bracelets">Bracelets</option>
+        <option value="Pendants">Pendants</option>
+        <option value="Jewellery">Jewellery</option>
+      </select>
+    </label>
+    <label>Product Code / Group Slug
+      <input name="product_code" defaultValue={product?.product_code||''} placeholder="e.g. royal-garnet-ring (defaults to SKU)"/>
+    </label>
+    <label>Metal*
+      <select name="metal" value={metal} onChange={e=>setMetal(e.target.value)}>
+        <option value="Gold">Gold</option>
+        <option value="Silver">Silver</option>
+        <option value="Platinum">Platinum</option>
+      </select>
+    </label>
+    <label>Purity*
+      <select name="purity" defaultValue={product?.purity||(metal==='Silver'?'925':'18K')}>
+        <option value="18K">18K</option>
+        <option value="22K">22K</option>
+        <option value="24K">24K</option>
+        <option value="14K">14K</option>
+      </select>
+    </label>
+    <label>Pricing Mode*
+      <select name="pricing_mode" value={pricingMode} onChange={e=>setPricingMode(e.target.value)}>
+        <option value="GOLD_LINKED">GOLD_LINKED (Live metal rates)</option>
+        <option value="FIXED">FIXED (Static selling price)</option>
+      </select>
+    </label>
+    {pricingMode==='FIXED'?(
+      <label>Fixed Selling Price (₹)*
+        <input name="fixed_price" type="number" step="0.01" min="1" defaultValue={product?.fixed_price||''} placeholder="e.g. 24500" required/>
+      </label>
+    ):(
+      <>
+        <label>Making Charge (₹ flat)
+          <input name="making_flat" type="number" step="0.01" min="0" defaultValue={product?.making_flat||0}/>
+        </label>
+        <label>Making Charge (%)
+          <input name="making_percent" type="number" step="0.01" min="0" defaultValue={product?.making_percent||0}/>
+        </label>
+        <label>Stone Charge (₹)
+          <input name="stone_charge" type="number" step="0.01" min="0" defaultValue={product?.stone_charge||0}/>
+        </label>
+        <label>Other Charge (₹)
+          <input name="other_charge" type="number" step="0.01" min="0" defaultValue={product?.other_charge||0}/>
+        </label>
+      </>
+    )}
+    <label>Net Metal Weight (grams)*
+      <input name="net_weight_g" type="number" step="0.001" min="0.001" defaultValue={product?.net_weight_g||''} placeholder="e.g. 3.500" required={pricingMode==='GOLD_LINKED'}/>
+    </label>
+    <label>Size / Dimensions
+      <input name="size" defaultValue={product?.size||''} placeholder="e.g. 14, Medium, 42 cm"/>
+    </label>
+    <label>Finish
+      <input name="finish" defaultValue={product?.finish||'Gold'} placeholder="e.g. Gold, High Polish, Matte"/>
+    </label>
+    <label>Stock snapshot*
+      <input name="stock" type="number" min="0" defaultValue={product?.stock??10} required/>
+    </label>
+  </CatalogueEditForm>;
+  return modal?<Modal title="Add New Product" onClose={onClose}>{form}</Modal>:form;
 }
 
 function AdminCatalogueList({items,label,resetKey,renderRow}){
   const pagination=usePagination(items,resetKey);
-  return <div className="admin-panel"><div className="panel-title" style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'12px',marginBottom:'16px'}}><div><h3 style={{margin:0}}>All {label} ({items.length})</h3><span className="small muted">Total {label==='Products'?'variants':'coins'}: {items.length} · In stock: {items.filter(p=>p.stock>0).length} · Out of stock: {items.filter(p=>p.stock===0).length}</span></div><div style={{display:'flex',gap:'10px',alignItems:'center'}}><span className="status-badge">{items.length} Items Listed</span></div></div><div className="table-wrap"><table><thead><tr><th>Piece / SKU</th><th>Pricing</th><th>Weight</th><th>Stock</th><th>Status</th><th></th></tr></thead><tbody>{pagination.items.map(renderRow)}{!items.length&&<tr><td colSpan="6" className="empty">No {label.toLowerCase()} found.</td></tr>}</tbody></table></div><Pagination pagination={pagination} label={label}/></div>;
+  return <div className="admin-panel"><div className="panel-title" style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'12px',marginBottom:'16px'}}><div><h3 style={{margin:0}}>All {label} ({items.length})</h3><span className="small muted">Total {label==='Products'?'variants':'coins'}: {items.length} · In stock: {items.filter(p=>p.stock>0).length} · Out of stock: {items.filter(p=>p.stock===0).length}</span></div><div style={{display:'flex',gap:'10px',alignItems:'center'}}><span className="status-badge">{items.length} Items Listed</span></div></div><div className="table-wrap"><table><thead><tr><th>Piece / SKU</th><th>Pricing</th><th>Weight</th><th>Stock</th><th>Status</th><th></th></tr></thead><tbody>{pagination.items.map(renderRow)}{!items.length&&<tr><td colSpan="6" className="empty" style={{textAlign:'center',padding:'30px'}}><p style={{margin:0}}>No {label.toLowerCase()} matched the current filters.</p></td></tr>}</tbody></table></div><Pagination pagination={pagination} label={label}/></div>;
 }
 
 function AdminCatalogueRow({item,details,pricing,weight,actions,children}){
@@ -1035,7 +1240,7 @@ function CatalogueEditForm({item,onSave,onClose,error,readonly=false,children,cr
   </form>;
 }
 
-function ProductRow({p,readonly,refresh}){
+function ProductRow({p,readonly,refresh,onDelete}){
   const {refreshCatalogue}=useStore();
   const [editing,setEditing]=useState(false),[error,setError]=useState('');
   async function save(e){
@@ -1050,7 +1255,10 @@ function ProductRow({p,readonly,refresh}){
   return <AdminCatalogueRow item={p} details={`${p.sku} · ${p.product_code}`}
     pricing={<>{p.pricing_mode==='GOLD_LINKED'?<span className="coin-badge gold">GOLD_LINKED</span>:<span className="status-badge">FIXED</span>}<small>{p.pricing_mode==='FIXED'?money(p.fixed_price):`${p.purity} · Live Rate`}</small></>}
     weight={<>{p.net_weight_g} g</>}
-    actions={<button className="underlink" disabled={readonly} onClick={()=>{setError('');setEditing(!editing)}}>{editing?'Close':'Edit'}</button>}
+    actions={<div style={{display:'flex',gap:'10px',alignItems:'center'}}>
+      <button className="underlink" disabled={readonly} onClick={()=>{setError('');setEditing(!editing)}}>{editing?'Close':'Edit'}</button>
+      {onDelete&&<button className="text-button" disabled={readonly} style={{color:'#a83232',padding:0}} onClick={onDelete} title="Delete product"><Trash2 size={14}/></button>}
+    </div>}
   >{editing&&<>
     <CatalogueEditForm item={p} onSave={save} onClose={()=>setEditing(false)} error={error} readonly={readonly}/>
     <ProductAngleManager product={p} readonly={readonly} refreshParent={refresh}/>
@@ -1278,6 +1486,10 @@ function CoinsAdmin({readonly,refreshParent}){
   const [editingCoin,setEditingCoin]=useState(null),[addingCoin,setAddingCoin]=useState(false);
   const [silverInput,setSilverInput]=useState(''),[editingSilver,setEditingSilver]=useState(false);
   const [uploading,setUploading]=useState(false);
+  const [search,setSearch]=useState('');
+  const [stockFilter,setStockFilter]=useState('all');
+  const [statusFilter,setStatusFilter]=useState('all');
+  const [pricingFilter,setPricingFilter]=useState('all');
 
   async function load(){
     setBusy(true);setError('');
@@ -1347,12 +1559,35 @@ function CoinsAdmin({readonly,refreshParent}){
 
   const coins=data?.coins||[];
   const filteredCoins=coins.filter(c=>{
-    if(subTab==='all')return true;
-    if(subTab==='gold')return (c.metal||'').toLowerCase()==='gold'||(c.coin_type||'').toLowerCase().includes('gold');
-    if(subTab==='silver')return (c.metal||'').toLowerCase()==='silver'||(c.coin_type||'').toLowerCase().includes('silver');
+    if(subTab==='gold'&&(c.metal||'').toLowerCase()!=='gold'&&!(c.coin_type||'').toLowerCase().includes('gold'))return false;
+    if(subTab==='silver'&&(c.metal||'').toLowerCase()!=='silver'&&!(c.coin_type||'').toLowerCase().includes('silver'))return false;
+    if(search.trim()){
+      const q=search.toLowerCase().trim();
+      const match=(c.name||'').toLowerCase().includes(q)||
+                  (c.sku||'').toLowerCase().includes(q)||
+                  (c.coin_type||'').toLowerCase().includes(q)||
+                  (c.purity||'').toLowerCase().includes(q)||
+                  (c.metal||'').toLowerCase().includes(q)||
+                  String(c.weight_g||'').includes(q)||
+                  (c.description||'').toLowerCase().includes(q);
+      if(!match)return false;
+    }
+    if(stockFilter==='instock'&&c.stock<=0)return false;
+    if(stockFilter==='outofstock'&&c.stock>0)return false;
+    if(statusFilter!=='all'&&c.status!==statusFilter)return false;
+    if(pricingFilter!=='all'&&c.pricing_mode!==pricingFilter)return false;
     return true;
   });
 
+  const hasActiveFilters=search.trim()||stockFilter!=='all'||statusFilter!=='all'||pricingFilter!=='all'||subTab!=='all';
+
+  function resetFilters(){
+    setSearch('');
+    setStockFilter('all');
+    setStatusFilter('all');
+    setPricingFilter('all');
+    setSubTab('all');
+  }
 
   const goldCount=coins.filter(c=>(c.metal||'').toLowerCase()==='gold').length;
   const silverCount=coins.filter(c=>(c.metal||'').toLowerCase()==='silver').length;
@@ -1388,9 +1623,37 @@ function CoinsAdmin({readonly,refreshParent}){
         <button className={'coins-subtab-btn '+(subTab==='silver'?'active':'')} onClick={()=>setSubTab('silver')}>Silver Coins ({silverCount})</button>
       </div>
       <div style={{display:'flex',gap:'10px',alignItems:'center'}}>
-        <button className="button dark small-button" disabled={readonly} onClick={()=>{setEditingCoin(null);setError('');setAddingCoin(true)}}>+ Add Coin</button>
+        <button className="button dark small-button" disabled={readonly} onClick={()=>{setEditingCoin(null);setError('');setAddingCoin(true)}}><Plus size={14}/> Add Coin</button>
         <a className="underlink" href="/api/admin/export/coins" download style={{display:'inline-flex',alignItems:'center',gap:'6px'}}><Download size={14}/>Export Coins CSV</a>
       </div>
+    </div>
+
+    {/* Filter and Search Bar */}
+    <div className="admin-filter-bar">
+      <div className="search-box">
+        <Search size={14}/>
+        <input type="text" placeholder="Search coins by name, SKU, metal, weight…" value={search} onChange={e=>setSearch(e.target.value)}/>
+      </div>
+
+      <select className="filter-select" value={statusFilter} onChange={e=>setStatusFilter(e.target.value)} aria-label="Filter coins by status">
+        <option value="all">All Statuses</option>
+        <option value="published">Published</option>
+        <option value="draft">Draft</option>
+      </select>
+
+      <select className="filter-select" value={stockFilter} onChange={e=>setStockFilter(e.target.value)} aria-label="Filter coins by stock">
+        <option value="all">All Stock</option>
+        <option value="instock">In Stock ({coins.filter(c=>c.stock>0).length})</option>
+        <option value="outofstock">Out of Stock ({coins.filter(c=>c.stock===0).length})</option>
+      </select>
+
+      <select className="filter-select" value={pricingFilter} onChange={e=>setPricingFilter(e.target.value)} aria-label="Filter coins by pricing mode">
+        <option value="all">All Pricing</option>
+        <option value="METAL_LINKED">Metal Linked</option>
+        <option value="FIXED">Fixed Price</option>
+      </select>
+
+      {hasActiveFilters&&<button type="button" className="reset-filter-btn" onClick={resetFilters}><RotateCcw size={13}/> Reset</button>}
     </div>
 
     {error&&<p className="error">{error}</p>}
@@ -1400,7 +1663,7 @@ function CoinsAdmin({readonly,refreshParent}){
       <ImageUploader products={coins.map(c=>({...c,product_code:c.sku}))} refreshParent={async()=>{await load();if(refreshParent)await refreshParent();}}/>
     </details>
 
-    <AdminCatalogueList items={filteredCoins} label="Coins" resetKey={subTab} renderRow={c=><AdminCatalogueRow key={c.sku} item={c}
+    <AdminCatalogueList items={filteredCoins} label="Coins" resetKey={`${subTab}-${search}-${stockFilter}-${statusFilter}-${pricingFilter}`} renderRow={c=><AdminCatalogueRow key={c.sku} item={c}
       details={<>{c.sku} · {c.coin_type}</>}
       pricing={<><span className={'coin-badge '+(c.metal==='Silver'?'silver':'gold')}>{c.metal}</span><small>{c.purity} · Live Rate</small><strong>{c.calculated_price!=null?money(c.calculated_price):'Awaiting rate'}</strong>{c.breakdown&&<small>Metal {money(c.breakdown.metal)} + Making {money(c.breakdown.making)}</small>}<small>Making charge: {money(c.making_charge)}</small></>}
       weight={<>{Number(c.weight_g).toFixed(3)} g<small>{c.dimension||'Standard round'}</small></>}

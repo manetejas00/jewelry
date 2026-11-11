@@ -2310,3 +2310,85 @@
     right: 0;
   }
 }
+
+/* Unified Admin Filter & Search Bar for Products and Coins */
+.admin-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  background: var(--ivory, #fdfbf7);
+  border: 1px solid var(--line, #e2e2da);
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  border-radius: 4px;
+}
+
+.admin-filter-bar .search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 220px;
+}
+
+.admin-filter-bar .search-box svg {
+  position: absolute;
+  left: 10px;
+  color: var(--muted, #7c7c70);
+  pointer-events: none;
+}
+
+.admin-filter-bar .search-box input {
+  width: 100%;
+  padding-left: 32px;
+  height: 36px;
+  font-size: 12px;
+  border: 1px solid var(--line, #e2e2da);
+  border-radius: 2px;
+  background: var(--paper, #ffffff);
+  color: var(--ink, #102124);
+}
+
+.admin-filter-bar .search-box input:focus {
+  outline: none;
+  border-color: var(--ink, #102124);
+}
+
+.admin-filter-bar .filter-select {
+  height: 36px;
+  padding: 6px 12px;
+  font-size: 11.5px;
+  border: 1px solid var(--line, #e2e2da);
+  border-radius: 2px;
+  background: var(--paper, #ffffff);
+  color: var(--ink, #102124);
+  cursor: pointer;
+}
+
+.admin-filter-bar .filter-select:focus {
+  outline: none;
+  border-color: var(--ink, #102124);
+}
+
+.admin-filter-bar .reset-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 36px;
+  padding: 0 12px;
+  font-size: 11.5px;
+  font-weight: 500;
+  border: 1px solid var(--line, #e2e2da);
+  border-radius: 2px;
+  background: var(--paper, #ffffff);
+  color: var(--muted, #7c7c70);
+  cursor: pointer;
+  transition: all .15s ease;
+}
+
+.admin-filter-bar .reset-filter-btn:hover {
+  color: var(--ink, #102124);
+  border-color: var(--ink, #102124);
+}
+
