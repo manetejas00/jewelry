@@ -1,4 +1,6 @@
-import {resetConfigured,requestReset,completeReset} from './password-reset.js';
+import {resetConfigured,requestReset,completeReset,replacePassword} from './password-reset.js';
+import {createOtpGateway} from './otp-gateway.js';
+import {otpAvailability,sendOtp,sendPasswordResetOtp,verifyOtp,confirmOtp,resendOtp,otpStatus,spendVerified,releaseVerified,prepareCheckoutOtp,normalizeEmail,normalizeIndianMobile,SENT_MESSAGE} from './otp.js';
 import {registerSeo,pageMetadata,renderMetadata} from './seo.js';
 import {validateOffer} from './offers.js';
 import {commerceConfig} from './runtime.js';
@@ -64,9 +66,10 @@ app.use('/api',routeSettings);
 function routeSettings(req,res,next){loadFeedSettings().then(()=>next()).catch(next)}
 app.use('/api',(req,res,next)=>{res.set('Cache-Control','no-store');if(['POST','PUT','DELETE','PATCH'].includes(req.method)){const origin=req.get('origin');const allowedOrigins=[process.env.APP_URL?new URL(process.env.APP_URL).origin:null,...(!production?['http://localhost:3000','http://127.0.0.1:3000']:[])].filter(Boolean);if(origin && !allowedOrigins.includes(origin))return res.status(403).json({error:'Origin not allowed'});if(req.get('sec-fetch-site')==='cross-site')return res.status(403).json({error:'Origin not allowed'});if(req.path!=='/admin/login'&&req.path.startsWith('/admin')&&req.get('x-csrf-token')!==req.session.csrf)return res.status(403).json({error:'Please reload the admin panel'});}next();});
 
+const otpGateway=createOtpGateway(process.env);
 const auth=(roles=['owner','manager','viewer'])=>(req,res,next)=>req.session.staff&&roles.includes(req.session.staff.role)?next():res.status(403).json({error:'Staff access required'});
 const audit=async(req,action,details)=>db('audit').insert({staff_id:req.session.staff.id,action,details:json(details),created_at:now()});
-app.get('/api/config',(req,res)=>res.json({brand:process.env.BRAND_NAME||'Veyora Jewels',preview,passwordResetEnabled:resetConfigured(),...commerceConfig(process.env,preview),contact:process.env.MERCHANT_EMAIL||'',shippingPolicy:process.env.SHIPPING_POLICY||'',returnsPolicy:process.env.RETURNS_POLICY||''}));
+app.get('/api/config',(req,res)=>res.json({brand:process.env.BRAND_NAME||'Veyora Jewels',preview,passwordResetEnabled:resetConfigured(),otp:otpAvailability(process.env,otpGateway),...commerceConfig(process.env,preview),contact:process.env.MERCHANT_EMAIL||'',shippingPolicy:process.env.SHIPPING_POLICY||'',returnsPolicy:process.env.RETURNS_POLICY||''}));
 app.get('/api/thumbnail',async(req,res)=>{
  try{
   const file=await listingThumbnailFile(req.query.source,{publicDir:path.resolve('public'),uploadsDir,cacheDir:path.resolve('private/thumbnail-cache')});
@@ -141,11 +144,12 @@ app.delete('/api/admin/offers/:id',auth(['owner','manager']),route(async(req,res
   res.json({ok:true});
 }));
 app.post('/api/quote',route(async(req,res)=>res.json(await quote(db,req.body.items))));
-app.post('/api/checkout',rateLimit({windowMs:60000,limit:20}),route(async(req,res)=>{if(commerceConfig(process.env,preview).checkoutEnabled===false)return res.status(503).json({error:'Checkout is awaiting merchant configuration.'});req.session.checkoutScope ||= crypto.randomUUID();const result=await checkout(db,req.body,preview,req.session.customer?.id||null,req.session.checkoutScope);req.session.orderIds=[...new Set([...(req.session.orderIds||[]),result.id])].slice(-100);res.json(result);}));
+app.post('/api/checkout',rateLimit({windowMs:60000,limit:20}),route(async(req,res)=>{if(commerceConfig(process.env,preview).checkoutEnabled===false)return res.status(503).json({error:'Checkout is awaiting merchant configuration.'});req.session.checkoutScope ||= crypto.randomUUID();const held=await prepareCheckoutOtp(db,req.session,req.body,process.env,otpGateway);try{const result=await checkout(db,req.body,preview,req.session.customer?.id||null,req.session.checkoutScope);req.session.orderIds=[...new Set([...(req.session.orderIds||[]),result.id])].slice(-100);res.json(result);}catch(error){if(held)await releaseVerified(db,held);throw error;}}));
 app.get('/api/orders/:id',route(async(req,res)=>{const order=await db('orders').where({id:req.params.id}).first();if(!mayReadOrder(req.session,order))return res.status(404).json({error:'Order not found'});res.json({...order,customer:parse(order.customer),items:(await db('order_items').where({order_id:order.id})).map(i=>parse(i.snapshot))});}));
 const customerAuth=(req,res,next)=>req.session.customer?next():res.status(401).json({error:'Please sign in to your customer account.'});
 const customerCsrf=(req,res,next)=>req.session.customerCsrf&&req.get('x-customer-csrf')===req.session.customerCsrf?next():res.status(403).json({error:'Please reload and try again.'});
-app.get('/api/account/session',route(async(req,res)=>{req.session.customerCsrf ||= crypto.randomBytes(24).toString('hex');res.json({customer:req.session.customer||null,csrf:req.session.customerCsrf,state:req.session.customer?await customerState(db,req.session.customer.id):null});}));
+async function presentCustomer(customer){const row=await db('customers').where({id:customer.id}).select('phone','email_verified_at','phone_verified_at').first();return {...customer,phone:row?.phone||null,emailVerified:Boolean(row?.email_verified_at),phoneVerified:Boolean(row?.phone_verified_at)};}
+app.get('/api/account/session',route(async(req,res)=>{req.session.customerCsrf ||= crypto.randomBytes(24).toString('hex');if(req.session.customer)req.session.customer=await presentCustomer(req.session.customer);res.json({customer:req.session.customer||null,csrf:req.session.customerCsrf,state:req.session.customer?await customerState(db,req.session.customer.id):null});}));
 const resetLimit=rateLimit({windowMs:15*60000,limit:5});
 app.post('/api/account/forgot-password',resetLimit,customerCsrf,route(async(req,res)=>{
  if(!resetConfigured())throw validationError('Password recovery is not configured. Contact the merchant.',503);
@@ -154,21 +158,112 @@ app.post('/api/account/forgot-password',resetLimit,customerCsrf,route(async(req,
 app.post('/api/account/reset-password',resetLimit,customerCsrf,route(async(req,res)=>{await completeReset(db,req.body);res.json({ok:true});}));
 const customerLoginLimit=rateLimit({windowMs:15*60000,limit:20});
 async function establishCustomer(req,customer,guest){
+ const presented=await presentCustomer(customer);
  const oldStaff=req.session.staff,adminCsrf=req.session.csrf,guestOrders=req.session.customer?[]:req.session.orderIds||[];
  await mergeGuestState(db,customer.id,guest);await claimSessionOrders(db,customer,guestOrders);
  await new Promise((resolve,reject)=>req.session.regenerate(e=>e?reject(e):resolve()));
  if(oldStaff){req.session.staff=oldStaff;req.session.csrf=adminCsrf;}
- req.session.customer=customer;req.session.customerCsrf=crypto.randomBytes(24).toString('hex');
- return {customer,csrf:req.session.customerCsrf,state:await customerState(db,customer.id)};
+ req.session.customer=presented;req.session.customerCsrf=crypto.randomBytes(24).toString('hex');
+ return {customer:presented,csrf:req.session.customerCsrf,state:await customerState(db,customer.id)};
 }
-for(const mode of ['register','login'])app.post('/api/account/'+mode,customerLoginLimit,customerCsrf,route(async(req,res)=>{
+app.post('/api/account/register',customerLoginLimit,customerCsrf,route(async(req,res)=>{
  if(req.session.customer)return res.status(409).json({error:'Sign out before switching customer accounts.'});
  const guest=validateState(req.body.guestState||{bag:[],saved:[]});
- const customer=await (mode==='register'?registerCustomer:loginCustomer)(db,req.body);
+ let held=null;
+ if(otpAvailability(process.env,otpGateway).requireRegister){
+  await confirmOtp(db,req.session,{purpose:'register',otp:req.body?.otp},process.env,otpGateway);
+  if(normalizeEmail(req.body?.email)!==req.session.otpFlows?.register?.destination)throw validationError('Verify the code sent to this email before creating an account.');
+  held=await spendVerified(db,req.session,'register',req.body.email);
+ }
+ try{
+  const customer=await registerCustomer(db,req.body);
+  if(held)await db('customers').where({id:customer.id}).update({email_verified_at:new Date().toISOString()});
+  res.json(await establishCustomer(req,customer,guest));
+ }catch(error){if(held)await releaseVerified(db,held);throw error;}
+}));
+app.post('/api/account/login',customerLoginLimit,customerCsrf,route(async(req,res)=>{
+ if(req.session.customer)return res.status(409).json({error:'Sign out before switching customer accounts.'});
+ const guest=validateState(req.body.guestState||{bag:[],saved:[]});
+ const customer=await loginCustomer(db,req.body);
+ if(otpAvailability(process.env,otpGateway).requireLogin){
+  await sendOtp(db,req.session,{purpose:'login',channel:'email',destination:customer.email,customerId:customer.id},process.env,otpGateway);
+  req.session.pendingCustomer=customer;
+  return res.json({otpRequired:true});
+ }
  res.json(await establishCustomer(req,customer,guest));
+}));
+app.post('/api/account/login/otp',customerLoginLimit,customerCsrf,route(async(req,res)=>{
+ const pending=req.session.pendingCustomer;
+ if(!pending)throw validationError('That code is incorrect.');
+ const guest=validateState(req.body.guestState||{bag:[],saved:[]});
+ await confirmOtp(db,req.session,{purpose:'login',otp:req.body?.otp},process.env,otpGateway);
+ const held=await spendVerified(db,req.session,'login',pending.email);
+ try{res.json(await establishCustomer(req,pending,guest));}catch(error){await releaseVerified(db,held);throw error;}
 }));
 app.get('/api/account/orders',customerAuth,route(async(req,res)=>{const page=Number(req.query.page||1);if(!Number.isInteger(page)||page<1||page>10000)throw validationError('Invalid order page');res.json(await customerOrders(db,req.session.customer.id,page));}));
 app.put('/api/account/state',customerAuth,customerCsrf,route(async(req,res)=>res.json(await saveCustomerState(db,req.session.customer.id,req.body))));
+const otpIpLimit=rateLimit({windowMs:10*60000,limit:10,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Too many verification requests. Try again later.'}});
+app.post('/api/otp/send',otpIpLimit,customerCsrf,route(async(req,res)=>{
+ const purpose=req.body?.purpose,channel=req.body?.channel;
+ if(!['register','checkout'].includes(purpose))throw validationError('Verification is not available.');
+ await sendOtp(db,req.session,{purpose,channel,destination:req.body?.destination},process.env,otpGateway);
+ res.status(202).json({message:SENT_MESSAGE});
+}));
+app.post('/api/otp/verify',otpIpLimit,customerCsrf,route(async(req,res)=>{
+ if(!['register','checkout'].includes(req.body?.purpose))throw validationError('That code is incorrect.');
+ await verifyOtp(db,req.session,{purpose:req.body.purpose,otp:req.body?.otp},process.env,otpGateway);
+ res.json({verified:true});
+}));
+app.post('/api/otp/resend',otpIpLimit,customerCsrf,route(async(req,res)=>{
+ if(!['register','checkout','verify_email','verify_phone','password_reset','login'].includes(req.body?.purpose))throw validationError('That code has expired. Request a new one.');
+ res.status(202).json(await resendOtp(db,req.session,req.body.purpose,process.env,otpGateway));
+}));
+app.get('/api/otp/status',otpIpLimit,route(async(req,res)=>{
+ const purpose=String(req.query.purpose||'');
+ if(!['register','login','checkout','verify_email','verify_phone','password_reset'].includes(purpose))return res.json({state:'none'});
+ res.json(await otpStatus(db,req.session,purpose));
+}));
+app.post('/api/account/verify-email/send',otpIpLimit,customerAuth,customerCsrf,route(async(req,res)=>{
+ await sendOtp(db,req.session,{purpose:'verify_email',channel:'email',destination:req.session.customer.email,customerId:req.session.customer.id},process.env,otpGateway);
+ res.status(202).json({message:SENT_MESSAGE});
+}));
+app.post('/api/account/verify-email',otpIpLimit,customerAuth,customerCsrf,route(async(req,res)=>{
+ await confirmOtp(db,req.session,{purpose:'verify_email',otp:req.body?.otp},process.env,otpGateway);
+ const held=await spendVerified(db,req.session,'verify_email',req.session.customer.email);
+ try{await db('customers').where({id:req.session.customer.id}).update({email_verified_at:new Date().toISOString()});}catch(error){await releaseVerified(db,held);throw error;}
+ req.session.customer=await presentCustomer(req.session.customer);
+ res.json({customer:req.session.customer});
+}));
+app.post('/api/account/verify-phone/send',otpIpLimit,customerAuth,customerCsrf,route(async(req,res)=>{
+ const phone=normalizeIndianMobile(req.body?.phone);
+ if(!['sms','whatsapp'].includes(req.body?.channel))throw validationError('Verification is not available.');
+ await sendOtp(db,req.session,{purpose:'verify_phone',channel:req.body.channel,destination:phone.e164,customerId:req.session.customer.id},process.env,otpGateway);
+ res.status(202).json({message:SENT_MESSAGE});
+}));
+app.post('/api/account/verify-phone',otpIpLimit,customerAuth,customerCsrf,route(async(req,res)=>{
+ await confirmOtp(db,req.session,{purpose:'verify_phone',otp:req.body?.otp},process.env,otpGateway);
+ const phone=normalizeIndianMobile(req.session.otpFlows.verify_phone.destination);
+ const held=await spendVerified(db,req.session,'verify_phone',phone.e164);
+ try{await db('customers').where({id:req.session.customer.id}).update({phone:phone.national,phone_verified_at:new Date().toISOString()});}catch(error){await releaseVerified(db,held);throw error;}
+ req.session.customer=await presentCustomer(req.session.customer);
+ res.json({customer:req.session.customer});
+}));
+app.post('/api/account/forgot-password/otp',otpIpLimit,customerCsrf,route(async(req,res)=>{
+ if(!otpAvailability(process.env,otpGateway).passwordReset)throw validationError('Password recovery is not configured. Contact the merchant.',503);
+ await sendPasswordResetOtp(db,req.session,req.body?.email,process.env,otpGateway);
+ res.status(202).json({message:SENT_MESSAGE});
+}));
+app.post('/api/account/reset-password/otp',otpIpLimit,customerCsrf,route(async(req,res)=>{
+ if(!otpAvailability(process.env,otpGateway).passwordReset)throw validationError('Password recovery is not configured. Contact the merchant.',503);
+ await confirmOtp(db,req.session,{purpose:'password_reset',otp:req.body?.otp},process.env,otpGateway);
+ const email=req.session.otpFlows?.password_reset?.destination;
+ const customer=email?await db('customers').where({email}).first():null;
+ if(!customer)throw validationError('That code is incorrect.');
+ const held=await spendVerified(db,req.session,'password_reset',email);
+ try{await replacePassword(db,customer.id,req.body?.password);}catch(error){await releaseVerified(db,held);throw error;}
+ delete req.session.otpFlows.password_reset;
+ res.json({ok:true});
+}));
 app.post('/api/account/logout',customerAuth,customerCsrf,route(async(req,res)=>{
  const staff=req.session.staff,csrf=req.session.csrf;
  await new Promise((resolve,reject)=>req.session.regenerate(e=>e?reject(e):resolve()));

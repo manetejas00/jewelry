@@ -485,8 +485,8 @@ function Bag(){
 }
 function Checkout(){
   const {bag,setBag,config,customer,flushAccount,afterCheckout,refreshCatalogue}=useStore();
-  const [quote,setQuote]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[accepted,setAccepted]=useState(false),[changed,setChanged]=useState(false);
-  const key=useRef(crypto.randomUUID());
+  const [quote,setQuote]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[accepted,setAccepted]=useState(false),[changed,setChanged]=useState(false),[codeNote,setCodeNote]=useState('');
+  const key=useRef(crypto.randomUUID()),formRef=useRef();
   const nav=useNavigate();
   const placeholders={name:'e.g. Priya Sharma',email:'e.g. priya@example.com',phone:'10-digit mobile number',pincode:'6-digit PIN code',address:'Flat, house no., building, street',city:'e.g. Mumbai'};
   useEffect(()=>{
@@ -500,10 +500,12 @@ function Checkout(){
     if(!quote){setError('Waiting for current price quote. Please check your bag items.');return;}
     if(!accepted){setError('Please check the confirmation box above to confirm your Cash on Delivery order.');return;}
     setBusy(true);setError('');
-    const customer=Object.fromEntries(new FormData(e.target));
+    const fields=Object.fromEntries(new FormData(e.target));
+    const otp=fields.otp;
+    delete fields.otp;
     try{
       await flushAccount();
-      const r=await api('/checkout',{items:bag.map(({sku,quantity})=>({sku,quantity})),token:quote.token,customer,paymentMode:'cod',idempotencyKey:key.current});
+      const r=await api('/checkout',{items:bag.map(({sku,quantity})=>({sku,quantity})),token:quote.token,customer:fields,otp,paymentMode:'cod',idempotencyKey:key.current});
       await afterCheckout();
       nav('/order/'+r.id);
     }catch(e){
@@ -516,12 +518,13 @@ function Checkout(){
     <Link className="underlink" to="/bag"><ArrowLeft size={15}/> Back to bag</Link>
     <div className="section-heading"><div><span className="eyebrow">ONE STEP CLOSER</span><h1>A little wonder, on its way.</h1></div><span className="status-badge" style={{background:'#e8f5e9',color:'#1b5e20',borderColor:'#a5d6a7',fontSize:'10px',fontWeight:700,letterSpacing:'1px'}}>CASH ON DELIVERY (COD)</span></div>
     {!bag.length?<div className="empty"><p>Your bag is empty.</p><Link to="/collections/all">Explore jewellery</Link></div>:<div className="checkout-grid">
-      <form onSubmit={pay}>
+      <form onSubmit={pay} ref={formRef}>
         <h3>Contact & delivery</h3>
         {customer?<p className="checkout-account-note">Signed in as {customer.email} · This order will appear in your account.</p>:<p className="checkout-account-note"><Link to="/account">Sign in or create an account</Link> to keep your order history. Guest checkout is also available.</p>}
         <div className="form-grid">
           {[['name','Full name','text'],['email','Email address','email'],['phone','Mobile number','tel'],['pincode','PIN code','text'],['address','Address','text'],['city','City','text']].map(([name,label,type])=><label key={name} className={name==='address'?'span-two':''}>{label}<input name={name} type={type} placeholder={placeholders[name]} title={name==='phone'?'10-digit mobile number':name==='pincode'?'6-digit PIN code':undefined} defaultValue={name==='name'?customer?.name:name==='email'?customer?.email:undefined} autoComplete={{name:'name',email:'email',phone:'tel',pincode:'postal-code',address:'street-address',city:'address-level2'}[name]} required maxLength={name==='phone'?10:name==='pincode'?6:200} pattern={name==='phone'?'[0-9]{10}':name==='pincode'?'[0-9]{6}':undefined}/></label>)}
         </div>
+        {config.otp?.requireCheckout&&<div className="span-two"><label>Mobile verification code<input name="otp" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" minLength={6} maxLength={6} required/></label><button type="button" className="text-button" disabled={busy} onClick={async()=>{const phone=new FormData(formRef.current).get('phone');const channel=config.otp.channels.includes('sms')?'sms':'whatsapp';setBusy(true);setError('');try{const result=await api('/otp/send',{purpose:'checkout',channel,destination:phone});setCodeNote(result.message);}catch(err){setError(err.message)}finally{setBusy(false)}}}>Send code</button>{codeNote&&<p role="status">{codeNote}</p>}</div>}
         <div className="payment-method-box" style={{background:'var(--paper)',border:'1px solid var(--line)',padding:'16px 18px',borderRadius:'4px',margin:'22px 0 16px'}}>
           <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'6px'}}>
             <span style={{fontSize:'16px'}}>💵</span>

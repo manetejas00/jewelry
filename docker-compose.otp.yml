@@ -1,0 +1,62 @@
+# OTPGateway is an internal service. The published port is bound to loopback so
+# only processes on this machine (the Express server) can reach it.
+# Do not publish 9000 on a public interface, and do not call it from the browser.
+services:
+  otp-redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    restart: unless-stopped
+    networks: [otp]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  otpgateway:
+    build:
+      context: ./docker/otp
+    restart: unless-stopped
+    depends_on:
+      otp-redis:
+        condition: service_healthy
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      OTP_NAMESPACE: ${OTP_GATEWAY_NAMESPACE:-Veyora}
+      OTP_SECRET: ${OTP_GATEWAY_SECRET:?set OTP_GATEWAY_SECRET}
+      OTP_ROOT_URL: http://127.0.0.1:9000
+      OTP_REDIS_HOST: otp-redis
+      OTP_EMAIL_ENABLED: ${OTP_EMAIL_ENABLED:-false}
+      OTP_SMS_ENABLED: ${OTP_SMS_ENABLED:-false}
+      OTP_SMS_PROVIDER: ${OTP_SMS_PROVIDER:-}
+      OTP_WHATSAPP_ENABLED: ${OTP_WHATSAPP_ENABLED:-false}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      KALEYRA_API_KEY: ${KALEYRA_API_KEY:-}
+      KALEYRA_SID: ${KALEYRA_SID:-}
+      KALEYRA_SMS_SENDER: ${KALEYRA_SMS_SENDER:-}
+      KALEYRA_SMS_ENTITY_ID: ${KALEYRA_SMS_ENTITY_ID:-}
+      KALEYRA_SMS_TEMPLATE_ID: ${KALEYRA_SMS_TEMPLATE_ID:-}
+      KALEYRA_WHATSAPP_API_KEY: ${KALEYRA_WHATSAPP_API_KEY:-}
+      KALEYRA_WHATSAPP_SID: ${KALEYRA_WHATSAPP_SID:-}
+      KALEYRA_WHATSAPP_SENDER: ${KALEYRA_WHATSAPP_SENDER:-}
+      KALEYRA_WHATSAPP_TEMPLATE: ${KALEYRA_WHATSAPP_TEMPLATE:-}
+      PINPOINT_APPLICATION_ID: ${PINPOINT_APPLICATION_ID:-}
+      PINPOINT_ACCESS_KEY: ${PINPOINT_ACCESS_KEY:-}
+      PINPOINT_SECRET_KEY: ${PINPOINT_SECRET_KEY:-}
+      PINPOINT_REGION: ${PINPOINT_REGION:-}
+      PINPOINT_SENDER_ID: ${PINPOINT_SENDER_ID:-}
+      PINPOINT_ENTITY_ID: ${PINPOINT_ENTITY_ID:-}
+      PINPOINT_TEMPLATE_ID: ${PINPOINT_TEMPLATE_ID:-}
+    ports:
+      - "127.0.0.1:9000:9000"
+    networks: [otp]
+
+networks:
+  otp:
+    internal: false

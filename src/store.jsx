@@ -97,8 +97,10 @@ export function Provider({children}) {
   }
   async function authenticate(mode, fields) {
     const payload = await api('/account/'+mode,{...fields,guestState:compact(model.current)});
+    if (payload.otpRequired) return payload;
     adopt(payload);
     setToast(mode === 'register' ? 'Welcome to Veyora. Your account is ready.' : 'Welcome back. Your pieces are here.');
+    return payload;
   }
   async function logoutCustomer() {
     await flushAccount();
