@@ -5,7 +5,7 @@ const asset=name=>'https://cdnstatic.tencentcs.com/edgeone/pages/product-activit
 const banners=[
  {image:'Pearls Collection',video:true,eyebrow:'THE PEARL EDIT · CHAPTER 01',title:'Quiet beauty.',lead:'Lasting ',emphasis:'impressions.',copy:<>A little light. A quiet statement.<br/>Jewellery that feels unmistakably you.</>,to:'/collections/pearls',cta:'Shop the collection',alt:'Pearl jewellery campaign'},
  {image:'Fine Jewelry Collection',eyebrow:'THE EVERYDAY EDIT · CHAPTER 02',title:'Little details.',lead:'Extraordinary ',emphasis:'days.',copy:<>Find a piece that becomes part of your story.<br/>Considered jewellery for every chapter.</>,to:'/collections/all',cta:'Explore all jewellery',alt:'Fine jewellery collection'},
- {image:'Pearls Collection',eyebrow:'SOMETHING TO TREASURE · CHAPTER 03',title:'A little light.',lead:'A lasting ',emphasis:'connection.',copy:<>For someone you love. Including yourself.<br/>Discover your next favourite piece.</>,to:'/collections/pearls',cta:'Discover the Pearl Edit',alt:'The Pearl Edit collection'}
+ {image:'Lune Pearl Drop',eyebrow:'SOMETHING TO TREASURE · CHAPTER 03',title:'A little light.',lead:'A lasting ',emphasis:'connection.',copy:<>For someone you love. Including yourself.<br/>Discover your next favourite piece.</>,to:'/collections/pearls',cta:'Discover the Pearl Edit',alt:'Pearl drop earring'}
 ];
 export default function HeroBanner({heroRef}){
  const [index,setIndex]=useState(0);

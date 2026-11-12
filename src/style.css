@@ -2392,3 +2392,29 @@
   border-color: var(--ink, #102124);
 }
 
+/* The centered wordmark is taken out of flow and covers the account control
+   once the right-hand tools no longer fit beside it. */
+@media (max-width: 380px) {
+  .header > .brand { position: static; transform: none; font-size: 18px; min-width: 0; }
+  .header .brand-emblem { font-size: 26px; }
+  .header-tools { gap: 0; }
+  .header-tools .icon { padding: 6px; }
+}
+
+/* The slide count and arrows are absolutely positioned. On a narrow phone
+   they land on the call-to-action, so reserve that bottom band for them. */
+@media (max-width: 420px) {
+  .hero-copy { padding-bottom: 118px; }
+  .hero .button { max-width: 100%; }
+  .hero-index {
+    left: 7%;
+    right: 7%;
+    bottom: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 14px;
+  }
+  .hero-arrows { margin-top: 0; }
+}
+
