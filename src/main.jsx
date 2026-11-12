@@ -484,7 +484,7 @@ function Bag(){
   </section></Layout>;
 }
 function Checkout(){
-  const {bag,setBag,config,customer,flushAccount,afterCheckout}=useStore();
+  const {bag,setBag,config,customer,flushAccount,afterCheckout,refreshCatalogue}=useStore();
   const [quote,setQuote]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[accepted,setAccepted]=useState(false),[changed,setChanged]=useState(false);
   const key=useRef(crypto.randomUUID());
   const nav=useNavigate();
@@ -509,6 +509,7 @@ function Checkout(){
     }catch(e){
       setError(e.message);
       if(e.quote){setQuote(e.quote);setChanged(true);setAccepted(false);}
+      if(/stock|unavailable/i.test(e.message||''))refreshCatalogue({notify:true,fresh:true}).catch(()=>{});
     }finally{setBusy(false);}
   }
   return <Layout><section className="section checkout-page">

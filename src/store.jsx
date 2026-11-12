@@ -1,6 +1,6 @@
 import React, {createContext, useContext, useEffect, useRef, useState} from 'react';
 import {Check} from 'lucide-react';
-import {api} from './api.js';
+import {api,bumpCatalogueReads} from './api.js';
 const Store = createContext();
 export const useStore = () => useContext(Store);
 const readList = key => {try {const value = JSON.parse(localStorage.getItem(key) || '[]'); return Array.isArray(value) ? value : [];} catch {return [];}};
@@ -13,6 +13,7 @@ export function Provider({children}) {
   const [customer,setCustomer] = useState(null), [accountReady,setAccountReady] = useState(false);
   const [syncStatus,setSyncStatus] = useState(''), [syncError,setSyncError] = useState(''), [toast,setToast] = useState('');
   const model = useRef({bag,saved}), user = useRef(null), revision = useRef(0), queue = useRef(Promise.resolve()), syncFailure = useRef('');
+  const catalogueRequest = useRef(0), tabId = useRef(crypto.randomUUID());
   function adopt(payload) {
     sessionStorage.setItem('customer-csrf',payload.csrf);
     user.current = payload.customer;
@@ -29,20 +30,26 @@ export function Provider({children}) {
   }
   useEffect(() => {
     let cancelled = false;
+    const requestId = ++catalogueRequest.current;
     Promise.all([api('/products'),api('/coins').catch(()=>[]),api('/config'),api('/account/session'),api('/offers').catch(()=>[])]).then(([p,cns,c,account,o]) => {
       if (cancelled) return;
-      setProducts(p);setCoins(cns||[]);setConfig(c);adopt(account);setOffers(o||[]);
+      setConfig(c);adopt(account);
+      if (requestId !== catalogueRequest.current) return;
+      setProducts(p);setCoins(cns||[]);setOffers(o||[]);
     }).catch(e => {if (!cancelled) setError(e.message);}).finally(() => {if (!cancelled) setAccountReady(true);});
     return () => {cancelled = true;};
   }, []);
-  async function refreshCatalogue({notify=false}={}) {
+  async function refreshCatalogue({notify=false,fresh=false}={}) {
+    if (fresh) bumpCatalogueReads();
+    const requestId = ++catalogueRequest.current;
     const [pieces,coinsData,currentOffers] = await Promise.all([api('/products'),api('/coins').catch(()=>[]),api('/offers').catch(()=>[])]);
+    if (requestId !== catalogueRequest.current) return;
     setProducts(pieces);setCoins(coinsData||[]);setError('');setOffers(currentOffers);setCatalogueRevision(n=>n+1);
     const all=[...pieces,...(coinsData||[])];
     const updatedBag=model.current.bag.map(item=>{const piece=all.find(p=>p.sku===item.sku);return piece?{...item,name:piece.name,image:piece.image,price:piece.price,stock:piece.stock,unavailable:!piece.checkout_available}:{...item,unavailable:true};});
     model.current={...model.current,bag:updatedBag};rawBag(updatedBag);
     if(notify && typeof BroadcastChannel!=='undefined') {
-      const channel=new BroadcastChannel('veyora-catalogue');channel.postMessage('prices-updated');channel.close();
+      const channel=new BroadcastChannel('veyora-catalogue');channel.postMessage({type:'prices-updated',origin:tabId.current});channel.close();
     }
   }
   useEffect(()=>{
@@ -50,7 +57,7 @@ export function Provider({children}) {
     const visible=()=>{if(document.visibilityState==='visible')reload();};
     window.addEventListener('focus',reload);document.addEventListener('visibilitychange',visible);
     const channel=typeof BroadcastChannel!=='undefined'?new BroadcastChannel('veyora-catalogue'):null;
-    if(channel)channel.onmessage=reload;
+    if(channel)channel.onmessage=event=>{if(event.data?.origin===tabId.current)return;reload();};
     return()=>{window.removeEventListener('focus',reload);document.removeEventListener('visibilitychange',visible);channel?.close();};
   },[]);
   useEffect(() => {if (toast) {const timer = setTimeout(() => setToast(''),3500);return () => clearTimeout(timer);}}, [toast]);
@@ -102,8 +109,9 @@ export function Provider({children}) {
     setToast('You have signed out. Your pieces are saved in your account.');
   }
   async function afterCheckout() {
-    if (!user.current) {setBag([]);return;}
-    try {await refreshAccount();} catch (e) {model.current={...model.current,bag:[]};rawBag([]);syncFailure.current=e.message;setSyncError(e.message);}
+    if (!user.current) setBag([]);
+    else {try {await refreshAccount();} catch (e) {model.current={...model.current,bag:[]};rawBag([]);syncFailure.current=e.message;setSyncError(e.message);}}
+    try {await refreshCatalogue({notify:true,fresh:true});} catch (e) {setError(e.message);}
   }
   function add(p) {
     setBag(old => {
