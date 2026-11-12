@@ -97,4 +97,4 @@ If any post-deployment critical check fails, close checkout through the verified
 
 ## Subsequent availability repair
 
-On 10 November 2026, the existing deployed frontend's direct-route entry was repaired to match the already-working homepage assets. See [live asset repair](docs/live-asset-repair.md). This restored `/admin`; it was not deployment of the locally audited backend/release.
+On 10 November 2026, the existing deployed frontend's direct-route entry was repaired to match the already-working homepage assets. See [live asset repair](live-asset-repair.md). This restored `/admin`; it was not deployment of the locally audited backend/release.

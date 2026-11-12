@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
-const files=['package.json','package-lock.json','index.html','vite.config.js','server.js','server.cjs','server','src','migrations','scripts','seeders','tests','samples','dist','public/assets','.env.example','README.md','docs','PROJECT_AUDIT.md','PRODUCTION_READINESS.md','DEPLOYMENT.md','ROLLBACK.md','SECURITY_AUDIT.md','TESTING_REPORT.md','ENV_SETUP.md'];
-files.push('.github','LIVE_AUDIT_REPORT.md','LIVE_SECURITY_REPORT.md','LIVE_FUNCTIONAL_TESTING.md','LIVE_PERFORMANCE_REPORT.md','LIVE_SEO_REPORT.md','PRODUCTION_BLOCKERS.md','LIVE_DEPLOYMENT_VERIFICATION.md','GIT_WORKFLOW.md','CI_CD_SETUP.md','AUTO_DEPLOYMENT.md','DEPLOYMENT_HISTORY.md');
+const files=['package.json','package-lock.json','index.html','vite.config.js','server.js','server.cjs','server','src','migrations','scripts','seeders','tests','samples','dist','public/assets','.env.example','README.md','docs'];
+files.push('.github');
 for(const file of files)if(!fs.existsSync(file))throw Error(`Missing release file: ${file}`);
 fs.mkdirSync('artifacts',{recursive:true});const target=path.resolve('artifacts/veyora-reviewed-release.tar.gz');
 execFileSync('tar',['-czf',target,'--exclude=.DS_Store','--exclude=._*',...files],{stdio:'inherit',env:{...process.env,COPYFILE_DISABLE:'1'}});
