@@ -25,6 +25,7 @@ import {coinArtwork} from './coin-artwork.js';
 import {seed} from '../scripts/seed.js';
 import {saveUploadedImage,ensureThumbnail,thumbnailUrl} from './thumbnails.js';
 import {searchCatalogue,invalidateSearchCache} from './search.js';
+import {listCopySkills, createCatalogueDraft, approveCatalogueDraft, rejectCatalogueDraft, listCatalogueDrafts} from './ai-copy.js';
 import {
   getProductReviews,
   submitReview,
@@ -700,6 +701,19 @@ app.post('/api/admin/rules/preview',auth(['owner']),route(async(req,res)=>{
 }));
 function validateRule(input){return validatePricingRule(input);}
 app.post('/api/admin/rules',auth(['owner']),route(async(req,res)=>{const rule=validateRule(req.body);await db.transaction(async t=>{await t('pricing_rules').insert({...rule,changed_at:now(),changed_by:req.session.staff.id});await t('audit').insert({staff_id:req.session.staff.id,action:'pricing_rule',details:json(rule),created_at:now()});});invalidateSearchCache();res.json({ok:true});}));
+const aiCopyLimit=rateLimit({windowMs:60000,limit:8,message:{error:'Too many catalogue copy requests. Wait a minute and try again.'}});
+app.get('/api/admin/ai/skills',auth(),route(async(req,res)=>res.json(listCopySkills())));
+app.get('/api/admin/ai/drafts',auth(),route(async(req,res)=>res.json(await listCatalogueDrafts(db,{sku:req.query.sku,status:req.query.status}))));
+app.post('/api/admin/ai/drafts',aiCopyLimit,auth(['owner','manager']),route(async(req,res)=>{
+  const draft=await createCatalogueDraft(db,{sku:req.body.sku,skill:req.body.skill,tone:req.body.tone,staffId:req.session.staff.id});
+  res.status(201).json(draft);
+}));
+app.post('/api/admin/ai/drafts/:id/approve',auth(['owner','manager']),route(async(req,res)=>{
+  const draft=await approveCatalogueDraft(db,Number(req.params.id),{applyName:req.body.apply_name===true,applyDescription:req.body.apply_description===true,acknowledgeWarnings:req.body.acknowledge_warnings===true,staffId:req.session.staff.id});
+  invalidateSearchCache();
+  res.json(draft);
+}));
+app.post('/api/admin/ai/drafts/:id/reject',auth(['owner','manager']),route(async(req,res)=>res.json(await rejectCatalogueDraft(db,Number(req.params.id),req.session.staff.id))));
 registerSeo(app,db,{preview,route});
 app.use('/api',(req,res)=>res.status(404).json({error:'API endpoint not found'}));
 if(!production){const {createServer}=await import('vite');const vite=await createServer({server:{middlewareMode:true},appType:'spa'});app.use(vite.middlewares);}else{app.use(express.static('dist',{index:false,maxAge:'1h'}));app.use(express.static('public',{maxAge:'1h'}));app.get('*',route(async(req,res)=>{if(path.extname(req.path))return res.status(404).send('Not found');const meta=await pageMetadata(db,req.path);res.set('Cache-Control','no-cache');if(!meta.indexable)res.set('X-Robots-Tag','noindex, nofollow');res.status(meta.status).type('html').send(renderMetadata(fs.readFileSync('dist/index.html','utf8'),meta));}));}

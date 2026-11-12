@@ -33,6 +33,10 @@ Production uses `npm start`, explicit migrations (`npm run migrate`) and `PREVIE
 
 Live payment integration is deliberately unavailable until the merchant identifies the gateway and supplies its approved server-side integration details. Test checkout is not a payment gateway. There is no claim that the Hostinger database or scheduler is connected. Product structured data is populated from the published catalogue. All certification and hallmarking claims have been omitted.
 
+## Catalogue copy drafts
+
+Merchant Studio → Catalogue copy can draft a product name or description with three Nexscope instruction skills. Drafts stay out of the live catalogue until an owner or manager approves the name, the description, or both. Setup, the skill audit, and the environment variables are in [catalogue copy](docs/AI_CATALOGUE_COPY.md). Apply migration `013_ai_drafts.js` with `npm run migrate` before using it. Preview mode applies pending migrations when the server starts.
+
 ## Expanded catalogue and image zoom
 
 The 100-product collection uses the existing product, supplier mapping and image tables. Run `npm run seed:products` independently, or `npm run seed:catalogue` through DatabaseSeeder. Both are transactional and repeat-safe; neither removes existing records or resets sold stock. See [collection data, images and verification](docs/products-100.md). Product-image buttons reuse the full-screen viewer, and product-name links keep opening details.

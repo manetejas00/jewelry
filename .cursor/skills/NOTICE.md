@@ -1,0 +1,1 @@
+The skill files in `product-description-generator`, `product-page-seo`, and `product-title-optimization` are copied from https://github.com/nexscope-ai/eCommerce-Skills under the MIT License. Copyright remains with their authors. `veyora-catalogue-copy` is project-specific guidance for this store.
