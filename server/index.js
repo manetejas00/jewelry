@@ -26,6 +26,7 @@ import {seed} from '../scripts/seed.js';
 import {saveUploadedImage,ensureThumbnail,thumbnailUrl} from './thumbnails.js';
 import {searchCatalogue,invalidateSearchCache} from './search.js';
 import {listCopySkills, createCatalogueDraft, approveCatalogueDraft, rejectCatalogueDraft, listCatalogueDrafts} from './ai-copy.js';
+import {registerPwa} from './pwa.js';
 import {
   getProductReviews,
   submitReview,
@@ -716,6 +717,7 @@ app.post('/api/admin/ai/drafts/:id/approve',auth(['owner','manager']),route(asyn
 app.post('/api/admin/ai/drafts/:id/reject',auth(['owner','manager']),route(async(req,res)=>res.json(await rejectCatalogueDraft(db,Number(req.params.id),req.session.staff.id))));
 registerSeo(app,db,{preview,route});
 app.use('/api',(req,res)=>res.status(404).json({error:'API endpoint not found'}));
+registerPwa(app,{production});
 if(!production){const {createServer}=await import('vite');const vite=await createServer({server:{middlewareMode:true},appType:'spa'});app.use(vite.middlewares);}else{app.use(express.static('dist',{index:false,maxAge:'1h'}));app.use(express.static('public',{maxAge:'1h'}));app.get('*',route(async(req,res)=>{if(path.extname(req.path))return res.status(404).send('Not found');const meta=await pageMetadata(db,req.path);res.set('Cache-Control','no-cache');if(!meta.indexable)res.set('X-Robots-Tag','noindex, nofollow');res.status(meta.status).type('html').send(renderMetadata(fs.readFileSync('dist/index.html','utf8'),meta));}));}
 app.use((err,req,res,next)=>{if(res.headersSent)return next(err);const out=errorResponse(err);if(out.status>=500)console.error(JSON.stringify({event:'request_failed',requestId:req.requestId,method:req.method,status:out.status}));res.status(out.status).json(out.body);});
 const port=Number(process.env.PORT||3000);const httpServer=app.listen(port,production?'0.0.0.0':'127.0.0.1',()=>console.log(`Veyora Jewels: http://localhost:${port} (${preview?'fictional preview':'production'})`));

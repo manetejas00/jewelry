@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
-const files=['package.json','package-lock.json','index.html','vite.config.js','server.js','server.cjs','server','src','migrations','scripts','seeders','tests','samples','dist','public/assets','.env.example','README.md','docs'];
+const files=['package.json','package-lock.json','index.html','vite.config.js','server.js','server.cjs','server','src','migrations','scripts','seeders','tests','samples','dist','public/assets','public/manifest.webmanifest','public/sw.js','public/pwa-boot.js','public/offline.html','public/icon-192.png','public/icon-512.png','public/icon-maskable-512.png','public/apple-touch-icon.png','.env.example','README.md','docs'];
 files.push('.github');
 for(const file of files)if(!fs.existsSync(file))throw Error(`Missing release file: ${file}`);
 fs.mkdirSync('artifacts',{recursive:true});const target=path.resolve('artifacts/veyora-reviewed-release.tar.gz');
