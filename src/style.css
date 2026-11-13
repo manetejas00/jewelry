@@ -2538,7 +2538,7 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
 .chatbot-bars small{font-size:9px;color:var(--muted)}
 @keyframes veyora-chat-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @keyframes veyora-chat-dot{50%{opacity:.35}}
-@media(max-width:700px){.veyora-chat-panel{position:fixed;inset:auto 0 0 0;width:100%;height:min(100dvh,720px);bottom:0}.veyora-chat-launcher{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom))}}
+@media(max-width:700px){.veyora-chat-launcher[aria-expanded="true"]{display:none}.veyora-chat-panel{position:fixed;inset:auto 0 0 0;width:100%;height:min(100dvh,720px);bottom:0}.veyora-chat-launcher{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom))}}
 @media(prefers-reduced-motion:reduce){.veyora-chat-panel,.veyora-chat-typing span{animation:none}}
 
 
