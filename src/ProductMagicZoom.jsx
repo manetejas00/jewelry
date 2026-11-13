@@ -1,4 +1,4 @@
-import {useEffect} from 'react';
+import React, {useEffect} from 'react';
 import {listingThumbnail} from './listing-media.js';
 
 const STYLE = '/magiczoom/magiczoom.css';
