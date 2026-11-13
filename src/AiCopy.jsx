@@ -188,7 +188,7 @@ export default function AiCopy({products, readonly, onPublished}) {
       </label>
       <label>Product
         <select value={sku} onChange={e => setSku(e.target.value)} disabled={busy || !products.length}>
-          {products.map(item => <option key={item.sku} value={item.sku}>{item.name} · {item.sku}</option>)}
+          {products.map(item => <option key={item.sku} value={item.sku}>{item.name} · {item.sku}{item.slug ? ` · ${item.slug}` : ''}</option>)}
         </select>
       </label>
       <label>Tone
@@ -204,7 +204,7 @@ export default function AiCopy({products, readonly, onPublished}) {
     {error && <p className="error" role="alert">{error}</p>}
     {notice && <p className="notice" role="status">{notice}</p>}
     {selected && <div className="copy-review">
-      <p className="small"><strong>{selected.skill}</strong> · {selected.sku} · {selected.status} · {selected.tone}</p>
+      <p className="small"><strong>{selected.skill}</strong> · {selected.sku}{product?.slug ? ` · ${product.slug}` : ''} · {selected.status} · {selected.tone}</p>
       {selected.error && <p className="error">{selected.error}</p>}
       {output && <div className="copy-columns">
         <div>
@@ -252,13 +252,15 @@ export default function AiCopy({products, readonly, onPublished}) {
       </div>}
     </div>
     <div className="table-wrap"><table>
-      <thead><tr><th>Select</th><th>Draft</th><th>Product</th><th>Skill</th><th>Status</th></tr></thead>
+      <thead><tr><th>Select</th><th>Draft</th><th>Product</th><th>Slug</th><th>Skill</th><th>Status</th></tr></thead>
       <tbody>{drafts.map(draft => {
         const pending = draft.status === 'pending';
+        const slug = products.find(item => item.sku === draft.sku)?.slug || '';
         return <tr key={draft.id}>
           <td><input type="checkbox" checked={pending && checked.has(draft.id)} disabled={!pending || busy || readonly} onChange={() => toggleDraft(draft.id)} aria-label={`Select draft ${draft.id}`}/></td>
           <td><button type="button" className="underlink" onClick={() => setSelectedId(draft.id)}>#{draft.id}</button></td>
           <td>{draft.sku}</td>
+          <td>{slug ? <a href={`/products/${slug}`} target="_blank" rel="noreferrer">{slug}</a> : '—'}</td>
           <td>{skills.find(([id]) => id === draft.skill)?.[1] || draft.skill}</td>
           <td>{draft.status}</td>
         </tr>;
