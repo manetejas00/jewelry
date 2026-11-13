@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import useScrollLock from '../../useScrollLock.js';
+import React, { useRef } from 'react';
 import { X } from 'lucide-react';
 
 export function CommonModal({
@@ -10,23 +11,18 @@ export function CommonModal({
   maxWidth = '580px',
   ariaLabel
 }) {
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  const rootRef=useRef(null);
+  useScrollLock(isOpen,rootRef,{onEscape:onClose,trapFocus:true});
 
   if (!isOpen) return null;
 
   return (
     <div
+      ref={rootRef}
       className="admin-modal-backdrop"
       style={{
         position: 'fixed',
-        inset: 0,
+        inset: 'var(--overlay-viewport-top, 0px) 0 var(--overlay-viewport-bottom, 0px)',
         backgroundColor: 'rgba(26,24,20,0.55)',
         backdropFilter: 'blur(3px)',
         zIndex: 999,
@@ -51,7 +47,7 @@ export function CommonModal({
           boxShadow: '0 20px 45px rgba(0,0,0,0.18)',
           width: '100%',
           maxWidth,
-          maxHeight: 'calc(100dvh - 40px)',
+          maxHeight: 'calc(var(--overlay-viewport-height, 100dvh) - 40px)',
           overflowY: 'auto',
           padding: '28px',
           position: 'relative'

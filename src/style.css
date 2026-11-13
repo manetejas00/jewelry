@@ -2562,3 +2562,28 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
 .customer-detail-content label{display:flex;flex-direction:column;gap:8px;margin:16px 0;font-size:13px}
 .customer-detail-content input{width:100%;padding:10px;border:1px solid var(--line);background:white}
 .customers-admin .panel-title{flex-wrap:wrap}
+
+/* Scroll ownership belongs to useScrollLock; only open overlays receive bounds. */
+.modal-backdrop,.admin-modal-backdrop,.review-photo-lightbox{max-height:var(--overlay-viewport-height, 100dvh);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.modal,.admin-modal-card,.install-help,.account-dropdown,.search-dropdown,.veyora-chat-panel,.veyora-chat-log{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.modal,.admin-modal-card{max-height:calc(var(--overlay-viewport-height, 100dvh) - 40px)}
+.admin-modal-card .modal-body{min-height:0;overscroll-behavior:contain}
+.admin-modal-card .modal-header,.admin-modal-card .modal-footer{flex-shrink:0}
+.account-dropdown{max-height:calc(var(--overlay-viewport-height, 100dvh) - 150px);overflow-y:auto}
+.header .nav.open{max-height:calc(var(--overlay-viewport-height, 100dvh) - 136px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.search-autocomplete-wrap{max-height:calc(var(--overlay-viewport-height, 100dvh) - 136px);display:flex;flex-direction:column}
+.search-autocomplete-wrap .search-panel{flex-shrink:0}
+.search-autocomplete-wrap .search-dropdown{position:relative;top:auto;min-height:0;flex:0 1 auto}
+.install-help{max-height:calc(var(--overlay-viewport-height, 100dvh) - 116px);overflow-y:auto}
+.veyora-chat-panel{overflow-y:auto}
+.veyora-chat-header,.veyora-chat-usage,.veyora-chat-history,.veyora-chat-note,.veyora-chat-form{flex-shrink:0}
+.veyora-chat-log{min-height:80px}
+.image-viewer{max-height:var(--overlay-viewport-height, 100dvh);overflow-y:auto}
+.viewer-stage{min-height:80px}
+.lightbox-content,.lightbox-content img{max-height:min(85vh,calc(var(--overlay-viewport-height, 100dvh) - 120px))}
+@media(max-width:800px){.header .nav.open{max-height:calc(var(--overlay-viewport-height, 100dvh) - 113px)}}
+@media(max-width:800px){.search-autocomplete-wrap{max-height:calc(var(--overlay-viewport-height, 100dvh) - 113px)}}
+@media(max-width:600px){.modal{max-height:calc(var(--overlay-viewport-height, 100dvh) - 20px)}}
+
+.modal-backdrop,.admin-modal-backdrop,.review-photo-lightbox,.image-viewer{top:var(--overlay-viewport-top,0px);bottom:var(--overlay-viewport-bottom,0px)}
+@media(max-width:700px){.veyora-chat-panel{height:min(var(--overlay-viewport-height,100dvh),720px);bottom:var(--overlay-viewport-bottom,0px)}}

@@ -1,3 +1,4 @@
+import useScrollLock from './useScrollLock.js';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Search, X, ArrowRight, ArrowUpRight, Tag, Sparkles, Gem, AlertCircle, Loader2 } from 'lucide-react';
@@ -44,6 +45,7 @@ export function SearchAutocomplete({ onClose, initialQuery = '' }) {
   const inputRef = useRef(null);
   const containerRef = useRef(null);
   const listboxRef = useRef(null);
+  useScrollLock(true,containerRef,{onEscape:onClose});
   const navigate = useNavigate();
 
   // Load empty state meta if needed

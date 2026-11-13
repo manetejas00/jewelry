@@ -1,4 +1,5 @@
-import React, {useEffect, useState} from 'react';
+import useScrollLock from './useScrollLock.js';
+import React, {useEffect, useState, useRef} from 'react';
 
 const SEEN_KEY = 'veyora-install-banner-seen';
 
@@ -13,6 +14,8 @@ export default function InstallApp() {
   const [help, setHelp] = useState(false);
   const [ios, setIos] = useState(false);
   const [offline, setOffline] = useState(false);
+  const helpRef=useRef(null);
+  useScrollLock(help&&!installed,helpRef,{onEscape:()=>setHelp(false),trapFocus:true});
 
   useEffect(() => {
     const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
@@ -75,7 +78,7 @@ export default function InstallApp() {
       </button>
       {expanded && <button type="button" className="install-app-dismiss" aria-label="Dismiss" onClick={() => setExpanded(false)}>Close</button>}
       {expanded && ios && <p className="install-app-note">On iPhone or iPad, use Safari’s Share menu, then Add to Home Screen.</p>}
-      {help && <div className="install-help" role="dialog" aria-modal="true" aria-labelledby="install-help-title">
+      {help && <div ref={helpRef} className="install-help" role="dialog" aria-modal="true" aria-labelledby="install-help-title">
         <h2 id="install-help-title">Add Veyora to your home screen</h2>
         {ios ? <>
           <ol>

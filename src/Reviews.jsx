@@ -1,3 +1,4 @@
+import useScrollLock from './useScrollLock.js';
 import React, { useState, useEffect, useRef, useId } from 'react';
 import { Link } from 'react-router-dom';
 import { Star, CheckCircle, Upload, X, AlertCircle, Sparkles, MessageSquare, Image as ImageIcon, ChevronDown, Clock } from 'lucide-react';
@@ -170,6 +171,8 @@ export function ProductReviewsSection({ product }) {
   const [formSuccess, setFormSuccess] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [zoomedImage, setZoomedImage] = useState(null);
+  const lightboxRef=useRef(null);
+  useScrollLock(Boolean(zoomedImage),lightboxRef,{onEscape:()=>setZoomedImage(null),trapFocus:true});
 
   const fileInputRef = useRef(null);
 
@@ -763,7 +766,7 @@ export function ProductReviewsSection({ product }) {
 
       {/* Zoom Modal for Review Photos */}
       {zoomedImage && (
-        <div className="review-photo-lightbox" onClick={() => setZoomedImage(null)}>
+        <div ref={lightboxRef} role="dialog" aria-modal="true" aria-label="Review photograph" className="review-photo-lightbox" onClick={() => setZoomedImage(null)}>
           <div className="lightbox-content" onClick={e => e.stopPropagation()}>
             <img src={zoomedImage} alt="Enlarged review photograph" />
             <button

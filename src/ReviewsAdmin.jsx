@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import useScrollLock from './useScrollLock.js';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Star,
   Check,
@@ -47,6 +48,10 @@ export function ReviewsAdmin({ readonly = false, refreshParent = null }) {
   const [editReviewData, setEditReviewData] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
   const [actionBusy, setActionBusy] = useState(false);
+  const detailRef=useRef(null),editRef=useRef(null),deleteRef=useRef(null);
+  useScrollLock(Boolean(detailReview),detailRef,{onEscape:()=>setDetailReview(null),trapFocus:true});
+  useScrollLock(Boolean(editReviewData),editRef,{onEscape:()=>setEditReviewData(null),trapFocus:true});
+  useScrollLock(deleteId!=null,deleteRef,{onEscape:()=>setDeleteId(null),trapFocus:true});
 
   async function loadReviews(pageNum = page) {
     setLoading(true);
@@ -603,7 +608,7 @@ export function ReviewsAdmin({ readonly = false, refreshParent = null }) {
 
       {/* Detail Modal */}
       {detailReview && (
-        <div className="admin-modal-backdrop" onClick={() => setDetailReview(null)}>
+        <div ref={detailRef} role="dialog" aria-modal="true" aria-label="Review details" className="admin-modal-backdrop" onClick={() => setDetailReview(null)}>
           <div className="admin-modal-card" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Review Details #{detailReview.id}</h3>
@@ -731,7 +736,7 @@ export function ReviewsAdmin({ readonly = false, refreshParent = null }) {
 
       {/* Edit Review Modal */}
       {editReviewData && (
-        <div className="admin-modal-backdrop" onClick={() => setEditReviewData(null)}>
+        <div ref={editRef} role="dialog" aria-modal="true" aria-label="Edit review" className="admin-modal-backdrop" onClick={() => setEditReviewData(null)}>
           <div className="admin-modal-card" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Edit Review #{editReviewData.id}</h3>
@@ -835,7 +840,7 @@ export function ReviewsAdmin({ readonly = false, refreshParent = null }) {
 
       {/* Delete Confirmation Modal */}
       {deleteId && (
-        <div className="admin-modal-backdrop" onClick={() => setDeleteId(null)}>
+        <div ref={deleteRef} role="dialog" aria-modal="true" aria-label="Delete review" className="admin-modal-backdrop" onClick={() => setDeleteId(null)}>
           <div className="admin-modal-card confirm-modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Confirm Review Removal</h3>

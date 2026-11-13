@@ -1,3 +1,4 @@
+import useScrollLock from './useScrollLock.js';
 import React, {useEffect, useId, useRef, useState} from 'react';
 import {Link} from 'react-router-dom';
 import {MessageCircle, Send, X} from 'lucide-react';
@@ -25,6 +26,7 @@ export default function ChatWidget() {
   const sending = useRef('');
   const [availability, setAvailability] = useState(null);
   const [open, setOpen] = useState(false);
+  useScrollLock(open&&accountReady&&availability?.enabled,panelRef,{onEscape:()=>setOpen(false)});
   const [usage, setUsage] = useState(null);
   const [conversations, setConversations] = useState([]);
   const [conversationId, setConversationId] = useState(null);
@@ -63,10 +65,8 @@ export default function ChatWidget() {
 
   useEffect(() => {
     if (!open) return;
-    const onKey = event => { if (event.key === 'Escape') setOpen(false); };
-    window.addEventListener('keydown', onKey);
     const timer = setTimeout(() => inputRef.current?.focus(), 50);
-    return () => { window.removeEventListener('keydown', onKey); clearTimeout(timer); };
+    return () => { clearTimeout(timer); };
   }, [open]);
 
   if (!accountReady || !availability?.enabled) return null;

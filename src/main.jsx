@@ -1,3 +1,4 @@
+import useScrollLock from './useScrollLock.js';
 import React,{useEffect,useState,useRef,createContext,useContext,useMemo} from 'react';
 import {createRoot} from 'react-dom/client';
 import {BrowserRouter,Routes,Route,Link,useLocation,useNavigate,useParams,useSearchParams} from 'react-router-dom';
@@ -43,23 +44,16 @@ function Header(){
   const [menu,setMenu]=useState(false),[search,setSearch]=useState(false),[q,setQ]=useState('');
   const [accountOpen,setAccountOpen]=useState(false);
   const accountRef=useRef(null);
+  const menuRef=useRef(null);
+  useScrollLock(menu,menuRef,{onEscape:()=>setMenu(false)});
+  useScrollLock(accountOpen,accountRef,{onEscape:()=>setAccountOpen(false)});
   const hoverTimer=useRef(null);
   const nav=useNavigate();
   const location=useLocation();
   const searchInputRef=useRef(null);
 
   useEffect(()=>{setMenu(false);setSearch(false);setAccountOpen(false);},[location.pathname,location.search]);
-  useEffect(()=>{
-    const close=e=>{
-      if(e.key==='Escape'){
-        setMenu(false);
-        setSearch(false);
-        setAccountOpen(false);
-      }
-    };
-    document.addEventListener('keydown',close);
-    return()=>document.removeEventListener('keydown',close);
-  },[]);
+  useEffect(()=>{const media=window.matchMedia('(max-width:800px)');const closeWide=()=>{if(!media.matches)setMenu(false)};media.addEventListener('change',closeWide);return()=>media.removeEventListener('change',closeWide)},[]);
 
   useEffect(()=>{
     if(!accountOpen)return;
@@ -116,7 +110,7 @@ function Header(){
         {menu?<X size={22}/>:<Menu size={22}/>}
       </button>
       <Brand/>
-      <nav id="store-navigation" className={menu?'nav open':'nav'}>
+      <nav ref={menuRef} id="store-navigation" className={menu?'nav open':'nav'}>
         <Link onClick={()=>setMenu(false)} to="/collections/all">All jewellery</Link>
         <Link onClick={()=>setMenu(false)} to="/collections/pearls">The Pearl Edit</Link>
         <Link onClick={()=>setMenu(false)} to="/coins">Coins</Link>
@@ -447,7 +441,8 @@ function Collection(){
     </section>
   </Layout>;
 }
-function Modal({title,children,onClose}){const el=useRef();useEffect(()=>{const prev=document.activeElement;el.current?.focus();const key=e=>{if(!el.current?.contains(document.activeElement))return;if(e.key==='Escape')onClose();if(e.key==='Tab'){const nodes=el.current.querySelectorAll('button:not([disabled]),a[href],input:not([disabled]):not([type="hidden"]),select:not([disabled]),textarea:not([disabled])');const first=nodes[0],last=nodes[nodes.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}}};document.addEventListener('keydown',key);const old=document.body.style.overflow;document.body.style.overflow='hidden';return()=>{document.removeEventListener('keydown',key);document.body.style.overflow=old;prev?.focus()}},[]);return <div className="modal-backdrop" onClick={onClose}><section ref={el} tabIndex={-1} role="dialog" aria-modal="true" aria-label={title} className="modal" onClick={e=>e.stopPropagation()}><div className="modal-heading"><h2>{title}</h2><button className="icon" aria-label="Close dialog" onClick={onClose}><X/></button></div>{children}</section></div>}
+function Modal({title,children,onClose}){const el=useRef();useScrollLock(true,el,{onEscape:onClose,trapFocus:true});return <div className="modal-backdrop" onClick={onClose}><section ref={el} tabIndex={-1} role="dialog" aria-modal="true" aria-label={title} className="modal" onClick={e=>e.stopPropagation()}><div className="modal-heading"><h2>{title}</h2><button className="icon" aria-label="Close dialog" onClick={onClose}><X/></button></div>{children}</section></div>}
+
 function StructuredProduct({p}){if(typeof document!=='undefined'&&document.querySelector('script[type="application/ld+json"]'))return null;const data={"@context":"https://schema.org","@type":"Product",name:p.name,description:p.description,image:p.image,sku:p.sku,material:p.metal,brand:{"@type":"Brand",name:"Veyora Jewels"},offers:{"@type":"Offer",priceCurrency:"INR",price:p.price,availability:"https://schema.org/"+(p.checkout_available?'InStock':'OutOfStock'),url:window.location.href}};return <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(data).replace(/</g,'\\u003c')}}/>}
 function Product(){
   const {slug}=useParams();
@@ -908,7 +903,7 @@ function ImageUploader({products=[],refreshParent}){
         Target Product (Optional)
         <select value={selectedProduct} onChange={e=>setSelectedProduct(e.target.value)} disabled={busy}>
           <option value="">General Media Pool (Unassigned)</option>
-          {products.map(p=><option key={p.product_code} value={p.product_code}>{p.name} ({p.product_code})</option>)}
+          {products.map(p=><option key={`${p.product_code}:${p.sku}`} value={p.product_code}>{p.name} ({p.product_code})</option>)}
         </select>
       </label>
       <label>
