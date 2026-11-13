@@ -12,8 +12,18 @@ export async function activeOffers(k){
   }catch(e){throw e;}
 }
 
-export function matchOffer(item, offers=[]){
+export function offerIsCurrent(offer, nowMs=Date.now()){
+  if(!offer)return false;
+  if(offer.starts_at && Date.parse(offer.starts_at)>nowMs)return false;
+  if(offer.ends_at && Date.parse(offer.ends_at)<nowMs)return false;
+  return true;
+}
+export function matchOffer(item, offers=[], code=null){
+  const wanted=code?String(code).trim().toUpperCase():'';
   for(const o of offers){
+    if(!offerIsCurrent(o))continue;
+    const codeRequired=o.code_required===true||o.code_required===1||o.code_required==='1';
+    if(codeRequired&&String(o.code||'').trim().toUpperCase()!==wanted)continue;
     const app=o.applies_to;
     if(app==='all')return o;
     const isCoin=Boolean(item.coin_type||(item.metal&&['Gold','Silver'].includes(item.metal)&&item.weight_g&&item.sku?.startsWith('COIN-')));
@@ -206,7 +216,7 @@ export function calculateCoinPrice(c,rates,silverRate=null,rule={tax_percent:0,r
   };
 }
 
-export async function coinCatalogue(k){
+export async function coinCatalogue(k, options={}){
   if(!k.schema||!(await k.schema.hasTable('coins')))return [];
   const hasImages=await k.schema.hasTable('product_images').catch(()=>false);
   const hasReviews=await k.schema.hasTable('reviews').catch(()=>false);
@@ -234,7 +244,7 @@ export async function coinCatalogue(k){
     }
   }
   return coins.map(c=>{
-    const offer=matchOffer(c,offers);
+    const offer=matchOffer(c,offers,options.code);
     let price=null;
     try{price=calculateCoinPrice(c,rates,silverRate,rules,offer);}catch{}
     const isGold=(c.metal||'').toLowerCase()==='gold';
@@ -261,7 +271,7 @@ export async function coinCatalogue(k){
   });
 }
 
-export async function catalogue(k){
+export async function catalogue(k, options={}){
   const hasImages=await k.schema.hasTable('product_images').catch(()=>false);
   const hasReviews=await k.schema.hasTable('reviews').catch(()=>false);
   const [products,rates,rules,images,offers,ratings]=await Promise.all([
@@ -285,7 +295,7 @@ export async function catalogue(k){
     }
   }
   return products.map(p=>{
-    const offer=matchOffer(p,offers);
+    const offer=matchOffer(p,offers,options.code);
     let price=null;
     try{price=calculatePrice(p,rates[p.purity],rules,offer)}catch{}
     const prodImages=[...(imagesByProduct[p.sku]||[]),...(imagesByProduct[p.product_code]||[])].filter((img,i,all)=>all.findIndex(other=>other.url===img.url)===i);
@@ -309,11 +319,11 @@ export async function catalogue(k){
   });
 }
 
-export async function quote(k,items){
+export async function quote(k,items,options={}){
  if(!Array.isArray(items)||!items.length||items.length>50)throw validationError('Your bag is empty or too large');
  if(items.some(i=>!i||typeof i.sku!=='string'||!i.sku||i.sku.length>80))throw validationError('Invalid bag item');
  if(new Set(items.map(i=>i.sku)).size!==items.length)throw validationError('Duplicate bag SKU');
- const [products,coins]=await Promise.all([catalogue(k),coinCatalogue(k)]);
+  const [products,coins]=await Promise.all([catalogue(k,options),coinCatalogue(k,options)]);
  const allItems=[...products,...coins];
  let subtotal=0;const lines=[];
  for(const i of items){
@@ -338,4 +348,31 @@ export async function quote(k,items){
  const shipping=subtotal>=Number(process.env.FREE_SHIPPING_INR||25000)?0:Number(process.env.SHIPPING_INR||250);
  const result={lines,subtotal,shipping,total:Number(new Decimal(subtotal).add(shipping))};
  return {...result,token:fingerprint(result)};
+}
+async function pricingContext(k){
+  const [rates,rules,offers]=await Promise.all([activeRates(k),k('pricing_rules').orderBy('id','desc').first(),activeOffers(k)]);
+  return {rates,rules,offers};
+}
+export async function pricedProductBySlug(k, slug){
+  const row=await k('products').where({slug,status:'published'}).first();
+  if(!row)return null;
+  const {rates,rules,offers}=await pricingContext(k);
+  const offer=matchOffer(row,offers);
+  let price=null;
+  try{price=calculatePrice(row,rates[row.purity],rules,offer);}catch{}
+  const fresh=row.pricing_mode==='FIXED'||isFresh(rates[row.purity]);
+  return {...row,price:price?.total,checkout_available:row.stock>0&&Number.isFinite(price?.total)&&fresh};
+}
+export async function pricedCoinBySku(k, sku){
+  if(!await k.schema.hasTable('coins'))return null;
+  const row=await k('coins').where({sku,status:'published'}).first();
+  if(!row)return null;
+  const {rates,rules,offers}=await pricingContext(k);
+  const silver=await getSilverRate(k);
+  const offer=matchOffer(row,offers);
+  let price=null;
+  try{price=calculateCoinPrice(row,rates,silver,rules,offer);}catch{}
+  const isGold=(row.metal||'').toLowerCase()==='gold';
+  const fresh=row.pricing_mode==='FIXED'||(isGold?isFresh(rates[row.purity]):Number(silver)>0);
+  return {...row,price:price?.total,checkout_available:row.stock>0&&Number.isFinite(price?.total)&&fresh,description:row.description||row.name};
 }

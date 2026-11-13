@@ -16,16 +16,17 @@ import crypto from 'node:crypto';
 import path from 'node:path';
 import fs from 'node:fs';
 import {db,migrate,preview,now,json,parse} from './db.js';
-import {catalogue,coinCatalogue,calculateCoinPrice,getSilverRate,activeRates,calculatePrice,isFresh,quote,todayIndia,activeOffers,matchOffer} from './pricing.js';
+import {catalogue,coinCatalogue,calculateCoinPrice,getSilverRate,activeRates,calculatePrice,isFresh,quote,todayIndia,activeOffers,matchOffer,offerIsCurrent} from './pricing.js';
 import {previewImport,publishImport,errorCsv,exportCsv,ordersCsv,schemas,validate} from './importer.js';
-import {checkout} from './orders.js';
+import {checkout,presentOrders,requireSignedInCsrf,updateOrderStatus} from './orders.js';
+import {staffIsActive,setStaffAccess} from './staff-access.js';
 import {validatePricingRule} from './pricing-rules.js';
 import {registerCustomer,loginCustomer,customerState,saveCustomerState,mergeGuestState,claimSessionOrders,customerOrders,mayReadOrder,validateState} from './customers.js';
 import {daily} from './daily.js';
 import {loadFeedSettings as readFeedSettings} from './settings.js';
 import {coinArtwork} from './coin-artwork.js';
 import {seed} from '../scripts/seed.js';
-import {saveUploadedImage,ensureThumbnail,thumbnailUrl} from './thumbnails.js';
+import {saveUploadedImage,ensureThumbnail,thumbnailUrl,isSafeMediaUrl} from './thumbnails.js';
 import {searchCatalogue,invalidateSearchCache} from './search.js';
 import {listCopySkills, createCatalogueDraft, approveCatalogueDraft, rejectCatalogueDraft, listCatalogueDrafts} from './ai-copy.js';
 import {registerPwa} from './pwa.js';
@@ -67,7 +68,7 @@ function routeSettings(req,res,next){loadFeedSettings().then(()=>next()).catch(n
 app.use('/api',(req,res,next)=>{res.set('Cache-Control','no-store');if(['POST','PUT','DELETE','PATCH'].includes(req.method)){const origin=req.get('origin');const allowedOrigins=[process.env.APP_URL?new URL(process.env.APP_URL).origin:null,...(!production?['http://localhost:3000','http://127.0.0.1:3000']:[])].filter(Boolean);if(origin && !allowedOrigins.includes(origin))return res.status(403).json({error:'Origin not allowed'});if(req.get('sec-fetch-site')==='cross-site')return res.status(403).json({error:'Origin not allowed'});if(req.path!=='/admin/login'&&req.path.startsWith('/admin')&&req.get('x-csrf-token')!==req.session.csrf)return res.status(403).json({error:'Please reload the admin panel'});}next();});
 
 const otpGateway=createOtpGateway(process.env);
-const auth=(roles=['owner','manager','viewer'])=>(req,res,next)=>req.session.staff&&roles.includes(req.session.staff.role)?next():res.status(403).json({error:'Staff access required'});
+const auth=(roles=['owner','manager','viewer'])=>async(req,res,next)=>{try{if(!req.session.staff||!roles.includes(req.session.staff.role))return res.status(403).json({error:'Staff access required'});const row=await db('staff').where({id:req.session.staff.id}).select('role','disabled_at').first();if(!staffIsActive(row)||!roles.includes(row.role)){delete req.session.staff;return res.status(403).json({error:'Staff access required'});}req.session.staff.role=row.role;next();}catch(error){next(error);}};
 const audit=async(req,action,details)=>db('audit').insert({staff_id:req.session.staff.id,action,details:json(details),created_at:now()});
 app.get('/api/config',(req,res)=>res.json({brand:process.env.BRAND_NAME||'Veyora Jewels',preview,passwordResetEnabled:resetConfigured(),otp:otpAvailability(process.env,otpGateway),...commerceConfig(process.env,preview),contact:process.env.MERCHANT_EMAIL||'',shippingPolicy:process.env.SHIPPING_POLICY||'',returnsPolicy:process.env.RETURNS_POLICY||''}));
 app.get('/api/thumbnail',async(req,res)=>{
@@ -83,7 +84,7 @@ app.get('/api/offers',route(async(req,res)=>{
   const hasOffers=await db.schema.hasTable('offers').catch(()=>false);
   if(!hasOffers)return res.json([]);
   const list=await db('offers').where({status:'active'}).orderBy('priority','desc').orderBy('id','desc');
-  res.json(list);
+  res.json(list.filter(offer=>offerIsCurrent(offer)));
 }));
 app.get('/api/admin/offers',auth(),route(async(req,res)=>{
   const hasOffers=await db.schema.hasTable('offers').catch(()=>false);
@@ -110,6 +111,9 @@ app.post('/api/admin/offers',auth(['owner','manager']),route(async(req,res)=>{
     priority:Number(priority||0),
     show_in_banner:show_in_banner!==undefined?show_in_banner:true,
     show_in_grid:show_in_grid!==undefined?show_in_grid:true,
+    starts_at:req.body.starts_at?new Date(req.body.starts_at).toISOString():null,
+    ends_at:req.body.ends_at?new Date(req.body.ends_at).toISOString():null,
+    code_required:req.body.code_required===true||req.body.code_required===1||req.body.code_required==='1'||req.body.code_required==='on',
     created_at:nowStr,
     updated_at:nowStr
   };
@@ -122,12 +126,14 @@ app.patch('/api/admin/offers/:id',auth(['owner','manager']),route(async(req,res)
   const offer=await db('offers').where({id:req.params.id}).first();
   if(!offer)return res.status(404).json({error:'Offer not found'});
   const patch={updated_at:now()};
-  const fields=['name','code','badge_text','discount_type','discount_value','applies_to','target_value','banner_headline','banner_subtext','status','priority','show_in_banner','show_in_grid'];
+  const fields=['name','code','badge_text','discount_type','discount_value','applies_to','target_value','banner_headline','banner_subtext','status','priority','show_in_banner','show_in_grid','starts_at','ends_at','code_required'];
   for(const f of fields){
     if(req.body[f]!==undefined){
       if(f==='discount_value'||f==='priority')patch[f]=Number(req.body[f]||0);
       else if(f==='show_in_banner'||f==='show_in_grid')patch[f]=req.body[f];
       else if(f==='code')patch[f]=req.body[f]?String(req.body[f]).trim().toUpperCase():null;
+      else if(f==='starts_at'||f==='ends_at')patch[f]=req.body[f]?new Date(req.body[f]).toISOString():null;
+      else if(f==='code_required')patch[f]=req.body[f]===true||req.body[f]===1||req.body[f]==='1'||req.body[f]==='on';
       else patch[f]=req.body[f]===null?null:String(req.body[f]).trim();
     }
   }
@@ -143,8 +149,8 @@ app.delete('/api/admin/offers/:id',auth(['owner','manager']),route(async(req,res
   await audit(req,'delete_offer',{id:req.params.id,name:offer.name});
   res.json({ok:true});
 }));
-app.post('/api/quote',route(async(req,res)=>res.json(await quote(db,req.body.items))));
-app.post('/api/checkout',rateLimit({windowMs:60000,limit:20}),route(async(req,res)=>{if(commerceConfig(process.env,preview).checkoutEnabled===false)return res.status(503).json({error:'Checkout is awaiting merchant configuration.'});req.session.checkoutScope ||= crypto.randomUUID();const held=await prepareCheckoutOtp(db,req.session,req.body,process.env,otpGateway);try{const result=await checkout(db,req.body,preview,req.session.customer?.id||null,req.session.checkoutScope);req.session.orderIds=[...new Set([...(req.session.orderIds||[]),result.id])].slice(-100);res.json(result);}catch(error){if(held)await releaseVerified(db,held);throw error;}}));
+app.post('/api/quote',route(async(req,res)=>res.json(await quote(db,req.body.items,{code:req.body.offerCode}))));
+app.post('/api/checkout',rateLimit({windowMs:60000,limit:20}),route(async(req,res)=>{if(commerceConfig(process.env,preview).checkoutEnabled===false)return res.status(503).json({error:'Checkout is awaiting merchant configuration.'});requireSignedInCsrf(req);req.session.checkoutScope ||= crypto.randomUUID();const held=await prepareCheckoutOtp(db,req.session,req.body,process.env,otpGateway);try{const result=await checkout(db,{...req.body,offerCode:req.body.offerCode||null},preview,req.session.customer?.id||null,req.session.checkoutScope);req.session.orderIds=[...new Set([...(req.session.orderIds||[]),result.id])].slice(-100);res.json(result);}catch(error){if(held)await releaseVerified(db,held);throw error;}}));
 app.get('/api/orders/:id',route(async(req,res)=>{const order=await db('orders').where({id:req.params.id}).first();if(!mayReadOrder(req.session,order))return res.status(404).json({error:'Order not found'});res.json({...order,customer:parse(order.customer),items:(await db('order_items').where({order_id:order.id})).map(i=>parse(i.snapshot))});}));
 const customerAuth=(req,res,next)=>req.session.customer?next():res.status(401).json({error:'Please sign in to your customer account.'});
 const customerCsrf=(req,res,next)=>req.session.customerCsrf&&req.get('x-customer-csrf')===req.session.customerCsrf?next():res.status(403).json({error:'Please reload and try again.'});
@@ -319,10 +325,10 @@ app.post('/api/reviews/upload-image', reviewUploadLimit, customerAuth, customerC
   const saved = await saveUploadedImage(uploadsDir, filename, buffer);
   res.json({ ok: true, url: saved.url, thumbnail: saved.thumbnail });
 }));
-app.post('/api/admin/login',rateLimit({windowMs:15*60000,limit:10}),route(async(req,res)=>{const staff=await db('staff').where({email:String(req.body.email).toLowerCase()}).first();if(!staff||!await bcrypt.compare(String(req.body.password),staff.password_hash))return res.status(401).json({error:'Email or password is incorrect'});const customer=req.session.customer,customerCsrf=req.session.customerCsrf,orderIds=req.session.orderIds;await new Promise((resolve,reject)=>req.session.regenerate(e=>e?reject(e):resolve()));if(customer){req.session.customer=customer;req.session.customerCsrf=customerCsrf;}req.session.orderIds=orderIds;req.session.staff={id:staff.id,email:staff.email,role:staff.role};req.session.csrf=crypto.randomBytes(24).toString('hex');res.json({staff:req.session.staff,csrf:req.session.csrf});}));
+app.post('/api/admin/login',rateLimit({windowMs:15*60000,limit:10}),route(async(req,res)=>{const staff=await db('staff').where({email:String(req.body.email).toLowerCase()}).first();if(!staff||staff.disabled_at||!await bcrypt.compare(String(req.body.password),staff.password_hash))return res.status(401).json({error:'Email or password is incorrect'});const customer=req.session.customer,customerCsrf=req.session.customerCsrf,orderIds=req.session.orderIds;await new Promise((resolve,reject)=>req.session.regenerate(e=>e?reject(e):resolve()));if(customer){req.session.customer=customer;req.session.customerCsrf=customerCsrf;}req.session.orderIds=orderIds;req.session.staff={id:staff.id,email:staff.email,role:staff.role};req.session.csrf=crypto.randomBytes(24).toString('hex');res.json({staff:req.session.staff,csrf:req.session.csrf});}));
 app.get('/api/admin/session',auth(),(req,res)=>res.json({staff:req.session.staff,csrf:req.session.csrf}));
 app.post('/api/admin/logout',auth(),route(async(req,res)=>{const customer=req.session.customer,customerCsrf=req.session.customerCsrf,orderIds=req.session.orderIds;await new Promise((resolve,reject)=>req.session.regenerate(e=>e?reject(e):resolve()));if(customer){req.session.customer=customer;req.session.customerCsrf=customerCsrf;}req.session.orderIds=orderIds;res.json({ok:true});}));
-app.get('/api/admin/dashboard',auth(),route(async(req,res)=>{const [rates,batches,runs,orders,rule,audits,suppliers,rateHistory]=await Promise.all([activeRates(db),db('import_batches').select('id','kind','supplier','source_timestamp','status','summary','created_at').orderBy('id','desc').limit(30),db('daily_runs').orderBy('id','desc').limit(10),db('orders').orderBy('created_at','desc').limit(100),db('pricing_rules').orderBy('id','desc').first(),db('audit').orderBy('id','desc').limit(20),db('import_batches').where({status:'published'}).select('supplier','kind').max('source_timestamp as last_update').groupBy('supplier','kind'),db('rates').orderBy('id','desc').limit(100)]);const scheduleMissed=!runs.some(r=>r.trigger==='scheduled'&&r.finished_at&&Date.now()-Date.parse(r.finished_at)<36*3600000);const todayBatches=batches.filter(b=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(b.created_at))===todayIndia());res.json({rateHistory,scheduleMissed,todayImports:{total:todayBatches.length,failed:todayBatches.filter(b=>b.status==='failed').length,published:todayBatches.filter(b=>b.status==='published').length},rates:Object.values(rates).map(r=>({...r,fresh:isFresh(r)})),batches:batches.map(b=>({...b,summary:parse(b.summary)})),runs:runs.map(r=>({...r,result:parse(r.result)})),orders:orders.map(o=>({...o,customer:parse(o.customer)})),rule,audits,suppliers,maxAgeHours:Number(process.env.GOLD_MAX_AGE_HOURS||48),feedSettings:{goldConfigured:!!process.env.GOLD_FEED_URL,productsConfigured:!!(process.env.PRODUCT_FEED_URL||process.env.PRODUCT_FEED_FILE),inventoryMode:process.env.INVENTORY_MODE||'incremental',overwriteFields:process.env.SUPPLIER_OVERWRITE_FIELDS||'stock,fixed_price,net_weight_g,making_flat,stone_charge,other_charge',feedStatus:process.env.FEED_STATUS||'active',goldFeedEnabled:process.env.GOLD_FEED_ENABLED!=='false',productFeedEnabled:process.env.PRODUCT_FEED_ENABLED!=='false',goldUrl:process.env.GOLD_FEED_URL||'',productUrl:process.env.PRODUCT_FEED_URL||''},preview});}));
+app.get('/api/admin/dashboard',auth(),route(async(req,res)=>{const [rates,batches,runs,orders,rule,audits,suppliers,rateHistory]=await Promise.all([activeRates(db),db('import_batches').select('id','kind','supplier','source_timestamp','status','summary','created_at').orderBy('id','desc').limit(30),db('daily_runs').orderBy('id','desc').limit(10),db('orders').orderBy('created_at','desc').limit(100),db('pricing_rules').orderBy('id','desc').first(),db('audit').orderBy('id','desc').limit(20),db('import_batches').where({status:'published'}).select('supplier','kind').max('source_timestamp as last_update').groupBy('supplier','kind'),db('rates').orderBy('id','desc').limit(100)]);const scheduleMissed=!runs.some(r=>r.trigger==='scheduled'&&r.finished_at&&Date.now()-Date.parse(r.finished_at)<36*3600000);const todayBatches=batches.filter(b=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(b.created_at))===todayIndia());res.json({rateHistory,scheduleMissed,todayImports:{total:todayBatches.length,failed:todayBatches.filter(b=>b.status==='failed').length,published:todayBatches.filter(b=>b.status==='published').length},rates:Object.values(rates).map(r=>({...r,fresh:isFresh(r)})),batches:batches.map(b=>({...b,summary:parse(b.summary)})),runs:runs.map(r=>({...r,result:parse(r.result)})),orders:presentOrders(orders,req.session.staff.role),rule,audits,suppliers,maxAgeHours:Number(process.env.GOLD_MAX_AGE_HOURS||48),feedSettings:{goldConfigured:!!process.env.GOLD_FEED_URL,productsConfigured:!!(process.env.PRODUCT_FEED_URL||process.env.PRODUCT_FEED_FILE),inventoryMode:process.env.INVENTORY_MODE||'incremental',overwriteFields:process.env.SUPPLIER_OVERWRITE_FIELDS||'stock,fixed_price,net_weight_g,making_flat,stone_charge,other_charge',feedStatus:process.env.FEED_STATUS||'active',goldFeedEnabled:process.env.GOLD_FEED_ENABLED!=='false',productFeedEnabled:process.env.PRODUCT_FEED_ENABLED!=='false',goldUrl:process.env.GOLD_FEED_URL||'',productUrl:process.env.PRODUCT_FEED_URL||''},preview});}));
 app.get('/api/admin/products',auth(),route(async(req,res)=>{
  const products=await db('products').orderBy('product_code');
  const hasImages=await db.schema.hasTable('product_images').catch(()=>false);
@@ -337,7 +343,7 @@ app.get('/api/admin/products',auth(),route(async(req,res)=>{
  }
  res.json(products.map(p=>({...p,images:[...(imagesByProduct[p.sku]||[]),...(imagesByProduct[p.product_code]||[])].filter((img,i,all)=>all.findIndex(other=>other.url===img.url)===i)})));
 }));
-app.patch('/api/admin/products/:sku',auth(['owner','manager']),route(async(req,res)=>{const {name,description,status,image,stock,category,net_weight_g,fixed_price}=req.body;if(typeof name!=='string'||!name.trim()||!['published','draft'].includes(status))throw validationError('Name and valid publication status required');const patch={name:String(name).slice(0,200),description:String(description||'').slice(0,5000),status,updated_at:now()};if(typeof image==='string'&&image.trim())patch.image=String(image).trim().slice(0,2000);if(stock!==undefined)patch.stock=Math.max(0,parseInt(stock||0,10));if(category)patch.category=String(category).slice(0,100);if(net_weight_g)patch.net_weight_g=Number(net_weight_g);if(fixed_price)patch.fixed_price=Number(fixed_price);await db.transaction(async t=>{const count=await t('products').where({sku:req.params.sku}).update(patch);if(!count)throw validationError('Product not found',404);if(patch.image){const hero=await t('product_images').where({sku:req.params.sku,role:'hero'}).whereNull('product_code').first();const photo={url:patch.image,alt_text:patch.name,updated_at:now()};if(hero)await t('product_images').where({id:hero.id}).update(photo);else await t('product_images').insert({...photo,sku:req.params.sku,product_code:null,role:'hero',sort_order:-1,created_at:now()});}});await audit(req,'edit_product',{sku:req.params.sku,hasImage:!!image});res.json({ok:true});}));
+app.patch('/api/admin/products/:sku',auth(['owner','manager']),route(async(req,res)=>{const {name,description,status,image,stock,category,net_weight_g,fixed_price}=req.body;if(typeof name!=='string'||!name.trim()||!['published','draft'].includes(status))throw validationError('Name and valid publication status required');const patch={name:String(name).slice(0,200),description:String(description||'').slice(0,5000),status,updated_at:now()};if(typeof image==='string'&&image.trim())patch.image=String(image).trim().slice(0,2000);if(stock!==undefined){const parsedStock=Number.parseInt(stock,10);if(!Number.isInteger(parsedStock)||parsedStock<0)throw validationError('Stock must be a whole number of zero or more');patch.stock=parsedStock;}if(category)patch.category=String(category).slice(0,100);if(net_weight_g!==undefined&&net_weight_g!==''&&net_weight_g!==null){const weight=Number(net_weight_g);if(!Number.isFinite(weight)||weight<0)throw validationError('Weight must be a non-negative number');patch.net_weight_g=weight;}if(fixed_price!==undefined&&fixed_price!==''&&fixed_price!==null){const price=Number(fixed_price);if(!Number.isFinite(price)||price<0)throw validationError('Price must be a non-negative number');patch.fixed_price=price;}await db.transaction(async t=>{const count=await t('products').where({sku:req.params.sku}).update(patch);if(!count)throw validationError('Product not found',404);if(patch.image){const hero=await t('product_images').where({sku:req.params.sku,role:'hero'}).whereNull('product_code').first();const photo={url:patch.image,alt_text:patch.name,updated_at:now()};if(hero)await t('product_images').where({id:hero.id}).update(photo);else await t('product_images').insert({...photo,sku:req.params.sku,product_code:null,role:'hero',sort_order:-1,created_at:now()});}});await audit(req,'edit_product',{sku:req.params.sku,hasImage:!!image});res.json({ok:true});}));
 app.post('/api/admin/products',auth(['owner','manager']),route(async(req,res)=>{
  const {sku,product_code,name,category,metal,purity,net_weight_g,size,finish,pricing_mode,fixed_price,making_flat,making_percent,stone_charge,other_charge,stock,description,image,status}=req.body;
  if(!sku||!name)throw validationError('SKU and Name are required');
@@ -346,7 +352,8 @@ app.post('/api/admin/products',auth(['owner','manager']),route(async(req,res)=>{
  if(existing)throw validationError(`A product with SKU "${cleanSku}" already exists`);
  if(await db('coins').where({sku:cleanSku}).first())throw validationError('This SKU already belongs to bullion coins. Choose a unique jewellery SKU.');
  const cleanCode=String(product_code||cleanSku.toLowerCase()).trim().toLowerCase().replace(/[^a-z0-9_-]+/g,'-');
- const slug=cleanCode.replace(/[^a-z0-9]+/g,'-');
+ let slug=cleanCode.replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'piece';
+ if(await db('products').where({slug}).first())slug=`${slug}-${cleanSku.toLowerCase().replace(/[^a-z0-9]+/g,'-')}`;
  const mode=pricing_mode==='FIXED'?'FIXED':'GOLD_LINKED';
  const nNow=now();
  const prodData={
@@ -386,11 +393,13 @@ app.post('/api/admin/products',auth(['owner','manager']),route(async(req,res)=>{
   other_charge:Number(prodData.other_charge||0),
   updated_at:nNow
  };
- await db('products').insert(dbRow);
- if(dbRow.image){
-  const photo={url:dbRow.image,alt_text:dbRow.name,updated_at:nNow};
-  await db('product_images').insert({...photo,sku:cleanSku,product_code:cleanCode,role:'hero',sort_order:-1,created_at:nNow});
- }
+ await db.transaction(async t=>{
+  await t('products').insert(dbRow);
+  if(dbRow.image){
+   const photo={url:dbRow.image,alt_text:dbRow.name,updated_at:nNow};
+   await t('product_images').insert({...photo,sku:cleanSku,product_code:cleanCode,role:'hero',sort_order:-1,created_at:nNow});
+  }
+ });
  await audit(req,'create_product',{sku:cleanSku,name:dbRow.name});
  res.json({ok:true,product:dbRow});
 }));
@@ -596,7 +605,7 @@ app.get('/api/admin/product-images/:product_code',auth(),route(async(req,res)=>{
 
 app.post('/api/admin/product-images',auth(['owner','manager']),route(async(req,res)=>{
  const {product_code,sku,role,url,alt_text,sort_order}=req.body;
- if(!url||typeof url!=='string'||!url.trim())throw validationError('Image URL is required');
+ if(!isSafeMediaUrl(url))throw validationError('Use an HTTPS image or a saved /uploads or /assets image');
  const validRole=['hero','front','left','right','model','modal','detail'].includes(role)?role:'front';
  const targetCode=product_code||sku;
  if(!targetCode)throw validationError('Product code or SKU is required');
@@ -712,7 +721,10 @@ app.delete('/api/admin/reviews/:id', auth(['owner', 'manager']), route(async (re
 }));
 
 app.get('/api/admin/samples/:file',auth(),(req,res)=>{const allowed=['gold-rates-template.csv','gold-rates-example.csv','products-template.csv','products-example.csv','coins-template.csv','coins-example.csv','import-errors-example.csv'];if(!allowed.includes(req.params.file))return res.sendStatus(404);res.download(path.resolve('samples',req.params.file));});
-app.get('/api/admin/export/:kind',auth(),route(async(req,res)=>{const k=req.params.kind,d=new Date().toISOString().slice(0,10);if(k==='products'){const rows=await db('products').orderBy('product_code');return res.type('text/csv').attachment(`products-${d}.csv`).send(exportCsv('products',rows));}if(k==='coins'){const rows=await db('coins').orderBy('id','desc');return res.type('text/csv').attachment(`coins-${d}.csv`).send(exportCsv('coins',rows));}if(k==='gold'){const rows=await db('rates').orderBy('id','desc');return res.type('text/csv').attachment(`gold-rates-${d}.csv`).send(exportCsv('gold',rows));}if(k==='orders'){const rows=await db('orders').orderBy('created_at','desc');return res.type('text/csv').attachment(`orders-${d}.csv`).send(ordersCsv(rows));}res.sendStatus(404);}));
+app.post('/api/admin/orders/:id/status',auth(['owner','manager']),route(async(req,res)=>{const result=await updateOrderStatus(db,req.params.id,req.body.status);await audit(req,'order_status',{id:req.params.id,status:result.status});res.json(result);}));
+app.get('/api/admin/staff',auth(['owner']),route(async(req,res)=>res.json(await db('staff').select('id','email','role','disabled_at').orderBy('id'))));
+app.post('/api/admin/staff/:id/access',auth(['owner']),route(async(req,res)=>{const result=await setStaffAccess(db,req.session.staff.id,req.params.id,req.body.disabled===true);await audit(req,'staff_access',result);res.json(result);}));
+app.get('/api/admin/export/:kind',auth(),route(async(req,res)=>{const k=req.params.kind,d=new Date().toISOString().slice(0,10);if(k==='orders'&&req.session.staff.role==='viewer')return res.status(403).json({error:'Order export requires a manager'});if(k==='products'){const rows=await db('products').orderBy('product_code');return res.type('text/csv').attachment(`products-${d}.csv`).send(exportCsv('products',rows));}if(k==='coins'){const rows=await db('coins').orderBy('id','desc');return res.type('text/csv').attachment(`coins-${d}.csv`).send(exportCsv('coins',rows));}if(k==='gold'){const rows=await db('rates').orderBy('id','desc');return res.type('text/csv').attachment(`gold-rates-${d}.csv`).send(exportCsv('gold',rows));}if(k==='orders'){const rows=await db('orders').orderBy('created_at','desc');return res.type('text/csv').attachment(`orders-${d}.csv`).send(ordersCsv(rows));}res.sendStatus(404);}));
 app.post('/api/admin/import/preview',auth(['owner','manager']),route(async(req,res)=>{if(typeof req.body.csv!=='string')throw validationError('Upload a UTF-8 CSV file');res.json(await previewImport(db,req.body.kind,req.body.csv,req.session.staff.id));}));
 app.post('/api/admin/import/:id/publish',auth(['owner','manager']),route(async(req,res)=>{const out=await publishImport(db,Number(req.params.id),req.session.staff.id);invalidateSearchCache();return res.json(out);}));
 app.get('/api/admin/import/:id/errors',auth(),route(async(req,res)=>{res.type('text/csv').attachment(`batch-${req.params.id}-errors.csv`).send(errorCsv(await db('import_errors').where({batch_id:req.params.id})));}));

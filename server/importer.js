@@ -4,6 +4,7 @@ import {stringify} from 'csv-stringify/sync';
 import Decimal from 'decimal.js';
 import {validateCoins,previewCoins,publishCoins} from './coin-imports.js';
 import {fingerprint,calculatePrice,activeRates,isFresh,todayIndia} from './pricing.js';
+import {STOCK_HOLDING_STATUSES} from './orders.js';
 import {now,parse,json,preview} from './db.js';
 export const schemas={gold:['supplier','purity','currency','unit','rate','effective_date','source_timestamp'],products:['supplier','product_code','sku','name','category','description','metal','purity','net_weight_g','size','finish','image','pricing_mode','fixed_price','making_flat','making_percent','stone_charge','other_charge','stock','status','source_timestamp'],coins:['supplier','sku','name','metal','coin_type','purity','weight_g','dimension','making_charge','pricing_mode','fixed_price','stock','description','image','status','image_kind','source_timestamp']};
 const num=v=>/^\d+(\.\d{1,4})?$/.test(v) && Number(v)<=9999999999;
@@ -64,8 +65,8 @@ export async function publishImport(k,id,staff=null){
  let created=0,updated=0,unchanged=0;
  for(const r of rows){if(b.kind==='gold'){const norm=normaliseRate(r);if(!isFresh(norm))throw validationError('Rate effective date is stale');await t('rates').insert({supplier:r.supplier,purity:r.purity,currency:r.currency,original_unit:norm.original_unit,original_rate:norm.original_rate,inr_per_gram:norm.inr_per_gram,effective_date:r.effective_date,source_timestamp:r.source_timestamp,published_at:now(),batch_id:b.id});created++;}else{
  const old=await t('products').where({sku:r.sku}).forUpdate().first();if(old && r.source_timestamp<old.source_timestamp)throw validationError('SKU has newer data; preview again');
- const slug=r.product_code.toLowerCase().replace(/[^a-z0-9]+/g,'-');const row={...r,slug,updated_at:now()};for(const f of ['net_weight_g','fixed_price','making_flat','making_percent','stone_charge','other_charge'])row[f]=r[f]===''?null:r[f];
- const sold=await t('order_items').join('orders','orders.id','order_items.order_id').where('order_items.sku',r.sku).where('orders.created_at','>',r.source_timestamp).whereIn('orders.status',['paid','confirmed','placed']).sum('order_items.quantity as qty').first();row.stock=Math.max(0,Number(r.stock)-Number(sold.qty||0));
+ let slug=String(r.product_code||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'piece';if(await t('products').where({slug}).whereNot({sku:r.sku}).first())slug=`${slug}-${String(r.sku).toLowerCase().replace(/[^a-z0-9]+/g,'-')}`;const row={...r,slug,updated_at:now()};for(const f of ['net_weight_g','fixed_price','making_flat','making_percent','stone_charge','other_charge'])row[f]=r[f]===''?null:r[f];
+ const sold=await t('order_items').join('orders','orders.id','order_items.order_id').where('order_items.sku',r.sku).where('orders.created_at','>',r.source_timestamp).whereIn('orders.status',STOCK_HOLDING_STATUSES).sum('order_items.quantity as qty').first();row.stock=Math.max(0,Number(r.stock)-Number(sold.qty||0));
  if(old){const patch=productPatch(row,old);const changed=Object.entries(patch).some(([f,v])=>!['source_timestamp','updated_at'].includes(f)&&String(old[f]??'')!==String(v??''));await t('products').where({sku:r.sku}).update(patch);changed?updated++:unchanged++;}else{await t('products').insert(row);created++;}
  await t('supplier_skus').insert({supplier:r.supplier,supplier_sku:r.sku,sku:r.sku}).onConflict(['supplier','supplier_sku']).ignore();
  }}

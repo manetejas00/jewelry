@@ -112,7 +112,8 @@ export async function resolveProduct(k, identifier) {
       if (coin) {
         return {
           product: { ...coin, product_code: coin.sku },
-          canonicalId: coin.id
+          canonicalId: coin.id,
+          subjectType: 'coin'
         };
       }
     }
@@ -127,8 +128,16 @@ export async function resolveProduct(k, identifier) {
 
   return {
     product,
-    canonicalId: canonical ? canonical.id : product.id
+    canonicalId: canonical ? canonical.id : product.id,
+    subjectType: 'product'
   };
+}
+
+function subjectQuery(query, subjectType, canonicalId) {
+  if (subjectType === 'coin') return query.where('reviews.coin_id', canonicalId).where('reviews.subject_type', 'coin');
+  return query.where('reviews.product_id', canonicalId).where(function () {
+    this.where('reviews.subject_type', 'product').orWhereNull('reviews.subject_type');
+  });
 }
 
 /**
@@ -203,11 +212,11 @@ export async function getProductReviews(k, productIdOrSlug, {
     };
   }
 
-  const { product, canonicalId } = await resolveProduct(k, productIdOrSlug);
+  const { product, canonicalId, subjectType } = await resolveProduct(k, productIdOrSlug);
 
   // Compute rating summary using approved reviews only
-  const summaryRows = await k('reviews')
-    .where({ product_id: canonicalId, status: 'approved' })
+  const summaryRows = await subjectQuery(k('reviews'), subjectType, canonicalId)
+    .where({ status: 'approved' })
     .whereNull('deleted_at')
     .select('rating', 'is_verified_purchase');
 
@@ -233,9 +242,8 @@ export async function getProductReviews(k, productIdOrSlug, {
   }
 
   // Base query for public review listing
-  let query = k('reviews')
+  let query = subjectQuery(k('reviews'), subjectType, canonicalId)
     .join('customers', 'customers.id', 'reviews.user_id')
-    .where('reviews.product_id', canonicalId)
     .whereNull('reviews.deleted_at')
     .select(
       'reviews.id',
@@ -314,8 +322,7 @@ export async function getProductReviews(k, productIdOrSlug, {
   // Fetch current customer's own review if authenticated (including pending or rejected state)
   let myReview = null;
   if (currentCustomerId) {
-    const own = await k('reviews')
-      .where({ product_id: canonicalId, user_id: currentCustomerId })
+    const own = await subjectQuery(k('reviews').where({ user_id: currentCustomerId }), subjectType, canonicalId)
       .whereNull('deleted_at')
       .first();
 
@@ -368,11 +375,10 @@ export async function submitReview(k, customerId, productIdOrSlug, reviewData) {
   }
 
   const valid = validateReviewInput(reviewData);
-  const { product, canonicalId } = await resolveProduct(k, productIdOrSlug);
+  const { product, canonicalId, subjectType } = await resolveProduct(k, productIdOrSlug);
 
   // Check if active review already exists
-  const existing = await k('reviews')
-    .where({ product_id: canonicalId, user_id: customerId })
+  const existing = await subjectQuery(k('reviews').where({ user_id: customerId }), subjectType, canonicalId)
     .whereNull('deleted_at')
     .first();
 
@@ -390,7 +396,9 @@ export async function submitReview(k, customerId, productIdOrSlug, reviewData) {
   return await k.transaction(async t => {
     // Insert review with pending status
     const [reviewId] = await t('reviews').insert({
-      product_id: canonicalId,
+      product_id: subjectType === 'coin' ? null : canonicalId,
+      coin_id: subjectType === 'coin' ? canonicalId : null,
+      subject_type: subjectType,
       user_id: customerId,
       rating: valid.rating,
       title: valid.title,
@@ -498,6 +506,7 @@ export async function getAllProductsRatingSummaries(k) {
   const rows = await k('reviews')
     .where('reviews.status', 'approved')
     .whereNull('reviews.deleted_at')
+    .whereNotNull('product_id')
     .groupBy('product_id')
     .select(
       'product_id',
@@ -521,6 +530,26 @@ export async function getAllProductsRatingSummaries(k) {
         productCodeLookup.set(code, { average: avg, count });
       }
       productCodeLookup.set(row.product_id, { average: avg, count });
+    }
+  }
+
+  const hasCoinColumn = await k.schema.hasColumn('reviews', 'coin_id').catch(() => false);
+  if (hasCoinColumn && await k.schema.hasTable('coins')) {
+    const coinRows = await k('reviews')
+      .where({ status: 'approved', subject_type: 'coin' })
+      .whereNull('deleted_at')
+      .whereNotNull('coin_id')
+      .groupBy('coin_id')
+      .select('coin_id', k.raw('COUNT(*) as review_count'), k.raw('AVG(rating) as avg_rating'));
+    if (coinRows.length) {
+      const coins = await k('coins').whereIn('id', coinRows.map(row => row.coin_id)).select('id', 'sku');
+      const skuById = new Map(coins.map(coin => [coin.id, coin.sku]));
+      for (const row of coinRows) {
+        const summary = { average: Number(Number(row.avg_rating).toFixed(1)), count: Number(row.review_count) };
+        productCodeLookup.set(row.coin_id, summary);
+        const sku = skuById.get(row.coin_id);
+        if (sku) productCodeLookup.set(sku, summary);
+      }
     }
   }
 
@@ -575,7 +604,8 @@ export async function getAdminReviews(k, {
   // Query reviews with joins
   let query = k('reviews')
     .join('customers', 'customers.id', 'reviews.user_id')
-    .join('products', 'products.id', 'reviews.product_id')
+    .leftJoin('products', 'products.id', 'reviews.product_id')
+    .leftJoin('coins', 'coins.id', 'reviews.coin_id')
     .whereNull('reviews.deleted_at')
     .select(
       'reviews.id',
@@ -590,11 +620,11 @@ export async function getAdminReviews(k, {
       'reviews.updated_at',
       'customers.name as customer_name',
       'customers.email as customer_email',
-      'products.name as product_name',
-      'products.slug as product_slug',
-      'products.product_code as product_code',
-      'products.sku as product_sku',
-      'products.image as product_image'
+      k.raw('COALESCE(products.name, coins.name) as product_name'),
+      k.raw('COALESCE(products.slug, coins.sku) as product_slug'),
+      k.raw('COALESCE(products.product_code, coins.sku) as product_code'),
+      k.raw('COALESCE(products.sku, coins.sku) as product_sku'),
+      k.raw('COALESCE(products.image, coins.image) as product_image')
     );
 
   if (status && status !== 'all') {
@@ -621,7 +651,7 @@ export async function getAdminReviews(k, {
     query = query.where(function () {
       this.whereRaw('LOWER(customers.name) LIKE ?', [term])
         .orWhereRaw('LOWER(customers.email) LIKE ?', [term])
-        .orWhereRaw('LOWER(products.name) LIKE ?', [term])
+        .orWhereRaw('LOWER(COALESCE(products.name, coins.name)) LIKE ?', [term])
         .orWhereRaw('LOWER(reviews.title) LIKE ?', [term])
         .orWhereRaw('LOWER(reviews.comment) LIKE ?', [term]);
     });
@@ -700,12 +730,14 @@ export async function getAdminReviews(k, {
 export async function getAdminReviewById(k, reviewId) {
   const row = await k('reviews')
     .join('customers', 'customers.id', 'reviews.user_id')
-    .join('products', 'products.id', 'reviews.product_id')
+    .leftJoin('products', 'products.id', 'reviews.product_id')
+    .leftJoin('coins', 'coins.id', 'reviews.coin_id')
     .where('reviews.id', Number(reviewId))
     .whereNull('reviews.deleted_at')
     .select(
       'reviews.id',
       'reviews.product_id',
+      'reviews.coin_id',
       'reviews.user_id',
       'reviews.rating',
       'reviews.title',
@@ -716,11 +748,11 @@ export async function getAdminReviewById(k, reviewId) {
       'reviews.updated_at',
       'customers.name as customer_name',
       'customers.email as customer_email',
-      'products.name as product_name',
-      'products.slug as product_slug',
-      'products.product_code as product_code',
-      'products.sku as product_sku',
-      'products.image as product_image'
+      k.raw('COALESCE(products.name, coins.name) as product_name'),
+      k.raw('COALESCE(products.slug, coins.sku) as product_slug'),
+      k.raw('COALESCE(products.product_code, coins.sku) as product_code'),
+      k.raw('COALESCE(products.sku, coins.sku) as product_sku'),
+      k.raw('COALESCE(products.image, coins.image) as product_image')
     )
     .first();
 

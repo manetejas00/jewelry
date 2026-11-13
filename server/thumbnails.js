@@ -10,6 +10,13 @@ const validName=name=>typeof name==='string'&&/^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,180}
 const pending=new Map();let queue=Promise.resolve();
 const enqueue=job=>{const result=queue.then(job);queue=result.catch(()=>{});return result};
 export const thumbnailUrl=url=>typeof url==='string'&&/^\/uploads\/[^/?#]+\.(jpe?g|png|webp|gif|svg)$/i.test(url)?'/uploads/thumbs/'+encodeURIComponent(url.slice('/uploads/'.length))+'.webp':null;
+export function isSafeMediaUrl(url){
+ if(typeof url!=='string')return false;
+ const value=url.trim();
+ if(!value||value.length>2000||value.includes('..'))return false;
+ if(/^\/(uploads|assets)\/[a-zA-Z0-9_./-]+\.(png|jpe?g|webp|gif)$/i.test(value))return true;
+ try{const parsed=new URL(value);return parsed.protocol==='https:'&&!parsed.username&&!parsed.password;}catch{return false;}
+}
 export async function thumbnailBuffer(buffer){
  if(!Buffer.isBuffer(buffer)||!buffer.length||buffer.length>8*1024*1024)throw validationError('Choose an image no larger than 8 MB.');
  try{return await sharp(buffer,{limitInputPixels:40000000,failOn:'error',pages:1}).rotate().resize({width:600,height:800,fit:'inside',withoutEnlargement:true}).webp({quality:82,effort:4}).toBuffer()}
