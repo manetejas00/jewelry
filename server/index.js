@@ -282,14 +282,12 @@ const reviewUploadLimit = rateLimit({windowMs:15*60000,limit:30,message:{error:'
 
 app.get('/api/products/:productId/reviews', route(async (req, res) => {
   const currentCustomerId = req.session.customer?.id || null;
-  const includePending = req.query.includePending !== 'false';
   const result = await getProductReviews(db, req.params.productId, {
     page: req.query.page,
     limit: req.query.limit,
     sort: req.query.sort,
     ratingFilter: req.query.rating,
-    currentCustomerId,
-    includePending
+    currentCustomerId
   });
   res.json(result);
 }));
