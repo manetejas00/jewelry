@@ -2261,8 +2261,7 @@ function CoinProduct(){
   const {sku}=useParams();
   const navigate=useNavigate();
   const {add,catalogueRevision}=useStore();
-  const [coins,setCoins]=useState([]),[zoomCoin,setZoomCoin]=useState(false);
-  const [selectedImage,setSelectedImage]=useState(null);
+  const [coins,setCoins]=useState([]);
   const [loading,setLoading]=useState(true),[error,setError]=useState(''),[retry,setRetry]=useState(0);
   useEffect(()=>{
     let active=true;
@@ -2272,22 +2271,14 @@ function CoinProduct(){
   },[catalogueRevision,retry]);
   const p=coins.find(c=>c.sku===sku)||null;
   const weights=p?coins.filter(c=>c.metal===p.metal&&c.purity===p.purity&&c.coin_type===p.coin_type).sort((a,b)=>Number(a.weight_g)-Number(b.weight_g)):[];
-  useEffect(()=>{setSelectedImage(null);setZoomCoin(false);},[sku]);
   useEffect(()=>{document.title=(p?.name||(loading?'Loading coin':error?'Could not load coin':'Coin not found'))+' | Veyora Jewels'},[p,loading,error]);
   if(loading||error||!p)return <Layout><section className="empty"><h1>{loading?'Finding your coin…':error?'Could not load this coin':'Coin not found'}</h1>{error&&<><p className="error" role="alert">{error}</p><button className="button dark" onClick={()=>setRetry(n=>n+1)}>Try again</button></>}<Link className="underlink" to="/coins">Back to coins</Link></section></Layout>;
   const photos=galleryPhotos(p.images);
-  const angleImages=photos.length?photos:galleryPhotos([{id:'default',role:'hero',url:p.image,alt_text:p.name}]);
-  const activeImage=angleImages.find(img=>img.url===selectedImage)?.url||angleImages[0]?.url||coinImage(p.image)||imageFallback;
+  const angleImages=(photos.length?photos:galleryPhotos([{id:'default',role:'hero',url:p.image,alt_text:p.name}])).map(img=>({...img,url:coinImage(img.url)||img.url})).filter(img=>img.url);
+  const caption=angleImages.length>1?'MULTI-ANGLE PHOTOGRAPHY · PREVIEW CATALOGUE':p.image_kind==='illustration'?'ILLUSTRATIVE IMAGE · PREVIEW CATALOGUE':'PRODUCT IMAGE · PREVIEW CATALOGUE';
   return <Layout><StructuredProduct p={p}/><div className="breadcrumbs section"><Link to="/coins">Coins</Link><span>/</span><Link to={'/coins/'+p.metal.toLowerCase()}>{p.metal} coins</Link><span>/</span><span>{p.name}</span></div>
     <section className="product-detail section">
-      <div className="detail-gallery">
-        {activeImage?<button type="button" className="detail-image" style={{position:'relative'}} onClick={()=>setZoomCoin(true)} aria-label="Zoom product photograph">
-          <img onError={e=>{if(e.currentTarget.getAttribute('src')!==imageFallback)e.currentTarget.src=imageFallback}} src={coinImage(activeImage)} alt={`${p.name}, ${p.weight_g}g, ${p.purity} ${p.metal}`}/>
-          <span><Plus size={16}/> Click to explore</span>
-        </button>:<div className="detail-image" style={{minHeight:300,display:'grid',placeItems:'center'}}><CoinsIcon size={64}/></div>}
-        {angleImages.length>1&&<div className="product-angle-gallery" role="group" aria-label="Coin angle views">{angleImages.map((img,idx)=>{const isSelected=activeImage===img.url;const roleLabels={hero:'Obverse Face',front:'Front View',left:'Left View',right:'Right View',model:'Hand-held View',modal:'Detail',detail:'Detail'};const label=roleLabels[img.role]||img.role;return <button key={img.id||idx} type="button" className={'angle-thumb-btn '+(isSelected?'active':'')} onClick={()=>setSelectedImage(img.url)} aria-pressed={isSelected} aria-label={`View ${label}`} title={label}><img loading="lazy" src={listingThumbnail({image:img.url})} alt={img.alt_text||`${p.name} ${label}`}/><span className="angle-label">{label}</span></button>;})}</div>}
-        <p className="caption">{angleImages.length>1?'MULTI-ANGLE PHOTOGRAPHY · PREVIEW CATALOGUE':p.image_kind==='illustration'?'ILLUSTRATIVE IMAGE · PREVIEW CATALOGUE':'PRODUCT IMAGE · PREVIEW CATALOGUE'}</p>
-      </div>
+      {angleImages.length?<ProductMagicZoom images={angleImages} title={`${p.name}, ${p.weight_g}g, ${p.purity} ${p.metal}`}><p className="caption">{caption}</p></ProductMagicZoom>:<div className="detail-gallery"><div className="detail-image" style={{minHeight:300,display:'grid',placeItems:'center'}}><CoinsIcon size={64}/></div><p className="caption">{caption}</p></div>}
       <div className="detail-copy">
         <span className="eyebrow">THE COIN COLLECTION</span>
         <h1>{p.name}</h1>
@@ -2313,7 +2304,6 @@ function CoinProduct(){
       </div>
     </section>
     <ProductReviewsSection product={{...p,product_code:p.sku}}/>
-    {zoomCoin&&<ImageViewer images={angleImages} index={Math.max(0,angleImages.findIndex(i=>i.url===activeImage))} title={p.name} onClose={()=>setZoomCoin(false)}/>}
   </Layout>;
 }
 
