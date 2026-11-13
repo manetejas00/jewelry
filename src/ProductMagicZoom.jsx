@@ -1,13 +1,15 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {createZoomImageClick, createZoomImageHover} from '@zoom-image/core';
+import {createZoomImageHover} from '@zoom-image/core';
+import ImageViewer from './ImageViewer.jsx';
 import {listingThumbnail} from './listing-media.js';
 
-const NARROW = '(max-width: 800px)';
+const NARROW = '(max-width: 800px), (hover: none), (pointer: coarse)';
 
 export default function ProductMagicZoom({images, title, children}) {
   const photos = images.filter(image => image?.url);
   const signature = photos.map(image => image.url).join('|');
   const [index, setIndex] = useState(0);
+  const [viewerOpen, setViewerOpen] = useState(false);
   const [narrow, setNarrow] = useState(() => window.matchMedia(NARROW).matches);
   const stageRef = useRef(null);
   const targetRef = useRef(null);
@@ -15,6 +17,7 @@ export default function ProductMagicZoom({images, title, children}) {
 
   useEffect(() => {
     setIndex(0);
+    setViewerOpen(false);
   }, [signature]);
 
   useEffect(() => {
@@ -26,16 +29,9 @@ export default function ProductMagicZoom({images, title, children}) {
 
   useEffect(() => {
     const stage = stageRef.current;
-    if (!stage || !photo) return undefined;
+    if (!stage || !photo || narrow) return undefined;
     const rect = stage.getBoundingClientRect();
-    const zoom = narrow
-      ? createZoomImageClick(stage, {
-        zoomImageSource: photo.url,
-        zoomFactor: 2.4,
-        disableScrollLock: true,
-        zoomImageProps: {alt: title}
-      })
-      : createZoomImageHover(stage, {
+    const zoom = createZoomImageHover(stage, {
         zoomImageSource: photo.url,
         zoomTarget: targetRef.current,
         customZoom: {
@@ -63,6 +59,7 @@ export default function ProductMagicZoom({images, title, children}) {
     <div className="gallery-frame">
       <div className="gallery-stage" ref={stageRef}>
         <img src={photo.url} alt={title}/>
+        {narrow && <button type="button" className="gallery-open" aria-label={`Zoom ${title}`} onClick={() => setViewerOpen(true)}/>}
         <span className="gallery-hint">{narrow ? 'Tap to zoom' : 'Hover to zoom'}</span>
         {photos.length > 1 && <>
           <button type="button" className="gallery-arrow gallery-arrow-prev" aria-label="Previous photo" onPointerDown={event => event.stopPropagation()} onClick={event => show(event, index - 1)}><span/></button>
@@ -76,6 +73,7 @@ export default function ProductMagicZoom({images, title, children}) {
         <img src={listingThumbnail({image: image.url})} alt=""/>
       </button>)}
     </div>}
+    {viewerOpen && narrow && <ImageViewer key={signature} images={photos} index={index} title={title} onClose={() => setViewerOpen(false)}/>}
     {children}
   </div>;
 }
