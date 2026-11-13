@@ -170,4 +170,15 @@ test('HTTP customer management requires staff, CSRF, and appropriate write roles
  assert.equal((await viewer('/api/admin/customers/'+id,{},'DELETE',{'x-csrf-token':v.data.csrf})).status,403);
  assert.equal((await owner('/api/admin/customers/'+id,{name:'Changed',email:'changed-http@example.invalid',phone:''},'PUT',token)).status,200);
  assert.equal((await owner('/api/admin/customers/'+id,{},'DELETE',token)).status,200);
+ assert.equal((await owner('/api/admin/customers?deleted=true&search=changed-http')).data.total,1);
+ assert.equal((await viewer('/api/admin/customers/'+id+'/restore',{},'POST',{'x-csrf-token':v.data.csrf})).status,403);
+ assert.equal((await owner('/api/admin/customers/'+id+'/restore',{},'POST',token)).status,200);
+ assert.equal((await owner('/api/admin/customers?search=changed-http')).data.total,1);
+});
+
+test('HTTP soft deletion signs out an existing customer session and restore does not revive it',async()=>{
+ const customer=browserSession(),init=await customer('/api/account/session');const registered=await customer('/api/account/register',{name:'Soft delete test',email:'soft-delete-http@example.invalid',password:'a-long-test-password'},'POST',{'x-customer-csrf':init.data.csrf});assert.equal(registered.status,200);
+ const owner=browserSession(),login=await owner('/api/admin/login',{email:'preview@veyora.local',password:'preview-veyora-2026'},'POST');const headers={'x-csrf-token':login.data.csrf},id=registered.data.customer.id;
+ assert.equal((await owner('/api/admin/customers/'+id,{},'DELETE',headers)).status,200);assert.equal((await customer('/api/account/orders')).status,401);
+ assert.equal((await owner('/api/admin/customers/'+id+'/restore',{},'POST',headers)).status,200);assert.equal((await customer('/api/account/orders')).status,401);
 });

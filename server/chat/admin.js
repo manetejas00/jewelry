@@ -62,7 +62,7 @@ export async function chatDashboard(db, env = process.env, now = new Date()) {
   if (dashboardCache.key === key && Date.now() - dashboardCache.at < 15000) return dashboardCache.value;
   const settings = await limitMap(db, config.maxDaily);
   const [customers, chatbotUsers, todayUsage, monthUsage, logs, todayLogs] = await Promise.all([
-    db('customers').count({total: 'id'}).first(),
+    db('customers').whereNull('deleted_at').count({total: 'id'}).first(),
     db('chatbot_usage_logs').countDistinct({total: 'user_id'}).first(),
     db('chat_daily_usage').where({usage_date: today}),
     db('chat_daily_usage').where('usage_date', 'like', `${month}%`).sum({total: 'message_count'}).first(),
@@ -114,7 +114,7 @@ export async function listChatUsers(db, query, env = process.env, now = new Date
   const page = clampInt(query.page, 1, 1, 10000);
   const pageSize = clampInt(query.pageSize, 25, 1, 100);
   const filters = {search: query.search || query.q || '', status: query.status || 'all', access: query.access || 'all', date, maxDaily: config.maxDaily};
-  const base = () => db('customers as c')
+  const base = () => db('customers as c').whereNull('c.deleted_at')
     .leftJoin('chat_daily_usage as u', function joinUsage() {
       this.on('u.user_id', '=', 'c.id').andOn('u.usage_date', '=', db.raw('?', [date]));
     })

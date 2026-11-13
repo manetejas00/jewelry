@@ -12,7 +12,7 @@ export async function sendResetMail({email,url}){
 const hash=token=>crypto.createHash('sha256').update(token).digest('hex');
 export async function requestReset(k,email,send=sendResetMail){
  const normal=String(email||'').trim().toLowerCase();if(!/^\S+@\S+\.\S+$/.test(normal)||normal.length>254)throw validationError('Enter a valid email address.');
- const customer=await k('customers').where({email:normal}).first();
+ const customer=await k('customers').where({email:normal}).whereNull('deleted_at').first();
  if(!customer)return;
  const token=crypto.randomBytes(32).toString('hex'),token_hash=hash(token);
  await k('password_resets').insert({token_hash,customer_id:customer.id,expires:Date.now()+30*60000});
@@ -22,7 +22,8 @@ export async function requestReset(k,email,send=sendResetMail){
 export async function replacePassword(k, customerId, password) {
  if (typeof password !== 'string' || password.length < 12 || Buffer.byteLength(password) > 72) throw validationError('Choose a password of at least 12 characters, up to 72 UTF-8 bytes.');
  const password_hash = await bcrypt.hash(password, 12);
- await k('customers').where({id: customerId}).update({password_hash, session_version: k.raw('session_version + 1')});
+ const changed=await k('customers').where({id: customerId}).whereNull('deleted_at').update({password_hash, session_version: k.raw('session_version + 1')});
+ if(!changed)throw validationError('Customer account is unavailable.');
  await k('password_resets').where({customer_id: customerId}).del();
 }
 export async function completeReset(k,{token,password}){
@@ -33,7 +34,8 @@ export async function completeReset(k,{token,password}){
   const row=await t('password_resets').where({token_hash:hash(token)}).forUpdate().first();
   if(!row||Number(row.expires)<=Date.now())throw validationError('Reset link is invalid or expired.');
   // Concurrent use is serialized by the reset row; all account links expire together.
-  await t('customers').where({id:row.customer_id}).update({password_hash,session_version:t.raw('session_version + 1')});
+  const changed=await t('customers').where({id:row.customer_id}).whereNull('deleted_at').update({password_hash,session_version:t.raw('session_version + 1')});
+  if(!changed)throw validationError('Reset link is invalid or expired.');
   await t('password_resets').where({customer_id:row.customer_id}).del();
  });
 }

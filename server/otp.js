@@ -150,7 +150,7 @@ export async function sendPasswordResetOtp(k, session, email, env = process.env,
   if (await countRecent(k, destinationHash, stamp) >= OTP_DESTINATION_MAX) throw validationError('Too many verification requests. Try again later.', 429);
   const latest = await k('otp_challenges').where({destination_hash: destinationHash, purpose: 'password_reset'}).orderBy('sent_at', 'desc').first();
   if (latest && stamp - Number(latest.sent_at) < OTP_COOLDOWN_MS) throw validationError('Please wait a minute before requesting another code.', 429);
-  const customer = await k('customers').where({email: address}).first();
+  const customer = await k('customers').where({email: address}).whereNull('deleted_at').first();
   if (!customer) {
     await k('otp_challenges').insert({id: crypto.randomBytes(16).toString('hex'), purpose: 'password_reset', channel: 'email', destination_hash: destinationHash, customer_id: null, sent_at: stamp, verified_at: null, consumed_at: stamp, expires_at: stamp + OTP_TTL_MS});
     flowMap(session).password_reset = {id: `decoy-${crypto.randomBytes(8).toString('hex')}`, destination: address, decoy: true, channel: 'email'};

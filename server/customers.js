@@ -25,7 +25,7 @@ export async function registerCustomer(k, input) {
 // Run the same cost of password verification even when the email is unknown.
 const dummyHash = await bcrypt.hash('not-a-customer-password', 12);
 export async function loginCustomer(k, input) {
-  const row = await k('customers').where({email: normalEmail(input.email)}).first();
+  const row = await k('customers').where({email: normalEmail(input.email)}).whereNull('deleted_at').first();
   const candidate = typeof input.password === 'string' && Buffer.byteLength(input.password) <= 72 ? input.password : '';
   const valid = await bcrypt.compare(candidate, row?.password_hash || dummyHash);
   if (!row || !valid) throw validationError('Email or password is incorrect.');

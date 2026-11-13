@@ -65,7 +65,7 @@ app.use('/uploads',(req,res,next)=>{res.set('Content-Security-Policy',"default-s
 class DbStore extends session.Store {get(sid,cb){db('sessions').where({sid}).first().then(r=>cb(null,r&&Number(r.expires)>Date.now()?parse(r.data):null)).catch(cb)}set(sid,data,cb){db('sessions').insert({sid,data:json(data),expires:Date.now()+8*3600000}).onConflict('sid').merge().then(()=>cb?.()).catch(cb)}destroy(sid,cb){db('sessions').where({sid}).del().then(()=>cb?.()).catch(cb)}}
 const cookieSecure = process.env.COOKIE_SECURE === 'true' || (production && Boolean(process.env.APP_URL?.startsWith('https:')));
 app.use(session({secret:process.env.SESSION_SECRET||crypto.randomBytes(32).toString('hex'),resave:false,saveUninitialized:false,store:new DbStore(),cookie:{httpOnly:true,sameSite:'strict',secure:cookieSecure,maxAge:8*3600000}}));
-app.use('/api',route(async(req,res,next)=>{if(req.session.customer){const row=await db('customers').where({id:req.session.customer.id}).select('session_version').first();if(!row||(row.session_version||0)!==(req.session.customer.session_version||0)){delete req.session.customer;delete req.session.customerCsrf;}}next();}));
+app.use('/api',route(async(req,res,next)=>{if(req.session.customer){const row=await db('customers').where({id:req.session.customer.id}).select('session_version','deleted_at').first();if(!row||row.deleted_at||(row.session_version||0)!==(req.session.customer.session_version||0)){delete req.session.customer;delete req.session.customerCsrf;}}next();}));
 app.use('/api',routeSettings);
 function routeSettings(req,res,next){loadFeedSettings().then(()=>next()).catch(next)}
 app.use('/api',(req,res,next)=>{res.set('Cache-Control','no-store');if(['POST','PUT','DELETE','PATCH'].includes(req.method)){const origin=req.get('origin');const allowedOrigins=[process.env.APP_URL?new URL(process.env.APP_URL).origin:null,...(!production?['http://localhost:3000','http://127.0.0.1:3000']:[])].filter(Boolean);if(origin && !allowedOrigins.includes(origin))return res.status(403).json({error:'Origin not allowed'});if(req.get('sec-fetch-site')==='cross-site')return res.status(403).json({error:'Origin not allowed'});if(req.path!=='/admin/login'&&req.path.startsWith('/admin')&&req.get('x-csrf-token')!==req.session.csrf)return res.status(403).json({error:'Please reload the admin panel'});}next();});
@@ -167,6 +167,9 @@ app.post('/api/account/forgot-password',resetLimit,customerCsrf,route(async(req,
 app.post('/api/account/reset-password',resetLimit,customerCsrf,route(async(req,res)=>{await completeReset(db,req.body);res.json({ok:true});}));
 const customerLoginLimit=rateLimit({windowMs:15*60000,limit:20});
 async function establishCustomer(req,customer,guest){
+ const active=await db('customers').where({id:customer.id}).whereNull('deleted_at').first();
+ if(!active||(active.session_version||0)!==(customer.session_version||0))throw validationError('Please sign in again.',401);
+
  const presented=await presentCustomer(customer);
  const oldStaff=req.session.staff,adminCsrf=req.session.csrf,guestOrders=req.session.customer?[]:req.session.orderIds||[];
  await mergeGuestState(db,customer.id,guest);await claimSessionOrders(db,customer,guestOrders);
@@ -266,7 +269,7 @@ app.post('/api/account/reset-password/otp',otpIpLimit,customerCsrf,route(async(r
  if(!otpAvailability(process.env,otpGateway).passwordReset)throw validationError('Password recovery is not configured. Contact the merchant.',503);
  await confirmOtp(db,req.session,{purpose:'password_reset',otp:req.body?.otp},process.env,otpGateway);
  const email=req.session.otpFlows?.password_reset?.destination;
- const customer=email?await db('customers').where({email}).first():null;
+ const customer=email?await db('customers').where({email}).whereNull('deleted_at').first():null;
  if(!customer)throw validationError('That code is incorrect.');
  const held=await spendVerified(db,req.session,'password_reset',email);
  try{await replacePassword(db,customer.id,req.body?.password);}catch(error){await releaseVerified(db,held);throw error;}
