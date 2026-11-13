@@ -14,6 +14,7 @@
     "samples": "node scripts/samples.js",
     "seed:products": "node seeders/ProductSeeder.js",
     "seed:reviews": "node seeders/ReviewSeeder.js",
+    "seed:catalogue-copy": "node seeders/CatalogueCopySeeder.js",
     "seed:catalogue": "node seeders/DatabaseSeeder.js",
     "assets:recreate": "node scripts/recreate-product-assets.js",
     "assets:check": "node scripts/check-product-assets.js",
