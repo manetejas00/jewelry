@@ -1,18 +1,10 @@
 # Automatic deployment status
 
-**Status: intentionally paused; not production-ready.** The owner enabled an existing Hostinger Git integration during the live audit. Its main-branch deployment published this Node repository as PHP/static source into public_html, ran no Node build, and removed required assets/uploads. Hostinger's green “Completed” label was not a functional acceptance result.
+**Status: GitHub Actions deploys `main`. The Hostinger Git publisher stays off.** That publisher copied this Node app into `public_html` as raw source, skipped the build, and removed uploads. Do not turn it back on.
 
-The owner explicitly authorized repair. Service was restored using the preserved Node routing, a coherent frontend compiled from main b68439a, and original publication images. Database totals/counts remained unchanged. Uploads now live outside the publication root; no new database authority or second deployment system was created.
+A push to `main` runs `.github/workflows/deploy.yml`. The Action SSHs to the Hostinger app, checks out that commit, runs `npm ci`, `npm run build`, and `npm run migrate` with Node 22, copies the built homepage and hashed assets into `public_html`, then touches `tmp/restart.txt`. `.env` and `storage/uploads` stay on the server. The private key is the `HOSTINGER_SSH_KEY` Actions secret, not a file in this repository.
 
-Auto-publication was switched off, with the UI confirming “Changes from Git are not deployed automatically.” The review branch is pushed and CI runs automatically. Main remains unchanged. The hardened backend/frontend is not represented as deployed.
-
-## Conditions for resuming
-
-1. Configure this existing website/repository through a supported Node/Express build path rather than raw PHP/static publication.
-2. Resolve private owner access and preview-business-data approval. Do not bypass startup controls or discard existing data.
-3. Rehearse the new additive MySQL migrations and restoration on isolated staging.
-4. Preserve private environment/storage, align all HTML entries and uploaded assets, retain a rollback release, and independently verify the deployed commit.
-5. Complete live acceptance and only then re-enable the provider's main-branch trigger.
+The hPanel control still says Git changes are not deployed automatically. That is correct. Leave it that way. This repository's Action is the deploy path.
 
 The availability-only command is:
 

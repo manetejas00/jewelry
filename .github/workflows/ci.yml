@@ -19,5 +19,4 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: npm audit --audit-level=high
-# Hosting already has a Git integration. This workflow adds quality checks only;
-# it does not establish another deployment system or carry hosting credentials.
+# Quality checks only. Production deploy is .github/workflows/deploy.yml.
