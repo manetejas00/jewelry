@@ -1,5 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {api} from './api.js';
+import {createPortal} from 'react-dom';
+import CommonModal from './admin/components/CommonModal.jsx';
 
 const statuses = [['all', 'All usage'], ['active', 'Active'], ['limit_reached', 'Limit reached'], ['not_used', 'Not used']];
 
@@ -151,7 +153,7 @@ export default function ChatbotAdmin({readonly, canConfigure}) {
         <tbody>{users?.users?.map(user => <tr key={user.id} className={detail?.user?.id === user.id ? 'is-selected' : ''}><td>{user.id}</td><td>{user.name}</td><td>{user.email}</td><td>{user.used}/{user.limit}</td><td>{user.limit}</td><td>{user.remaining}</td><td>{user.usageStatus.replaceAll('_', ' ')}</td><td>{user.lifetimeMessages}</td><td>{user.lastChat ? new Date(user.lastChat).toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'}) : '—'}</td><td>{user.accessEnabled ? 'Enabled' : 'Disabled'}</td><td><button type="button" className="underlink" onClick={() => openUser(user.id).catch(err => setError(err.message))}>View Details</button></td></tr>)}</tbody>
       </table>{users && !users.users.length && <p>No customers match these filters.</p>}</div>
       {users && <div className="admin-pagination-bar"><button type="button" className="button secondary small-button" disabled={users.page <= 1} onClick={() => { const next = {...filters, page: users.page - 1}; setFilters(next); loadUsers(next); }}>Previous</button><span>Page {users.page} of {users.pageCount}</span><button type="button" className="button secondary small-button" disabled={users.page >= users.pageCount} onClick={() => { const next = {...filters, page: users.page + 1}; setFilters(next); loadUsers(next); }}>Next</button></div>}
-      {detail && <UserDetails detail={detail} readonly={readonly} onClose={() => setDetail(null)} onSave={saveUser} onDelete={async id => { await api(`/admin/chatbot/conversations/${id}`, {}, 'DELETE'); await openUser(detail.user.id); }}/>}
+      {detail && createPortal(<CommonModal isOpen onClose={() => setDetail(null)} title="User details" maxWidth="850px"><UserDetails detail={detail} readonly={readonly} onClose={() => setDetail(null)} onSave={saveUser} onDelete={async id => { await api(`/admin/chatbot/conversations/${id}`, {}, 'DELETE'); await openUser(detail.user.id); }}/></CommonModal>, document.body)}
     </div>}
     {section === 'analytics' && <div className="admin-panel">
       <form onSubmit={event => loadAnalytics(event).catch(err => setError(err.message))} className="admin-filter-bar">

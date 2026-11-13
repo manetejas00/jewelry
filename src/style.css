@@ -2557,3 +2557,8 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
 .veyora-chat-product-links{display:flex;flex-direction:column;gap:8px}
 .veyora-chat-product-links:empty{display:none}
 .veyora-chat-product-links a{display:block;padding:10px 0;font-size:13px;line-height:1.5;text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere}
+
+.customer-row-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.customer-detail-content label{display:flex;flex-direction:column;gap:8px;margin:16px 0;font-size:13px}
+.customer-detail-content input{width:100%;padding:10px;border:1px solid var(--line);background:white}
+.customers-admin .panel-title{flex-wrap:wrap}

@@ -51,6 +51,8 @@ export function CommonModal({
           boxShadow: '0 20px 45px rgba(0,0,0,0.18)',
           width: '100%',
           maxWidth,
+          maxHeight: 'calc(100dvh - 40px)',
+          overflowY: 'auto',
           padding: '28px',
           position: 'relative'
         }}

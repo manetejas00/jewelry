@@ -158,3 +158,16 @@ test('HTTP viewer session cannot mutate merchant records even with a valid CSRF 
  assert.equal((await viewer('/api/admin/offers',{},'POST',{'x-csrf-token':login.data.csrf})).status,403);
  assert.equal((await viewer('/api/admin/products',{},'POST',{'x-csrf-token':login.data.csrf})).status,403);
 });
+test('HTTP customer management requires staff, CSRF, and appropriate write roles',async()=>{
+ assert.equal((await fetch(base+'/api/admin/customers')).status,403);
+ const owner=browserSession(),login=await owner('/api/admin/login',{email:'preview@veyora.local',password:'preview-veyora-2026'},'POST');const token={'x-csrf-token':login.data.csrf};
+ const httpDb=createDb(path.join(folder,'http.sqlite'));let id;
+ try{[id]=await httpDb('customers').insert({name:'Admin customer test',email:'customer-admin-http@example.invalid',password_hash:'test-only',created_at:new Date().toISOString()});}finally{await httpDb.destroy()}
+ assert.equal((await owner('/api/admin/customers?search=customer-admin-http')).data.total,1);
+ assert.equal((await owner('/api/admin/customers/'+id,{name:'Changed',email:'changed-http@example.invalid'},'PUT')).status,403);
+ const viewer=browserSession(),v=await viewer('/api/admin/login',{email:'audit-viewer@example.invalid',password:'preview-veyora-2026'},'POST');
+ assert.equal((await viewer('/api/admin/customers/'+id,{},'PUT',{'x-csrf-token':v.data.csrf})).status,403);
+ assert.equal((await viewer('/api/admin/customers/'+id,{},'DELETE',{'x-csrf-token':v.data.csrf})).status,403);
+ assert.equal((await owner('/api/admin/customers/'+id,{name:'Changed',email:'changed-http@example.invalid',phone:''},'PUT',token)).status,200);
+ assert.equal((await owner('/api/admin/customers/'+id,{},'DELETE',token)).status,200);
+});

@@ -29,6 +29,7 @@ import {seed} from '../scripts/seed.js';
 import {saveUploadedImage,ensureThumbnail,thumbnailUrl,isSafeMediaUrl} from './thumbnails.js';
 import {searchCatalogue,invalidateSearchCache} from './search.js';
 import {listCopySkills, createCatalogueDraft, approveCatalogueDraft, rejectCatalogueDraft, listCatalogueDrafts} from './ai-copy.js';
+import {registerCustomerAdminRoutes} from './customer-admin.js';
 import {registerChatRoutes} from './chat/routes.js';
 import {purgeRetainedChats} from './chat/service.js';
 import {registerPwa} from './pwa.js';
@@ -823,6 +824,7 @@ app.post('/api/admin/ai/drafts/:id/approve',auth(['owner','manager']),route(asyn
   res.json(draft);
 }));
 app.post('/api/admin/ai/drafts/:id/reject',auth(['owner','manager']),route(async(req,res)=>res.json(await rejectCatalogueDraft(db,Number(req.params.id),req.session.staff.id))));
+registerCustomerAdminRoutes(app,{db,route,auth});
 registerChatRoutes(app,{db,route,auth,rateLimit});
 registerSeo(app,db,{preview,route});
 app.use('/api',(req,res)=>res.status(404).json({error:'API endpoint not found'}));
