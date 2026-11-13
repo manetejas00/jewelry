@@ -1,43 +1,21 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
+import {createZoomImageClick, createZoomImageHover} from '@zoom-image/core';
 import {listingThumbnail} from './listing-media.js';
 
-const STYLE = '/magiczoom/magiczoom.css';
-const SCRIPT = '/magiczoom/magiczoom.js';
 const NARROW = '(max-width: 800px)';
-const DESKTOP_OPTIONS = 'cssClass: mz-show-arrows;';
-const MOBILE_OPTIONS = 'cssClass: mz-show-arrows; zoomPosition: inner; zoomMode: magnifier; textHoverZoomHint: Tap to zoom;';
 
-function galleryOptions(narrow) {
-  return narrow ? MOBILE_OPTIONS : DESKTOP_OPTIONS;
-}
-
-function loadMagicZoom() {
-  if (!document.querySelector('link[data-magiczoom]')) {
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = STYLE;
-    link.dataset.magiczoom = '1';
-    document.head.appendChild(link);
-  }
-  if (window.MagicZoom) return Promise.resolve(window.MagicZoom);
-  if (!window.__magicZoomReady) {
-    window.__magicZoomReady = new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = SCRIPT;
-      script.async = true;
-      script.onload = () => resolve(window.MagicZoom);
-      script.onerror = () => reject(new Error('MagicZoom failed to load'));
-      document.body.appendChild(script);
-    });
-  }
-  return window.__magicZoomReady;
-}
-
-export default function ProductMagicZoom({id, images, title, children}) {
-  const zoomId = `mz-${String(id || 'piece').replace(/[^a-zA-Z0-9_-]/g, '')}`;
+export default function ProductMagicZoom({images, title, children}) {
   const photos = images.filter(image => image?.url);
   const signature = photos.map(image => image.url).join('|');
+  const [index, setIndex] = useState(0);
   const [narrow, setNarrow] = useState(() => window.matchMedia(NARROW).matches);
+  const stageRef = useRef(null);
+  const targetRef = useRef(null);
+  const photo = photos[index] || photos[0];
+
+  useEffect(() => {
+    setIndex(0);
+  }, [signature]);
 
   useEffect(() => {
     const media = window.matchMedia(NARROW);
@@ -47,29 +25,56 @@ export default function ProductMagicZoom({id, images, title, children}) {
   }, []);
 
   useEffect(() => {
-    let cancel = false;
-    loadMagicZoom().then(zoom => {
-      if (cancel || !zoom) return;
-      if (typeof zoom.stop === 'function') zoom.stop(zoomId);
-      if (typeof zoom.refresh === 'function') zoom.refresh(zoomId);
-      else if (typeof zoom.start === 'function') zoom.start(zoomId);
-    }).catch(() => {});
-    return () => {
-      cancel = true;
-      window.MagicZoom?.stop?.(zoomId);
-    };
-  }, [zoomId, signature, narrow]);
+    const stage = stageRef.current;
+    if (!stage || !photo) return undefined;
+    const rect = stage.getBoundingClientRect();
+    const zoom = narrow
+      ? createZoomImageClick(stage, {
+        zoomImageSource: photo.url,
+        zoomFactor: 2.4,
+        disableScrollLock: true,
+        zoomImageProps: {alt: title}
+      })
+      : createZoomImageHover(stage, {
+        zoomImageSource: photo.url,
+        zoomTarget: targetRef.current,
+        customZoom: {
+          width: Math.max(240, Math.round(rect.width)),
+          height: Math.max(300, Math.round(rect.height))
+        },
+        scale: 2,
+        zoomLensClass: 'gallery-zoom-lens',
+        zoomTargetClass: 'is-open',
+        disableScrollLock: true,
+        zoomImageProps: {alt: title}
+      });
+    return () => zoom.cleanup();
+  }, [photo?.url, narrow, title]);
 
-  if (!photos.length) return null;
-  const main = photos[0];
+  if (!photo) return null;
+
+  function show(event, next) {
+    event.preventDefault();
+    event.stopPropagation();
+    setIndex((next + photos.length) % photos.length);
+  }
+
   return <div className="detail-gallery">
-    <a href={main.url} className="MagicZoom" id={zoomId} data-options={galleryOptions(narrow)}>
-      <img src={main.url} alt={title}/>
-    </a>
+    <div className="gallery-frame">
+      <div className="gallery-stage" ref={stageRef}>
+        <img src={photo.url} alt={title}/>
+        <span className="gallery-hint">{narrow ? 'Tap to zoom' : 'Hover to zoom'}</span>
+        {photos.length > 1 && <>
+          <button type="button" className="gallery-arrow gallery-arrow-prev" aria-label="Previous photo" onPointerDown={event => event.stopPropagation()} onClick={event => show(event, index - 1)}><span/></button>
+          <button type="button" className="gallery-arrow gallery-arrow-next" aria-label="Next photo" onPointerDown={event => event.stopPropagation()} onClick={event => show(event, index + 1)}><span/></button>
+        </>}
+      </div>
+      <div className="gallery-zoom-target" ref={targetRef} aria-hidden="true"/>
+    </div>
     {photos.length > 1 && <div className="product-angle-gallery" role="group" aria-label="Product angle views">
-      {photos.map((image, index) => <a key={image.id || index} data-zoom-id={zoomId} href={image.url} data-image={image.url}>
-        <img src={listingThumbnail({image: image.url})} alt={image.alt_text || title}/>
-      </a>)}
+      {photos.map((image, imageIndex) => <button type="button" key={image.id || imageIndex} className="gallery-thumb" aria-label={image.alt_text || `${title} view ${imageIndex + 1}`} aria-current={imageIndex === index ? 'true' : undefined} onClick={() => setIndex(imageIndex)}>
+        <img src={listingThumbnail({image: image.url})} alt=""/>
+      </button>)}
     </div>}
     {children}
   </div>;

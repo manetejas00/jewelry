@@ -23,6 +23,7 @@
     "release:package": "node scripts/package-release.js"
   },
   "dependencies": {
+    "@zoom-image/core": "^0.43.1",
     "bcryptjs": "^3.0.2",
     "better-sqlite3": "^11.8.1",
     "csv-parse": "^7.0.3",
