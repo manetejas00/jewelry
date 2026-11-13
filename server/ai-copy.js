@@ -154,15 +154,15 @@ export function buildCopyMessages(skillId, product, tone) {
 
 export async function completeCopy({env = process.env, fetchImpl = globalThis.fetch, messages, signal}) {
   if (!env.AI_API_KEY) throw validationError('Catalogue copy is unavailable until AI_API_KEY is set on the server.', 503);
-  const base = String(env.AI_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, '');
-  const model = env.AI_MODEL || 'gpt-4o-mini';
+  const base = String(env.AI_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta/openai').replace(/\/$/, '');
+  const model = env.AI_MODEL || 'gemini-3.5-flash-lite';
   let response;
   try {
     response = await fetchImpl(`${base}/chat/completions`, {
       method: 'POST',
       signal: signal || AbortSignal.timeout(40000),
       headers: {'Content-Type': 'application/json', Authorization: `Bearer ${env.AI_API_KEY}`},
-      body: json({model, temperature: 0.4, messages})
+      body: json({model, temperature: 0.4, response_format: {type: 'json_object'}, messages})
     });
   } catch (error) {
     if (error?.name === 'TimeoutError' || error?.name === 'AbortError') throw validationError('The copy service timed out. No live catalogue text was changed.', 504);

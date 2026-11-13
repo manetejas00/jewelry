@@ -21,6 +21,8 @@ export default function AiCopy({products, readonly, onPublished}) {
   const [applyDescription, setApplyDescription] = useState(false);
   const [applySearch, setApplySearch] = useState(false);
   const [acknowledge, setAcknowledge] = useState(false);
+  const [checked, setChecked] = useState(() => new Set());
+  const [bulkClaims, setBulkClaims] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -56,6 +58,33 @@ export default function AiCopy({products, readonly, onPublished}) {
     () => drafts.some(draft => draft.status === 'pending' && draft.sku === sku && draft.skill === skill),
     [drafts, sku, skill]
   );
+  const pendingDrafts = drafts.filter(draft => draft.status === 'pending');
+  const selectedDrafts = pendingDrafts.filter(draft => checked.has(draft.id));
+  const selectedNeedClaims = selectedDrafts.some(draft => draft.output?.warnings?.length);
+
+  function toggleDraft(id) {
+    setChecked(current => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function togglePending(on) {
+    setChecked(on ? new Set(pendingDrafts.map(draft => draft.id)) : new Set());
+    if (!on) setBulkClaims(false);
+  }
+
+  function publishBody(draft) {
+    const output = draft.output || {};
+    return {
+      apply_name: Boolean(output.proposed_name),
+      apply_description: Boolean(output.proposed_description),
+      apply_search: Boolean(output.seo_title || output.meta_description),
+      acknowledge_warnings: Boolean(output.warnings?.length)
+    };
+  }
 
   async function run(e) {
     e.preventDefault();
@@ -99,6 +128,52 @@ export default function AiCopy({products, readonly, onPublished}) {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function bulk(kind) {
+    if (!selectedDrafts.length || readonly) return;
+    setBusy(true);
+    setError('');
+    setNotice('');
+    const done = [];
+    const skipped = [];
+    const failed = [];
+    for (const draft of selectedDrafts) {
+      try {
+        if (kind === 'reject') {
+          await request(`/admin/ai/drafts/${draft.id}/reject`, {});
+          done.push(draft);
+          continue;
+        }
+        if (draft.output?.warnings?.length && !bulkClaims) {
+          skipped.push(draft);
+          continue;
+        }
+        const body = publishBody(draft);
+        if (!body.apply_name && !body.apply_description && !body.apply_search) {
+          skipped.push(draft);
+          continue;
+        }
+        await request(`/admin/ai/drafts/${draft.id}/approve`, body);
+        done.push(draft);
+      } catch (err) {
+        failed.push(`${draft.sku}: ${err.message}`);
+      }
+    }
+    setChecked(new Set());
+    setBulkClaims(false);
+    await load().catch(() => {});
+    if (kind === 'publish' && done.length && onPublished) await onPublished();
+    if (done.length) {
+      setNotice(kind === 'reject'
+        ? `Rejected ${done.length} draft${done.length === 1 ? '' : 's'}. The live catalogue is unchanged.`
+        : `Published ${done.length} draft${done.length === 1 ? '' : 's'}.`);
+    }
+    const problems = [];
+    if (skipped.length) problems.push(`Left ${skipped.length} selected draft${skipped.length === 1 ? '' : 's'} pending. Review claims before publishing them.`);
+    if (failed.length) problems.push(failed.join(' · '));
+    if (problems.length) setError(problems.join(' '));
+    setBusy(false);
   }
 
   return <div className="admin-panel">
@@ -157,14 +232,37 @@ export default function AiCopy({products, readonly, onPublished}) {
       </div>}
     </div>}
     <h4>Recent copy operations</h4>
+    <div className="reviews-bulk-bar">
+      <label className="checkbox">
+        <input
+          type="checkbox"
+          checked={pendingDrafts.length > 0 && selectedDrafts.length === pendingDrafts.length}
+          ref={node => { if (node) node.indeterminate = selectedDrafts.length > 0 && selectedDrafts.length < pendingDrafts.length; }}
+          onChange={e => togglePending(e.target.checked)}
+          disabled={busy || readonly || !pendingDrafts.length}
+          aria-label="Select all pending drafts"
+        />
+        Select pending
+      </label>
+      {selectedDrafts.length > 0 && <span className="selected-count-pill">{selectedDrafts.length} selected</span>}
+      {!readonly && selectedDrafts.length > 0 && <div className="bulk-action-buttons">
+        {selectedNeedClaims && <label className="checkbox"><input type="checkbox" checked={bulkClaims} disabled={busy} onChange={e => setBulkClaims(e.target.checked)}/> I have reviewed these claims</label>}
+        <button type="button" className="button dark sm" disabled={busy || (selectedNeedClaims && !bulkClaims)} onClick={() => bulk('publish')}>Publish selected</button>
+        <button type="button" className="text-button" disabled={busy} onClick={() => bulk('reject')}>Reject selected</button>
+      </div>}
+    </div>
     <div className="table-wrap"><table>
-      <thead><tr><th>Draft</th><th>Product</th><th>Skill</th><th>Status</th></tr></thead>
-      <tbody>{drafts.map(draft => <tr key={draft.id}>
-        <td><button type="button" className="underlink" onClick={() => setSelectedId(draft.id)}>#{draft.id}</button></td>
-        <td>{draft.sku}</td>
-        <td>{skills.find(([id]) => id === draft.skill)?.[1] || draft.skill}</td>
-        <td>{draft.status}</td>
-      </tr>)}</tbody>
+      <thead><tr><th>Select</th><th>Draft</th><th>Product</th><th>Skill</th><th>Status</th></tr></thead>
+      <tbody>{drafts.map(draft => {
+        const pending = draft.status === 'pending';
+        return <tr key={draft.id}>
+          <td><input type="checkbox" checked={pending && checked.has(draft.id)} disabled={!pending || busy || readonly} onChange={() => toggleDraft(draft.id)} aria-label={`Select draft ${draft.id}`}/></td>
+          <td><button type="button" className="underlink" onClick={() => setSelectedId(draft.id)}>#{draft.id}</button></td>
+          <td>{draft.sku}</td>
+          <td>{skills.find(([id]) => id === draft.skill)?.[1] || draft.skill}</td>
+          <td>{draft.status}</td>
+        </tr>;
+      })}</tbody>
     </table>{!drafts.length && <p className="small muted">No copy drafts yet.</p>}</div>
   </div>;
 }
