@@ -2445,6 +2445,8 @@
 .hero-photo img.is-prev,.hero-photo img.is-active{opacity:1}
 .hero-photo img.is-active{z-index:1}
 .hero-photo img.is-incoming{animation:hero-fade .7s ease}
+.hero-photo video{position:absolute;inset:0;z-index:0;opacity:0;pointer-events:none}
+.hero-photo video.is-active{z-index:1;opacity:1}
 .hero-photo:after{z-index:2;pointer-events:none}
 @keyframes hero-fade{from{opacity:0}to{opacity:1}}
 @media(prefers-reduced-motion:reduce){.hero-photo img.is-incoming{animation:none}}
