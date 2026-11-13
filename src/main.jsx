@@ -451,7 +451,7 @@ function Product(){
   const p=variants.find(item=>item.sku===sku)||listed;
   const relatedProducts = useMemo(()=>products.filter(item=>item.category===p?.category&&item.product_code!==p?.product_code),[products,p?.category,p?.product_code]);
   useEffect(()=>{setSku('');setSelectedImage(null);},[slug]);
-  useEffect(()=>{if(p)document.title=p.name+' | Veyora Jewels'},[p?.name]);
+  useEffect(()=>{if(p)document.title=p.seo_title||p.name+' | Veyora Jewels'},[p?.name,p?.seo_title]);
   if(!p)return <Layout><div className="empty"><h1>{!accountReady?'Finding your piece…':error?'Could not load this piece':'Piece not found'}</h1>{error&&<><p className="error" role="alert">{error}</p><button className="underlink" onClick={()=>refreshCatalogue().catch(()=>{})}>Try again</button></>}<Link to="/collections/all">Back to collection</Link></div></Layout>;
 
   const photos=galleryPhotos(p.images);

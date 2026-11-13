@@ -815,7 +815,7 @@ app.post('/api/admin/ai/drafts',aiCopyLimit,auth(['owner','manager']),route(asyn
   res.status(201).json(draft);
 }));
 app.post('/api/admin/ai/drafts/:id/approve',auth(['owner','manager']),route(async(req,res)=>{
-  const draft=await approveCatalogueDraft(db,Number(req.params.id),{applyName:req.body.apply_name===true,applyDescription:req.body.apply_description===true,acknowledgeWarnings:req.body.acknowledge_warnings===true,staffId:req.session.staff.id});
+  const draft=await approveCatalogueDraft(db,Number(req.params.id),{applyName:req.body.apply_name===true,applyDescription:req.body.apply_description===true,applySearch:req.body.apply_search===true,acknowledgeWarnings:req.body.acknowledge_warnings===true,staffId:req.session.staff.id});
   invalidateSearchCache();
   res.json(draft);
 }));

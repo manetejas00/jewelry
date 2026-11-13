@@ -249,7 +249,7 @@ export async function listCatalogueDrafts(k, {sku, status} = {}) {
   return (await query).map(present);
 }
 
-export async function approveCatalogueDraft(k, id, {applyName = false, applyDescription = false, acknowledgeWarnings = false, staffId}) {
+export async function approveCatalogueDraft(k, id, {applyName = false, applyDescription = false, applySearch = false, acknowledgeWarnings = false, staffId}) {
   await ensureTable(k);
   const draft = await k('ai_drafts').where({id}).first();
   if (!draft || draft.status !== 'pending') throw validationError('Draft is not awaiting review', 404);
@@ -267,7 +267,13 @@ export async function approveCatalogueDraft(k, id, {applyName = false, applyDesc
     patch.description = output.proposed_description;
     published.push('description');
   }
-  if (!published.length) throw validationError('Choose the name, the description, or both');
+  if (applySearch) {
+    if (!output.seo_title && !output.meta_description) throw validationError('This draft has no search text to publish');
+    if (output.seo_title) patch.seo_title = String(output.seo_title).slice(0, 70);
+    if (output.meta_description) patch.meta_description = String(output.meta_description).slice(0, 160);
+    published.push('search');
+  }
+  if (!published.length) throw validationError('Choose the name, the description, the search text, or any combination');
   await k.transaction(async t => {
     const count = await t('products').where({sku: draft.sku}).update(patch);
     if (!count) throw validationError('Product not found', 404);

@@ -182,6 +182,31 @@ test('catalogue copy drafts publish only after approval', async () => {
   });
   await rejectCatalogueDraft(k, rejected.id, 7);
   assert.equal((await k('products').where({sku: 'AI-RING'}).first()).name, 'Quiet gold ring');
+
+  const searchOnly = await createCatalogueDraft(k, {
+    sku: 'AI-RING',
+    skill: 'product-description-generator',
+    staffId: 7,
+    env: {AI_API_KEY: 'test'},
+    fetchImpl: model(JSON.stringify({
+      proposed_description: 'An 18K gold band with a polished finish.',
+      seo_title: 'Quiet 18K gold ring | Veyora Jewels',
+      meta_description: 'An 18K gold band with a polished finish.'
+    }))
+  });
+  searchOnly.skill = 'product-page-seo';
+  searchOnly.output.proposed_description = null;
+  await k('ai_drafts').where({id: searchOnly.id}).update({
+    skill: 'product-page-seo',
+    output_json: JSON.stringify(searchOnly.output)
+  });
+  const unchanged = await k('products').where({sku: 'AI-RING'}).first();
+  await approveCatalogueDraft(k, searchOnly.id, {applySearch: true, staffId: 7});
+  const withSearch = await k('products').where({sku: 'AI-RING'}).first();
+  assert.equal(withSearch.seo_title, 'Quiet 18K gold ring | Veyora Jewels');
+  assert.equal(withSearch.meta_description, 'An 18K gold band with a polished finish.');
+  assert.equal(withSearch.description, unchanged.description);
+  assert.equal(withSearch.name, unchanged.name);
   const history = await listCatalogueDrafts(k, {sku: 'AI-RING'});
   assert.ok(history.some(row => row.status === 'rejected'));
 });

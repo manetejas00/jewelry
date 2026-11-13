@@ -7,7 +7,7 @@ export async function pageMetadata(k,pathname){
  if(pathname.startsWith('/products/'))product=await pricedProductBySlug(k,decodeURIComponent(pathname.slice(10)));
  else if(pathname.startsWith('/coins/product/'))product=await pricedCoinBySku(k,decodeURIComponent(pathname.slice(15)));
  const labels={'/':'','/collections/all':'All jewellery','/collections/pearls':'The Pearl Edit','/collections/rings':'Rings','/collections/earrings':'Earrings','/collections/necklaces':'Necklaces','/collections/bracelets':'Bracelets','/coins':'Gold & silver coins','/coins/gold':'Gold coins','/coins/silver':'Silver coins','/information/shipping':'Shipping information','/information/care':'Jewellery care','/information/returns':'Returns information','/information/contact':'Contact','/information/about':'About Veyora','/information/privacy':'Privacy policy','/information/terms':'Terms and conditions'};
- if(product){title=product.name+' | '+brand;description=String(product.description||product.name).slice(0,160);image=product.image;}
+ if(product){title=product.seo_title||product.name+' | '+brand;description=product.meta_description||String(product.description||product.name).slice(0,160);image=product.image;}
  else if(pathname==='/collections/saved'){title='Your saved pieces | '+brand;indexable=false;}
  else if(pathname in labels){if(labels[pathname])title=labels[pathname]+' | '+brand;}
  else if(/^\/(account|admin|bag|checkout|order)(\/|$)/.test(pathname)){title='Your account and orders | '+brand;indexable=false;}

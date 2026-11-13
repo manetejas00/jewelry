@@ -19,6 +19,7 @@ export default function AiCopy({products, readonly, onPublished}) {
   const [selectedId, setSelectedId] = useState(null);
   const [applyName, setApplyName] = useState(false);
   const [applyDescription, setApplyDescription] = useState(false);
+  const [applySearch, setApplySearch] = useState(false);
   const [acknowledge, setAcknowledge] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -47,8 +48,9 @@ export default function AiCopy({products, readonly, onPublished}) {
     if (!selected?.output) return;
     setApplyName(Boolean(selected.output.proposed_name) && selected.skill === 'product-title-optimization');
     setApplyDescription(Boolean(selected.output.proposed_description));
+    setApplySearch(selected.skill === 'product-page-seo' && Boolean(selected.output.seo_title || selected.output.meta_description));
     setAcknowledge(false);
-  }, [selectedId, selected?.skill, selected?.output?.proposed_name, selected?.output?.proposed_description]);
+  }, [selectedId, selected?.skill, selected?.output?.proposed_name, selected?.output?.proposed_description, selected?.output?.seo_title, selected?.output?.meta_description]);
 
   const pendingForSelection = useMemo(
     () => drafts.some(draft => draft.status === 'pending' && draft.sku === sku && draft.skill === skill),
@@ -85,9 +87,10 @@ export default function AiCopy({products, readonly, onPublished}) {
         await request(`/admin/ai/drafts/${selected.id}/approve`, {
           apply_name: applyName,
           apply_description: applyDescription,
+          apply_search: applySearch,
           acknowledge_warnings: acknowledge
         });
-        setNotice('Approved text is now on the product.');
+        setNotice('Published text is now on the product.');
         if (onPublished) await onPublished();
       }
       await load(selected.id);
@@ -138,6 +141,7 @@ export default function AiCopy({products, readonly, onPublished}) {
           <h4>Draft</h4>
           {output.proposed_name && <p><strong>{output.proposed_name}</strong></p>}
           {output.proposed_description && <p>{output.proposed_description}</p>}
+          {output.seo_title && <p className="small muted">Page title: {output.seo_title}</p>}
           {output.meta_description && <p className="small muted">Search snippet: {output.meta_description}</p>}
           {output.notes && <p className="small muted">{output.notes}</p>}
         </div>
@@ -146,8 +150,9 @@ export default function AiCopy({products, readonly, onPublished}) {
       {selected.status === 'pending' && <div className="copy-actions">
         <label className="checkbox"><input type="checkbox" checked={applyName} disabled={!output?.proposed_name || busy || readonly} onChange={e => setApplyName(e.target.checked)}/> Publish name</label>
         <label className="checkbox"><input type="checkbox" checked={applyDescription} disabled={!output?.proposed_description || busy || readonly} onChange={e => setApplyDescription(e.target.checked)}/> Publish description</label>
+        {(output?.seo_title || output?.meta_description) && <label className="checkbox"><input type="checkbox" checked={applySearch} disabled={busy || readonly} onChange={e => setApplySearch(e.target.checked)}/> Publish search text</label>}
         {warnings.length > 0 && <label className="checkbox"><input type="checkbox" checked={acknowledge} disabled={busy || readonly} onChange={e => setAcknowledge(e.target.checked)}/> I have reviewed these claims</label>}
-        <button type="button" className="button dark small-button" disabled={busy || readonly} onClick={() => decide('approve')}>Approve selected text</button>
+        <button type="button" className="button dark small-button" disabled={busy || readonly || (!applyName && !applyDescription && !applySearch) || (warnings.length > 0 && !acknowledge)} onClick={() => decide('approve')}>Publish</button>
         <button type="button" className="text-button" disabled={busy || readonly} onClick={() => decide('reject')}>Reject draft</button>
       </div>}
     </div>}

@@ -49,7 +49,7 @@ const plans = [
         proposed_description: null,
         seo_title: `${product.name} | Veyora Jewels`,
         meta_description: `${product.name}${material ? `, ${material}` : ''}. Preview catalogue page for Veyora Jewels.`,
-        notes: `${marker}. Search text is a draft only and is not published.`,
+        notes: `${marker}. Publish search text to set the page title and Google snippet. The on-page description stays as it is.`,
         warnings: []
       };
     }
