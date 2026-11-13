@@ -5,7 +5,8 @@ import {registerCustomer} from '../server/customers.js';
 import {submitReview} from '../server/reviews.js';
 import {checkout, updateOrderStatus, presentOrders, requireSignedInCsrf} from '../server/orders.js';
 import {quote} from '../server/pricing.js';
-import {setStaffAccess} from '../server/staff-access.js';
+import {setStaffAccess, createStaff} from '../server/staff-access.js';
+import bcrypt from 'bcryptjs';
 import {isSafeMediaUrl} from '../server/thumbnails.js';
 
 let k;
@@ -46,6 +47,17 @@ test('launch integrity fixes keep reviews, stock, offers and staff access consis
   const [ownerId] = await k('staff').insert({email:'only-owner@example.invalid', password_hash:'hash', role:'owner'});
   await assert.rejects(setStaffAccess(k, ownerId, ownerId, true), /own account|active owner/);
   assert.equal((await k('staff').where({id:ownerId}).first()).disabled_at, null);
+
+  const created = await createStaff(k, {email:' New.Staff@Example.Invalid ', password:'a-secure-password', role:'viewer'});
+  assert.equal(created.email, 'new.staff@example.invalid');
+  assert.equal(created.role, 'viewer');
+  assert.equal(created.password_hash, undefined);
+  const row = await k('staff').where({email:'new.staff@example.invalid'}).first();
+  assert.equal(await bcrypt.compare('a-secure-password', row.password_hash), true);
+  await assert.rejects(() => createStaff(k, {email:'new.staff@example.invalid', password:'a-secure-password', role:'manager'}), /already exists/);
+  await assert.rejects(() => createStaff(k, {email:'not-an-email', password:'a-secure-password', role:'viewer'}), /email/i);
+  await assert.rejects(() => createStaff(k, {email:'short@example.invalid', password:'too-short', role:'viewer'}), /password/i);
+  await assert.rejects(() => createStaff(k, {email:'role@example.invalid', password:'a-secure-password', role:'admin'}), /role/i);
 });
 
 test('viewer order payloads omit contact details', () => {
