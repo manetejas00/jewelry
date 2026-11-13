@@ -2472,12 +2472,12 @@
 body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 @media(max-width:800px){input,select,textarea{font-size:16px}}
 .pwa-offline{position:fixed;z-index:34;left:0;right:0;top:0;margin:0;padding:calc(8px + env(safe-area-inset-top)) 16px 8px;background:#102124;color:#f8f6f0;text-align:center;font-size:13px;line-height:1.45}
-.install-app{position:fixed;z-index:35;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));display:flex;flex-wrap:wrap;align-items:center;gap:8px;max-width:min(24rem,calc(100vw - 32px))}
+.install-app{position:fixed;z-index:35;right:max(16px,env(safe-area-inset-right));bottom:calc(max(16px,env(safe-area-inset-bottom)) + 68px);display:flex;flex-wrap:wrap;align-items:center;gap:8px;max-width:min(24rem,calc(100vw - 32px))}
 .install-app-action,.install-app-dismiss,.install-help button{min-height:44px;padding:0 16px;background:#102124;color:#f8f6f0;font-size:13px}
 .install-app-dismiss,.install-help button{background:transparent;color:#102124;border:1px solid #102124}
 .install-app-banner{background:#f8f6f0;border:1px solid #dcdcd1;padding:12px;box-shadow:0 12px 32px #1021241a}
 .install-app-note,.install-help p,.install-help li{font-size:13px;line-height:1.5;margin:0}
-.install-help{position:fixed;z-index:36;left:max(16px,env(safe-area-inset-left));right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));background:#f8f6f0;border:1px solid #dcdcd1;padding:16px 16px max(16px,env(safe-area-inset-bottom));box-shadow:0 12px 32px #1021241a;max-width:36rem;margin-left:auto}
+.install-help{position:fixed;z-index:36;left:max(16px,env(safe-area-inset-left));right:max(16px,env(safe-area-inset-right));bottom:calc(max(16px,env(safe-area-inset-bottom)) + 68px);background:#f8f6f0;border:1px solid #dcdcd1;padding:16px 16px max(16px,env(safe-area-inset-bottom));box-shadow:0 12px 32px #1021241a;max-width:36rem;margin-left:auto}
 .install-help h2{font-size:28px;margin-bottom:8px}
 .install-help ol{margin:0 0 8px;padding-left:1.2rem}
 @media(prefers-reduced-motion:reduce){.install-app,.install-help{transition:none}}
