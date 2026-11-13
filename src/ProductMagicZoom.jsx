@@ -1,8 +1,15 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {listingThumbnail} from './listing-media.js';
 
 const STYLE = '/magiczoom/magiczoom.css';
 const SCRIPT = '/magiczoom/magiczoom.js';
+const NARROW = '(max-width: 800px)';
+const DESKTOP_OPTIONS = 'cssClass: mz-show-arrows;';
+const MOBILE_OPTIONS = 'cssClass: mz-show-arrows; zoomPosition: inner; zoomMode: magnifier; textHoverZoomHint: Tap to zoom;';
+
+function galleryOptions(narrow) {
+  return narrow ? MOBILE_OPTIONS : DESKTOP_OPTIONS;
+}
 
 function loadMagicZoom() {
   if (!document.querySelector('link[data-magiczoom]')) {
@@ -30,6 +37,14 @@ export default function ProductMagicZoom({id, images, title, children}) {
   const zoomId = `mz-${String(id || 'piece').replace(/[^a-zA-Z0-9_-]/g, '')}`;
   const photos = images.filter(image => image?.url);
   const signature = photos.map(image => image.url).join('|');
+  const [narrow, setNarrow] = useState(() => window.matchMedia(NARROW).matches);
+
+  useEffect(() => {
+    const media = window.matchMedia(NARROW);
+    const onChange = () => setNarrow(media.matches);
+    media.addEventListener('change', onChange);
+    return () => media.removeEventListener('change', onChange);
+  }, []);
 
   useEffect(() => {
     let cancel = false;
@@ -43,12 +58,12 @@ export default function ProductMagicZoom({id, images, title, children}) {
       cancel = true;
       window.MagicZoom?.stop?.(zoomId);
     };
-  }, [zoomId, signature]);
+  }, [zoomId, signature, narrow]);
 
   if (!photos.length) return null;
   const main = photos[0];
   return <div className="detail-gallery">
-    <a href={main.url} className="MagicZoom" id={zoomId} data-options="cssClass: mz-show-arrows;">
+    <a href={main.url} className="MagicZoom" id={zoomId} data-options={galleryOptions(narrow)}>
       <img src={main.url} alt={title}/>
     </a>
     {photos.length > 1 && <div className="product-angle-gallery" role="group" aria-label="Product angle views">
