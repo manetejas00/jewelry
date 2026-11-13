@@ -1,7 +1,7 @@
 import useScrollLock from './useScrollLock.js';
 import React, {useEffect, useId, useRef, useState} from 'react';
 import {Link} from 'react-router-dom';
-import {MessageCircle, Send, X} from 'lucide-react';
+import {MessageCircle, Send, X, ChevronDown} from 'lucide-react';
 import {api, request} from './api.js';
 import {useStore} from './store.jsx';
 import {chatProductLinks} from './chat-product-links.js';
@@ -148,7 +148,9 @@ export default function ChatWidget() {
           <Link className="veyora-chat-button secondary" to="/account?mode=register">Register</Link>
         </div>
       </div> : <>
-        <div className="veyora-chat-usage" aria-live="polite">
+        <details className="veyora-chat-usage">
+          <summary>Message usage <ChevronDown size={16} aria-hidden="true"/></summary>
+          <div className="veyora-chat-usage-content" aria-live="polite">
           <p>Daily Limit: {limit}</p>
           <p>Used Today: {used}/{limit}</p>
           <p>Remaining: {usage ? usage.remaining : limit}</p>
@@ -158,7 +160,8 @@ export default function ChatWidget() {
           </div>
           <p>{usage ? `${usage.remaining} Messages Remaining` : ''}</p>
           {usage?.resetAt && <p className="veyora-chat-reset">Resets at midnight ({usage.timeZone.replace('_', ' ')}).</p>}
-        </div>
+          </div>
+        </details>
         {conversations.length > 1 && <label className="veyora-chat-history">Conversation
           <select aria-label="Conversation history" value={conversationId || ''} onChange={event => setConversationId(Number(event.target.value))}>
             {conversations.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}

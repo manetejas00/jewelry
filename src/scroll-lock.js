@@ -55,7 +55,7 @@ export function createScrollLockManager(doc, win) {
     const amount = {ArrowDown:40,ArrowUp:-40,PageDown:win.innerHeight,PageUp:-win.innerHeight,Home:-Infinity,End:Infinity,' ':event.shiftKey?-win.innerHeight:win.innerHeight}[event.key];
     if (amount == null) return;
     const target = event.target;
-    if (inside(root,target) && target.closest?.('input,textarea,select,button,a,[contenteditable="true"],[role="listbox"]')) return;
+    if (inside(root,target) && target.closest?.('input,textarea,select,button,a,summary,[contenteditable="true"],[role="listbox"]')) return;
     if (!gesture(target,root) && !canScroll(target,root,0,amount)) stop(event);
   }
   function saveStyles(element, values) {
