@@ -170,8 +170,12 @@ function presentUser(row, fallback) {
 
 export async function chatUserDetail(db, userId, env = process.env, now = new Date()) {
   const id = Number(userId);
-  const customer = await db('customers').where({id}).select('id', 'name', 'email', 'created_at').first();
+  const customer = await db('customers').where({id}).select('id', 'name', 'email', 'phone', 'email_verified_at', 'phone_verified_at', 'created_at').first();
   if (!customer) throw validationError('Customer not found.', 404);
+  const [orders, reviews] = await Promise.all([
+    db('orders').where({customer_id: id}).count({total: 'id'}).first(),
+    db.schema.hasTable('reviews') ? db('reviews').where({user_id: id}).count({total: 'id'}).first() : {total: 0}
+  ]);
   const config = await loadChatConfig(db, env);
   const today = usageDate(now, config.timeZone);
   const settings = await db('chatbot_user_settings').where({user_id: id}).first();
@@ -185,7 +189,17 @@ export async function chatUserDetail(db, userId, env = process.env, now = new Da
   const failed = logs.filter(row => row.request_status === 'refunded');
   const cost = succeeded.map(row => row.estimated_cost).filter(value => value != null);
   return {
-    user: {id: customer.id, name: customer.name, email: customer.email, registeredAt: customer.created_at},
+    user: {
+      id: customer.id,
+      name: customer.name,
+      email: customer.email,
+      phone: customer.phone || null,
+      emailVerified: Boolean(customer.email_verified_at),
+      phoneVerified: Boolean(customer.phone_verified_at),
+      registeredAt: customer.created_at,
+      orders: Number(orders?.total || 0),
+      reviews: Number(reviews?.total || 0)
+    },
     usage: {
       used,
       limit,

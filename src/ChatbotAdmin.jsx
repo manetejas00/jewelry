@@ -55,7 +55,7 @@ export default function ChatbotAdmin({readonly, canConfigure}) {
       api(`/admin/chatbot/users/${id}/conversations`)
     ]);
     setDetail({...user, conversations: conversations.conversations});
-    setSection('user');
+    setSection('users');
   }
 
   async function saveUser(event) {
@@ -148,32 +148,10 @@ export default function ChatbotAdmin({readonly, canConfigure}) {
       </form>
       <div className="table-wrap"><table>
         <thead><tr><th>User ID</th><th>User Name</th><th>Email</th><th>Daily Usage</th><th>Daily Limit</th><th>Remaining</th><th>Usage Status</th><th>Total Messages</th><th>Last Chat</th><th>Access</th><th>Actions</th></tr></thead>
-        <tbody>{users?.users?.map(user => <tr key={user.id}><td>{user.id}</td><td>{user.name}</td><td>{user.email}</td><td>{user.used}/{user.limit}</td><td>{user.limit}</td><td>{user.remaining}</td><td>{user.usageStatus.replaceAll('_', ' ')}</td><td>{user.lifetimeMessages}</td><td>{user.lastChat ? new Date(user.lastChat).toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'}) : '—'}</td><td>{user.accessEnabled ? 'Enabled' : 'Disabled'}</td><td><button type="button" className="underlink" onClick={() => openUser(user.id).catch(err => setError(err.message))}>View Details</button></td></tr>)}</tbody>
+        <tbody>{users?.users?.map(user => <tr key={user.id} className={detail?.user?.id === user.id ? 'is-selected' : ''}><td>{user.id}</td><td>{user.name}</td><td>{user.email}</td><td>{user.used}/{user.limit}</td><td>{user.limit}</td><td>{user.remaining}</td><td>{user.usageStatus.replaceAll('_', ' ')}</td><td>{user.lifetimeMessages}</td><td>{user.lastChat ? new Date(user.lastChat).toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'}) : '—'}</td><td>{user.accessEnabled ? 'Enabled' : 'Disabled'}</td><td><button type="button" className="underlink" onClick={() => openUser(user.id).catch(err => setError(err.message))}>View Details</button></td></tr>)}</tbody>
       </table>{users && !users.users.length && <p>No customers match these filters.</p>}</div>
       {users && <div className="admin-pagination-bar"><button type="button" className="button secondary small-button" disabled={users.page <= 1} onClick={() => { const next = {...filters, page: users.page - 1}; setFilters(next); loadUsers(next); }}>Previous</button><span>Page {users.page} of {users.pageCount}</span><button type="button" className="button secondary small-button" disabled={users.page >= users.pageCount} onClick={() => { const next = {...filters, page: users.page + 1}; setFilters(next); loadUsers(next); }}>Next</button></div>}
-    </div>}
-    {section === 'user' && detail && <div className="admin-panel">
-      <button type="button" className="underlink" onClick={() => setSection('users')}>Back to users</button>
-      <h3>{detail.user.name}</h3>
-      <p>{detail.user.email} · User {detail.user.id} · Registered {new Date(detail.user.registeredAt).toLocaleDateString('en-IN', {timeZone: 'Asia/Kolkata'})}</p>
-      <div className="chatbot-usage-card">
-        <p>Used today {detail.usage.used} / {detail.usage.limit}</p>
-        <p>Remaining {detail.usage.remaining}</p>
-        <div className="veyora-chat-meter" role="progressbar" aria-valuemin={0} aria-valuemax={detail.usage.limit} aria-valuenow={detail.usage.used}><span style={{width: `${Math.min(100, (detail.usage.used / detail.usage.limit) * 100)}%`}}/></div>
-        <p>Next reset {new Date(detail.usage.resetAt).toLocaleString('en-IN', {timeZone: detail.usage.timeZone})}</p>
-      </div>
-      <p>Lifetime messages {detail.lifetime.messages} · Conversations {detail.lifetime.conversations} · Successful {detail.lifetime.successfulResponses} · Failed {detail.lifetime.failedRequests}</p>
-      <p>Tokens in {detail.lifetime.inputTokens} · out {detail.lifetime.outputTokens} · Estimated cost {detail.lifetime.estimatedCost == null ? 'unavailable for this model' : `$${detail.lifetime.estimatedCost}`}</p>
-      {!readonly && <form onSubmit={saveUser} className="chatbot-settings-form">
-        <label>Daily message limit<input name="dailyMessageLimit" type="number" min="1" max="100" defaultValue={detail.usage.limit} disabled={readonly}/></label>
-        <label>Access<select name="chatbotAccessEnabled" defaultValue={String(detail.usage.accessEnabled)} disabled={readonly}><option value="true">Enabled</option><option value="false">Disabled</option></select></label>
-        <button className="button dark small-button" type="submit">Save user settings</button>
-      </form>}
-      <h3>Daily history</h3>
-      <div className="table-wrap"><table><thead><tr><th>Date</th><th>Messages</th></tr></thead><tbody>{detail.daily.map(row => <tr key={row.date}><td>{row.date}</td><td>{row.messages}</td></tr>)}</tbody></table></div>
-      <h3>Conversations</h3>
-      {detail.conversations.map(conversation => <details key={conversation.id}><summary>{conversation.title} · {new Date(conversation.updatedAt).toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'})}</summary>{conversation.messages.map(message => <p key={message.id}><strong>{message.role}</strong> · {new Date(message.createdAt).toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'})}<br/>{message.message}</p>)}{!readonly && <button type="button" className="underlink" onClick={async () => { await api(`/admin/chatbot/conversations/${conversation.id}`, {}, 'DELETE'); await openUser(detail.user.id); }}>Delete conversation</button>}</details>)}
-      {!detail.conversations.length && <p>No conversations yet.</p>}
+      {detail && <UserDetails detail={detail} readonly={readonly} onClose={() => setDetail(null)} onSave={saveUser} onDelete={async id => { await api(`/admin/chatbot/conversations/${id}`, {}, 'DELETE'); await openUser(detail.user.id); }}/>}
     </div>}
     {section === 'analytics' && <div className="admin-panel">
       <form onSubmit={event => loadAnalytics(event).catch(err => setError(err.message))} className="admin-filter-bar">
@@ -210,6 +188,48 @@ export default function ChatbotAdmin({readonly, canConfigure}) {
       {canConfigure && <button className="button dark" type="submit">Save configuration</button>}
     </form>}
   </div>;
+}
+
+function when(value) {
+  return value ? new Date(value).toLocaleString('en-IN', {timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short'}) : '—';
+}
+
+function UserDetails({detail, readonly, onClose, onSave, onDelete}) {
+  const user = detail.user;
+  const fields = [
+    ['User ID', user.id],
+    ['Name', user.name],
+    ['Email', user.email],
+    ['Email verified', user.emailVerified ? 'Yes' : 'No'],
+    ['Phone', user.phone || 'Not added'],
+    ['Phone verified', user.phone ? (user.phoneVerified ? 'Yes' : 'No') : '—'],
+    ['Registered', when(user.registeredAt)],
+    ['Orders', user.orders],
+    ['Reviews', user.reviews],
+    ['Chat access', detail.usage.accessEnabled ? 'Enabled' : 'Disabled']
+  ];
+  return <section className="chatbot-user-details" aria-label={`Details for ${user.name}`}>
+    <div className="panel-title"><h3>User details</h3><button type="button" className="underlink" onClick={onClose}>Close</button></div>
+    <dl>{fields.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+    <div className="chatbot-usage-card">
+      <p>Used today {detail.usage.used} / {detail.usage.limit}</p>
+      <p>Remaining {detail.usage.remaining}</p>
+      <div className="veyora-chat-meter" role="progressbar" aria-valuemin={0} aria-valuemax={detail.usage.limit} aria-valuenow={detail.usage.used}><span style={{width: `${Math.min(100, (detail.usage.used / Math.max(detail.usage.limit, 1)) * 100)}%`}}/></div>
+      <p>Next reset {when(detail.usage.resetAt)}</p>
+    </div>
+    <p>Lifetime messages {detail.lifetime.messages} · Conversations {detail.lifetime.conversations} · Successful {detail.lifetime.successfulResponses} · Failed {detail.lifetime.failedRequests}</p>
+    <p>Tokens in {detail.lifetime.inputTokens} · out {detail.lifetime.outputTokens} · Estimated cost {detail.lifetime.estimatedCost == null ? 'unavailable for this model' : `$${detail.lifetime.estimatedCost}`}</p>
+    {!readonly && <form key={`${user.id}-${detail.usage.limit}-${detail.usage.accessEnabled}`} onSubmit={onSave} className="chatbot-settings-form">
+      <label>Daily message limit<input name="dailyMessageLimit" type="number" min="1" max="100" defaultValue={detail.usage.limit}/></label>
+      <label>Access<select name="chatbotAccessEnabled" defaultValue={String(detail.usage.accessEnabled)}><option value="true">Enabled</option><option value="false">Disabled</option></select></label>
+      <button className="button dark small-button" type="submit">Save user settings</button>
+    </form>}
+    <h3>Daily history</h3>
+    <div className="table-wrap"><table><thead><tr><th>Date</th><th>Messages</th></tr></thead><tbody>{detail.daily.map(row => <tr key={row.date}><td>{row.date}</td><td>{row.messages}</td></tr>)}{!detail.daily.length && <tr><td colSpan={2}>No messages yet.</td></tr>}</tbody></table></div>
+    <h3>Conversations</h3>
+    {detail.conversations.map(conversation => <details key={conversation.id} open><summary>{conversation.title} · {when(conversation.updatedAt)}</summary>{conversation.messages.map(message => <p key={message.id}><strong>{message.role}</strong> · {when(message.createdAt)}<br/>{message.message}</p>)}{!readonly && <button type="button" className="underlink" onClick={() => onDelete(conversation.id)}>Delete conversation</button>}</details>)}
+    {!detail.conversations.length && <p>No conversations yet.</p>}
+  </section>;
 }
 
 function Stat({title, value, detail}) {
