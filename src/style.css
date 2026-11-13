@@ -276,6 +276,10 @@
 .detail-image>img{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto;object-fit:cover;object-position:center}
 .detail-image>.offer-ribbon-badge,.detail-image>.gold-linked-badge{max-width:calc(100% - 24px);overflow-wrap:anywhere;text-align:left}
 .product-angle-gallery{max-width:100%;overscroll-behavior-inline:contain}
+.detail-gallery .MagicZoom{display:block}
+.detail-gallery .MagicZoom>img{width:100%;aspect-ratio:4/5;object-fit:cover}
+.detail-gallery .product-angle-gallery a{flex:0 0 72px;width:72px;display:block}
+.detail-gallery .product-angle-gallery a img{width:72px;height:72px;object-fit:cover}
 .angle-thumb-btn{width:72px;flex:0 0 72px}
 .angle-thumb-btn img{width:100%;height:72px;object-fit:contain}
 .angle-thumb-btn.active{padding:3px}
