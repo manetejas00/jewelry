@@ -39,6 +39,7 @@ export async function saveUploadedImage(directory,filename,buffer){
  return {url:'/uploads/'+filename,thumbnail:thumbnailUrl('/uploads/'+filename)};
 }
 export async function ensureThumbnail(directory,filename){
+ if(!validName(filename)&&validName(`${filename}.webp`))filename=`${filename}.webp`;
  if(!validName(filename))throw Object.assign(Error('Image not found'),{status:404});
  const root=await fs.realpath(directory),source=await fs.realpath(path.join(root,filename)).catch(()=>null);
  if(!source||path.dirname(source)!==root)throw Object.assign(Error('Image not found'),{status:404});

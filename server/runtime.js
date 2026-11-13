@@ -15,6 +15,7 @@ export function validateRuntime(env=process.env) {
 }
 export function commerceConfig(env=process.env,preview=false) {
  const merchantReady=env.MERCHANT_READY==='true'&&(/^\S+@\S+\.\S+$/.test(env.MERCHANT_EMAIL||'')&&!/\.(local|invalid|example)$/i.test(env.MERCHANT_EMAIL||''))&&Boolean(env.SHIPPING_POLICY?.trim()&&env.RETURNS_POLICY?.trim());
- const paymentMode=preview?'cod':(env.PAYMENT_MODE||'disabled');
- return {merchantReady,paymentMode,checkoutEnabled:preview||(merchantReady&&paymentMode==='cod')};
+ const localPreview=preview&&env.NODE_ENV!=='production';
+ const paymentMode=localPreview?'cod':(env.PAYMENT_MODE||'disabled');
+ return {merchantReady,paymentMode,checkoutEnabled:localPreview||(merchantReady&&paymentMode==='cod')};
 }

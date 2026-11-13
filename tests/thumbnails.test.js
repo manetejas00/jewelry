@@ -31,6 +31,14 @@ test('existing hero thumbnails are generated lazily once, and invalid names or d
  assert.equal(uploadThumbnail('https://external.test/uploads/hero.jpg','https://test3.avinyacarefoundation.org'),null);
  }finally{await fs.rm(dir,{recursive:true,force:true})}
 });
+test('a webp upload can be thumbnailed from the short route name',async()=>{
+ const dir=await fs.mkdtemp(path.join(os.tmpdir(),'veyora-thumb-'));try{
+ const original=await sharp({create:{width:40,height:40,channels:3,background:'red'}}).webp().toBuffer();
+ await fs.writeFile(path.join(dir,'hero.webp'),original);
+ const file=await ensureThumbnail(dir,'hero');
+ assert.equal(path.basename(file),'hero.webp.webp');
+ }finally{await fs.rm(dir,{recursive:true,force:true})}
+});
 test('phone photo orientation is applied to the thumbnail while the original remains untouched',async()=>{
  const original=await sharp({create:{width:1400,height:900,channels:3,background:'#ded3c2'}}).jpeg().withMetadata({orientation:6}).toBuffer();
  const meta=await sharp(await thumbnailBuffer(original)).metadata();assert.equal(meta.height,800);assert.equal(meta.width,514);assert.equal(meta.orientation,undefined);

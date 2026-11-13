@@ -37,6 +37,10 @@ export function matchOffer(item, offers=[], code=null){
   }
   return null;
 }
+export function pricedOffer(offer, discountAmount){
+  if(!offer||!(Number(discountAmount)>0))return null;
+  return {id:offer.id,name:offer.name,badge_text:offer.badge_text,discount_type:offer.discount_type,discount_value:Number(offer.discount_value)};
+}
 
 export function calculatePrice(p,rate,rule={tax_percent:0,rounding:1,tax_treatment:'exclusive'},offer=null) {
  if(p.pricing_mode==='FIXED'){
@@ -61,7 +65,7 @@ export function calculatePrice(p,rate,rule={tax_percent:0,rounding:1,tax_treatme
      base_subtotal:baseSubtotal.toNumber(),margin:margin.toNumber(),margin_type:rule.margin_type||'PERCENT',margin_value:Number(rule.margin_value||0),
      original_total:fixedPrice,
      discount_amount:discountAmount,
-     offer:offer?{id:offer.id,name:offer.name,badge_text:offer.badge_text,discount_type:offer.discount_type,discount_value:Number(offer.discount_value)}:null,
+     offer:pricedOffer(offer, discountAmount),
      mode:'FIXED'
    };
  }
@@ -112,7 +116,7 @@ export function calculatePrice(p,rate,rule={tax_percent:0,rounding:1,tax_treatme
    total:total.toNumber(),
    original_total:origTotal.toNumber(),
    discount_amount:Math.max(0,origTotal.sub(total).toNumber()),
-   offer:offer?{id:offer.id,name:offer.name,badge_text:offer.badge_text,discount_type:offer.discount_type,discount_value:Number(offer.discount_value)}:null,
+   offer:pricedOffer(offer, origTotal.sub(total).toNumber()),
    mode:'GOLD_LINKED',
    rate_date:rate.effective_date
  };
@@ -153,7 +157,7 @@ export function calculateCoinPrice(c,rates,silverRate=null,rule={tax_percent:0,r
       metal:0,rate:0,weight,making:0,stone:0,other:0,subtotal:total,tax:0,total,
       base_subtotal:baseSubtotal.toNumber(),margin:margin.toNumber(),margin_type:rule.margin_type||'PERCENT',margin_value:Number(rule.margin_value||0),
      original_total:fixedPrice,discount_amount:discountAmount,
-      offer:offer?{id:offer.id,name:offer.name,badge_text:offer.badge_text,discount_type:offer.discount_type,discount_value:Number(offer.discount_value)}:null,
+      offer:pricedOffer(offer, discountAmount),
       mode:'FIXED'
     };
   }
@@ -210,7 +214,7 @@ export function calculateCoinPrice(c,rates,silverRate=null,rule={tax_percent:0,r
     total:total.toNumber(),
     original_total:origTotal.toNumber(),
     discount_amount:Math.max(0,origTotal.sub(total).toNumber()),
-    offer:offer?{id:offer.id,name:offer.name,badge_text:offer.badge_text,discount_type:offer.discount_type,discount_value:Number(offer.discount_value)}:null,
+    offer:pricedOffer(offer, origTotal.sub(total).toNumber()),
     mode:'METAL_LINKED',
     rate_date:isGold?(rates[c.purity])?.effective_date:todayIndia()
   };
@@ -261,7 +265,7 @@ export async function coinCatalogue(k, options={}){
       price:price?.total??null,
       original_price:price?.original_total??null,
       discount_amount:price?.discount_amount??0,
-      offer:price?.offer||(offer?{id:offer.id,name:offer.name,badge_text:offer.badge_text,discount_type:offer.discount_type,discount_value:Number(offer.discount_value)}:null),
+      offer:pricedOffer(price?.offer||offer, price?.discount_amount),
       breakdown:price,
       checkout_available:c.stock>0&&rateFresh&&Number.isFinite(price?.total),
       rating_average,
@@ -309,7 +313,7 @@ export async function catalogue(k, options={}){
       price:price?.total,
       original_price:price?.original_total??null,
       discount_amount:price?.discount_amount??0,
-      offer:price?.offer||(offer?{id:offer.id,name:offer.name,badge_text:offer.badge_text,discount_type:offer.discount_type,discount_value:Number(offer.discount_value)}:null),
+      offer:pricedOffer(price?.offer||offer, price?.discount_amount),
       breakdown:price,
       checkout_available:p.stock>0 && Number.isFinite(price?.total) && (p.pricing_mode==='FIXED'||isFresh(rates[p.purity])),
       rating_average,

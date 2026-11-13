@@ -101,7 +101,7 @@ export async function seedOffers(k=db){
         applies_to:'all',
         target_value:null,
         banner_headline:'Festive offer is live | Up to 50% off* on Making Charges',
-        banner_subtext:'Celebrate with certified hallmarked heirlooms & pure bullion coins',
+        banner_subtext:'A festive edit of pearl jewellery and bullion coins',
         status:'active',
         priority:10,
         show_in_banner:1,
