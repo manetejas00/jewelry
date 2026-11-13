@@ -14,10 +14,14 @@ jobs:
         env:
           SSH_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
         run: |
+          set -o pipefail
           test -n "$SSH_KEY"
           mkdir -p ~/.ssh
           printf '%s\n' "$SSH_KEY" > ~/.ssh/hostinger
           chmod 600 ~/.ssh/hostinger
           ssh-keyscan -p 65002 82.112.239.95 >> ~/.ssh/known_hosts
           ssh -i ~/.ssh/hostinger -p 65002 -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
-            u382139760@82.112.239.95 "bash -s -- ${GITHUB_SHA}" < scripts/hostinger-deploy.sh
+            u382139760@82.112.239.95 "bash -s -- ${GITHUB_SHA}" < scripts/hostinger-deploy.sh | tee deploy.out
+          asset=$(grep '^DEPLOYED_ASSET=' deploy.out | tail -n 1 | cut -d= -f2-)
+          test -n "$asset"
+          curl -fsS https://test3.avinyacarefoundation.org/ | grep -F "$asset"

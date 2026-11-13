@@ -36,17 +36,6 @@ mkdir -p "$APP/tmp"
 touch "$APP/tmp/restart.txt"
 
 built=$(grep -o 'assets/index-[^"]*\.js' dist/index.html | head -n 1)
-i=0
-while [ "$i" -lt 12 ]; do
-  live=$(curl -fsS https://test3.avinyacarefoundation.org/ | grep -o 'assets/index-[^"]*\.js' | head -n 1 || true)
-  echo "check $i live=$live built=$built"
-  if [ "$live" = "$built" ]; then
-    echo "deployed $SHA"
-    exit 0
-  fi
-  i=$((i + 1))
-  sleep 5
-done
-
-echo "live homepage did not serve $built" >&2
-exit 1
+grep -q "$built" "$PUBLIC/index.html"
+echo "DEPLOYED_ASSET=$built"
+echo "deployed $SHA"
