@@ -1,0 +1,23 @@
+{
+  "id": "/",
+  "name": "Veyora Jewels",
+  "short_name": "Veyora",
+  "description": "Pearl and gold jewellery from Veyora Jewels. Browse the collection, save pieces, and check out when you are online.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "lang": "en-IN",
+  "dir": "ltr",
+  "background_color": "#f8f6f0",
+  "theme_color": "#102124",
+  "categories": ["shopping", "lifestyle"],
+  "icons": [
+    {"src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ],
+  "related_applications": [
+    {"platform": "webapp", "url": "/manifest.webmanifest"}
+  ]
+}

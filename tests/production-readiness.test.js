@@ -25,7 +25,8 @@ test('checkout requires actual merchant contact, policies and explicit COD confi
  const ready={...env,MERCHANT_READY:'true',MERCHANT_EMAIL:'shop@example.com',SHIPPING_POLICY:'Shipping terms',RETURNS_POLICY:'Returns terms',PAYMENT_MODE:'cod'};
  assert.equal(commerceConfig(ready).checkoutEnabled,true);
  assert.equal(commerceConfig({...ready,MERCHANT_EMAIL:''}).checkoutEnabled,false);
- assert.equal(commerceConfig(env,true).checkoutEnabled,true);
+ assert.equal(commerceConfig(env,true).checkoutEnabled,false);
+ assert.equal(commerceConfig({...env,NODE_ENV:'development'},true).checkoutEnabled,true);
 });
 test('unexpected errors never disclose database queries or credentials',()=>{
  const secret=Error('select password_hash from staff; token=secret');

@@ -13,6 +13,18 @@
 @media(max-width:500px){.header-tools .account-nav{padding:7px 3px}.header-tools{gap:0}.header>.brand{font-size:22px;gap:6px;left:43%}.header .brand-emblem{font-size:28px}.customer-auth{padding-top:25px;gap:25px}.auth-story{padding:30px 8%;min-height:295px}.auth-story h1{font-size:46px}.auth-story .eyebrow{font-size:7px;letter-spacing:1.3px}.auth-story>p{font-size:10px}.account-benefits{flex-direction:column;gap:13px;margin-top:22px}.auth-flower{font-size:180px;right:-45px;bottom:-35px}.customer-auth-form h2{font-size:32px}.customer-auth-form{padding:0 5px}.auth-tabs{margin-bottom:27px}.customer-auth-form input{font-size:16px}.account-welcome{align-items:flex-start;gap:10px;margin-bottom:28px}.account-welcome h1{font-size:43px;margin-top:14px}.account-welcome p{font-size:10px}.account-welcome .underlink{font-size:8px;gap:6px;margin-top:5px}.account-sidebar{padding:18px}.account-sidebar nav{gap:3px}.account-sidebar nav button{font-size:9px;gap:6px;padding:11px 9px}.account-sidebar nav svg{width:14px}.account-person strong{font-size:11px}.account-person small{font-size:9px}.account-section-heading h2{font-size:32px}.account-section-heading h3{font-size:27px}.account-section-heading{gap:12px;flex-wrap:wrap}.account-section-heading .underlink{font-size:8px;gap:9px}.account-tiles{gap:9px;margin-bottom:30px}.account-tiles button{padding:17px 12px}.account-tiles strong{font-size:35px;margin:12px 0}.account-tiles span{font-size:8px;gap:3px}.account-tiles span svg{width:12px}.customer-order-heading{padding:15px;gap:10px}.customer-order-heading .status-badge{font-size:7px}.customer-order-heading strong{font-size:9px}.customer-order-heading small{font-size:8px}.account-order-piece{padding:18px 15px;gap:12px;flex-wrap:wrap}.account-order-piece img{width:51px;height:70px}.account-order-piece h3{font-size:22px}.account-order-piece p{font-size:8px}.account-order-piece>span{font-size:10px}.customer-order-footer{padding:15px;font-size:10px;gap:10px}.customer-order-footer strong{margin-left:8px}.customer-order-footer .underlink{font-size:8px;gap:9px}.account-empty{padding:35px 20px}.account-empty h3{font-size:27px}.account-empty p{font-size:10px}.account-sync-banner{font-size:10px}.account-bag-total{font-size:12px}.checkout-account-note{font-size:9px}}
 .account-sidebar{min-width:0}.account-sidebar nav{max-width:100%}@media(max-width:800px){.account-grid{grid-template-columns:minmax(0,1fr)}}
 
+.copy-review{margin-top:28px;padding-top:22px;border-top:1px solid var(--line)}
+.copy-review h4{font-size:22px;margin:0 0 12px}
+.copy-columns{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:18px 0}
+.copy-columns p{font-size:12px;white-space:pre-wrap}
+.copy-actions{display:flex;flex-wrap:wrap;align-items:center;gap:18px;margin:18px 0}
+@media(max-width:800px){.copy-columns{grid-template-columns:1fr}}
+.copy-review{margin-top:28px;padding-top:22px;border-top:1px solid var(--line)}
+.copy-review h4{font-size:22px;margin:0 0 12px}
+.copy-columns{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:18px 0}
+.copy-columns p{font-size:12px;white-space:pre-wrap}
+.copy-actions{display:flex;flex-wrap:wrap;align-items:center;gap:18px;margin:18px 0}
+@media(max-width:800px){.copy-columns{grid-template-columns:1fr}}
 .price-bracket-bar{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px;margin:24px 0 10px;padding:0 5%}
 .price-bracket-title{font-size:10px;letter-spacing:1px;font-weight:600;text-transform:uppercase;color:var(--muted);margin-right:4px}
 .price-bracket-pill{font-size:11px;padding:6px 14px;border:1px solid var(--line);border-radius:24px;background:var(--ivory);color:var(--ink);transition:all .2s ease;cursor:pointer}
@@ -264,6 +276,30 @@
 .detail-image>img{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto;object-fit:cover;object-position:center}
 .detail-image>.offer-ribbon-badge,.detail-image>.gold-linked-badge{max-width:calc(100% - 24px);overflow-wrap:anywhere;text-align:left}
 .product-angle-gallery{max-width:100%;overscroll-behavior-inline:contain}
+.detail-gallery{position:relative;z-index:2}
+.gallery-frame{position:relative}
+.gallery-stage{position:relative;overflow:hidden;cursor:zoom-in;aspect-ratio:4/5;background:var(--paper)}
+.gallery-stage>img{width:100%;height:100%;object-fit:cover}
+.gallery-hint{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:2;pointer-events:none;max-width:calc(100% - 88px);padding:6px 12px;border-radius:999px;background:rgba(24,44,44,.72);color:#fff;font-size:11px;letter-spacing:.2px;white-space:nowrap}
+.gallery-arrow{position:absolute;top:50%;z-index:3;transform:translateY(-50%);width:36px;height:44px;display:grid;place-items:center;padding:0;background:rgba(248,246,240,.82);color:var(--ink)}
+.gallery-arrow-prev{left:8px}
+.gallery-arrow-next{right:8px}
+.gallery-arrow span{display:block;width:8px;height:8px;border-left:1.5px solid currentColor;border-bottom:1.5px solid currentColor}
+.gallery-arrow-prev span{transform:rotate(45deg);margin-left:3px}
+.gallery-arrow-next span{transform:rotate(-135deg);margin-right:3px}
+.gallery-zoom-lens{border:1px solid var(--gold);background:rgba(171,145,98,.28)}
+.gallery-zoom-target{position:absolute;left:calc(100% + 18px);top:0;z-index:4;pointer-events:none;display:none;overflow:hidden;background:#fff}
+.gallery-zoom-target.is-open{display:block;box-shadow:0 12px 40px rgba(24,44,44,.16)}
+.detail-gallery .product-angle-gallery button.gallery-thumb{flex:0 0 72px;width:72px;height:72px;padding:0;border:1px solid transparent;background:none}
+.detail-gallery .product-angle-gallery button.gallery-thumb img{width:72px;height:72px;object-fit:cover}
+.detail-gallery .product-angle-gallery button.gallery-thumb[aria-current="true"]{border-color:var(--ink)}
+@media(max-width:800px){
+  .detail-gallery{width:100%;z-index:auto}
+  .gallery-zoom-target{display:none}
+  .detail-gallery .product-angle-gallery{gap:8px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+  .detail-gallery .product-angle-gallery button.gallery-thumb{flex-basis:56px;width:56px;height:56px;scroll-snap-align:start}
+  .detail-gallery .product-angle-gallery button.gallery-thumb img{width:56px;height:56px}
+}
 .angle-thumb-btn{width:72px;flex:0 0 72px}
 .angle-thumb-btn img{width:100%;height:72px;object-fit:contain}
 .angle-thumb-btn.active{padding:3px}
@@ -2391,4 +2427,115 @@
   color: var(--ink, #102124);
   border-color: var(--ink, #102124);
 }
+
+/* The centered wordmark is taken out of flow and covers the account control
+   once the right-hand tools no longer fit beside it. */
+@media (max-width: 380px) {
+  .header > .brand { position: static; transform: none; font-size: 18px; min-width: 0; }
+  .header .brand-emblem { font-size: 26px; }
+  .header-tools { gap: 0; }
+  .header-tools .icon { padding: 6px; }
+}
+
+/* The slide count and arrows are absolutely positioned. On a narrow phone
+   they land on the call-to-action, so reserve that bottom band for them. */
+/* Every hero still stays mounted. The incoming frame fades over the previous
+   one, so the banner never blanks and the count always matches the picture. */
+.hero-photo img{position:absolute;inset:0;opacity:0;z-index:0}
+.hero-photo img.is-prev,.hero-photo img.is-active{opacity:1}
+.hero-photo img.is-active{z-index:1}
+.hero-photo img.is-incoming{animation:hero-fade .7s ease}
+.hero-photo{z-index:0}
+.hero-photo video{position:absolute;inset:0;z-index:0;opacity:0;pointer-events:none}
+.hero-photo video.is-active{z-index:1;opacity:1}
+.hero-photo:after{z-index:2;pointer-events:none}
+@keyframes hero-fade{from{opacity:0}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){.hero-photo img.is-incoming{animation:none}}
+
+@media (max-width: 420px) {
+  .hero-copy { padding-bottom: 118px; }
+  .hero .button { max-width: 100%; }
+  .hero-index {
+    left: 7%;
+    right: 7%;
+    bottom: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 14px;
+  }
+  .hero-arrows { margin-top: 0; }
+}
+
+body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+@media(max-width:800px){input,select,textarea{font-size:16px}}
+.pwa-offline{position:fixed;z-index:34;left:0;right:0;top:0;margin:0;padding:calc(8px + env(safe-area-inset-top)) 16px 8px;background:#102124;color:#f8f6f0;text-align:center;font-size:13px;line-height:1.45}
+.install-app{position:fixed;z-index:35;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));display:flex;flex-wrap:wrap;align-items:center;gap:8px;max-width:min(24rem,calc(100vw - 32px))}
+.install-app-action,.install-app-dismiss,.install-help button{min-height:44px;padding:0 16px;background:#102124;color:#f8f6f0;font-size:13px}
+.install-app-dismiss,.install-help button{background:transparent;color:#102124;border:1px solid #102124}
+.install-app-banner{background:#f8f6f0;border:1px solid #dcdcd1;padding:12px;box-shadow:0 12px 32px #1021241a}
+.install-app-note,.install-help p,.install-help li{font-size:13px;line-height:1.5;margin:0}
+.install-help{position:fixed;z-index:36;left:max(16px,env(safe-area-inset-left));right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));background:#f8f6f0;border:1px solid #dcdcd1;padding:16px 16px max(16px,env(safe-area-inset-bottom));box-shadow:0 12px 32px #1021241a;max-width:36rem;margin-left:auto}
+.install-help h2{font-size:28px;margin-bottom:8px}
+.install-help ol{margin:0 0 8px;padding-left:1.2rem}
+@media(prefers-reduced-motion:reduce){.install-app,.install-help{transition:none}}
+
+.veyora-chat{position:fixed;z-index:40;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));font-family:var(--sans);color:var(--ink)}
+.veyora-chat-launcher{display:flex;align-items:center;gap:8px;min-height:52px;padding:0 16px;border-radius:999px;background:var(--ink);color:var(--ivory);box-shadow:0 12px 30px #182c2c33}
+.veyora-chat-launcher span{font-size:12px;letter-spacing:.4px}
+.veyora-chat-panel{position:absolute;right:0;bottom:64px;width:min(380px,calc(100vw - 32px));height:min(640px,calc(100dvh - 120px));display:flex;flex-direction:column;background:var(--ivory);border:1px solid var(--line);box-shadow:0 18px 50px #182c2c29;overflow:hidden;animation:veyora-chat-in .18s ease}
+.veyora-chat-header{display:flex;justify-content:space-between;gap:12px;padding:16px 16px 12px;background:#102124;color:var(--ivory)}
+.veyora-chat-header .eyebrow,.veyora-chat-header h2,.veyora-chat-header p{color:var(--ivory)}
+.veyora-chat-header h2{font-size:28px;line-height:1;margin:2px 0 6px;letter-spacing:0}
+.veyora-chat-header p{font-size:12px;line-height:1.4}
+.veyora-chat-status{display:flex;align-items:center;gap:6px}
+.veyora-chat-status span{width:7px;height:7px;border-radius:50%;background:#c8b27a}
+.veyora-chat-icon-button,.veyora-chat-send,.veyora-chat-text,.veyora-chat-button{background:transparent;color:inherit}
+.veyora-chat-icon-button{width:36px;height:36px;color:var(--ivory)}
+.veyora-chat-guest{padding:22px 16px;display:flex;flex-direction:column;gap:16px}
+.veyora-chat-guest p{font-size:14px;line-height:1.6}
+.veyora-chat-guest div{display:flex;gap:8px}
+.veyora-chat-button{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 14px;background:var(--ink);color:var(--ivory);font-size:12px}
+.veyora-chat-button.secondary{background:transparent;color:var(--ink);border:1px solid var(--ink)}
+.veyora-chat-usage,.veyora-chat-note,.veyora-chat-history{padding:10px 16px;font-size:12px}
+.veyora-chat-usage p,.veyora-chat-note{margin:0 0 4px;font-size:12px;line-height:1.4}
+.veyora-chat-meter{height:6px;background:var(--paper);border:1px solid var(--line);margin:6px 0}
+.veyora-chat-meter span{display:block;height:100%;background:var(--gold)}
+.veyora-chat-reset,.veyora-chat-meter-label{color:var(--muted)}
+.veyora-chat-history{display:flex;flex-direction:column;gap:4px}
+.veyora-chat-history select,.veyora-chat-form textarea,.chatbot-settings-form input,.chatbot-settings-form select,.chatbot-settings-form textarea{width:100%;background:white;border:1px solid var(--line);color:var(--ink);padding:8px}
+.veyora-chat-log{flex:1;overflow:auto;padding:8px 16px 12px;display:flex;flex-direction:column;gap:8px}
+.veyora-chat-bubble{max-width:85%;padding:8px 10px;border:1px solid var(--line)}
+.veyora-chat-bubble p{font-size:13px;line-height:1.5;white-space:pre-wrap}
+.veyora-chat-bubble time{display:block;margin-top:4px;font-size:10px;color:var(--muted)}
+.veyora-chat-bubble.assistant{background:white;align-self:flex-start}
+.veyora-chat-bubble.visitor{background:#102124;color:var(--ivory);align-self:flex-end}
+.veyora-chat-bubble.visitor time{color:#d9d3c4}
+.veyora-chat-typing{display:flex;gap:4px;min-height:16px;align-items:center}
+.veyora-chat-typing span{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:veyora-chat-dot 1s infinite}
+.veyora-chat-typing span:nth-child(2){animation-delay:.15s}
+.veyora-chat-typing span:nth-child(3){animation-delay:.3s}
+.veyora-chat-form{padding:10px 16px 14px;border-top:1px solid var(--line);background:var(--paper)}
+.veyora-chat-form div{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px}
+.veyora-chat-text{font-size:11px;text-decoration:underline}
+.veyora-chat-send{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;background:var(--ink);color:var(--ivory);font-size:12px}
+.veyora-chat-note.error{color:#8d2f2f}
+.chatbot-admin .admin-tabs-inline{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.chatbot-admin .admin-tabs-inline button{min-height:36px;padding:0 12px;background:transparent;border:1px solid var(--line);font-size:12px}
+.chatbot-admin .admin-tabs-inline button.active{background:var(--ink);color:var(--ivory)}
+.chatbot-settings-form{display:grid;gap:12px;max-width:720px}
+.chatbot-usage-card{padding:12px;border:1px solid var(--line);margin:12px 0}
+.chatbot-user-details{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.chatbot-user-details dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px 16px;margin:12px 0}
+.chatbot-user-details dt{font-size:10px;letter-spacing:.4px;text-transform:uppercase;color:var(--muted)}
+.chatbot-user-details dd{margin:2px 0 0;font-size:13px}
+.chatbot-admin tr.is-selected td{background:#f3efe4}
+.chatbot-bars{display:flex;align-items:flex-end;gap:6px;min-height:140px;overflow:auto;padding-top:8px}
+.chatbot-bars div{display:flex;flex-direction:column;align-items:center;gap:4px}
+.chatbot-bars span{display:block;width:14px;background:var(--ink)}
+.chatbot-bars small{font-size:9px;color:var(--muted)}
+@keyframes veyora-chat-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes veyora-chat-dot{50%{opacity:.35}}
+@media(max-width:700px){.veyora-chat-panel{position:fixed;inset:auto 0 0 0;width:100%;height:min(100dvh,720px);bottom:0}.veyora-chat-launcher{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom))}}
+@media(prefers-reduced-motion:reduce){.veyora-chat-panel,.veyora-chat-typing span{animation:none}}
 

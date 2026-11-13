@@ -149,7 +149,11 @@ test('asset recreation keeps model photographs separate from macro details', asy
   const publicDir=await fs.mkdtemp(path.join(os.tmpdir(),'gallery-fixture-'));
   try {
     const folder=path.join(publicDir,'assets/products',code);await fs.mkdir(folder,{recursive:true});
-    for(const [role,color]of [['model','red'],['modal','blue']])await sharp({create:{width:20,height:20,channels:3,background:color}}).webp().toFile(path.join(folder,role+'.webp'));
+    for(const [role,color]of [['model','red'],['modal','blue']]){
+      const bytes=await sharp({create:{width:20,height:20,channels:3,background:color}}).webp().toBuffer();
+      await fs.writeFile(path.join(folder,role+'.webp'),bytes);
+    }
+    sharp.cache(false);
     await recreateProductAssets(k,{publicDir});
     const images = await k('product_images').where({product_code: code});
     assert.equal(images.find(image => image.role === 'model').url, `/assets/products/${code}/model.webp`);

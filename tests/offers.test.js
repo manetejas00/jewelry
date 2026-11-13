@@ -156,3 +156,10 @@ test('catalogue and coinCatalogue attach offers and discounted prices', async ()
   assert.equal(silverCoin.price, 980);
   assert.equal(silverCoin.original_price, 1180);
 });
+
+test('a making-charge offer stays hidden when the price does not change', () => {
+  const offer = {id:1,name:'Festive',badge_text:'50% OFF ON MC',discount_type:'making_percent',discount_value:50,applies_to:'all',status:'active'};
+  const priced = calculatePrice({pricing_mode:'FIXED',fixed_price:10000,net_weight_g:1}, null, {tax_percent:0,rounding:1,tax_treatment:'exclusive',margin_type:'FIXED',margin_value:0}, offer);
+  assert.equal(priced.discount_amount, 0);
+  assert.equal(priced.offer, null);
+});

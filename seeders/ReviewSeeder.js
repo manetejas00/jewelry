@@ -144,7 +144,7 @@ export async function ReviewSeeder(k = db) {
       customerEmail: 'pooja.verma@example.invalid',
       rating: 5,
       title: '[Preview Test] Elegant heirloom finish, exquisite craftsmanship',
-      comment: '[Catalogue Preview Test] Ordered this for a family celebration in Mumbai. The pearl has subtle rose-champagne iridescence that photographs beautifully in natural light. Hallmarking and weight certificate were intact.',
+      comment: '[Catalogue Preview Test] Ordered this for a family celebration in Mumbai. The pearl has subtle rose-champagne iridescence that photographs beautifully in natural light.',
       status: 'approved',
       is_verified_purchase: true,
       images: [],

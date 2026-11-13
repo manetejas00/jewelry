@@ -1,0 +1,41 @@
+#!/bin/sh
+# Deploy one commit to the Hostinger Node app. Called by GitHub Actions over SSH.
+# Preserves .env (gitignored) and storage/uploads. Does not publish the repo into public_html.
+set -eu
+
+SHA=${1:?commit sha required}
+APP=/home/u382139760/domains/test3.avinyacarefoundation.org/app
+PUBLIC=/home/u382139760/domains/test3.avinyacarefoundation.org/public_html
+export PATH=/opt/alt/alt-nodejs22/root/bin:$PATH
+
+cd "$APP"
+PREV=$(git rev-parse HEAD)
+echo "previous $PREV"
+echo "target $SHA"
+
+restore() {
+  echo "restoring $PREV" >&2
+  git reset --hard "$PREV"
+  npm ci --include=dev
+}
+
+git fetch origin "$SHA"
+git reset --hard "$SHA"
+# These are server-only links into public_html. Vite cannot copy them when the target is missing.
+rm -f public/assets/coins public/assets/products
+
+if ! npm ci --include=dev || ! npm run build || ! node scripts/migrate.js; then
+  restore
+  exit 1
+fi
+
+cp dist/index.html "$PUBLIC/index.html"
+mkdir -p "$PUBLIC/assets"
+cp -a dist/assets/. "$PUBLIC/assets/"
+mkdir -p "$APP/tmp"
+touch "$APP/tmp/restart.txt"
+
+built=$(grep -o 'assets/index-[^"]*\.js' dist/index.html | head -n 1)
+grep -q "$built" "$PUBLIC/index.html"
+echo "DEPLOYED_ASSET=$built"
+echo "deployed $SHA"

@@ -6,6 +6,7 @@ import {createDb,db,migrate,parse} from '../server/db.js';
 import {calculatePrice,quote,catalogue,isFresh} from '../server/pricing.js';
 import {schemas,validate,normaliseRate,previewImport,publishImport} from '../server/importer.js';
 import {checkout} from '../server/orders.js';
+import {searchCatalogue,invalidateSearchCache} from '../server/search.js';
 import {daily} from '../server/daily.js';
 import {gold,products,writeSamples} from '../scripts/samples.js';
 let k;const customer={name:'Preview Customer',email:'preview@example.invalid',phone:'9999999999',address:'Fictional test address',city:'Mumbai',pincode:'400001'};
@@ -41,4 +42,36 @@ test('product imports accept exported saved-photo paths and reject unsafe refere
  assert.equal(validate('products',make('/uploads/selected-photo.webp')).errors.length,0);
  assert.ok(validate('products',make('/uploads/../private/photo.png')).errors.some(e=>e.field==='image'));
  assert.ok(validate('products',make('javascript:alert(1)')).errors.some(e=>e.field==='image'));
+});
+test('successful checkout publishes the reduced SKU stock to search immediately and a failed checkout does not',async()=>{
+ await k('products').where({sku:'VEY-LP-01'}).update({stock:8});
+ const siblingBefore=(await k('products').where({sku:'VEY-ER-12'}).first()).stock;
+ invalidateSearchCache();
+ const warmed=await searchCatalogue(k,'Lune Pearl');
+ assert.equal(warmed.products.find(p=>p.sku==='VEY-LP-01').stock,8);
+ const items=[{sku:'VEY-LP-01',quantity:1}];
+ const quoted=await quote(k,items);
+ await checkout(k,{items,token:quoted.token,customer,idempotencyKey:'stock-sync-order-000001'});
+ const afterOne=await searchCatalogue(k,'Lune Pearl');
+ assert.equal(afterOne.products.find(p=>p.sku==='VEY-LP-01').stock,7);
+ assert.equal((await k('products').where({sku:'VEY-ER-12'}).first()).stock,siblingBefore);
+ const two=[{sku:'VEY-LP-01',quantity:2}];
+ const quotedTwo=await quote(k,two);
+ await checkout(k,{items:two,token:quotedTwo.token,customer,idempotencyKey:'stock-sync-order-000002'});
+ assert.equal((await searchCatalogue(k,'Lune Pearl')).products.find(p=>p.sku==='VEY-LP-01').stock,5);
+ const failed=[{sku:'VEY-LP-01',quantity:1}];
+ const quotedFailed=await quote(k,failed);
+ await assert.rejects(checkout(k,{items:failed,token:quotedFailed.token,customer:{...customer,phone:'123'},idempotencyKey:'stock-sync-order-000003'}),/mobile number/);
+ assert.equal((await k('products').where({sku:'VEY-LP-01'}).first()).stock,5);
+ assert.equal((await searchCatalogue(k,'Lune Pearl')).products.find(p=>p.sku==='VEY-LP-01').stock,5);
+ await k('products').where({sku:'VEY-LP-01'}).update({stock:1});
+ const last=[{sku:'VEY-LP-01',quantity:1}];
+ const quotedLast=await quote(k,last);
+ const raced=await Promise.allSettled([
+  checkout(k,{items:last,token:quotedLast.token,customer,idempotencyKey:'stock-sync-order-00000a'}),
+  checkout(k,{items:last,token:quotedLast.token,customer,idempotencyKey:'stock-sync-order-00000b'})
+ ]);
+ assert.equal(raced.filter(r=>r.status==='fulfilled').length,1);
+ assert.equal((await k('products').where({sku:'VEY-LP-01'}).first()).stock,0);
+ assert.equal((await searchCatalogue(k,'Lune Pearl')).products.find(p=>p.sku==='VEY-LP-01').stock,0);
 });

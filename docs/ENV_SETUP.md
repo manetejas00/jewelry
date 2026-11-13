@@ -28,6 +28,16 @@ Use `.env.example` for local preview only. The current local `.env` is preview c
 
 Private data does not become real by changing flags. Startup rejects the known fictional suppliers and default preview account even with production flags. First reconcile the database and merchant accounts through a reviewed migration plan.
 
+## One-time passwords
+
+OTP generation and verification belong to [knadh/otpgateway](https://github.com/knadh/otpgateway) (MIT). Express calls it with `OTP_GATEWAY_URL`, `OTP_GATEWAY_NAMESPACE` and `OTP_GATEWAY_SECRET`. The storefront never receives that URL, the secret, or the code.
+
+Start the internal gateway with `docker compose -f docker-compose.otp.yml up --build`. It listens on `127.0.0.1:9000` and is not a public route. Redis is private to the Compose network. At least one provider has to be fully configured or the gateway refuses to start.
+
+`OTP_EMAIL_ENABLED=true` also needs `SMTP_HOST` and `SMTP_FROM`. `OTP_SMS_ENABLED=true` needs `OTP_SMS_PROVIDER=kaleyra_sms` or `pinpoint_sms` plus that provider's credentials. `OTP_WHATSAPP_ENABLED=true` needs the Kaleyra WhatsApp Business fields, including a template approved in the WhatsApp Business account. A flag without credentials leaves the channel off. Kaleyra, Pinpoint and SMTP delivery are paid or account-gated services.
+
+`OTP_REQUIRE_REGISTER`, `OTP_REQUIRE_LOGIN`, `OTP_REQUIRE_CHECKOUT` and `OTP_PASSWORD_RESET` default to false, so existing password sign-in, guest checkout and link-based recovery stay as they are until a channel is actually available. Codes are six digits, expire after five minutes, allow five checks, and can be requested again after 60 seconds. The gateway stores the live code in Redis until it expires; this application stores only a hash of the destination.
+
 ## Password recovery SMTP
 
 `SMTP_HOST`, `SMTP_PORT` (default 465), `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`. Port 465 uses implicit TLS; other SMTP ports require STARTTLS. Use a provider-approved sender with SPF/DKIM/DMARC configured by its owner. No plaintext SMTP or disabled TLS verification is offered. Password recovery stays unadvertised until configuration exists, and returns 503 when unavailable. Verify actual inbox delivery; configured variables are not evidence of delivery. No order-confirmation email workflow is claimed.
@@ -49,3 +59,7 @@ Private data does not become real by changing flags. Startup rejects the known f
 `ADMIN_EMAIL`, `ADMIN_PASSWORD` (unique 16+ characters), optional `STAFF_ROLE` (`owner`, `manager`, `viewer`) are consumed by `scripts/create-admin.js`. Run once on the intended database; remove bootstrap password from configuration afterwards. Do not copy preview staff. Do not delete customer/order records to satisfy startup checks.
 
 `PAYMENT_PROVIDER`, `PAYMENT_SECRET`, `PAYMENT_WEBHOOK_SECRET` are legacy placeholders only; no provider integration consumes them. Setting them does not enable online payments. Analytics, WhatsApp, maps and social APIs are not configured features in this repository.
+
+## Storefront chatbot
+
+`AI_API_KEY` stays on the server and is shared with catalogue copy. `AI_API_URL` is the chatbot completions endpoint (default `https://api.openai.com/v1`). `AI_ENABLED`, `AI_MODEL`, `AI_MAX_DAILY_MESSAGES` (default 10), `AI_DAILY_RESET_TIMEZONE` (default `Asia/Kolkata`), `AI_MAX_INPUT_LENGTH`, and `AI_MAX_RESPONSE_TOKENS` configure the signed-in assistant. The browser never receives the key. See `AI_CHATBOT_SETUP.md`. Catalogue copy continues to use `AI_BASE_URL`.

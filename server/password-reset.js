@@ -19,6 +19,12 @@ export async function requestReset(k,email,send=sendResetMail){
  const url=new URL('/account',process.env.APP_URL);url.searchParams.set('reset',token);
  try{await send({email:customer.email,url:url.href});}catch{await k('password_resets').where({token_hash}).del();throw validationError('Password recovery is temporarily unavailable. Try again later.',503);}
 }
+export async function replacePassword(k, customerId, password) {
+ if (typeof password !== 'string' || password.length < 12 || Buffer.byteLength(password) > 72) throw validationError('Choose a password of at least 12 characters, up to 72 UTF-8 bytes.');
+ const password_hash = await bcrypt.hash(password, 12);
+ await k('customers').where({id: customerId}).update({password_hash, session_version: k.raw('session_version + 1')});
+ await k('password_resets').where({customer_id: customerId}).del();
+}
 export async function completeReset(k,{token,password}){
  if(typeof token!=='string'||!/^[a-f0-9]{64}$/.test(token))throw validationError('Reset link is invalid or expired.');
  if(typeof password!=='string'||password.length<12||Buffer.byteLength(password)>72)throw validationError('Choose a password of at least 12 characters, up to 72 UTF-8 bytes.');

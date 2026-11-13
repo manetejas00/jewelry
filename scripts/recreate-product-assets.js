@@ -59,7 +59,8 @@ export async function recreateProductAssets(k = db, {publicDir = path.join(root,
         const target = path.join(base, entry.name, `${role}-thumb.webp`);
         if (!fs.existsSync(source)) continue;
         if (fs.existsSync(target) && fs.statSync(target).mtimeMs >= fs.statSync(source).mtimeMs) continue;
-        await sharp(source).resize({ width: 600, height: 800, fit: 'inside', withoutEnlargement: true })
+        const input = fs.readFileSync(source);
+        await sharp(input).resize({ width: 600, height: 800, fit: 'inside', withoutEnlargement: true })
           .webp({ quality: 82 }).toFile(target);
         thumbnailCount++;
       }

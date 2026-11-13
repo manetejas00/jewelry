@@ -95,6 +95,25 @@ The exact Node path and directories must come from the host. Desired example UTC
 
 If any post-deployment critical check fails, close checkout through the verified environment/supervisor and follow ROLLBACK.md. Do not mark deployment complete based solely on a successful upload or process restart.
 
+## 8. Installable storefront
+
+The PWA is the existing storefront, not a second app. `npm run build` copies `public/manifest.webmanifest`, `public/sw.js`, `public/pwa-boot.js`, `public/offline.html`, and the four icons into `dist/`. Express serves those files with `Cache-Control: no-cache` before the HTML fallback, including for visitors who are not signed in. Do not put the service worker behind a login redirect.
+
+Production installation needs the HTTPS `APP_URL` already required by the runtime check. Confirm after a release, without creating orders:
+
+```sh
+curl -I --fail --show-error https://YOUR-HOST/manifest.webmanifest
+curl -I --fail --show-error https://YOUR-HOST/sw.js
+curl -I --fail --show-error https://YOUR-HOST/offline.html
+curl -I --fail --show-error https://YOUR-HOST/icon-512.png
+```
+
+Each of those should be HTTP 200. The manifest content type should be `application/manifest+json`, and the service worker should not be cached for long. `/api/account/session` and `/api/checkout` stay uncached (`no-store` on `/api`). A proxy or CDN in front of Node must not cache `/sw.js`, `/manifest.webmanifest`, `/api/*`, or HTML. Hashed files under `/assets/` may be cached.
+
+Changing the service worker means changing the `SHELL` cache name in `public/sw.js` when precached files change, then rebuilding. Old shell caches are deleted on activation. Thumbnail caches expire after 24 hours and never include API, account, order, or payment responses.
+
+Android Chrome: open the site, use Get app, or the browser menu Install app. iPhone and iPad: Safari, Share, Add to Home Screen. The button explains those steps and can be dismissed. There is no Play Store or App Store package. Do not deploy this change until the usual backup and staging checks in this document have passed.
+
 ## Subsequent availability repair
 
-On 10 November 2026, the existing deployed frontend's direct-route entry was repaired to match the already-working homepage assets. See [live asset repair](docs/live-asset-repair.md). This restored `/admin`; it was not deployment of the locally audited backend/release.
+On 10 November 2026, the existing deployed frontend's direct-route entry was repaired to match the already-working homepage assets. See [live asset repair](live-asset-repair.md). This restored `/admin`; it was not deployment of the locally audited backend/release.
