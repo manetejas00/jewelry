@@ -29,6 +29,8 @@ import {seed} from '../scripts/seed.js';
 import {saveUploadedImage,ensureThumbnail,thumbnailUrl,isSafeMediaUrl} from './thumbnails.js';
 import {searchCatalogue,invalidateSearchCache} from './search.js';
 import {listCopySkills, createCatalogueDraft, approveCatalogueDraft, rejectCatalogueDraft, listCatalogueDrafts} from './ai-copy.js';
+import {registerChatRoutes} from './chat/routes.js';
+import {purgeRetainedChats} from './chat/service.js';
 import {registerPwa} from './pwa.js';
 import {
   getProductReviews,
@@ -821,6 +823,7 @@ app.post('/api/admin/ai/drafts/:id/approve',auth(['owner','manager']),route(asyn
   res.json(draft);
 }));
 app.post('/api/admin/ai/drafts/:id/reject',auth(['owner','manager']),route(async(req,res)=>res.json(await rejectCatalogueDraft(db,Number(req.params.id),req.session.staff.id))));
+registerChatRoutes(app,{db,route,auth,rateLimit});
 registerSeo(app,db,{preview,route});
 app.use('/api',(req,res)=>res.status(404).json({error:'API endpoint not found'}));
 registerPwa(app,{production});
@@ -828,5 +831,5 @@ if(!production){const {createServer}=await import('vite');const vite=await creat
 app.use((err,req,res,next)=>{if(res.headersSent)return next(err);const out=errorResponse(err);if(out.status>=500)console.error(JSON.stringify({event:'request_failed',requestId:req.requestId,method:req.method,status:out.status}));res.status(out.status).json(out.body);});
 const port=Number(process.env.PORT||3000);const httpServer=app.listen(port,production?'0.0.0.0':'127.0.0.1',()=>console.log(`Veyora Jewels: http://localhost:${port} (${preview?'fictional preview':'production'})`));
 
-const cleanup=setInterval(()=>Promise.all([db('sessions').where('expires','<',Date.now()).del(),db('password_resets').where('expires','<',Date.now()).del()]).catch(()=>console.error(JSON.stringify({event:'session_cleanup_failed'}))),3600000);cleanup.unref();
+const cleanup=setInterval(()=>Promise.all([db('sessions').where('expires','<',Date.now()).del(),db('password_resets').where('expires','<',Date.now()).del(),purgeRetainedChats(db)]).catch(()=>console.error(JSON.stringify({event:'session_cleanup_failed'}))),3600000);cleanup.unref();
 for(const signal of ['SIGTERM','SIGINT'])process.once(signal,()=>{clearInterval(cleanup);httpServer.close(async()=>{await db.destroy();process.exit(0)});setTimeout(()=>process.exit(1),10000).unref();});

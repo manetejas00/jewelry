@@ -59,3 +59,7 @@ Start the internal gateway with `docker compose -f docker-compose.otp.yml up --b
 `ADMIN_EMAIL`, `ADMIN_PASSWORD` (unique 16+ characters), optional `STAFF_ROLE` (`owner`, `manager`, `viewer`) are consumed by `scripts/create-admin.js`. Run once on the intended database; remove bootstrap password from configuration afterwards. Do not copy preview staff. Do not delete customer/order records to satisfy startup checks.
 
 `PAYMENT_PROVIDER`, `PAYMENT_SECRET`, `PAYMENT_WEBHOOK_SECRET` are legacy placeholders only; no provider integration consumes them. Setting them does not enable online payments. Analytics, WhatsApp, maps and social APIs are not configured features in this repository.
+
+## Storefront chatbot
+
+`AI_API_KEY` stays on the server and is shared with catalogue copy. `AI_API_URL` is the chatbot completions endpoint (default `https://api.openai.com/v1`). `AI_ENABLED`, `AI_MODEL`, `AI_MAX_DAILY_MESSAGES` (default 10), `AI_DAILY_RESET_TIMEZONE` (default `Asia/Kolkata`), `AI_MAX_INPUT_LENGTH`, and `AI_MAX_RESPONSE_TOKENS` configure the signed-in assistant. The browser never receives the key. See `AI_CHATBOT_SETUP.md`. Catalogue copy continues to use `AI_BASE_URL`.
