@@ -135,7 +135,7 @@ export default function ChatWidget() {
     {open && <section id="veyora-chat-panel" ref={panelRef} className="veyora-chat-panel" role="dialog" aria-modal="false" aria-labelledby={titleId}>
       <header className="veyora-chat-header">
         <div>
-          <p className="eyebrow">Veyora Jewels</p>
+          <img src="/assets/brand/logo.webp" alt="Veyora Jewels" className="chat-brand-logo"/>
           <h2 id={titleId}>AI Assistant</h2>
           <p className="veyora-chat-status"><span />{offline ? 'Offline' : usage?.accessEnabled === false ? 'Unavailable' : 'Available'}</p>
         </div>

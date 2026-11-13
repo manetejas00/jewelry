@@ -1,5 +1,5 @@
 import {coinImage} from './media.js';
-export const imageFallback='/assets/product-placeholder.svg';
+export const imageFallback='/assets/brand/logo.webp';
 // Only use derivatives in cards. Unsupported sources never fall back to full size.
 export function listingThumbnail(product){
  if(product.thumbnail)return product.thumbnail;

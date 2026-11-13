@@ -1,0 +1,57 @@
+import {publicImageBuffer} from './public-image.js';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import sharp from 'sharp';
+import {listingThumbnailFile} from './listing-thumbnails.js';
+import {ensureThumbnail} from './thumbnails.js';
+const pending=new Map();let queue=Promise.resolve();
+export async function brandedImageFile(source,{publicDir,uploadsDir,cacheDir,publicMediaDir=process.env.PUBLIC_MEDIA_DIR||path.resolve('../public_html'),fetchImpl=fetch}){
+ if(typeof source!=='string'||source.length>2000||source.includes('..'))throw Error('Invalid image');
+ const logo=path.join(publicDir,'assets/brand/logo.webp');
+ let local,remote;
+ if(source.startsWith('/api/thumbnail?')){
+  local=await listingThumbnailFile(new URL(source,'https://local.invalid').searchParams.get('source'),{publicDir,uploadsDir,cacheDir:path.join(cacheDir,'thumbs')});
+ }else if(source.startsWith('/uploads/thumbs/')){
+  const filename=decodeURIComponent(source.slice('/uploads/thumbs/'.length)).replace(/\.webp$/,'');local=await ensureThumbnail(uploadsDir,filename);
+ }else if(source.startsWith('/assets/')||source.startsWith('/uploads/')){
+  const upload=source.startsWith('/uploads/'),root=await fs.realpath(upload?uploadsDir:publicDir);
+  if(!/\.(png|jpe?g|webp|gif|svg)$/i.test(source))throw Error('Invalid image');
+  local=await fs.realpath(path.join(root,upload?source.slice(9):source)).catch(()=>null);
+  if(local&&!local.startsWith(root+path.sep))throw Error('Invalid image');
+  // Hostinger keeps its original product assets in the sibling public_html directory.
+  if(!local&&!upload){const mediaRoot=await fs.realpath(publicMediaDir);local=await fs.realpath(path.join(mediaRoot,source));if(!local.startsWith(mediaRoot+path.sep))throw Error('Invalid image');}
+  if(!local)throw Error('Image unavailable');
+ }else{
+  const url=new URL(source);
+  if(url.origin===new URL(process.env.APP_URL||'http://localhost:3000').origin)return brandedImageFile(url.pathname,{publicDir,uploadsDir,cacheDir,publicMediaDir,fetchImpl});
+  if(url.protocol!=='https:'||url.username||url.password)throw Error('Unsupported image source');
+  remote=url.href;
+ }
+ if(local===await fs.realpath(logo))return logo;
+ const version=local?(await fs.stat(local)).mtimeMs:'remote';
+ const key=crypto.createHash('sha256').update(`${source}:${version}:${(await fs.stat(logo)).mtimeMs}`).digest('hex'),target=path.join(cacheDir,key+'.webp');
+ const cached=await fs.stat(target).catch(()=>null);if(cached&&(!remote||Date.now()-cached.mtimeMs<86400000))return target;
+ if(pending.has(key))return pending.get(key);if(pending.size>=256)throw Error('Images are busy');
+ const job=queue.then(async()=>{
+  let buffer;
+  if(local){if((await fs.stat(local)).size>8*1024*1024)throw Error('Image too large');buffer=await fs.readFile(local)}
+  else if(!remote.startsWith('https://cdnstatic.tencentcs.com/edgeone/pages/product-activities/jewelry/'))buffer=await publicImageBuffer(remote);
+  else{
+   const response=await fetchImpl(remote,{redirect:'error',signal:AbortSignal.timeout(10000)});if(!response.ok)throw Error('Image unavailable');
+   const chunks=[];let size=0;for await(const chunk of response.body){size+=chunk.length;if(size>8*1024*1024)throw Error('Image too large');chunks.push(chunk)}buffer=Buffer.concat(chunks);
+  }
+  const base=await sharp(buffer,{limitInputPixels:40000000,pages:1}).rotate().resize({width:1920,height:1920,fit:'inside',withoutEnlargement:true}).toBuffer();
+  const {width,height}=await sharp(base).metadata();
+  const markWidth=Math.max(1,Math.min(width,Math.floor(height*1.5),Math.max(24,Math.min(200,Math.round(width*.20)))));
+  const {data:opacity,info:meta}=await sharp(logo).resize({width:markWidth}).ensureAlpha().raw().toBuffer({resolveWithObject:true});
+  for(let i=3;i<opacity.length;i+=4)opacity[i]=Math.round(opacity[i]*.48);
+  const input=await sharp(opacity,{raw:{width:meta.width,height:meta.height,channels:4}}).png().toBuffer();
+  const output=await sharp(base).composite([{input,left:Math.max(0,width-markWidth-Math.round(Math.min(width,height)*.12)),top:Math.max(0,height-meta.height-Math.round(Math.min(width,height)*.12))}]).webp({quality:86}).toBuffer();
+  await fs.mkdir(cacheDir,{recursive:true});const temp=target+'.'+crypto.randomUUID()+'.tmp';try{await fs.writeFile(temp,output);await fs.rename(temp,target)}finally{await fs.unlink(temp).catch(()=>{})}return target;
+ });
+ queue=job.catch(()=>{});pending.set(key,job);try{return await job}finally{pending.delete(key)}
+}
+export function registerBrandImages(app,{publicDir,uploadsDir,cacheDir}){
+ app.get('/api/brand-image',async(req,res)=>{try{const file=await brandedImageFile(req.query.source,{publicDir,uploadsDir,cacheDir});res.set('Cache-Control','public, max-age=86400').type('webp').sendFile(file)}catch{res.set('Cache-Control','no-store').type('webp').sendFile(path.join(publicDir,'assets/brand/fallback.webp'))}});
+}

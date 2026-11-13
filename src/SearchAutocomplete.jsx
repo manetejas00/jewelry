@@ -1,3 +1,4 @@
+import BrandedImage from './BrandedImage.jsx';
 import useScrollLock from './useScrollLock.js';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
@@ -484,7 +485,7 @@ export function SearchAutocomplete({ onClose, initialQuery = '' }) {
                               onClick={() => executeSelection(selectableItems[idx])}
                             >
                               <div className="product-thumb">
-                                <img
+                                <BrandedImage
                                   src={thumbUrl}
                                   alt={p.name}
                                   loading="lazy"

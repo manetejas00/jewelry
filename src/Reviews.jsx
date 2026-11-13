@@ -1,3 +1,4 @@
+import BrandedImage from './BrandedImage.jsx';
 import useScrollLock from './useScrollLock.js';
 import React, { useState, useEffect, useRef, useId } from 'react';
 import { Link } from 'react-router-dom';
@@ -466,7 +467,7 @@ export function ProductReviewsSection({ product }) {
               <div className="review-image-upload-row">
                 {formImages.map((imgUrl, idx) => (
                   <div key={idx} className="review-photo-preview">
-                    <img src={imgUrl} alt="Customer upload preview" />
+                    <BrandedImage src={imgUrl} alt="Customer upload preview" />
                     <button
                       type="button"
                       className="remove-photo-btn"
@@ -729,7 +730,7 @@ export function ProductReviewsSection({ product }) {
                       onClick={() => setZoomedImage(photoUrl)}
                       aria-label="View enlarged customer review photograph"
                     >
-                      <img src={photoUrl} alt="Customer review photograph" loading="lazy" />
+                      <BrandedImage src={photoUrl} alt="Customer review photograph" loading="lazy" />
                     </button>
                   ))}
                 </div>
@@ -768,7 +769,7 @@ export function ProductReviewsSection({ product }) {
       {zoomedImage && (
         <div ref={lightboxRef} role="dialog" aria-modal="true" aria-label="Review photograph" className="review-photo-lightbox" onClick={() => setZoomedImage(null)}>
           <div className="lightbox-content" onClick={e => e.stopPropagation()}>
-            <img src={zoomedImage} alt="Enlarged review photograph" />
+            <BrandedImage src={zoomedImage} alt="Enlarged review photograph" />
             <button
               type="button"
               className="lightbox-close-btn"

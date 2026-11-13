@@ -1,8 +1,8 @@
-const SHELL = 'veyora-shell-v1';
-const THUMBS = 'veyora-thumbs-v1';
+const SHELL = 'veyora-shell-v2-vj';
+const THUMBS = 'veyora-thumbs-v2-vj';
 const THUMB_TTL = 24 * 60 * 60 * 1000;
 const THUMB_LIMIT = 80;
-const PRECACHE = ['/offline.html', '/icon-192.png', '/icon-512.png', '/icon-maskable-512.png', '/apple-touch-icon.png', '/manifest.webmanifest'];
+const PRECACHE = ['/assets/brand/logo.webp', '/favicon.png', '/offline.html', '/icon-192.png', '/icon-512.png', '/icon-maskable-512.png', '/apple-touch-icon.png', '/manifest.webmanifest'];
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

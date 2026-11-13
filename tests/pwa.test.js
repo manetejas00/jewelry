@@ -36,7 +36,7 @@ test('icons are opaque branded pngs at the required sizes', async () => {
     assert.equal(meta.height, size);
     const {data, info} = await image.raw().toBuffer({resolveWithObject: true});
     const corner = [data[0], data[1], data[2]];
-    assert.deepEqual(corner, [16, 33, 36]);
+    assert.deepEqual(corner, [248, 246, 240]);
     let gold = false;
     for (let i = 0; i < data.length; i += info.channels) {
       if (Math.abs(data[i] - 171) < 30 && Math.abs(data[i + 1] - 145) < 30 && Math.abs(data[i + 2] - 98) < 30) gold = true;

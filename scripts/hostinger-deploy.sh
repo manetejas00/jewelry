@@ -32,6 +32,10 @@ fi
 cp dist/index.html "$PUBLIC/index.html"
 mkdir -p "$PUBLIC/assets"
 cp -a dist/assets/. "$PUBLIC/assets/"
+# Publish the approved branding and offline shell even when the host serves root files directly.
+for file in favicon.png icon-192.png icon-512.png icon-maskable-512.png apple-touch-icon.png manifest.webmanifest sw.js pwa-boot.js offline.html; do
+  cp "dist/$file" "$PUBLIC/$file"
+done
 mkdir -p "$APP/tmp"
 touch "$APP/tmp/restart.txt"
 

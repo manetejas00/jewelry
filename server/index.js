@@ -1,3 +1,4 @@
+import {registerBrandImages} from './brand-images.js';
 import {resetConfigured,requestReset,completeReset,replacePassword} from './password-reset.js';
 import {createOtpGateway} from './otp-gateway.js';
 import {otpAvailability,sendOtp,sendPasswordResetOtp,verifyOtp,confirmOtp,resendOtp,otpStatus,spendVerified,releaseVerified,prepareCheckoutOtp,normalizeEmail,normalizeIndianMobile,SENT_MESSAGE} from './otp.js';
@@ -60,6 +61,7 @@ app.use('/api',rateLimit({windowMs:60000,limit:300,standardHeaders:'draft-7',leg
 app.use('/api',(req,res,next)=>express.json({limit:(req.path.startsWith('/admin/upload-')||req.path==='/reviews/upload-image')?'50mb':req.path==='/admin/import/preview'?'8mb':'256kb'})(req,res,next));
 const uploadsDir=path.resolve(process.env.UPLOADS_DIR||'public/uploads');
 fs.mkdirSync(uploadsDir,{recursive:true});
+registerBrandImages(app,{publicDir:path.resolve('public'),uploadsDir,cacheDir:path.resolve('private/brand-image-cache')});
 app.get('/uploads/thumbs/:filename.webp',async(req,res)=>{try{const file=await ensureThumbnail(uploadsDir,req.params.filename);res.set('Cache-Control','public, max-age=86400');res.sendFile(file)}catch(e){res.status(e.status||422).json({error:e.status===404?'Image not found':e.expose?e.message:'Image unavailable'})}});
 app.use('/uploads',(req,res,next)=>{res.set('Content-Security-Policy',"default-src 'none'; sandbox");next();},express.static(uploadsDir));
 class DbStore extends session.Store {get(sid,cb){db('sessions').where({sid}).first().then(r=>cb(null,r&&Number(r.expires)>Date.now()?parse(r.data):null)).catch(cb)}set(sid,data,cb){db('sessions').insert({sid,data:json(data),expires:Date.now()+8*3600000}).onConflict('sid').merge().then(()=>cb?.()).catch(cb)}destroy(sid,cb){db('sessions').where({sid}).del().then(()=>cb?.()).catch(cb)}}

@@ -1,3 +1,4 @@
+import BrandedImage from './BrandedImage.jsx';
 import useScrollLock from './useScrollLock.js';
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -456,7 +457,7 @@ export function ReviewsAdmin({ readonly = false, refreshParent = null }) {
                     <td>
                       <div className="table-product-cell">
                         {r.productImage && (
-                          <img
+                          <BrandedImage
                             src={r.productImage}
                             alt=""
                             className="table-product-thumb"
@@ -678,7 +679,7 @@ export function ReviewsAdmin({ readonly = false, refreshParent = null }) {
                         rel="noreferrer"
                         className="detail-photo-link"
                       >
-                        <img src={img} alt="Customer upload" />
+                        <BrandedImage src={img} alt="Customer upload" />
                       </a>
                     ))}
                   </div>
