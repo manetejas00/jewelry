@@ -2554,3 +2554,7 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
  .viewer-help{padding-bottom:max(12px,env(safe-area-inset-bottom))}
  .viewer-thumbnails{justify-content:flex-start}
 }
+
+.veyora-chat-product-links{display:flex;flex-direction:column;gap:8px}
+.veyora-chat-product-links:empty{display:none}
+.veyora-chat-product-links a{display:block;padding:10px 0;font-size:13px;line-height:1.5;text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere}

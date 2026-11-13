@@ -3,6 +3,7 @@ import {Link} from 'react-router-dom';
 import {MessageCircle, Send, X} from 'lucide-react';
 import {api, request} from './api.js';
 import {useStore} from './store.jsx';
+import {chatProductLinks} from './chat-product-links.js';
 
 const WELCOME = 'Hello. I can help with Veyora Jewels pieces, coins, care, and orders. What would you like to know?';
 const GUEST = 'Please log in or create an account to access our AI assistant.';
@@ -16,7 +17,7 @@ function formatTime(value) {
 }
 
 export default function ChatWidget() {
-  const {customer, accountReady} = useStore();
+  const {customer, accountReady, products, coins} = useStore();
   const titleId = useId();
   const panelRef = useRef(null);
   const listRef = useRef(null);
@@ -169,6 +170,9 @@ export default function ChatWidget() {
           </article>
           {messages.map(item => <article key={item.id} className={`veyora-chat-bubble ${item.role === 'assistant' ? 'assistant' : 'visitor'}`}>
             <p>{item.message}</p>
+            {item.role === 'assistant' && <div className="veyora-chat-product-links">
+              {chatProductLinks(item.message, products, coins).map(product => <Link key={product.href} to={product.href} onClick={() => setOpen(false)}>View {product.name} →</Link>)}
+            </div>}
             <time dateTime={item.createdAt}>{formatTime(item.createdAt)}</time>
           </article>)}
           {pending && <article className="veyora-chat-bubble assistant" aria-label="Assistant is typing"><p className="veyora-chat-typing"><span/><span/><span/></p></article>}
