@@ -288,8 +288,8 @@
 .gallery-arrow-prev span{transform:rotate(45deg);margin-left:3px}
 .gallery-arrow-next span{transform:rotate(-135deg);margin-right:3px}
 .gallery-zoom-lens{border:1px solid var(--gold);background:rgba(171,145,98,.28)}
-.gallery-zoom-target{position:absolute;left:calc(100% + 18px);top:0;z-index:4;pointer-events:none;background:#fff}
-.gallery-zoom-target.is-open{box-shadow:0 12px 40px rgba(24,44,44,.16)}
+.gallery-zoom-target{position:absolute;left:calc(100% + 18px);top:0;z-index:4;pointer-events:none;display:none;overflow:hidden;background:#fff}
+.gallery-zoom-target.is-open{display:block;box-shadow:0 12px 40px rgba(24,44,44,.16)}
 .detail-gallery .product-angle-gallery button.gallery-thumb{flex:0 0 72px;width:72px;height:72px;padding:0;border:1px solid transparent;background:none}
 .detail-gallery .product-angle-gallery button.gallery-thumb img{width:72px;height:72px;object-fit:cover}
 .detail-gallery .product-angle-gallery button.gallery-thumb[aria-current="true"]{border-color:var(--ink)}
