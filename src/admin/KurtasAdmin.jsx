@@ -11,7 +11,8 @@ import {
   AlertCircle,
   Eye,
   RefreshCw,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Upload
 } from 'lucide-react';
 import { api } from '../api.js';
 import { money } from '../catalogue.js';
@@ -48,7 +49,7 @@ function KurtaAdminModal({ title, children, onClose }) {
   );
 }
 
-export function KurtasAdmin({ readonly, ProductAngleManager }) {
+export function KurtasAdmin({ readonly, ProductAngleManager, ImportPanel }) {
   const [kurtas, setKurtas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -56,6 +57,7 @@ export function KurtasAdmin({ readonly, ProductAngleManager }) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [editingKurta, setEditingKurta] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [busy, setBusy] = useState(false);
   const [success, setSuccess] = useState('');
 
@@ -232,6 +234,16 @@ export function KurtasAdmin({ readonly, ProductAngleManager }) {
           >
             <RefreshCw size={13} className={loading ? 'spin' : ''} /> Refresh
           </button>
+          {ImportPanel && (
+            <button
+              type="button"
+              className={`button ${showImport ? 'dark' : 'secondary'} small-button`}
+              onClick={() => setShowImport(s => !s)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+              <Upload size={14} /> {showImport ? 'Hide Import' : 'Import Kurtas CSV'}
+            </button>
+          )}
           {!readonly && (
             <button
               type="button"
@@ -247,6 +259,16 @@ export function KurtasAdmin({ readonly, ProductAngleManager }) {
 
       {error && <p className="error" role="alert" style={{ marginBottom: '14px' }}>{error}</p>}
       {success && <p className="notice" role="status" style={{ marginBottom: '14px' }}>{success}</p>}
+
+      {showImport && ImportPanel && (
+        <div style={{ marginBottom: '22px' }}>
+          <ImportPanel
+            kind="kurtas"
+            refresh={refresh}
+            readonly={readonly}
+          />
+        </div>
+      )}
 
       {/* Filter and Search Bar */}
       <div className="admin-filters" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '18px' }}>
