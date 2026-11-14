@@ -134,7 +134,6 @@ export class CoinService {
       const [varId] = await t('coin_variants').insert({
         coin_id: id,
         sku: cleanSku,
-        slug,
         name: insertData.name,
         metal: insertData.metal,
         purity: insertData.purity,
@@ -143,7 +142,6 @@ export class CoinService {
         price: insertData.fixed_price,
         fixed_price: insertData.fixed_price,
         stock: insertData.stock,
-        image: insertData.image,
         status: insertData.status,
         created_at: nowStr,
         updated_at: nowStr
@@ -221,7 +219,6 @@ export class CoinService {
         fixed_price: patch.fixed_price !== undefined ? patch.fixed_price : existing.fixed_price,
         stock: patch.stock !== undefined ? patch.stock : existing.stock,
         status: patch.status !== undefined ? patch.status : existing.status,
-        image: patch.image !== undefined ? patch.image : existing.image,
         updated_at: nowStr
       });
 

@@ -41,6 +41,9 @@ import {registerCraftsmanshipRoutes} from './craftsmanship.js';
 import {registerCollectionRoutes} from './collections.js';
 import {registerRecommendationRoutes} from './recommendations.js';
 import {registerRateRoutes} from './rates.js';
+import { createJewelryRouter } from './modules/jewelry/Routes/jewelryRoutes.js';
+import { createCoinRouter } from './modules/coin/Routes/coinRoutes.js';
+import { createKurtaRouter } from './modules/kurta/Routes/kurtaRoutes.js';
 import {
   getProductReviews,
   submitReview,
@@ -96,6 +99,9 @@ app.get('/api/categories/:slug',route(async(req,res)=>{const c=await categoryByS
 app.get('/api/kurtas',route(async(req,res)=>res.json(await listKurtas(db))));
 app.get('/api/kurtas/:slug',route(async(req,res)=>{const k=await kurtaBySlug(db,req.params.slug);if(!k)return res.status(404).json({error:'Kurta not found'});res.json(k);}));
 app.get('/api/search',route(async(req,res)=>{const q=String(req.query.q||'').slice(0,100);res.json(await searchCatalogue(db,q));}));
+app.use('/api', createJewelryRouter(db, { auth, route }));
+app.use('/api', createCoinRouter(db, { auth, route }));
+app.use('/api', createKurtaRouter(db, { auth, route }));
 app.get('/api/offers',route(async(req,res)=>{
   const hasOffers=await db.schema.hasTable('offers').catch(()=>false);
   if(!hasOffers)return res.json([]);
@@ -746,7 +752,7 @@ app.delete('/api/admin/reviews/:id', auth(['owner', 'manager']), route(async (re
   res.json(result);
 }));
 
-app.get('/api/admin/samples/:file',auth(),(req,res)=>{const allowed=['gold-rates-template.csv','gold-rates-example.csv','metal-rates-template.csv','metal-rates-example.csv','metal-rates-template.xlsx','metal-rates-example.xlsx','gold-rates-template.xlsx','gold-rates-example.xlsx','products-template.csv','products-example.csv','coins-template.csv','coins-example.csv','kurtas-template.csv','kurtas-example.csv','import-errors-example.csv','jewellery-template.csv','jewellery-example.csv','gold-jewellery-template.csv','gold-jewellery-example.csv','silver-jewellery-template.csv','silver-jewellery-example.csv','kurta-designs-template.csv','kurta-designs-example.csv','kurta-variants-template.csv','kurta-variants-example.csv','materials-template.csv','materials-example.csv','craftsmanship-template.csv','craftsmanship-example.csv','collections-template.csv','collections-example.csv'];if(!allowed.includes(req.params.file))return res.sendStatus(404);res.download(path.resolve('samples',req.params.file));});
+app.get('/api/admin/samples/:file',auth(),(req,res)=>{const allowed=['jewelry-template.csv','jewelry-example.csv','coin-template.csv','coin-example.csv','kurta-template.csv','kurta-example.csv','gold-rates-template.csv','gold-rates-example.csv','metal-rates-template.csv','metal-rates-example.csv','metal-rates-template.xlsx','metal-rates-example.xlsx','gold-rates-template.xlsx','gold-rates-example.xlsx','products-template.csv','products-example.csv','coins-template.csv','coins-example.csv','kurtas-template.csv','kurtas-example.csv','import-errors-example.csv','jewellery-template.csv','jewellery-example.csv','gold-jewellery-template.csv','gold-jewellery-example.csv','silver-jewellery-template.csv','silver-jewellery-example.csv','kurta-designs-template.csv','kurta-designs-example.csv','kurta-variants-template.csv','kurta-variants-example.csv','materials-template.csv','materials-example.csv','craftsmanship-template.csv','craftsmanship-example.csv','collections-template.csv','collections-example.csv'];if(!allowed.includes(req.params.file))return res.sendStatus(404);res.download(path.resolve('samples',req.params.file));});
 app.post('/api/admin/orders/:id/status',auth(['owner','manager']),route(async(req,res)=>{const result=await updateOrderStatus(db,req.params.id,req.body.status);await audit(req,'order_status',{id:req.params.id,status:result.status});res.json(result);}));
 app.get('/api/admin/staff',auth(['owner']),route(async(req,res)=>res.json(await db('staff').select('id','email','role','disabled_at').orderBy('id'))));
 app.post('/api/admin/staff',auth(['owner']),route(async(req,res)=>{const created=await createStaff(db,req.body);await audit(req,'staff_created',{id:created.id,email:created.email,role:created.role});res.status(201).json(created);}));

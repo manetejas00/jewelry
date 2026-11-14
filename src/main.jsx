@@ -52,10 +52,10 @@ function Scroll(){const loc=useLocation();useEffect(()=>{if(!loc.pathname.starts
 function Brand(){return <Link className="brand" to="/" aria-label="Veyora Jewels home"><img className="brand-logo" src="/assets/brand/logo.webp" alt="Veyora Jewels" width="150" height="100"/></Link>}
 
 export const STORE_NAV_ITEMS = [
-  { label: 'Chicken Curry Kurtas', href: '/kurtas', matchPrefixes: ['/kurtas'], categoryKey: 'kurtas' },
-  { label: 'All jewellery', href: '/collections/all', exact: true, categoryKey: 'all' },
+  { label: 'Chicken Curry Kurtas', href: '/kurtas', matchPrefixes: ['/kurtas', '/kurta'], categoryKey: 'kurtas' },
+  { label: 'All jewellery', href: '/collections/all', matchPrefixes: ['/jewelry'], exact: true, categoryKey: 'all' },
   { label: 'The Pearl Edit', href: '/collections/pearls', matchPrefixes: ['/collections/pearls'], categoryKey: 'pearls' },
-  { label: 'Coins', href: '/coins', matchPrefixes: ['/coins'], categoryKey: 'coins' },
+  { label: 'Coins', href: '/coins', matchPrefixes: ['/coins', '/coin'], categoryKey: 'coins' },
   { label: 'Earrings', href: '/collections/earrings', matchPrefixes: ['/collections/earrings'], categoryKey: 'earrings' },
   { label: 'Necklaces', href: '/collections/necklaces', matchPrefixes: ['/collections/necklaces'], categoryKey: 'necklaces' },
   { label: 'Rings', href: '/collections/rings', matchPrefixes: ['/collections/rings'], categoryKey: 'rings' },
@@ -930,9 +930,9 @@ function Information(){
 const adminRoutes = [
   { key: 'dashboard', label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
   { key: 'categories', label: 'Categories', path: '/admin/categories', icon: Layers },
-  { key: 'products', label: 'Products', path: '/admin/products', icon: Gem },
-  { key: 'kurtas', label: 'Chicken Curry Kurtas', path: '/admin/chicken-curry-kurtas', aliases: ['/admin/kurtas'], icon: Shirt },
-  { key: 'coins', label: 'Coins', path: '/admin/coins', icon: CoinsIcon },
+  { key: 'products', label: 'Products', path: '/admin/products', aliases: ['/admin/jewelry'], icon: Gem },
+  { key: 'kurtas', label: 'Chicken Curry Kurtas', path: '/admin/chicken-curry-kurtas', aliases: ['/admin/kurtas', '/admin/kurta'], icon: Shirt },
+  { key: 'coins', label: 'Coins', path: '/admin/coins', aliases: ['/admin/coin'], icon: CoinsIcon },
   { key: 'offers', label: 'Offers', path: '/admin/offers', icon: Tag },
   { key: 'reviews', label: 'Reviews', path: '/admin/reviews', icon: Star },
   { key: 'gold-rates', label: 'Gold Rates', path: '/admin/gold-rates', icon: ChartNoAxesCombined },
@@ -2934,4 +2934,4 @@ function CraftsmanshipPage(){
 }
 
 function NotFound(){return <Layout><section className="empty"><span className="eyebrow">A SMALL DETOUR</span><h1>This page is yet to be discovered.</h1><p>The link you followed may have changed, or the piece may have moved.</p><div style={{display:'flex',gap:'14px',justifyContent:'center',flexWrap:'wrap',marginTop:'20px'}}><Link className="button dark" to="/collections/all">Explore all jewellery</Link><Link className="underlink" to="/">Return to home</Link></div></section></Layout>}
-createRoot(document.getElementById('root')).render(<ErrorBoundary><BrowserRouter><Provider><Scroll/><Routes><Route path="/" element={<Home/>}/><Route path="/kurtas" element={<KurtasPage Layout={Layout} ProductCard={ProductCard}/>}/><Route path="/kurtas/:slug" element={<KurtaDetailPage Layout={Layout} StructuredProduct={StructuredProduct} ProductCard={ProductCard}/>}/><Route path="/collections/:category" element={<Collection/>}/><Route path="/materials/:slug" element={<MaterialPage/>}/><Route path="/craftsmanship/:slug" element={<CraftsmanshipPage/>}/><Route path="/products/:slug" element={<Product/>}/><Route path="/coins/product/:sku" element={<CoinProduct/>}/><Route path="/coins" element={<CoinsPage/>}/> <Route path="/coins/:category" element={<CoinsPage/>}/><Route path="/account" element={<Account Layout={Layout} BagLines={BagLines} ProductCard={ProductCard} grouped={grouped}/>}/><Route path="/bag" element={<Bag/>}/><Route path="/checkout" element={<Checkout/>}/><Route path="/order/:id" element={<Order/>}/><Route path="/information/:page" element={<Information/>}/><Route path="/admin/*" element={<Admin/>}/><Route path="*" element={<NotFound/>}/></Routes></Provider></BrowserRouter></ErrorBoundary>);
+createRoot(document.getElementById('root')).render(<ErrorBoundary><BrowserRouter><Provider><Scroll/><Routes><Route path="/" element={<Home/>}/><Route path="/jewelry" element={<Collection/>}/><Route path="/jewelry/:slug" element={<Product/>}/><Route path="/coin" element={<CoinsPage/>}/><Route path="/coin/:slug" element={<CoinProduct/>}/><Route path="/kurta" element={<KurtasPage Layout={Layout} ProductCard={ProductCard}/>}/><Route path="/kurta/:slug" element={<KurtaDetailPage Layout={Layout} StructuredProduct={StructuredProduct} ProductCard={ProductCard}/>}/><Route path="/kurtas" element={<KurtasPage Layout={Layout} ProductCard={ProductCard}/>}/><Route path="/kurtas/:slug" element={<KurtaDetailPage Layout={Layout} StructuredProduct={StructuredProduct} ProductCard={ProductCard}/>}/><Route path="/collections/:category" element={<Collection/>}/><Route path="/materials/:slug" element={<MaterialPage/>}/><Route path="/craftsmanship/:slug" element={<CraftsmanshipPage/>}/><Route path="/products/:slug" element={<Product/>}/><Route path="/coins/product/:sku" element={<CoinProduct/>}/><Route path="/coins" element={<CoinsPage/>}/> <Route path="/coins/:category" element={<CoinsPage/>}/><Route path="/account" element={<Account Layout={Layout} BagLines={BagLines} ProductCard={ProductCard} grouped={grouped}/>}/><Route path="/bag" element={<Bag/>}/><Route path="/checkout" element={<Checkout/>}/><Route path="/order/:id" element={<Order/>}/><Route path="/information/:page" element={<Information/>}/><Route path="/admin/*" element={<Admin/>}/><Route path="*" element={<NotFound/>}/></Routes></Provider></BrowserRouter></ErrorBoundary>);

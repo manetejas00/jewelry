@@ -1,4 +1,4 @@
-import { listingThumbnail } from '../../../listing-thumbnails.js';
+import { listingThumbnail } from '../../../../src/listing-media.js';
 
 export class JewelryResource {
   static toStorefrontCard(jewelry, priceResult = null, rating = null) {

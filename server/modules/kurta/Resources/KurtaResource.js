@@ -1,5 +1,5 @@
 import { KURTA_SIZES } from '../Constants/KurtaConstants.js';
-import { listingThumbnail } from '../../../src/listing-media.js';
+import { listingThumbnail } from '../../../../src/listing-media.js';
 
 export class KurtaResource {
   static toStorefrontCard(kurta, offers = [], ratings = new Map()) {

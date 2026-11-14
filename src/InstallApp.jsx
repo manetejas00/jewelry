@@ -14,8 +14,29 @@ export default function InstallApp() {
   const [help, setHelp] = useState(false);
   const [ios, setIos] = useState(false);
   const [offline, setOffline] = useState(false);
+  const [pastHero, setPastHero] = useState(false);
   const helpRef=useRef(null);
   useScrollLock(help&&!installed,helpRef,{onEscape:()=>setHelp(false),trapFocus:true});
+
+  useEffect(() => {
+    const checkScroll = () => {
+      const hero = document.querySelector('section.hero');
+      if (!hero) {
+        setPastHero(true);
+        return;
+      }
+      const rect = hero.getBoundingClientRect();
+      setPastHero(rect.bottom <= 80);
+    };
+
+    checkScroll();
+    window.addEventListener('scroll', checkScroll, { passive: true });
+    window.addEventListener('resize', checkScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', checkScroll);
+      window.removeEventListener('resize', checkScroll);
+    };
+  }, []);
 
   useEffect(() => {
     const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
@@ -72,7 +93,7 @@ export default function InstallApp() {
   return (
     <>
     {offline && <p className="pwa-offline" role="status">You are offline. Prices, stock, sign-in, and checkout need a connection.</p>}
-    {!installed && <div className={expanded ? 'install-app install-app-banner' : 'install-app install-app-chip'}>
+    {!installed && <div className={`${expanded ? 'install-app install-app-banner' : 'install-app install-app-chip'}${!pastHero ? ' is-hero-fold' : ''}`}>
       <button type="button" className="install-app-action" aria-label="Install app" onClick={install}>
         {expanded ? 'Install the app for faster access' : 'Get app'}
       </button>

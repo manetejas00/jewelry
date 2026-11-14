@@ -358,7 +358,25 @@ export async function quote(k,items,options={}){
  if(items.some(i=>!i||typeof i.sku!=='string'||!i.sku||i.sku.length>80))throw validationError('Invalid bag item');
  if(new Set(items.map(i=>i.sku)).size!==items.length)throw validationError('Duplicate bag SKU');
   const [products,coins]=await Promise.all([catalogue(k,options),coinCatalogue(k,options)]);
-  const allItems=[...products,...coins];
+  let kurtaVariants = [];
+  try {
+    if (k.schema && await k.schema.hasTable('kurta_variants')) {
+      const vars = await k('kurta_variants').where({ status: 'published' });
+      kurtaVariants = vars.map(v => ({
+        ...v,
+        dimension: v.size,
+        size: v.size,
+        image: v.image,
+        checkout_available: v.stock > 0,
+        price: v.price != null ? Number(v.price) : Number(v.fixed_price || 0),
+        original_price: null,
+        discount_amount: 0,
+        offer: null,
+        breakdown: { total: v.price != null ? Number(v.price) : Number(v.fixed_price || 0), mode: 'FIXED' }
+      }));
+    }
+  } catch {}
+  const allItems=[...products,...coins,...kurtaVariants];
   let subtotal=0;const lines=[];
   for(const i of items){
     const p=allItems.find(p=>p.sku===i.sku);

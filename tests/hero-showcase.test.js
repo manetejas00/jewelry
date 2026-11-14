@@ -90,12 +90,17 @@ test('hero showcase: hero banner takes full viewport height below header across 
   assert.match(cssContent, /rgba\(16,\s*35,\s*39,\s*0\.85\)/, 'CSS must include tablet dark gradient overlay rgba(16, 35, 39, 0.85)');
   assert.match(cssContent, /rgba\(16,\s*35,\s*39,\s*0\.4\)/, 'CSS must include tablet dark gradient overlay rgba(16, 35, 39, 0.4)');
 
-  // 4. Mobile responsive full-screen calculation with 85svh and top bars offset
-  assert.match(cssContent, /min-height:\s*85svh/, 'CSS must adjust mobile min-height to 85svh');
+  // 4. Mobile responsive full-screen calculation with header offset
+  assert.match(cssContent, /min-height:\s*calc\(100svh\s*-\s*var\(--header-offset,\s*113px\)\)/, 'CSS must set mobile min-height with header offset');
   assert.match(cssContent, /height:\s*calc\([^)]*113px\)/, 'CSS must calculate height subtracting 113px mobile top bars');
 
-  // 5. Controls anchored alignment across breakpoints
+  // 5. Mobile photo framing, gradient overlay and typography
+  assert.match(cssContent, /linear-gradient\(180deg,\s*rgba\(16,\s*39,\s*42,\s*0\.15\)\s*0%,\s*rgba\(16,\s*39,\s*42,\s*0\.65\)\s*55%,\s*rgba\(16,\s*39,\s*42,\s*0\.96\)\s*100%\)/, 'CSS must use top-to-bottom dark gradient overlay on mobile');
+  assert.match(cssContent, /clamp\(1\.75rem,\s*7vw,\s*2\.25rem\)/, 'CSS must use scaled typography for mobile hero heading');
+
+  // 6. Controls anchored alignment across breakpoints
   assert.match(cssContent, /\.hero-scroll\s*\{[^}]*transform:\s*translateX\(-50%\)/, 'CSS .hero-scroll must be horizontally centered');
   assert.match(cssContent, /\.hero-scroll\s*\{[^}]*left:\s*50%/, 'CSS .hero-scroll must be anchored at left: 50%');
   assert.match(cssContent, /\.hero-index\s*\{[^}]*right:\s*6%/, 'CSS .hero-index must be anchored at right: 6% on desktop');
+  assert.match(cssContent, /\.hero-controls\s*\{[^}]*display:\s*flex;[^}]*justify-content:\s*space-between;[^}]*align-items:\s*center;[^}]*width:\s*100%/, 'CSS must align mobile hero controls in a bottom row');
 });

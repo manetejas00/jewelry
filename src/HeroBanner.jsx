@@ -22,7 +22,8 @@ const slides = [
     copy: <>A little light. A quiet statement.<br />Jewellery that feels unmistakably you.</>,
     to: '/collections/pearls',
     cta: 'Shop the collection',
-    alt: 'Pearl jewellery campaign'
+    alt: 'Pearl jewellery campaign',
+    mobilePosition: '65% 20%'
   },
   // 2. Jewellery image 1
   {
@@ -36,7 +37,8 @@ const slides = [
     copy: <>Cultured pearls handset in recycled gold.<br />Modern classics crafted to cherish every day.</>,
     to: '/collections/pearls',
     cta: 'Explore pearls',
-    alt: 'Pearl jewellery collection'
+    alt: 'Pearl jewellery collection',
+    mobilePosition: '65% 20%'
   },
   // 3. Jewellery image 2
   {
@@ -50,7 +52,8 @@ const slides = [
     copy: <>Find a piece that becomes part of your story.<br />Considered jewellery for every chapter.</>,
     to: '/collections/all',
     cta: 'Explore all jewellery',
-    alt: 'Fine jewellery collection'
+    alt: 'Fine jewellery collection',
+    mobilePosition: '65% 20%'
   },
   // 4. Jewellery image 3
   {
@@ -64,7 +67,8 @@ const slides = [
     copy: <>For someone you love. Including yourself.<br />Discover your next favourite piece.</>,
     to: '/collections/pearls',
     cta: 'Discover the Pearl Edit',
-    alt: 'Pearl drop earring'
+    alt: 'Pearl drop earring',
+    mobilePosition: '65% 20%'
   },
   // 5. Kurta image 1
   {
@@ -77,7 +81,8 @@ const slides = [
     copy: <>Authentic Lucknowi Chikankari on pure mulmul cotton.<br />Delicate shadow-work and tonal floral jaal.</>,
     to: '/kurtas',
     cta: 'Shop Chicken Curry Kurtas',
-    alt: 'Lucknowi Ivory Chikankari Cotton Kurta'
+    alt: 'Lucknowi Ivory Chikankari Cotton Kurta',
+    mobilePosition: 'center top'
   },
   // 6. Kurta image 2
   {
@@ -90,7 +95,8 @@ const slides = [
     copy: <>Rose blush sheer georgette with artisan needlecraft.<br />A celebration of feminine drape and craftsmanship.</>,
     to: '/kurtas',
     cta: 'Discover Rose Blush',
-    alt: 'Rose Blush Georgette Chikankari Kurta'
+    alt: 'Rose Blush Georgette Chikankari Kurta',
+    mobilePosition: 'center top'
   },
   // 7. Kurta image 3
   {
@@ -103,7 +109,8 @@ const slides = [
     copy: <>Regal sage green Chanderi with intricate bakhiya embroidery.<br />Handcrafted Awadhi needlecraft for timeless celebrations.</>,
     to: '/kurtas',
     cta: 'Explore All Kurtas',
-    alt: 'Sage Green Chanderi Chikankari Kurta'
+    alt: 'Sage Green Chanderi Chikankari Kurta',
+    mobilePosition: 'center top'
   }
 ];
 
@@ -304,10 +311,12 @@ export default function HeroBanner({ heroRef }) {
             return null; // Video rendered below
           }
 
+          const posClass = slide.mobilePosition === '65% 20%' ? 'slide-pos-jewelry' : 'slide-pos-top';
           return (
             <BrandedImage
               key={slide.src}
-              className={classes}
+              className={`${classes} ${posClass}`}
+              style={{ '--slide-mobile-pos': slide.mobilePosition || 'center top' }}
               src={slide.src}
               alt={active ? slide.alt : ''}
               aria-hidden={active ? undefined : true}
@@ -320,7 +329,8 @@ export default function HeroBanner({ heroRef }) {
         {!reduce && (
           <video
             ref={videoRef}
-            className={isVideoSlide ? 'is-active' : ''}
+            className={`${isVideoSlide ? 'is-active' : ''} slide-pos-jewelry`}
+            style={{ '--slide-mobile-pos': slides[0].mobilePosition || '65% 20%' }}
             src={videoSrc}
             poster={brandedImageSource(slides[0].poster)}
             autoPlay
@@ -357,23 +367,25 @@ export default function HeroBanner({ heroRef }) {
         <span className="hero-bottom">THE EXTRAORDINARY, IN THE EVERYDAY</span>
       </div>
 
-      <div className="hero-index">
-        <div aria-live="polite" aria-atomic="true">
-          {String(index + 1).padStart(2, '0')} <span>/ {total}</span>
-        </div>
-        <div className="hero-arrows">
-          <button type="button" aria-label="Previous banner" onClick={() => go(-1)}>
-            <ArrowLeft size={18} />
-          </button>
-          <button type="button" aria-label="Next banner" onClick={() => go(1)}>
-            <ArrowRight size={18} />
-          </button>
+      <div className="hero-controls">
+        <a className="hero-scroll" href="#collections" aria-label="Explore collections">
+          EXPLORE <span>↓</span>
+        </a>
+
+        <div className="hero-index">
+          <div aria-live="polite" aria-atomic="true">
+            {String(index + 1).padStart(2, '0')} <span>/ {total}</span>
+          </div>
+          <div className="hero-arrows">
+            <button type="button" aria-label="Previous banner" onClick={() => go(-1)}>
+              <ArrowLeft size={18} />
+            </button>
+            <button type="button" aria-label="Next banner" onClick={() => go(1)}>
+              <ArrowRight size={18} />
+            </button>
+          </div>
         </div>
       </div>
-
-      <a className="hero-scroll" href="#collections" aria-label="Explore collections">
-        EXPLORE <span>↓</span>
-      </a>
     </section>
   );
 }
