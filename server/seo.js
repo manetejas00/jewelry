@@ -24,7 +24,28 @@ export async function pageMetadata(k,pathname){
      title='Collection | '+brand;
    }
  }
- else if(/^\/(account|admin|bag|checkout|order)(\/|$)/.test(pathname)){title='Your account and orders | '+brand;indexable=false;}
+  else if(pathname.startsWith('/admin')){title='Merchant Studio | '+brand;indexable=false;}
+  else if(pathname.startsWith('/materials/')){
+    const matSlug=pathname.slice(11);
+    const mat=await k.schema.hasTable('materials')?await k('materials').where({slug:matSlug,status:'active'}).first():null;
+    if(mat){
+      title=(mat.seo_title||mat.name)+' | '+brand;
+      description=mat.meta_description||mat.description||description;
+    }else{
+      title='Material | '+brand;
+    }
+  }
+  else if(pathname.startsWith('/craftsmanship/')){
+    const craftSlug=pathname.slice(15);
+    const craft=await k.schema.hasTable('craftsmanship')?await k('craftsmanship').where({slug:craftSlug,status:'active'}).first():null;
+    if(craft){
+      title=(craft.seo_title||craft.name)+' | '+brand;
+      description=craft.meta_description||craft.description||description;
+    }else{
+      title='Craftsmanship | '+brand;
+    }
+  }
+  else if(/^\/(account|bag|checkout|order)(\/|$)/.test(pathname)){title='Your account and orders | '+brand;indexable=false;}
  else{title='Page not found | '+brand;indexable=false;status=404;}
  return {title,description,status,indexable:indexable&&process.env.NODE_ENV==='production'&&process.env.MERCHANT_READY==='true',url:origin()+pathname,path:pathname,image,product};
 }

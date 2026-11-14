@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Sparkles,
@@ -9,6 +9,7 @@ import {
   ArrowUpRight
 } from 'lucide-react';
 import { money } from '../catalogue.js';
+import { api } from '../api.js';
 import ProductMagicZoom from '../ProductMagicZoom.jsx';
 import { RatingBadge, ProductReviewsSection } from '../Reviews.jsx';
 
@@ -37,6 +38,31 @@ export function CommonPDP({
   StructuredProductComponent
 }) {
   const navigate = useNavigate();
+  const [recs, setRecs] = useState({ similar: [], youMayLike: [], completeLook: [] });
+
+  useEffect(() => {
+    if (!p) return;
+    const identifier = p.product_code || p.slug || p.sku;
+    if (!identifier) return;
+
+    let cancelled = false;
+    const colorParam = selectedColor ? `?color=${encodeURIComponent(selectedColor)}` : '';
+    api(`/products/${encodeURIComponent(identifier)}/recommendations${colorParam}`)
+      .then(res => {
+        if (!cancelled && res) {
+          setRecs({
+            similar: Array.isArray(res.similar) ? res.similar : [],
+            youMayLike: Array.isArray(res.youMayLike) ? res.youMayLike : [],
+            completeLook: Array.isArray(res.completeLook) ? res.completeLook : []
+          });
+        }
+      })
+      .catch(() => {
+        // Fallback silently if recommendation API fails
+      });
+
+    return () => { cancelled = true; };
+  }, [p?.product_code, p?.slug, p?.sku, selectedColor]);
 
   if (!p) return null;
 
@@ -343,8 +369,66 @@ export function CommonPDP({
       {/* Customer Reviews Section */}
       <ProductReviewsSection product={p} />
 
-      {/* Related Products Section */}
-      {relatedProducts.length > 0 && ProductCardComponent && (
+      {/* Recommendation Shelf 1: Similar Products */}
+      {recs.similar.length > 0 && ProductCardComponent && (
+        <section className="related-products-section section" style={{ borderTop: '1px solid var(--line)', paddingTop: '40px' }}>
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">HARMONIOUS SILHOUETTES</span>
+              <h2>Similar Pieces</h2>
+            </div>
+            <Link className="underlink" to={`/collections/${p.category ? p.category.toLowerCase().replace(/[^a-z0-9]+/g, '-') : 'all'}`}>
+              View all {p.category || 'pieces'} <ArrowUpRight size={16} />
+            </Link>
+          </div>
+          <div className="product-grid">
+            {recs.similar.map(item => (
+              <ProductCardComponent key={item.sku || item.product_code} p={item} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Recommendation Shelf 2: You May Also Like */}
+      {recs.youMayLike.length > 0 && ProductCardComponent && (
+        <section className="related-products-section section" style={{ borderTop: '1px solid var(--line)', paddingTop: '40px' }}>
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">CURATED FOR YOUR AESTHETIC</span>
+              <h2>You May Also Adore</h2>
+            </div>
+            <Link className="underlink" to="/collections/all">
+              Explore more pieces <ArrowUpRight size={16} />
+            </Link>
+          </div>
+          <div className="product-grid">
+            {recs.youMayLike.map(item => (
+              <ProductCardComponent key={item.sku || item.product_code} p={item} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Recommendation Shelf 3: Complete the Look (Cross-Category Styling) */}
+      {recs.completeLook.length > 0 && ProductCardComponent && (
+        <section className="related-products-section section" style={{ borderTop: '1px solid var(--line)', paddingTop: '40px', background: 'var(--paper)', margin: '40px 0', padding: '40px 24px' }}>
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">ARTISAN ENSEMBLE</span>
+              <h2>Complete the Look</h2>
+            </div>
+            <span className="small muted">Stylist-curated pairings that harmonize across metals and needlework</span>
+          </div>
+          <div className="product-grid">
+            {recs.completeLook.map(item => (
+              <ProductCardComponent key={item.sku || item.product_code} p={item} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Fallback to basic related products if no recommendations returned */}
+      {recs.similar.length === 0 && recs.youMayLike.length === 0 && recs.completeLook.length === 0 && relatedProducts.length > 0 && ProductCardComponent && (
         <section className="related-products-section section">
           <div className="section-heading">
             <div>

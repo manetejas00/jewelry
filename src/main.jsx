@@ -25,6 +25,10 @@ import ProductMagicZoom from './ProductMagicZoom.jsx';
 import { KurtasPage, KurtaDetailPage } from './Kurtas.jsx';
 import { CategoriesAdmin } from './admin/CategoriesAdmin.jsx';
 import { KurtasAdmin } from './admin/KurtasAdmin.jsx';
+import { MaterialsAdmin } from './admin/MaterialsAdmin.jsx';
+import { CraftsmanshipAdmin } from './admin/CraftsmanshipAdmin.jsx';
+import { CollectionsAdmin } from './admin/CollectionsAdmin.jsx';
+import { RecommendationsAdmin } from './admin/RecommendationsAdmin.jsx';
 import CommonPLP from './components/CommonPLP.jsx';
 import CommonPDP from './components/CommonPDP.jsx';
 const money=v=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:2,minimumFractionDigits:0}).format(v||0);
@@ -533,6 +537,8 @@ function Collection(){
 
   const jewelleryItems=grouped(products.filter(p=>{
     if(category==='all')return true;
+    if(category==='gold')return (p.metal||'').toLowerCase()==='gold'||(p.collections||[]).includes('gold');
+    if(category==='silver')return (p.metal||'').toLowerCase()==='silver'||(p.collections||[]).includes('silver');
     if(category==='pearls')return p.category?.toLowerCase()==='pearls'||p.category?.toLowerCase()==='the pearl edit';
     if(category==='saved')return saved.includes(p.product_code);
     const pCatLower=(p.category||'').toLowerCase();
@@ -548,7 +554,18 @@ function Collection(){
   let items=baseList.filter(p=>matchesSearch(p,p.is_coin)&&(!params.get('purity')||p.purity===params.get('purity'))&&(!params.get('stock')||p.stock>0)&&matchPrice(p.price,params.get('price')));
   if(params.get('sort')==='price-asc')items.sort((a,b)=>a.price-b.price);
   if(params.get('sort')==='price-desc')items.sort((a,b)=>b.price-a.price);
-  const title=q?`Search results for “${q}”`:categoryMeta?.name||({all:'The jewellery collection',pearls:'The Pearl Edit',saved:'Your saved pieces'}[category]||category.replace(/-/g,' '));
+  const title=q?`Search results for “${q}”`:categoryMeta?.name||({
+    all:'The jewellery collection',
+    gold:'The Gold Collection',
+    silver:'The Silver Collection',
+    pearls:'The Pearl Edit',
+    saved:'Your saved pieces'
+  }[category]||category.replace(/-/g,' '));
+  const categoryDescription=q?`Showing items matching “${q}”.`:categoryMeta?.description||({
+    all:'Considered pieces. Quiet statements. Endlessly you.',
+    gold:'Hallmarked 18K and 22K yellow gold fine jewellery crafted with timeless heritage and contemporary precision.',
+    silver:'Fine 925 sterling silver artisan jewellery finished with anti-tarnish rhodium and lustrous hand polishing.'
+  }[category]||'Considered pieces. Quiet statements. Endlessly you.');
   const gridOffer=offers.find(o=>o.show_in_grid)||offers[0];
 
   const tabs=[
@@ -560,6 +577,8 @@ function Collection(){
     {label:'Rings',href:'/collections/rings',active:category==='rings'},
     {label:'Bracelets',href:'/collections/bracelets',active:category==='bracelets'},
     {label:'Coins',href:'/coins',active:false},
+    ...(category==='gold'?[{label:'Gold Collection',href:'/collections/gold',active:true}]:[]),
+    ...(category==='silver'?[{label:'Silver Collection',href:'/collections/silver',active:true}]:[]),
     ...(category==='saved'?[{label:`Saved pieces (${saved.length})`,href:'/collections/saved',active:true}]:[])
   ];
 
@@ -580,7 +599,7 @@ function Collection(){
     <CommonPLP
       eyebrow={q?`FOUND ${items.length} MATCHING PIECES`:'THE VEYORA COLLECTIONS'}
       title={title}
-      description={q?`Showing items matching “${q}”.`:categoryMeta?.description||'Considered pieces. Quiet statements. Endlessly you.'}
+      description={categoryDescription}
       tabs={tabs}
       priceBrackets={priceBrackets}
       activePrice={params.get('price')||''}
@@ -1027,11 +1046,11 @@ function Admin(){
         <span>VEYORA / STUDIO / {activeRoute.label.toUpperCase()}</span>
       </div>
       <span className="test-badge">{data?.preview?'PREVIEW ENVIRONMENT':'MERCHANT ENVIRONMENT'}</span>
-    </header><div className="admin-content"><div className="section-heading"><div><span className="eyebrow">YOUR MAISON, AT A GLANCE</span><h1>{tab==='Dashboard'?'A considered overview.':tab}</h1></div><button className="text-button" onClick={()=>refresh().catch(e=>setError(e.message))}><RefreshCw size={15}/>Refresh</button></div>{error&&<div className="error" role="alert">{error}</div>}{!data?<p>Loading studio…</p>:<>{tab==='Dashboard'&&<><div className="admin-stats"><Stat title="ACTIVE GOLD RATES" value={data.rates.length} detail={`${data.rates.filter(r=>r.fresh).length} within freshness limit`}/><Stat title="CATALOGUE VARIANTS" value={products.length} detail={`${products.filter(p=>p.stock===0).length} out of stock`}/><Stat title="TODAY’S IMPORTS" value={data.todayImports?.failed?'Needs review':'All clear'} detail={`${data.todayImports?.published||0} published · ${data.todayImports?.failed||0} failed`}/><Stat title="ORDERS" value={data.orders.length} detail={`${money(data.orders.reduce((s,o)=>s+Number(o.total),0))} total order value`}/></div><div className="admin-two"><div className="admin-panel"><div className="panel-title"><h3>Active gold rates</h3><button className="underlink" onClick={()=>setTab('Gold Rates')}>View rates ↗</button></div><RateTable rates={data.rates}/></div><div className="admin-panel"><h3>Needs your attention</h3>{data.feedSettings?.feedStatus==='stopped'&&<div className="attention" style={{borderLeft:'3px solid #c62828',paddingLeft:'12px'}}><AlertCircle size={19} color="#c62828"/><div><strong style={{color:'#c62828'}}>Feed Automation is STOPPED</strong><p>Background syncs and live rates are paused. <button className="underlink" onClick={()=>setTab('Settings')}>Open Settings to start ↗</button></p></div></div>}<div className="attention"><AlertCircle size={19}/><div><strong>{data.rates.some(r=>!r.fresh)?'Gold rates are stale':'Storefront active with Cash on Delivery'}</strong><p>Cash on Delivery is active. Store policies and catalogue photography can be reviewed anytime.</p></div></div><p className="small">Maximum rate age: {data.maxAgeHours} hours. Stale gold-linked items pause at checkout.</p></div></div><div className="admin-panel"><h3>Supplier freshness</h3><div className="table-wrap"><table><thead><tr><th>Supplier</th><th>Feed</th><th>Last published source</th></tr></thead><tbody>{data.suppliers.map(s=><tr key={s.supplier+s.kind}><td>{s.supplier}</td><td>{s.kind}</td><td>{date(s.last_update)}</td></tr>)}</tbody></table></div></div><BatchTable batches={data.batches.slice(0,6)}/><div className="admin-panel"><h3>Recent staff activity</h3>{data.audits.slice(0,8).map(a=><p className="audit-line" key={a.id}><span>{a.action} · Staff {a.staff_id||'system'}</span><span>{date(a.created_at)}</span></p>)}</div></>}{tab==='Gold Rates'&&<><div className="notice">Rates are explicitly purity-specific. No automatic purity conversion is enabled. Original values and corrections remain in rate history. Maximum age: {data.maxAgeHours} hours.</div><div className="admin-panel"><div className="panel-title"><h3>Approved rates</h3><button disabled={busy||staff.role==='viewer'} className="button dark small-button" onClick={()=>run('gold')}><RefreshCw size={15}/>Run rate feed</button></div><RateTable rates={data.rates}/></div><ImportPanel kind="gold" refresh={refresh} readonly={staff.role==='viewer'}/><div className="admin-panel"><h3>Rate history & corrections</h3><RateTable rates={(data.rateHistory||[]).map(r=>({...r,fresh:data.rates.some(a=>a.id===r.id&&a.fresh)}))}/></div></>}{tab==='Categories'&&<CategoriesAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Products'&&<><div className="notice">Supplier imports preserve merchant names, descriptions and publication status by default. Stock is an absolute snapshot, adjusted for paid orders after its source timestamp.</div><details className="advanced-media"><summary>Manage multiple photos (optional)</summary><ImageUploader products={products} refreshParent={refresh}/></details><AdminProductList products={products} readonly={staff.role==='viewer'} refresh={refresh} onOpenImports={()=>setTab('Imports')}/></>}{tab==='Chicken Curry Kurtas'&&<KurtasAdmin readonly={staff.role==='viewer'} ProductAngleManager={ProductAngleManager} ImportPanel={ImportPanel}/>}{tab==='Coins'&&<CoinsAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Offers'&&<OffersAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Reviews'&&<ReviewsAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Pricing Rules'&&<Rules rule={data.rule} readonly={staff.role!=='owner'} refresh={refresh}/ >}{tab==='Imports'&&<><div className="admin-two"><div className="admin-panel"><span className="eyebrow">FEED SYNCHRONIZATION</span><h3>Rates first. Catalogue second.</h3><p className="small muted">Feed sources are configured on the server. Current inventory mode: {data.feedSettings.inventoryMode}. Synchronize feeds on demand below.</p><button className="button dark" disabled={busy||staff.role==='viewer'} onClick={()=>run(null)}>{busy?'Running…':'Run both feeds now'}<RefreshCw size={16}/></button></div><div className="admin-panel"><h3>Source connections</h3><p>Gold feed: <Status text={data.feedSettings.goldConfigured?'Configured':'Not configured'}/></p><p>Product feed: <Status text={data.feedSettings.productsConfigured?'Configured':'Not configured'}/></p><p className="small muted">Private feed URLs and credentials never appear in this screen. Failed rate feeds retain the last verified rate.</p><button className="underlink" disabled={busy||staff.role==='viewer'} onClick={()=>run('products')}>Run product feed only ↗</button></div></div><div className="admin-two"><ImportPanel kind="gold" refresh={refresh} readonly={staff.role==='viewer'}/><ImportPanel kind="products" refresh={refresh} readonly={staff.role==='viewer'}/><ImportPanel kind="coins" refresh={refresh} readonly={staff.role==='viewer'}/><ImportPanel kind="kurtas" refresh={refresh} readonly={staff.role==='viewer'}/></div><details className="advanced-media"><summary>Manage multiple photos (optional)</summary><ImageUploader products={products} refreshParent={refresh}/></details><FeedSettings data={data} refresh={refresh} readonly={staff.role!=='owner'}/><BatchTable batches={data.batches} retry={async b=>{try{await api(`/admin/import/${b.id}/publish`,{});await refresh()}catch(e){setError(e.message)}}} readonly={staff.role==='viewer'}/><div className="admin-panel"><h3>Workflow history</h3>{data.runs.length?data.runs.map(r=><div key={r.id} className="run-record"><strong>Run #{r.id} · {r.trigger} · {date(r.started_at)}</strong>{Object.entries(r.result).map(([k,v])=><p key={k}>{k}: {v.ok?`Succeeded · Source ${v.source_date} · Created ${v.created} / Updated ${v.updated} / Unchanged ${v.unchanged} / Rejected ${v.rejected}`:v.message}</p>)}</div>):<p className="small muted">No feed sync has been recorded yet.</p>}</div></>}{tab==='Orders'&&(()=>{const q=orderQuery.trim().toLowerCase();const orders=data.orders.filter(o=>{if(orderStatusFilter!=='all'&&o.status!==orderStatusFilter)return false;if(orderPayFilter!=='all'&&o.payment_mode!==orderPayFilter)return false;if(!q)return true;const customer=orderCustomer(o);return [o.id,o.status,o.payment_mode,customer.name,customer.email].join(' ').toLowerCase().includes(q)});const filtering=orderQuery.trim()||orderStatusFilter!=='all'||orderPayFilter!=='all';return <div className="admin-panel"><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'12px',marginBottom:'16px'}}><div><h3 style={{margin:0}}>All Orders ({orders.length}{filtering?` of ${data.orders.length}`:''})</h3><span className="small muted">{filtering?`${orders.length} matching`:`${data.orders.length} total orders recorded`}</span></div>{staff.role!=='viewer'&&<a className="underlink" href="/api/admin/export/orders" download style={{display:'inline-flex',alignItems:'center',gap:'6px'}}>Export orders CSV ({data.orders.length}) ↓</a>}</div><div className="admin-filter-bar"><div className="search-box"><Search size={14}/><input type="search" placeholder="Search order, customer, or email" value={orderQuery} onChange={e=>setOrderQuery(e.target.value)} aria-label="Search orders"/></div><select className="filter-select" value={orderStatusFilter} onChange={e=>setOrderStatusFilter(e.target.value)} aria-label="Filter orders by status"><option value="all">All statuses</option>{['confirmed','packed','shipped','delivered','cancelled'].map(status=><option key={status} value={status}>{status}</option>)}</select><select className="filter-select" value={orderPayFilter} onChange={e=>setOrderPayFilter(e.target.value)} aria-label="Filter orders by payment"><option value="all">All payments</option><option value="cod">Cash on delivery</option></select>{filtering&&<button type="button" className="reset-filter-btn" onClick={()=>{setOrderQuery('');setOrderStatusFilter('all');setOrderPayFilter('all')}}><RotateCcw size={13}/> Reset</button>}</div><div className="table-wrap"><table><thead><tr><th>Order</th><th>Customer</th><th>Placed (India)</th><th>Payment</th><th>Total</th><th>Status</th></tr></thead><tbody>{orders.map(o=>{const customer=orderCustomer(o);return <tr key={o.id}><td><Link to={'/order/'+o.id}>{o.id} ↗</Link></td><td>{customer.email?<>{customer.name}<small>{customer.email}</small></>:customer.name||'Customer'}</td><td>{date(o.created_at)}</td><td>{o.payment_mode}</td><td>{money(o.total)}</td><td>{staff.role==='viewer'?<Status text={o.status}/>:<select aria-label={`Status for ${o.id}`} value={o.status} disabled={busy} onChange={e=>setOrderStatus(o.id,e.target.value)}>{['confirmed','packed','shipped','delivered','cancelled'].map(status=><option key={status} value={status}>{status}</option>)}</select>}</td></tr>})}</tbody></table>{!data.orders.length&&<p className="empty">Orders will appear here after checkout.</p>}{!!data.orders.length&&!orders.length&&<p className="empty">No orders match these filters.</p>}</div></div>})()}{tab==='Customers'&&<CustomersAdmin role={staff.role}/>}{tab==='Catalogue copy'&&<AiCopy products={products} readonly={staff.role==='viewer'} onPublished={refresh}/>}{tab==='AI Chatbot'&&<ChatbotAdmin readonly={staff.role==='viewer'} canConfigure={staff.role==='owner'}/>}{tab==='Settings'&&<SettingsAdmin data={data} refresh={refresh} readonly={staff.role!=='owner'} owner={staff.role==='owner'}/>}</>}</div></main></div>}
+    </header><div className="admin-content"><div className="section-heading"><div><span className="eyebrow">YOUR MAISON, AT A GLANCE</span><h1>{tab==='Dashboard'?'A considered overview.':tab}</h1></div><button className="text-button" onClick={()=>refresh().catch(e=>setError(e.message))}><RefreshCw size={15}/>Refresh</button></div>{error&&<div className="error" role="alert">{error}</div>}{!data?<p>Loading studio…</p>:<>{tab==='Dashboard'&&<><div className="admin-stats"><Stat title="ACTIVE GOLD RATES" value={data.rates.length} detail={`${data.rates.filter(r=>r.fresh).length} within freshness limit`}/><Stat title="CATALOGUE VARIANTS" value={products.length} detail={`${products.filter(p=>p.stock===0).length} out of stock`}/><Stat title="TODAY’S IMPORTS" value={data.todayImports?.failed?'Needs review':'All clear'} detail={`${data.todayImports?.published||0} published · ${data.todayImports?.failed||0} failed`}/><Stat title="ORDERS" value={data.orders.length} detail={`${money(data.orders.reduce((s,o)=>s+Number(o.total),0))} total order value`}/></div><div className="admin-two"><div className="admin-panel"><div className="panel-title"><h3>Active gold rates</h3><button className="underlink" onClick={()=>setTab('Gold Rates')}>View rates ↗</button></div><RateTable rates={data.rates}/></div><div className="admin-panel"><h3>Needs your attention</h3>{data.feedSettings?.feedStatus==='stopped'&&<div className="attention" style={{borderLeft:'3px solid #c62828',paddingLeft:'12px'}}><AlertCircle size={19} color="#c62828"/><div><strong style={{color:'#c62828'}}>Feed Automation is STOPPED</strong><p>Background syncs and live rates are paused. <button className="underlink" onClick={()=>setTab('Settings')}>Open Settings to start ↗</button></p></div></div>}<div className="attention"><AlertCircle size={19}/><div><strong>{data.rates.some(r=>!r.fresh)?'Gold rates are stale':'Storefront active with Cash on Delivery'}</strong><p>Cash on Delivery is active. Store policies and catalogue photography can be reviewed anytime.</p></div></div><p className="small">Maximum rate age: {data.maxAgeHours} hours. Stale gold-linked items pause at checkout.</p></div></div><div className="admin-panel"><h3>Supplier freshness</h3><div className="table-wrap"><table><thead><tr><th>Supplier</th><th>Feed</th><th>Last published source</th></tr></thead><tbody>{data.suppliers.map(s=><tr key={s.supplier+s.kind}><td>{s.supplier}</td><td>{s.kind}</td><td>{date(s.last_update)}</td></tr>)}</tbody></table></div></div><BatchTable batches={data.batches.slice(0,6)}/><div className="admin-panel"><h3>Recent staff activity</h3>{data.audits.slice(0,8).map(a=><p className="audit-line" key={a.id}><span>{a.action} · Staff {a.staff_id||'system'}</span><span>{date(a.created_at)}</span></p>)}</div></>}{tab==='Gold Rates'&&<><div className="notice">Rates are explicitly purity-specific. No automatic purity conversion is enabled. Original values and corrections remain in rate history. Maximum age: {data.maxAgeHours} hours.</div><div className="admin-panel"><div className="panel-title"><h3>Approved rates</h3><button disabled={busy||staff.role==='viewer'} className="button dark small-button" onClick={()=>run('gold')}><RefreshCw size={15}/>Run rate feed</button></div><RateTable rates={data.rates}/></div><ImportPanel kind="gold" refresh={refresh} readonly={staff.role==='viewer'}/><div className="admin-panel"><h3>Rate history & corrections</h3><RateTable rates={(data.rateHistory||[]).map(r=>({...r,fresh:data.rates.some(a=>a.id===r.id&&a.fresh)}))}/></div></>}{tab==='Categories'&&<CategoriesAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Products'&&<><div className="notice">Supplier imports preserve merchant names, descriptions and publication status by default. Stock is an absolute snapshot, adjusted for paid orders after its source timestamp.</div><details className="advanced-media"><summary>Manage multiple photos (optional)</summary><ImageUploader products={products} refreshParent={refresh}/></details><AdminProductList products={products} readonly={staff.role==='viewer'} refresh={refresh} onOpenImports={()=>setTab('Imports')}/></>}{tab==='Chicken Curry Kurtas'&&<KurtasAdmin readonly={staff.role==='viewer'} ProductAngleManager={ProductAngleManager} ImportPanel={ImportPanel}/>}{tab==='Coins'&&<CoinsAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Offers'&&<OffersAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Reviews'&&<ReviewsAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Pricing Rules'&&<Rules rule={data.rule} readonly={staff.role!=='owner'} refresh={refresh}/ >}{tab==='Materials'&&<MaterialsAdmin readonly={staff.role==='viewer'}/>}{tab==='Craftsmanship'&&<CraftsmanshipAdmin readonly={staff.role==='viewer'}/>}{tab==='Collections'&&<CollectionsAdmin readonly={staff.role==='viewer'}/>}{tab==='AI Recommendations'&&<RecommendationsAdmin readonly={staff.role==='viewer'}/>}{tab==='Imports'&&<><div className="admin-two"><div className="admin-panel"><span className="eyebrow">FEED SYNCHRONIZATION</span><h3>Rates first. Catalogue second.</h3><p className="small muted">Feed sources are configured on the server. Current inventory mode: {data.feedSettings.inventoryMode}. Synchronize feeds on demand below.</p><button className="button dark" disabled={busy||staff.role==='viewer'} onClick={()=>run(null)}>{busy?'Running…':'Run both feeds now'}<RefreshCw size={16}/></button></div><div className="admin-panel"><h3>Source connections</h3><p>Gold feed: <Status text={data.feedSettings.goldConfigured?'Configured':'Not configured'}/></p><p>Product feed: <Status text={data.feedSettings.productsConfigured?'Configured':'Not configured'}/></p><p className="small muted">Private feed URLs and credentials never appear in this screen. Failed rate feeds retain the last verified rate.</p><button className="underlink" disabled={busy||staff.role==='viewer'} onClick={()=>run('products')}>Run product feed only ↗</button></div></div><div className="admin-two"><ImportPanel kind="gold" refresh={refresh} readonly={staff.role==='viewer'}/><ImportPanel kind="products" refresh={refresh} readonly={staff.role==='viewer'}/><ImportPanel kind="coins" refresh={refresh} readonly={staff.role==='viewer'}/><ImportPanel kind="kurtas" refresh={refresh} readonly={staff.role==='viewer'}/></div><details className="advanced-media"><summary>Manage multiple photos (optional)</summary><ImageUploader products={products} refreshParent={refresh}/></details><FeedSettings data={data} refresh={refresh} readonly={staff.role!=='owner'}/><BatchTable batches={data.batches} retry={async b=>{try{await api(`/admin/import/${b.id}/publish`,{});await refresh()}catch(e){setError(e.message)}}} readonly={staff.role==='viewer'}/><div className="admin-panel"><h3>Workflow history</h3>{data.runs.length?data.runs.map(r=><div key={r.id} className="run-record"><strong>Run #{r.id} · {r.trigger} · {date(r.started_at)}</strong>{Object.entries(r.result).map(([k,v])=><p key={k}>{k}: {v.ok?`Succeeded · Source ${v.source_date} · Created ${v.created} / Updated ${v.updated} / Unchanged ${v.unchanged} / Rejected ${v.rejected}`:v.message}</p>)}</div>):<p className="small muted">No feed sync has been recorded yet.</p>}</div></>}{tab==='Orders'&&(()=>{const q=orderQuery.trim().toLowerCase();const orders=data.orders.filter(o=>{if(orderStatusFilter!=='all'&&o.status!==orderStatusFilter)return false;if(orderPayFilter!=='all'&&o.payment_mode!==orderPayFilter)return false;if(!q)return true;const customer=orderCustomer(o);return [o.id,o.status,o.payment_mode,customer.name,customer.email].join(' ').toLowerCase().includes(q)});const filtering=orderQuery.trim()||orderStatusFilter!=='all'||orderPayFilter!=='all';return <div className="admin-panel"><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'12px',marginBottom:'16px'}}><div><h3 style={{margin:0}}>All Orders ({orders.length}{filtering?` of ${data.orders.length}`:''})</h3><span className="small muted">{filtering?`${orders.length} matching`:`${data.orders.length} total orders recorded`}</span></div>{staff.role!=='viewer'&&<a className="underlink" href="/api/admin/export/orders" download style={{display:'inline-flex',alignItems:'center',gap:'6px'}}>Export orders CSV ({data.orders.length}) ↓</a>}</div><div className="admin-filter-bar"><div className="search-box"><Search size={14}/><input type="search" placeholder="Search order, customer, or email" value={orderQuery} onChange={e=>setOrderQuery(e.target.value)} aria-label="Search orders"/></div><select className="filter-select" value={orderStatusFilter} onChange={e=>setOrderStatusFilter(e.target.value)} aria-label="Filter orders by status"><option value="all">All statuses</option>{['confirmed','packed','shipped','delivered','cancelled'].map(status=><option key={status} value={status}>{status}</option>)}</select><select className="filter-select" value={orderPayFilter} onChange={e=>setOrderPayFilter(e.target.value)} aria-label="Filter orders by payment"><option value="all">All payments</option><option value="cod">Cash on delivery</option></select>{filtering&&<button type="button" className="reset-filter-btn" onClick={()=>{setOrderQuery('');setOrderStatusFilter('all');setOrderPayFilter('all')}}><RotateCcw size={13}/> Reset</button>}</div><div className="table-wrap"><table><thead><tr><th>Order</th><th>Customer</th><th>Placed (India)</th><th>Payment</th><th>Total</th><th>Status</th></tr></thead><tbody>{orders.map(o=>{const customer=orderCustomer(o);return <tr key={o.id}><td><Link to={'/order/'+o.id}>{o.id} ↗</Link></td><td>{customer.email?<>{customer.name}<small>{customer.email}</small></>:customer.name||'Customer'}</td><td>{date(o.created_at)}</td><td>{o.payment_mode}</td><td>{money(o.total)}</td><td>{staff.role==='viewer'?<Status text={o.status}/>:<select aria-label={`Status for ${o.id}`} value={o.status} disabled={busy} onChange={e=>setOrderStatus(o.id,e.target.value)}>{['confirmed','packed','shipped','delivered','cancelled'].map(status=><option key={status} value={status}>{status}</option>)}</select>}</td></tr>})}</tbody></table>{!data.orders.length&&<p className="empty">Orders will appear here after checkout.</p>}{!!data.orders.length&&!orders.length&&<p className="empty">No orders match these filters.</p>}</div></div>})()}{tab==='Customers'&&<CustomersAdmin role={staff.role}/>}{tab==='Catalogue copy'&&<AiCopy products={products} readonly={staff.role==='viewer'} onPublished={refresh}/>}{tab==='AI Chatbot'&&<ChatbotAdmin readonly={staff.role==='viewer'} canConfigure={staff.role==='owner'}/>}{tab==='Settings'&&<SettingsAdmin data={data} refresh={refresh} readonly={staff.role!=='owner'} owner={staff.role==='owner'}/>}</>}</div></main></div>}
 function Stat({title,value,detail}){return <div className="stat"><span className="eyebrow">{title}</span><strong>{value}</strong><small>{detail}</small></div>}
 function Status({text}){return <CommonStatusBadge status={text} label={text}/>}
 function RateTable({rates}){return <div className="table-wrap"><table><thead><tr><th>Purity</th><th>INR / gram</th><th>Source / original</th><th>Effective date</th><th>Status</th></tr></thead><tbody>{rates.map(r=><tr key={r.id}><td><strong>{r.purity}</strong></td><td>{money(r.inr_per_gram)}</td><td>{r.supplier}<small>{money(r.original_rate)} / {r.original_unit}</small></td><td>{r.effective_date}<small>{date(r.source_timestamp)}</small></td><td><Status text={r.fresh?'Verified':'stale — checkout paused'}/></td></tr>)}</tbody></table>{!rates.length&&<p>No approved rates. Import a rate file to begin.</p>}</div>}
-function BatchTable({batches,retry,readonly}){return <div className="admin-panel"><h3>Import history</h3><div className="table-wrap"><table><thead><tr><th>Batch</th><th>Supplier / source</th><th>Status</th><th>Created / Updated / Rejected</th><th>Actions</th></tr></thead><tbody>{batches.map(b=><tr key={b.id}><td>#{b.id} · {b.kind}</td><td>{b.supplier}<small>{date(b.source_timestamp)}</small></td><td><Status text={b.status}/></td><td>{b.summary.created} / {b.summary.updated} / {b.summary.rejected}</td><td>{b.status==='failed'?<a className="underlink" href={`/api/admin/import/${b.id}/errors`}>Errors CSV ↓</a>:b.status==='staged'&&retry&&!readonly?<button className="underlink" onClick={()=>retry(b)}>Publish / retry ↗</button>:'—'}</td></tr>)}</tbody></table></div></div>}
+function BatchTable({batches,retry,readonly}){return <div className="admin-panel"><h3>Import history</h3><div className="table-wrap"><table><thead><tr><th>Batch</th><th>Supplier / source</th><th>Status</th><th>Created / Updated / Rejected</th><th>Actions</th></tr></thead><tbody>{batches.map(b=><tr key={b.id}><td>#{b.id} · {b.kind}</td><td>{b.supplier}<small>{date(b.source_timestamp)}</small></td><td><Status text={b.status}/></td><td>{b.summary?.created ?? 0} / {b.summary?.updated ?? 0} / {b.summary?.rejected ?? 0}</td><td>{b.status==='failed'?<a className="underlink" href={`/api/admin/import/${b.id}/errors`}>Errors CSV ↓</a>:b.status==='staged'&&retry&&!readonly?<button className="underlink" onClick={()=>retry(b)}>Publish / retry ↗</button>:'—'}</td></tr>)}</tbody></table></div></div>}
 function ImportPanel({kind,refresh,readonly}){const [batch,setBatch]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[success,setSuccess]=useState('');const prefix=kind==='gold'?'gold-rates':kind;async function upload(e){const file=e.target.files[0];if(!file)return;setError('');setSuccess('');setBatch(null);setBusy(true);try{if(file.size>5*1024*1024)throw Error('Maximum CSV size is 5 MB');const b=await api('/admin/import/preview',{kind,csv:await file.text()});setBatch(b);await refresh()}catch(e){setError(e.message)}finally{setBusy(false);e.target.value=''}}async function publish(){setBusy(true);try{await api(`/admin/import/${batch.id}/publish`,{});setBatch(null);setSuccess('Import published. Catalogue updated.');await refresh()}catch(e){setError(e.message)}finally{setBusy(false)}}return <div className="admin-panel import-panel"><Upload size={23}/><h3>{kind==='gold'?'Gold rates':kind==='coins'?'Import coins':kind==='kurtas'?'Chicken Curry Kurtas & stock':'Products & stock'}</h3><p className="small muted">Upload a private UTF-8 CSV. Validate first, then review and confirm.</p><div className="download-links"><a href={`/api/admin/samples/${prefix}-template.csv`}><Download size={14}/>Blank template</a><a href={`/api/admin/samples/${prefix}-example.csv`}><Download size={14}/>Fictional example</a><a href={`/api/admin/export/${kind}`} download><Download size={14}/>Export current {kind==='gold'?'rates':kind==='coins'?'coins':kind==='kurtas'?'kurtas':'catalogue'} CSV</a></div><label className="upload-zone"><Upload size={22}/><strong>{busy?'Validating…':'Choose a CSV to preview'}</strong><span>Private upload · 5 MB maximum</span><input disabled={busy||readonly} type="file" accept=".csv,text/csv" onChange={upload}/></label>{error&&<p className="error" role="alert">{error}</p>}{success&&<p role="status" className="notice">{success}</p>}{batch&&<div className="import-preview"><Status text={`Batch #${batch.id} · ${batch.status}${batch.duplicate?' · duplicate':''}`}/><p>{batch.summary.created} new · {batch.summary.updated} updates · {batch.summary.rejected} errors</p>{batch.errors?.length>0?<><p className="error">No changes published. Correct the file and upload it again.</p>{batch.errors.slice(0,5).map((e,i)=><p className="small" key={i}>Row {e.row} · {e.field}: {e.value} → {e.correction}</p>)}<a className="underlink" href={`/api/admin/import/${batch.id}/errors`}>Download error report ↓</a></>:<>{<div className="table-wrap"><table><thead><tr><th>SKU</th><th>Old</th><th>New</th><th>Stock</th></tr></thead><tbody>{batch.summary.changes?.map(c=><tr key={c.sku}><td>{c.sku}</td><td>{c.before===null?'New':money(c.before)}</td><td>{c.after===null?'Awaiting rate':money(c.after)}</td><td>{c.stock}</td></tr>)}</tbody></table></div>}{batch.status==='staged'&&<button disabled={busy||readonly} className="button dark full" onClick={publish}>Confirm & publish <Check size={16}/></button>}</>}</div>}</div>}
 function ProductAngleManager({product,readonly,refreshParent}){
   const [busyRole,setBusyRole]=useState(null);
@@ -1906,6 +1925,7 @@ function SettingsAdmin({data,refresh,readonly,owner=false}){
       </form>
       {silverSaved&&<p style={{color:'#2e7d32',fontSize:'11px',marginTop:'8px'}}>Silver benchmark rate updated.</p>}
     </div>
+    <RecommendationsAdmin readonly={readonly}/>
     {owner&&<StaffAccess/>}
   </div>;
 }
@@ -2759,5 +2779,161 @@ function CoinProduct(){
   );
 }
 
+function MaterialPage(){
+  const {slug}=useParams();
+  const [params,setParams]=useSearchParams();
+  const {accountReady,error,refreshCatalogue}=useStore();
+  const [meta,setMeta]=useState(null);
+  const [products,setProducts]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [fetchError,setFetchError]=useState('');
+
+  const update=(k,v)=>{
+    const next=new URLSearchParams(params);
+    v?next.set(k,v):next.delete(k);
+    setParams(next,{replace:true});
+  };
+
+  useEffect(()=>{
+    let active=true;
+    setLoading(true);
+    setFetchError('');
+    api('/materials/'+encodeURIComponent(slug))
+      .then(res=>{
+        if(!active)return;
+        setMeta(res.material||null);
+        setProducts(res.products||[]);
+        setLoading(false);
+      })
+      .catch(err=>{
+        if(!active)return;
+        setFetchError(err.message||'Failed to load material collection');
+        setLoading(false);
+      });
+    return()=>{active=false;};
+  },[slug]);
+
+  useEffect(()=>{
+    if(meta?.name){
+      document.title=`${meta.seo_title||meta.name} | Veyora Jewels`;
+    }
+  },[meta]);
+
+  const items=useMemo(()=>{
+    let list=grouped(products);
+    const priceFilter=params.get('price');
+    if(priceFilter)list=list.filter(p=>matchPrice(p.price,priceFilter));
+    const sort=params.get('sort');
+    if(sort==='price-asc')list.sort((a,b)=>a.price-b.price);
+    if(sort==='price-desc')list.sort((a,b)=>b.price-a.price);
+    return list;
+  },[products,params.toString()]);
+
+  return <Layout>
+    <CommonPLP
+      eyebrow="MATERIAL CLASSIFICATION"
+      title={meta?.name||slug.replace(/-/g,' ')}
+      description={meta?.description||'Explore handcrafted pieces showcasing this distinguished precious material.'}
+      tabs={[
+        {label:'Chicken Curry Kurtas',href:'/kurtas',active:false},
+        {label:'All jewellery',href:'/collections/all',active:false},
+        {label:'Gold',href:'/collections/gold',active:false},
+        {label:'Silver',href:'/collections/silver',active:false},
+        {label:'The Pearl Edit',href:'/collections/pearls',active:false},
+        {label:'Coins',href:'/coins',active:false}
+      ]}
+      priceBrackets={priceBrackets}
+      activePrice={params.get('price')||''}
+      onPriceChange={v=>update('price',v)}
+      items={items}
+      loading={loading||!accountReady}
+      error={fetchError||error}
+      sortBy={params.get('sort')||'featured'}
+      onSortChange={v=>update('sort',v)}
+      onRetry={()=>refreshCatalogue().catch(()=>{})}
+      ProductCardComponent={ProductCard}
+      itemLabel="pieces"
+    />
+  </Layout>;
+}
+
+function CraftsmanshipPage(){
+  const {slug}=useParams();
+  const [params,setParams]=useSearchParams();
+  const {accountReady,error,refreshCatalogue}=useStore();
+  const [meta,setMeta]=useState(null);
+  const [products,setProducts]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [fetchError,setFetchError]=useState('');
+
+  const update=(k,v)=>{
+    const next=new URLSearchParams(params);
+    v?next.set(k,v):next.delete(k);
+    setParams(next,{replace:true});
+  };
+
+  useEffect(()=>{
+    let active=true;
+    setLoading(true);
+    setFetchError('');
+    api('/craftsmanship/'+encodeURIComponent(slug))
+      .then(res=>{
+        if(!active)return;
+        setMeta(res.craftsmanship||null);
+        setProducts(res.products||[]);
+        setLoading(false);
+      })
+      .catch(err=>{
+        if(!active)return;
+        setFetchError(err.message||'Failed to load craftsmanship collection');
+        setLoading(false);
+      });
+    return()=>{active=false;};
+  },[slug]);
+
+  useEffect(()=>{
+    if(meta?.name){
+      document.title=`${meta.seo_title||meta.name} | Veyora Jewels`;
+    }
+  },[meta]);
+
+  const items=useMemo(()=>{
+    let list=grouped(products);
+    const priceFilter=params.get('price');
+    if(priceFilter)list=list.filter(p=>matchPrice(p.price,priceFilter));
+    const sort=params.get('sort');
+    if(sort==='price-asc')list.sort((a,b)=>a.price-b.price);
+    if(sort==='price-desc')list.sort((a,b)=>b.price-a.price);
+    return list;
+  },[products,params.toString()]);
+
+  return <Layout>
+    <CommonPLP
+      eyebrow="HERITAGE CRAFTSMANSHIP"
+      title={meta?.name||slug.replace(/-/g,' ')}
+      description={meta?.description||'Handcrafted Indian craftsmanship passed down across generations of master artisans.'}
+      tabs={[
+        {label:'Chicken Curry Kurtas',href:'/kurtas',active:false},
+        {label:'All jewellery',href:'/collections/all',active:false},
+        {label:'Gold',href:'/collections/gold',active:false},
+        {label:'Silver',href:'/collections/silver',active:false},
+        {label:'The Pearl Edit',href:'/collections/pearls',active:false},
+        {label:'Coins',href:'/coins',active:false}
+      ]}
+      priceBrackets={priceBrackets}
+      activePrice={params.get('price')||''}
+      onPriceChange={v=>update('price',v)}
+      items={items}
+      loading={loading||!accountReady}
+      error={fetchError||error}
+      sortBy={params.get('sort')||'featured'}
+      onSortChange={v=>update('sort',v)}
+      onRetry={()=>refreshCatalogue().catch(()=>{})}
+      ProductCardComponent={ProductCard}
+      itemLabel="pieces"
+    />
+  </Layout>;
+}
+
 function NotFound(){return <Layout><section className="empty"><span className="eyebrow">A SMALL DETOUR</span><h1>This page is yet to be discovered.</h1><p>The link you followed may have changed, or the piece may have moved.</p><div style={{display:'flex',gap:'14px',justifyContent:'center',flexWrap:'wrap',marginTop:'20px'}}><Link className="button dark" to="/collections/all">Explore all jewellery</Link><Link className="underlink" to="/">Return to home</Link></div></section></Layout>}
-createRoot(document.getElementById('root')).render(<ErrorBoundary><BrowserRouter><Provider><Scroll/><Routes><Route path="/" element={<Home/>}/><Route path="/kurtas" element={<KurtasPage Layout={Layout} ProductCard={ProductCard}/>}/><Route path="/kurtas/:slug" element={<KurtaDetailPage Layout={Layout} StructuredProduct={StructuredProduct} ProductCard={ProductCard}/>}/><Route path="/collections/:category" element={<Collection/>}/><Route path="/products/:slug" element={<Product/>}/><Route path="/coins/product/:sku" element={<CoinProduct/>}/><Route path="/coins" element={<CoinsPage/>}/> <Route path="/coins/:category" element={<CoinsPage/>}/><Route path="/account" element={<Account Layout={Layout} BagLines={BagLines} ProductCard={ProductCard} grouped={grouped}/>}/><Route path="/bag" element={<Bag/>}/><Route path="/checkout" element={<Checkout/>}/><Route path="/order/:id" element={<Order/>}/><Route path="/information/:page" element={<Information/>}/><Route path="/admin/*" element={<Admin/>}/><Route path="*" element={<NotFound/>}/></Routes></Provider></BrowserRouter></ErrorBoundary>);
+createRoot(document.getElementById('root')).render(<ErrorBoundary><BrowserRouter><Provider><Scroll/><Routes><Route path="/" element={<Home/>}/><Route path="/kurtas" element={<KurtasPage Layout={Layout} ProductCard={ProductCard}/>}/><Route path="/kurtas/:slug" element={<KurtaDetailPage Layout={Layout} StructuredProduct={StructuredProduct} ProductCard={ProductCard}/>}/><Route path="/collections/:category" element={<Collection/>}/><Route path="/materials/:slug" element={<MaterialPage/>}/><Route path="/craftsmanship/:slug" element={<CraftsmanshipPage/>}/><Route path="/products/:slug" element={<Product/>}/><Route path="/coins/product/:sku" element={<CoinProduct/>}/><Route path="/coins" element={<CoinsPage/>}/> <Route path="/coins/:category" element={<CoinsPage/>}/><Route path="/account" element={<Account Layout={Layout} BagLines={BagLines} ProductCard={ProductCard} grouped={grouped}/>}/><Route path="/bag" element={<Bag/>}/><Route path="/checkout" element={<Checkout/>}/><Route path="/order/:id" element={<Order/>}/><Route path="/information/:page" element={<Information/>}/><Route path="/admin/*" element={<Admin/>}/><Route path="*" element={<NotFound/>}/></Routes></Provider></BrowserRouter></ErrorBoundary>);

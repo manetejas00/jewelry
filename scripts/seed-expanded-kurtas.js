@@ -3,6 +3,7 @@ import path from 'node:path';
 import sharp from 'sharp';
 import { db, now } from '../server/db.js';
 import { KURTA_SIZES } from '../src/kurta-constants.js';
+import { ALL_50_KURTA_STYLES } from './generate-50-kurtas-data.js';
 
 const artifactDir = '/Users/tejasmane/.gemini/antigravity/brain/60b1e6c9-b137-491f-a4c5-3d0afb3f1d40';
 const publicDir = path.resolve('public');
@@ -26,289 +27,8 @@ const rawMasters = {
   sage_left: path.join(artifactDir, 'sage_green_kurta_left_1794634300890.jpg')
 };
 
-// 20 Unique Chicken Curry Kurta Styles with 3+ Colours each
-export const KURTA_STYLES = [
-  {
-    product_code: 'lucknowi-ivory-chikankari-cotton-kurta',
-    name: 'Noor-e-Awadh Royal Mulmul Kurta',
-    fabric: 'Pure Mulmul Cotton',
-    craftsmanship: 'Authentic Lucknowi Chikankari · Tepchi & Bakhiya Stitches',
-    description: 'Handcrafted in pre-washed, ultra-soft pure mulmul cotton with heirloom Bakhiya shadow-work and delicate floral butis along the daman.',
-    price: 3299,
-    baseMaster: 'ivory',
-    colors: [
-      { name: 'Ivory White', code: 'ivory', hex: '#FFFFF0', modulate: { hue: 0, saturation: 1.0, brightness: 1.02 } },
-      { name: 'Rose Blush', code: 'blush', hex: '#F7CAC9', modulate: { hue: 345, saturation: 1.15, brightness: 1.02 } },
-      { name: 'Sky Blue', code: 'sky', hex: '#87CEEB', modulate: { hue: 205, saturation: 1.2, brightness: 1.02 } }
-    ]
-  },
-  {
-    product_code: 'rose-blush-georgette-chikankari-kurta',
-    name: 'Gulzar Flowing Georgette Chikankari Kurta',
-    fabric: 'Viscose Georgette (with Cotton Inner)',
-    craftsmanship: 'All-Over Floral Jaal & Raised Phanda Knots',
-    description: 'Flowing viscose georgette kurta featuring intricate pearl-like Phanda knotting and all-over floral jaal embroidery. Includes matching slip.',
-    price: 3499,
-    baseMaster: 'blush',
-    colors: [
-      { name: 'Rose Blush', code: 'blush', hex: '#F7CAC9', modulate: { hue: 0, saturation: 1.0, brightness: 1.0 } },
-      { name: 'Powder Blue', code: 'powder-blue', hex: '#B0E0E6', modulate: { hue: 200, saturation: 1.15, brightness: 1.05 } },
-      { name: 'Sage Green', code: 'sage', hex: '#9CAF88', modulate: { hue: 100, saturation: 0.95, brightness: 1.0 } }
-    ]
-  },
-  {
-    product_code: 'sage-green-chanderi-chikankari-kurta',
-    name: 'Nazm Shahi Chanderi Silk Chikankari Kurta',
-    fabric: 'Handloom Chanderi Silk',
-    craftsmanship: 'Murri & Keel Kangan Needlework with Zari Accents',
-    description: 'Shimmering handloom Chanderi silk with fine rice-grain Murri needlecraft and delicate gold zari tipping along the collar and cuffs.',
-    price: 3699,
-    baseMaster: 'sage',
-    colors: [
-      { name: 'Sage Green', code: 'sage', hex: '#9CAF88', modulate: { hue: 0, saturation: 1.0, brightness: 1.0 } },
-      { name: 'Ivory Gold', code: 'ivory-gold', hex: '#FAF0E6', modulate: { hue: 40, saturation: 0.8, brightness: 1.08 } },
-      { name: 'Mustard Ochre', code: 'mustard', hex: '#E1AD01', modulate: { hue: 45, saturation: 1.35, brightness: 1.0 } }
-    ]
-  },
-  {
-    product_code: 'sky-blue-mulmul-chikankari-kurta',
-    name: 'Mehtab Breathable Mulmul Chikankari Kurta',
-    fabric: 'Fine Count Breathable Mulmul Cotton',
-    craftsmanship: 'Delicate Keel Kangan Vines & Ghaspatti Stitch',
-    description: 'Breezy daytime mulmul silhouette adorned with flowing leafy vines and traditional Awadhi ghaspatti embroidery.',
-    price: 3199,
-    baseMaster: 'ivory',
-    colors: [
-      { name: 'Sky Blue', code: 'sky', hex: '#87CEEB', modulate: { hue: 205, saturation: 1.25, brightness: 1.02 } },
-      { name: 'Lilac Lavender', code: 'lilac', hex: '#E6E6FA', modulate: { hue: 265, saturation: 1.1, brightness: 1.05 } },
-      { name: 'Peach Whisper', code: 'peach', hex: '#FFE5B4', modulate: { hue: 22, saturation: 1.2, brightness: 1.04 } }
-    ]
-  },
-  {
-    product_code: 'nazaakat-angrakha-chikankari-kurta',
-    name: 'Nazaakat Royal Flared Angrakha Kurta',
-    fabric: 'Pure Mulmul Cotton',
-    craftsmanship: 'Asymmetric Tie-Up with Cutwork Jaali',
-    description: 'Regal Mughal-inspired overlapping front with hand-tied tassels, detailed with fine needle-pulled jaali cutwork and shadow embroidery.',
-    price: 3899,
-    baseMaster: 'ivory',
-    colors: [
-      { name: 'Ivory Cream', code: 'ivory-cream', hex: '#FFFFF5', modulate: { hue: 10, saturation: 0.9, brightness: 1.03 } },
-      { name: 'Mint Mist', code: 'mint-mist', hex: '#E0EEE0', modulate: { hue: 130, saturation: 0.9, brightness: 1.04 } },
-      { name: 'Dusty Rose', code: 'dusty-rose', hex: '#DCAE96', modulate: { hue: 350, saturation: 1.05, brightness: 0.98 } }
-    ]
-  },
-  {
-    product_code: 'anarkali-darbar-chikankari-kurta',
-    name: 'Darbar Kalidar Anarkali Chikankari Kurta',
-    fabric: 'Fluid Viscose Georgette',
-    craftsmanship: '24-Kali Flared Ghera with Pearl Phanda Knots',
-    description: 'Sweeping 24-kali flared Anarkali silhouette designed with dense pearl Phanda knots and scalloped embroidered border.',
-    price: 4299,
-    baseMaster: 'blush',
-    colors: [
-      { name: 'Royal Navy', code: 'royal-navy', hex: '#1B2F4E', modulate: { hue: 215, saturation: 1.35, brightness: 0.78 } },
-      { name: 'Wine Burgundy', code: 'wine', hex: '#722F37', modulate: { hue: 330, saturation: 1.25, brightness: 0.82 } },
-      { name: 'Pearl Ivory', code: 'pearl-ivory', hex: '#FDFBF7', modulate: { hue: 30, saturation: 0.7, brightness: 1.06 } }
-    ]
-  },
-  {
-    product_code: 'zeenat-straight-chanderi-kurta',
-    name: 'Zeenat Classic Straight Chanderi Kurta',
-    fabric: 'Chanderi Silk Cotton',
-    craftsmanship: 'Intricate Neck Yoke & Embroidered Cuffs',
-    description: 'Tailored straight silhouette with a dramatic high-coverage neckline yoke and symmetrical geometric Chikankari motifs.',
-    price: 3599,
-    baseMaster: 'sage',
-    colors: [
-      { name: 'Emerald Olive', code: 'emerald-olive', hex: '#556B2F', modulate: { hue: 90, saturation: 1.15, brightness: 0.86 } },
-      { name: 'Pale Amber', code: 'pale-amber', hex: '#FFBF00', modulate: { hue: 42, saturation: 1.2, brightness: 1.05 } },
-      { name: 'Off-White', code: 'off-white', hex: '#F8F8FF', modulate: { hue: 15, saturation: 0.75, brightness: 1.04 } }
-    ]
-  },
-  {
-    product_code: 'ruhaani-modal-chikankari-kurta',
-    name: 'Ruhaani Modal Cotton Comfort Kurta',
-    fabric: 'Pure Modal Cotton',
-    craftsmanship: 'Ultra-Soft Drape with Dense Bakhiya Work',
-    description: 'Silky soft modal cotton fabric that drapes effortlessly, accented with signature Awadhi floral medallions and side slit embroidery.',
-    price: 3399,
-    baseMaster: 'ivory',
-    colors: [
-      { name: 'Teal Peacock', code: 'teal', hex: '#005F73', modulate: { hue: 175, saturation: 1.25, brightness: 0.85 } },
-      { name: 'Lilac Mauve', code: 'mauve', hex: '#C8A2C8', modulate: { hue: 280, saturation: 1.1, brightness: 0.98 } },
-      { name: 'Blush Blossom', code: 'blush-blossom', hex: '#FAD2E1', modulate: { hue: 340, saturation: 1.15, brightness: 1.03 } }
-    ]
-  },
-  {
-    product_code: 'mumtaz-kota-doria-chikankari-kurta',
-    name: 'Mumtaz Kota Doria Checked Chikankari Kurta',
-    fabric: 'Authentic Kota Doria Cotton',
-    craftsmanship: 'Fine Khat Weave with Shadow Work Motifs',
-    description: 'Featherlight geometric square-check weave with artisan shadow embroidery that glows translucently against natural light.',
-    price: 3249,
-    baseMaster: 'ivory',
-    colors: [
-      { name: 'Lemon Chiffon', code: 'lemon', hex: '#FFFACD', modulate: { hue: 52, saturation: 1.1, brightness: 1.08 } },
-      { name: 'Coral Peach', code: 'coral', hex: '#F88379', modulate: { hue: 10, saturation: 1.25, brightness: 1.0 } },
-      { name: 'Powder Mint', code: 'powder-mint', hex: '#D4EDDA', modulate: { hue: 135, saturation: 0.95, brightness: 1.03 } }
-    ]
-  },
-  {
-    product_code: 'shabnam-viscose-georgette-kurta',
-    name: 'Shabnam Evening Viscose Georgette Kurta',
-    fabric: 'Heavy Viscose Georgette',
-    craftsmanship: 'Dense Front Panel & Scalloped Sleeves',
-    description: 'Lustrous twilight tunic with heavy chest panel embroidery, scalloped cuffs, and matching dyed mulmul slip.',
-    price: 3799,
-    baseMaster: 'blush',
-    colors: [
-      { name: 'Midnight Onyx', code: 'black', hex: '#1A1A1A', modulate: { hue: 0, saturation: 0.1, brightness: 0.58 } },
-      { name: 'Mulberry Wine', code: 'mulberry', hex: '#5C0632', modulate: { hue: 325, saturation: 1.3, brightness: 0.75 } },
-      { name: 'Silver Ash', code: 'silver-ash', hex: '#DCDCDC', modulate: { hue: 0, saturation: 0.15, brightness: 1.02 } }
-    ]
-  },
-  {
-    product_code: 'afreen-organza-chikankari-kurta',
-    name: 'Afreen Sheer Organza Festive Kurta',
-    fabric: 'Silk Organza (with Cotton Slip)',
-    craftsmanship: 'Crisp Sheer Weave with Pastel Floral Butas',
-    description: 'Contemporary sheer organza structure featuring delicate hand-embroidered rosebuds and satin-finished hems.',
-    price: 3999,
-    baseMaster: 'sage',
-    colors: [
-      { name: 'Rose Quartz', code: 'rose-quartz', hex: '#F7CAC9', modulate: { hue: 345, saturation: 1.1, brightness: 1.04 } },
-      { name: 'Seafoam Turquoise', code: 'seafoam', hex: '#40E0D0', modulate: { hue: 165, saturation: 1.15, brightness: 1.0 } },
-      { name: 'Champagne Gold', code: 'champagne', hex: '#F7E7CE', modulate: { hue: 38, saturation: 1.0, brightness: 1.06 } }
-    ]
-  },
-  {
-    product_code: 'parizaad-tussar-silk-kurta',
-    name: 'Parizaad Textured Tussar Silk Kurta',
-    fabric: 'Handspun Tussar Silk',
-    craftsmanship: 'Traditional Awadhi Bels & Raw Texture',
-    description: 'Richly textured wild silk crafted with earth-toned threadwork, showcasing century-old Lucknow floral creepers.',
-    price: 4199,
-    baseMaster: 'sage',
-    colors: [
-      { name: 'Mustard Haldi', code: 'mustard-haldi', hex: '#E3A857', modulate: { hue: 38, saturation: 1.3, brightness: 1.0 } },
-      { name: 'Terracotta Rust', code: 'terracotta', hex: '#CC4E33', modulate: { hue: 15, saturation: 1.25, brightness: 0.9 } },
-      { name: 'Natural Ecru', code: 'natural-ecru', hex: '#F3ECE1', modulate: { hue: 28, saturation: 0.8, brightness: 1.04 } }
-    ]
-  },
-  {
-    product_code: 'jahanara-layered-chikankari-kurta',
-    name: 'Jahanara Dual-Layer Festive Kurta',
-    fabric: 'Mulmul & Sheer Georgette',
-    craftsmanship: 'Tone-on-Tone Shadow & Ghaspatti Stitch',
-    description: 'Two-tiered layered silhouette featuring an embroidered mulmul base and floating sheer overlay with pearl-tipped hem.',
-    price: 3849,
-    baseMaster: 'ivory',
-    colors: [
-      { name: 'Lavender Mist', code: 'lavender-mist', hex: '#E6E6FA', modulate: { hue: 260, saturation: 1.1, brightness: 1.04 } },
-      { name: 'Pistachio Green', code: 'pistachio', hex: '#93C572', modulate: { hue: 95, saturation: 1.05, brightness: 1.02 } },
-      { name: 'Cloud White', code: 'cloud-white', hex: '#F5F5F5', modulate: { hue: 0, saturation: 0.9, brightness: 1.03 } }
-    ]
-  },
-  {
-    product_code: 'dilkash-short-tunic-kurta',
-    name: 'Dilkash Contemporary Short Tunic Kurta',
-    fabric: 'Premium Cotton Slub',
-    craftsmanship: 'Mandarin Collar with Minimalist Tepchi Stitches',
-    description: 'Modern hip-length short kurta designed for effortless pairing with denims or trousers, finished with subtle sleeve embroidery.',
-    price: 2799,
-    baseMaster: 'ivory',
-    colors: [
-      { name: 'Indigo Sapphire', code: 'indigo', hex: '#0F52BA', modulate: { hue: 218, saturation: 1.45, brightness: 0.78 } },
-      { name: 'Sage Olive', code: 'sage-olive', hex: '#8A9A5B', modulate: { hue: 85, saturation: 1.05, brightness: 0.95 } },
-      { name: 'Coral Rose', code: 'coral-rose', hex: '#E07A5F', modulate: { hue: 12, saturation: 1.2, brightness: 0.96 } }
-    ]
-  },
-  {
-    product_code: 'shahzadi-heavy-jaal-kurta',
-    name: 'Shahzadi Bridal Heavy Jaal Kurta',
-    fabric: 'Opulent Viscose Georgette',
-    craftsmanship: 'Master Artisan All-Over Heirloom Jaal Work',
-    description: 'Exquisite museum-grade embroidery covering every inch of the fabric with intricate paisleys, jaalis, and raised phandas.',
-    price: 4599,
-    baseMaster: 'blush',
-    colors: [
-      { name: 'Deep Garnet', code: 'garnet', hex: '#800020', modulate: { hue: 340, saturation: 1.35, brightness: 0.78 } },
-      { name: 'Regal Plum', code: 'plum', hex: '#4B0082', modulate: { hue: 280, saturation: 1.3, brightness: 0.8 } },
-      { name: 'Ivory Opulence', code: 'ivory-opulence', hex: '#FFFFF0', modulate: { hue: 25, saturation: 0.8, brightness: 1.06 } }
-    ]
-  },
-  {
-    product_code: 'sitara-mirror-chikankari-kurta',
-    name: 'Sitara Subtle Mirror-Work Chikankari Kurta',
-    fabric: 'Pure Mulmul Cotton',
-    craftsmanship: 'Delicate Abhla Mirrors Hand-Set in Phanda Knots',
-    description: 'Sparkling artisan mirrors embedded seamlessly into hand-embroidered floral motifs for understated festive shimmer.',
-    price: 3549,
-    baseMaster: 'ivory',
-    colors: [
-      { name: 'Powder Blue', code: 'powder-blue', hex: '#B0E0E6', modulate: { hue: 200, saturation: 1.2, brightness: 1.04 } },
-      { name: 'Sunshine Yellow', code: 'sunshine-yellow', hex: '#FFD700', modulate: { hue: 48, saturation: 1.35, brightness: 1.04 } },
-      { name: 'Vintage Rose', code: 'vintage-rose', hex: '#C47E84', modulate: { hue: 350, saturation: 1.1, brightness: 0.96 } }
-    ]
-  },
-  {
-    product_code: 'subah-cotton-linen-kurta',
-    name: 'Subah Linen-Cotton Breathable Kurta',
-    fabric: 'Linen Cotton Blend',
-    craftsmanship: 'Geometric Tepchi Stitches & Side Slit Bels',
-    description: 'Crisp and breathable everyday summer linen-cotton blend decorated with geometric linear threadwork and side slit accents.',
-    price: 3149,
-    baseMaster: 'sage',
-    colors: [
-      { name: 'Oatmeal Beige', code: 'oatmeal', hex: '#E6D7C3', modulate: { hue: 30, saturation: 0.85, brightness: 1.02 } },
-      { name: 'Olive Fern', code: 'olive-fern', hex: '#6B8E23', modulate: { hue: 85, saturation: 1.1, brightness: 0.9 } },
-      { name: 'Sky Azure', code: 'azure', hex: '#4682B4', modulate: { hue: 205, saturation: 1.25, brightness: 0.9 } }
-    ]
-  },
-  {
-    product_code: 'firdaus-slit-a-line-kurta',
-    name: 'Firdaus Front-Slit A-Line Kurta',
-    fabric: 'Pure Chanderi Silk',
-    craftsmanship: 'Centred Slit with Elaborate Damask Needling',
-    description: 'Regal A-line silhouette with a centre-front slit and symmetrical Mughal damask motifs down both panels.',
-    price: 3749,
-    baseMaster: 'sage',
-    colors: [
-      { name: 'Dusty Mauve', code: 'dusty-mauve', hex: '#915F6D', modulate: { hue: 320, saturation: 1.15, brightness: 0.9 } },
-      { name: 'Forest Emerald', code: 'forest-emerald', hex: '#1E4D2B', modulate: { hue: 125, saturation: 1.2, brightness: 0.78 } },
-      { name: 'Cream Chiffon', code: 'cream-chiffon', hex: '#FFFDD0', modulate: { hue: 35, saturation: 0.85, brightness: 1.05 } }
-    ]
-  },
-  {
-    product_code: 'noorjahan-embroidered-yoke-kurta',
-    name: 'Noorjahan Scalloped Daman Kurta',
-    fabric: 'Fine Viscose Georgette',
-    craftsmanship: 'Cutwork Scallop Hem & High Neck Yoke',
-    description: 'Dramatic scalloped hemline created with needle-cut jaali and heavy floral sprays across the front yoke and sleeves.',
-    price: 3899,
-    baseMaster: 'blush',
-    colors: [
-      { name: 'Slate Charcoal', code: 'slate-charcoal', hex: '#36454F', modulate: { hue: 200, saturation: 0.35, brightness: 0.75 } },
-      { name: 'Coral Sunset', code: 'coral-sunset', hex: '#F3705A', modulate: { hue: 14, saturation: 1.3, brightness: 0.98 } },
-      { name: 'Pristine Snow', code: 'pristine-snow', hex: '#FFFFFF', modulate: { hue: 0, saturation: 0.6, brightness: 1.08 } }
-    ]
-  },
-  {
-    product_code: 'rahat-relaxed-mulmul-kurta',
-    name: 'Rahat Relaxed Oversized Mulmul Kurta',
-    fabric: 'Featherlight Mulmul Cotton',
-    craftsmanship: 'Scattered Floral Butis with Bakhiya Shadow Stitch',
-    description: 'Relaxed easy-fit everyday kurta featuring breezy dolman sleeves and delicate scattered star and blossom embroidery.',
-    price: 2999,
-    baseMaster: 'ivory',
-    colors: [
-      { name: 'Marigold Saffron', code: 'marigold', hex: '#FF9933', modulate: { hue: 35, saturation: 1.4, brightness: 1.02 } },
-      { name: 'Aqua Mint', code: 'aqua-mint', hex: '#7FFFD4', modulate: { hue: 165, saturation: 1.15, brightness: 1.04 } },
-      { name: 'Kashmiri Peach', code: 'kashmiri-peach', hex: '#FFCBA4', modulate: { hue: 24, saturation: 1.2, brightness: 1.04 } }
-    ]
-  }
-];
+// 50 Unique Chicken Curry Kurta Styles with 5 Colours each (250 variants total)
+export const KURTA_STYLES = ALL_50_KURTA_STYLES;
 
 // Helper to produce WebP square buffer
 async function makeWebp(source, { width = 1024, height = 1024, fit = 'cover', position = 'center', extract = null, modulate = null } = {}) {
@@ -329,7 +49,7 @@ async function makeThumb(buffer, { width = 600, height = 800 } = {}) {
 }
 
 export async function seedExpandedKurtas() {
-  console.log('--- Starting Expanded Chicken Curry Kurtas (20 Styles, 60 Colours, 420 SKUs) ---');
+  console.log(`--- Starting Expanded Chicken Curry Kurtas (${KURTA_STYLES.length} Styles, ${KURTA_STYLES.length * 5} Colours, ${KURTA_STYLES.length * 5 * 7} SKUs) ---`);
 
   const timestamp = now();
 
@@ -386,8 +106,6 @@ export async function seedExpandedKurtas() {
     const styleDir = path.join(publicDir, 'assets/products', code);
     await fs.mkdir(styleDir, { recursive: true });
 
-    console.log(`Processing Style ${sIdx + 1}/20: ${style.name} (${code})...`);
-
     // Process each color
     for (let cIdx = 0; cIdx < style.colors.length; cIdx++) {
       const col = style.colors[cIdx];
@@ -429,7 +147,7 @@ export async function seedExpandedKurtas() {
           role,
           url: imgUrl,
           alt_text: `${style.name} in ${col.name} - ${role} view, authentic Lucknowi Chikankari`,
-          sort_order: rIdx + 1,
+          sort_order: isDefaultColor ? (rIdx + 1) : (100 + cIdx * 20 + rIdx + 1),
           color: col.name,
           created_at: timestamp,
           updated_at: timestamp
@@ -534,7 +252,7 @@ export async function seedExpandedKurtas() {
     }
   }
 
-  console.log(`Generated ${productRows.length} Kurta SKU variants across 20 styles!`);
+  console.log(`Generated ${productRows.length} Kurta SKU variants across ${KURTA_STYLES.length} styles!`);
   console.log(`Generated ${imageRows.length} Kurta gallery image records across 12 angles!`);
 
   // Database transaction: Replace existing kurta products and images cleanly
@@ -552,13 +270,26 @@ export async function seedExpandedKurtas() {
     // 3. Delete existing kurta products
     await trx('products').where({ is_kurta: 1 }).del();
 
-    // 4. Insert all 420 kurta variants in batches
+    // 4. Insert all kurta variants in batches
     for (let i = 0; i < productRows.length; i += batchSize) {
       await trx('products').insert(productRows.slice(i, i + batchSize));
     }
+
+    // 5. Insert supplier SKUs
+    for (let i = 0; i < productRows.length; i += batchSize) {
+      const slice = productRows.slice(i, i + batchSize).map(r => ({
+        supplier: r.supplier,
+        supplier_sku: r.sku,
+        sku: r.sku
+      }));
+      await trx('supplier_skus')
+        .insert(slice)
+        .onConflict(['supplier', 'supplier_sku'])
+        .ignore();
+    }
   });
 
-  console.log('✓ Successfully seeded 20 Kurta styles with 60 colour variants and 420 SKUs into database!');
+  console.log(`✓ Successfully seeded ${KURTA_STYLES.length} Kurta styles with ${KURTA_STYLES.length * 5} colour variants and ${productRows.length} SKUs into database!`);
 }
 
 // Direct execution

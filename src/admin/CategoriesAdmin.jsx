@@ -1,9 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Edit2, Trash2, Eye, EyeOff, Check, X, FolderTree, RefreshCw, AlertCircle, ArrowUpRight } from 'lucide-react';
+import { Plus, Edit2, Trash2, Eye, EyeOff, Check, X, FolderTree, RefreshCw, AlertCircle, ArrowUpRight, Layers, Sparkles, Gem } from 'lucide-react';
 import { api } from '../api.js';
 import BrandedImage from '../BrandedImage.jsx';
+import { CollectionsAdmin } from './CollectionsAdmin.jsx';
+import { MaterialsAdmin } from './MaterialsAdmin.jsx';
+import { CraftsmanshipAdmin } from './CraftsmanshipAdmin.jsx';
 
 export function CategoriesAdmin({ readonly = false, refreshParent = null }) {
+  const [activeTab, setActiveTab] = useState('categories');
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -100,36 +104,77 @@ export function CategoriesAdmin({ readonly = false, refreshParent = null }) {
 
   return (
     <div className="admin-categories-panel">
-      <div className="section-heading" style={{ marginBottom: '16px' }}>
-        <div>
-          <span className="eyebrow">STORE TAXONOMY & COLLECTIONS</span>
-          <h3>Category Management ({categories.length})</h3>
-        </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button
-            type="button"
-            className="text-button"
-            onClick={load}
-            disabled={loading}
-          >
-            <RefreshCw size={15} /> Refresh
-          </button>
-          {!readonly && (
-            <button
-              type="button"
-              className="button dark small-button"
-              onClick={startCreate}
-            >
-              <Plus size={16} /> New Category
-            </button>
-          )}
-        </div>
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', borderBottom: '1px solid var(--line)', paddingBottom: '12px', flexWrap: 'wrap' }}>
+        <button
+          type="button"
+          className="button small-button"
+          style={{ background: activeTab === 'categories' ? 'var(--charcoal)' : 'var(--paper)', color: activeTab === 'categories' ? 'var(--paper)' : 'var(--charcoal)', border: '1px solid var(--line)' }}
+          onClick={() => setActiveTab('categories')}
+        >
+          <FolderTree size={14} /> Categories ({categories.length})
+        </button>
+        <button
+          type="button"
+          className="button small-button"
+          style={{ background: activeTab === 'collections' ? 'var(--charcoal)' : 'var(--paper)', color: activeTab === 'collections' ? 'var(--paper)' : 'var(--charcoal)', border: '1px solid var(--line)' }}
+          onClick={() => setActiveTab('collections')}
+        >
+          <Gem size={14} /> Collections
+        </button>
+        <button
+          type="button"
+          className="button small-button"
+          style={{ background: activeTab === 'materials' ? 'var(--charcoal)' : 'var(--paper)', color: activeTab === 'materials' ? 'var(--paper)' : 'var(--charcoal)', border: '1px solid var(--line)' }}
+          onClick={() => setActiveTab('materials')}
+        >
+          <Layers size={14} /> Materials
+        </button>
+        <button
+          type="button"
+          className="button small-button"
+          style={{ background: activeTab === 'craftsmanship' ? 'var(--charcoal)' : 'var(--paper)', color: activeTab === 'craftsmanship' ? 'var(--paper)' : 'var(--charcoal)', border: '1px solid var(--line)' }}
+          onClick={() => setActiveTab('craftsmanship')}
+        >
+          <Sparkles size={14} /> Craftsmanship
+        </button>
       </div>
 
-      {error && <div className="error" role="alert" style={{ marginBottom: '16px' }}>{error}</div>}
-      {success && <div className="notice" role="status" style={{ marginBottom: '16px' }}>{success}</div>}
+      {activeTab === 'collections' && <CollectionsAdmin readonly={readonly} />}
+      {activeTab === 'materials' && <MaterialsAdmin readonly={readonly} />}
+      {activeTab === 'craftsmanship' && <CraftsmanshipAdmin readonly={readonly} />}
 
-      <div className="table-wrap">
+      {activeTab === 'categories' && (
+        <>
+          <div className="section-heading" style={{ marginBottom: '16px' }}>
+            <div>
+              <span className="eyebrow">STORE TAXONOMY & CATEGORIES</span>
+              <h3>Category Management ({categories.length})</h3>
+            </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                type="button"
+                className="text-button"
+                onClick={load}
+                disabled={loading}
+              >
+                <RefreshCw size={15} /> Refresh
+              </button>
+              {!readonly && (
+                <button
+                  type="button"
+                  className="button dark small-button"
+                  onClick={startCreate}
+                >
+                  <Plus size={16} /> New Category
+                </button>
+              )}
+            </div>
+          </div>
+
+          {error && <div className="error" role="alert" style={{ marginBottom: '16px' }}>{error}</div>}
+          {success && <div className="notice" role="status" style={{ marginBottom: '16px' }}>{success}</div>}
+
+          <div className="table-wrap">
         <table>
           <thead>
             <tr>
@@ -212,6 +257,7 @@ export function CategoriesAdmin({ readonly = false, refreshParent = null }) {
           <p className="empty">No categories configured yet. Click "New Category" to create one.</p>
         )}
       </div>
+      </>)}
 
       {/* Edit / Create Modal */}
       {editingCat && (

@@ -1,0 +1,3442 @@
+[
+  {
+    "sku": "VEY-NK-001",
+    "product_code": "aaradhya-kundan-bridal-choker",
+    "slug": "aaradhya-kundan-bridal-choker",
+    "name": "Aaradhya Kundan Bridal Choker",
+    "category": "Necklaces",
+    "description": "A regal handcrafted Kundan choker embellished with cabochon ruby accents, cultured seed pearls, and finished in rich antique gold. An eternal masterpiece for the traditional Indian bride.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "34.500",
+    "size": "Standard",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/aaradhya-kundan-bridal-choker/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "285000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "gemstones",
+      "pearl"
+    ],
+    "craftsmanship": [
+      "kundan",
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "bridal"
+    ]
+  },
+  {
+    "sku": "VEY-NK-002",
+    "product_code": "kasu-mala-lakshmi-temple-necklace",
+    "slug": "kasu-mala-lakshmi-temple-necklace",
+    "name": "Kasu Mala Lakshmi Temple Necklace",
+    "category": "Necklaces",
+    "description": "Sacred South Indian Kasu Mala stringing embossed Goddess Lakshmi coins alongside floral Nakshi repoussé links in pure 22K gold.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "42.200",
+    "size": "Standard",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/kasu-mala-lakshmi-temple-necklace/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "348000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [],
+    "craftsmanship": [
+      "temple-craft",
+      "nakshi"
+    ],
+    "collections": [
+      "gold",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-NK-003",
+    "product_code": "padmavati-royal-polki-rani-haar",
+    "slug": "padmavati-royal-polki-rani-haar",
+    "name": "Padmavati Royal Polki Rani Haar",
+    "category": "Necklaces",
+    "description": "Imperial long layered Rani Haar encrusted with natural uncut Polki diamonds, suspended Zambian emerald drops, and classic Jadau gold settings.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "48.000",
+    "size": "Standard",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/padmavati-royal-polki-rani-haar/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "420000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "gemstones"
+    ],
+    "craftsmanship": [
+      "polki",
+      "jadau"
+    ],
+    "collections": [
+      "gold",
+      "bridal"
+    ]
+  },
+  {
+    "sku": "VEY-NK-004",
+    "product_code": "banarasi-meenakari-floral-collar",
+    "slug": "banarasi-meenakari-floral-collar",
+    "name": "Banarasi Meenakari Floral Collar",
+    "category": "Necklaces",
+    "description": "Luminous pink and turquoise mineral enamel hand-fused onto articulated floral medallions in warm 22K yellow gold.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "28.400",
+    "size": "Standard",
+    "finish": "polished-gold",
+    "image": "/assets/products/banarasi-meenakari-floral-collar/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "235000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "mixed-materials"
+    ],
+    "craftsmanship": [
+      "meenakari",
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "festive"
+    ]
+  },
+  {
+    "sku": "VEY-NK-005",
+    "product_code": "mayuri-antique-peacock-temple-haar",
+    "slug": "mayuri-antique-peacock-temple-haar",
+    "name": "Mayuri Antique Peacock Temple Haar",
+    "category": "Necklaces",
+    "description": "Majestic hand-carved twin peacocks flanking a grand temple pendant crowned with uncut Burmese ruby doublets and hanging gold jhumkies.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "56.800",
+    "size": "Standard",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/mayuri-antique-peacock-temple-haar/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "468000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "gemstones"
+    ],
+    "craftsmanship": [
+      "temple-craft",
+      "antique-craft"
+    ],
+    "collections": [
+      "gold",
+      "traditional",
+      "bridal"
+    ]
+  },
+  {
+    "sku": "VEY-NK-006",
+    "product_code": "tarkasi-silver-filigree-choker",
+    "slug": "tarkasi-silver-filigree-choker",
+    "name": "Tarkasi Silver Filigree Choker",
+    "category": "Necklaces",
+    "description": "Heritage Cuttack Tarkasi silver lace handcrafted from whisper-thin 925 sterling silver wires in delicate floral scrollwork.",
+    "metal": "Silver",
+    "purity": "925",
+    "net_weight_g": "38.000",
+    "size": "Standard",
+    "finish": "silver-finish",
+    "image": "/assets/products/tarkasi-silver-filigree-choker/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "18500.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "silver",
+    "additional_materials": [],
+    "craftsmanship": [
+      "filigree",
+      "handcrafted"
+    ],
+    "collections": [
+      "silver",
+      "festive"
+    ]
+  },
+  {
+    "sku": "VEY-NK-007",
+    "product_code": "chandrika-tribal-oxidised-silver-hasli",
+    "slug": "chandrika-tribal-oxidised-silver-hasli",
+    "name": "Chandrika Tribal Oxidised Silver Hasli",
+    "category": "Necklaces",
+    "description": "Bold rigid sterling silver torque necklace with stamped ethnic sunburst motifs and antique charcoal oxidisation.",
+    "metal": "Silver",
+    "purity": "925",
+    "net_weight_g": "45.000",
+    "size": "Standard",
+    "finish": "oxidised-finish",
+    "image": "/assets/products/chandrika-tribal-oxidised-silver-hasli/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "16200.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "oxidised-silver",
+    "additional_materials": [],
+    "craftsmanship": [
+      "handcrafted",
+      "antique-craft"
+    ],
+    "collections": [
+      "silver",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-NK-008",
+    "product_code": "devi-nakshi-floral-temple-choker",
+    "slug": "devi-nakshi-floral-temple-choker",
+    "name": "Devi Nakshi Floral Temple Choker",
+    "category": "Necklaces",
+    "description": "Architectural temple choker chiseled with divine floral garlands, cabochon rubies, and delicate dangling gold beads.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "32.100",
+    "size": "Standard",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/devi-nakshi-floral-temple-choker/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "265000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "gemstones"
+    ],
+    "craftsmanship": [
+      "temple-craft",
+      "nakshi"
+    ],
+    "collections": [
+      "gold",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-NK-009",
+    "product_code": "gitanjali-layered-gold-pearl-haram",
+    "slug": "gitanjali-layered-gold-pearl-haram",
+    "name": "Gitanjali Layered Gold & Pearl Haram",
+    "category": "Necklaces",
+    "description": "Multi-strand layered pearl mala interspersed with 18K gold station beads and an ornate hand-engraved side brooch.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "26.500",
+    "size": "Standard",
+    "finish": "polished-gold",
+    "image": "/assets/products/gitanjali-layered-gold-pearl-haram/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "198000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "pearl"
+    ],
+    "craftsmanship": [
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "festive"
+    ]
+  },
+  {
+    "sku": "VEY-NK-010",
+    "product_code": "surya-kundan-medallion-pendant-necklace",
+    "slug": "surya-kundan-medallion-pendant-necklace",
+    "name": "Surya Kundan Medallion Pendant Necklace",
+    "category": "Necklaces",
+    "description": "Sun-inspired circular Kundan medallion strung on a refined gold link chain, backed with reversible Jaipur enamel work.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "18.400",
+    "size": "Standard",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/surya-kundan-medallion-pendant-necklace/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "142000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "gemstones",
+      "pearl"
+    ],
+    "craftsmanship": [
+      "kundan",
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "everyday-wear"
+    ]
+  },
+  {
+    "sku": "VEY-NK-011",
+    "product_code": "rohini-minimal-solitaire-diamond-pendant-chain",
+    "slug": "rohini-minimal-solitaire-diamond-pendant-chain",
+    "name": "Rohini Minimal Solitaire Diamond Pendant Chain",
+    "category": "Necklaces",
+    "description": "Understated elegance featuring a bezel-set brilliant diamond suspended on a fluid 18K solid yellow gold curb chain.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "4.800",
+    "size": "Standard",
+    "finish": "high-polish",
+    "image": "/assets/products/rohini-minimal-solitaire-diamond-pendant-chain/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "48500.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "diamond"
+    ],
+    "craftsmanship": [
+      "stone-setting"
+    ],
+    "collections": [
+      "gold",
+      "everyday-wear"
+    ]
+  },
+  {
+    "sku": "VEY-NK-012",
+    "product_code": "jodha-imperial-jadau-choker-with-emeralds",
+    "slug": "jodha-imperial-jadau-choker-with-emeralds",
+    "name": "Jodha Imperial Jadau Choker with Emeralds",
+    "category": "Necklaces",
+    "description": "Mughal-court inspired Jadau choker setting uncut gems and hydro emerald tumbles with natural Basra-style seed pearls.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "41.200",
+    "size": "Standard",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/jodha-imperial-jadau-choker-with-emeralds/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "365000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "gemstones",
+      "pearl"
+    ],
+    "craftsmanship": [
+      "jadau",
+      "kundan"
+    ],
+    "collections": [
+      "gold",
+      "bridal"
+    ]
+  },
+  {
+    "sku": "VEY-NK-013",
+    "product_code": "utsav-pastel-meenakari-layered-necklace",
+    "slug": "utsav-pastel-meenakari-layered-necklace",
+    "name": "Utsav Pastel Meenakari Layered Necklace",
+    "category": "Necklaces",
+    "description": "Artful mint green and lotus pink enamel plaques linked with fine gold loops and cultured pearl clusters.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "31.600",
+    "size": "Standard",
+    "finish": "polished-gold",
+    "image": "/assets/products/utsav-pastel-meenakari-layered-necklace/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "260000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "mixed-materials"
+    ],
+    "craftsmanship": [
+      "meenakari"
+    ],
+    "collections": [
+      "gold",
+      "festive"
+    ]
+  },
+  {
+    "sku": "VEY-NK-014",
+    "product_code": "bhairavi-temple-guttapusalu-heritage-necklace",
+    "slug": "bhairavi-temple-guttapusalu-heritage-necklace",
+    "name": "Bhairavi Temple Guttapusalu Heritage Necklace",
+    "category": "Necklaces",
+    "description": "Celebrated coastal Andhra Guttapusalu necklace fringed with lush bunches of cultured seed pearls and pota ruby cabochons.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "44.500",
+    "size": "Standard",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/bhairavi-temple-guttapusalu-heritage-necklace/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "368000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "pearl",
+      "gemstones"
+    ],
+    "craftsmanship": [
+      "temple-craft",
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "traditional",
+      "bridal"
+    ]
+  },
+  {
+    "sku": "VEY-NK-015",
+    "product_code": "trishna-oxidised-silver-mirror-work-choker",
+    "slug": "trishna-oxidised-silver-mirror-work-choker",
+    "name": "Trishna Oxidised Silver Mirror Work Choker",
+    "category": "Necklaces",
+    "description": "Gujarati mirror-work inspired sterling silver choker with hand-stamped floral dangles and comfortable dori closure.",
+    "metal": "Silver",
+    "purity": "925",
+    "net_weight_g": "32.000",
+    "size": "Standard",
+    "finish": "oxidised-finish",
+    "image": "/assets/products/trishna-oxidised-silver-mirror-work-choker/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "14200.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "oxidised-silver",
+    "additional_materials": [
+      "mixed-materials"
+    ],
+    "craftsmanship": [
+      "handcrafted"
+    ],
+    "collections": [
+      "silver",
+      "festive"
+    ]
+  },
+  {
+    "sku": "VEY-NK-016",
+    "product_code": "aanya-contemporary-geometric-gold-collar",
+    "slug": "aanya-contemporary-geometric-gold-collar",
+    "name": "Aanya Contemporary Geometric Gold Collar",
+    "category": "Necklaces",
+    "description": "Architectural satin-finished gold torque designed with subtle clean angles for contemporary high-fashion elegance.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "16.200",
+    "size": "Standard",
+    "finish": "matte-finish",
+    "image": "/assets/products/aanya-contemporary-geometric-gold-collar/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "128000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [],
+    "craftsmanship": [
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "everyday-wear"
+    ]
+  },
+  {
+    "sku": "VEY-NK-017",
+    "product_code": "navratna-nine-gem-royal-heritage-necklace",
+    "slug": "navratna-nine-gem-royal-heritage-necklace",
+    "name": "Navratna Nine-Gem Royal Heritage Necklace",
+    "category": "Necklaces",
+    "description": "Sacred planetary alignment of nine precious gemstones bezel-set in solid 22K gold, balancing heritage astrology and royal grandeur.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "36.800",
+    "size": "Standard",
+    "finish": "polished-gold",
+    "image": "/assets/products/navratna-nine-gem-royal-heritage-necklace/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "310000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "gemstones"
+    ],
+    "craftsmanship": [
+      "stone-setting",
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-NK-018",
+    "product_code": "meera-antique-coin-filigree-necklace",
+    "slug": "meera-antique-coin-filigree-necklace",
+    "name": "Meera Antique Coin Filigree Necklace",
+    "category": "Necklaces",
+    "description": "Vintage-inspired medallion necklace combining delicate silver filigree netting with miniature floral repoussé coins.",
+    "metal": "Silver",
+    "purity": "925",
+    "net_weight_g": "29.500",
+    "size": "Standard",
+    "finish": "silver-finish",
+    "image": "/assets/products/meera-antique-coin-filigree-necklace/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "13800.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "silver",
+    "additional_materials": [],
+    "craftsmanship": [
+      "filigree",
+      "traditional-engraving"
+    ],
+    "collections": [
+      "silver",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-NK-019",
+    "product_code": "ananya-rose-gold-diamond-station-necklace",
+    "slug": "ananya-rose-gold-diamond-station-necklace",
+    "name": "Ananya Rose Gold Diamond Station Necklace",
+    "category": "Necklaces",
+    "description": "Delicate bezel-set round brilliant diamond stations resting along a graceful 18K rose gold cable chain.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "9.400",
+    "size": "Standard",
+    "finish": "rose-gold-finish",
+    "image": "/assets/products/ananya-rose-gold-diamond-station-necklace/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "82000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "diamond"
+    ],
+    "craftsmanship": [
+      "stone-setting"
+    ],
+    "collections": [
+      "gold",
+      "everyday-wear"
+    ]
+  },
+  {
+    "sku": "VEY-NK-020",
+    "product_code": "kalyani-grand-antique-gold-haram",
+    "slug": "kalyani-grand-antique-gold-haram",
+    "name": "Kalyani Grand Antique Gold Haram",
+    "category": "Necklaces",
+    "description": "Heirloom South Indian long necklace featuring sculptural floral and divine motifs, finished in rich matte antique gold.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "62.000",
+    "size": "Standard",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/kalyani-grand-antique-gold-haram/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "512000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "gemstones"
+    ],
+    "craftsmanship": [
+      "temple-craft",
+      "antique-craft"
+    ],
+    "collections": [
+      "gold",
+      "bridal",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-MS-001",
+    "product_code": "swarna-vati-maharashtrian-sacred-mangalsutra",
+    "slug": "swarna-vati-maharashtrian-sacred-mangalsutra",
+    "name": "Swarna Vati Maharashtrian Sacred Mangalsutra",
+    "category": "Mangalsutra",
+    "description": "Traditional twin hollow gold vatis engraved with auspicious sun and moon motifs, suspended on a sacred dual-strand black bead chain.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "14.200",
+    "size": "Standard",
+    "finish": "polished-gold",
+    "image": "/assets/products/swarna-vati-maharashtrian-sacred-mangalsutra/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "118000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "black-beads"
+    ],
+    "craftsmanship": [
+      "handcrafted",
+      "traditional-engraving"
+    ],
+    "collections": [
+      "gold",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-MS-002",
+    "product_code": "nirali-modern-solitaire-diamond-mangalsutra",
+    "slug": "nirali-modern-solitaire-diamond-mangalsutra",
+    "name": "Nirali Modern Solitaire Diamond Mangalsutra",
+    "category": "Mangalsutra",
+    "description": "A contemporary single brilliant solitaire diamond pendant strung on a whisper-thin 18K gold and black onyx bead chain.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "5.200",
+    "size": "Standard",
+    "finish": "high-polish",
+    "image": "/assets/products/nirali-modern-solitaire-diamond-mangalsutra/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "54000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "diamond",
+      "black-beads"
+    ],
+    "craftsmanship": [
+      "stone-setting"
+    ],
+    "collections": [
+      "gold",
+      "everyday-wear"
+    ]
+  },
+  {
+    "sku": "VEY-MS-003",
+    "product_code": "anandi-traditional-long-bridal-mangalsutra",
+    "slug": "anandi-traditional-long-bridal-mangalsutra",
+    "name": "Anandi Traditional Long Bridal Mangalsutra",
+    "category": "Mangalsutra",
+    "description": "Auspicious full-length bridal mangalsutra with multi-layered black bead strands anchored by an intricate Lakshmi temple pendant.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "24.500",
+    "size": "Standard",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/anandi-traditional-long-bridal-mangalsutra/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "202000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "black-beads",
+      "gemstones"
+    ],
+    "craftsmanship": [
+      "handcrafted",
+      "temple-craft"
+    ],
+    "collections": [
+      "gold",
+      "bridal",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-MS-004",
+    "product_code": "parijaat-floral-diamond-cluster-mangalsutra",
+    "slug": "parijaat-floral-diamond-cluster-mangalsutra",
+    "name": "Parijaat Floral Diamond Cluster Mangalsutra",
+    "category": "Mangalsutra",
+    "description": "Delicate floral blossom pendant studded with seven round cut diamonds on a light daily-wear black bead chain.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "6.800",
+    "size": "Standard",
+    "finish": "polished-gold",
+    "image": "/assets/products/parijaat-floral-diamond-cluster-mangalsutra/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "68000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "diamond",
+      "black-beads"
+    ],
+    "craftsmanship": [
+      "stone-setting"
+    ],
+    "collections": [
+      "gold",
+      "everyday-wear"
+    ]
+  },
+  {
+    "sku": "VEY-MS-005",
+    "product_code": "riddhi-temple-nakshi-pendant-mangalsutra",
+    "slug": "riddhi-temple-nakshi-pendant-mangalsutra",
+    "name": "Riddhi Temple Nakshi Pendant Mangalsutra",
+    "category": "Mangalsutra",
+    "description": "Hand-carved Nakshi repoussé gold pendant featuring divine scrollwork and miniature ghungroo droplets on black bead strands.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "18.600",
+    "size": "Standard",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/riddhi-temple-nakshi-pendant-mangalsutra/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "154000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "black-beads"
+    ],
+    "craftsmanship": [
+      "nakshi",
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-MS-006",
+    "product_code": "suhani-infinity-rose-gold-mangalsutra",
+    "slug": "suhani-infinity-rose-gold-mangalsutra",
+    "name": "Suhani Infinity Rose Gold Mangalsutra",
+    "category": "Mangalsutra",
+    "description": "Modern eternal infinity loop accented with micro-pavé diamonds on a blush 18K rose gold and black bead chain.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "4.900",
+    "size": "Standard",
+    "finish": "rose-gold-finish",
+    "image": "/assets/products/suhani-infinity-rose-gold-mangalsutra/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "46000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "diamond",
+      "black-beads"
+    ],
+    "craftsmanship": [
+      "stone-setting"
+    ],
+    "collections": [
+      "gold",
+      "everyday-wear"
+    ]
+  },
+  {
+    "sku": "VEY-MS-007",
+    "product_code": "kavya-geometric-bar-diamond-mangalsutra",
+    "slug": "kavya-geometric-bar-diamond-mangalsutra",
+    "name": "Kavya Geometric Bar Diamond Mangalsutra",
+    "category": "Mangalsutra",
+    "description": "Sleek horizontal diamond channel bar pendant tailored for the modern working woman.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "5.600",
+    "size": "Standard",
+    "finish": "high-polish",
+    "image": "/assets/products/kavya-geometric-bar-diamond-mangalsutra/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "52000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "diamond",
+      "black-beads"
+    ],
+    "craftsmanship": [
+      "stone-setting"
+    ],
+    "collections": [
+      "gold",
+      "everyday-wear"
+    ]
+  },
+  {
+    "sku": "VEY-MS-008",
+    "product_code": "tara-kundan-crescent-mangalsutra",
+    "slug": "tara-kundan-crescent-mangalsutra",
+    "name": "Tara Kundan Crescent Mangalsutra",
+    "category": "Mangalsutra",
+    "description": "Crescent moon pendant set with foil-backed Kundan stones and suspended pearl droplets on black beads.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "11.400",
+    "size": "Standard",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/tara-kundan-crescent-mangalsutra/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "92000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "gemstones",
+      "black-beads"
+    ],
+    "craftsmanship": [
+      "kundan",
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "festive"
+    ]
+  },
+  {
+    "sku": "VEY-MS-009",
+    "product_code": "meenakari-peacock-traditional-mangalsutra",
+    "slug": "meenakari-peacock-traditional-mangalsutra",
+    "name": "Meenakari Peacock Traditional Mangalsutra",
+    "category": "Mangalsutra",
+    "description": "Vibrant cobalt and green Jaipur enamel peacock pendant linked to classic two-string black beads.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "16.000",
+    "size": "Standard",
+    "finish": "polished-gold",
+    "image": "/assets/products/meenakari-peacock-traditional-mangalsutra/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "132000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "black-beads",
+      "mixed-materials"
+    ],
+    "craftsmanship": [
+      "meenakari",
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-MS-010",
+    "product_code": "shraddha-dual-strand-gold-bead-mangalsutra",
+    "slug": "shraddha-dual-strand-gold-bead-mangalsutra",
+    "name": "Shraddha Dual-Strand Gold Bead Mangalsutra",
+    "category": "Mangalsutra",
+    "description": "Interspersed gold fluted beads and smooth black beads leading to a traditional triple-leaf gold pendant.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "21.000",
+    "size": "Standard",
+    "finish": "polished-gold",
+    "image": "/assets/products/shraddha-dual-strand-gold-bead-mangalsutra/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "172000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "black-beads"
+    ],
+    "craftsmanship": [
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-MS-011",
+    "product_code": "tanvi-minimal-evil-eye-mangalsutra",
+    "slug": "tanvi-minimal-evil-eye-mangalsutra",
+    "name": "Tanvi Minimal Evil Eye Mangalsutra",
+    "category": "Mangalsutra",
+    "description": "Protective blue sapphire and diamond evil eye motif suspended on an ultra-light black bead chain.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "4.200",
+    "size": "Standard",
+    "finish": "high-polish",
+    "image": "/assets/products/tanvi-minimal-evil-eye-mangalsutra/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "39500.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "diamond",
+      "black-beads",
+      "gemstones"
+    ],
+    "craftsmanship": [
+      "stone-setting"
+    ],
+    "collections": [
+      "gold",
+      "everyday-wear"
+    ]
+  },
+  {
+    "sku": "VEY-MS-012",
+    "product_code": "lavanya-jadau-royal-bridal-mangalsutra",
+    "slug": "lavanya-jadau-royal-bridal-mangalsutra",
+    "name": "Lavanya Jadau Royal Bridal Mangalsutra",
+    "category": "Mangalsutra",
+    "description": "Imperial Jadau pendant with uncut Polki stones and dangling south sea pearl drops on authentic double black beads.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "22.800",
+    "size": "Standard",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/lavanya-jadau-royal-bridal-mangalsutra/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "188000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "black-beads",
+      "pearl"
+    ],
+    "craftsmanship": [
+      "jadau",
+      "polki"
+    ],
+    "collections": [
+      "gold",
+      "bridal"
+    ]
+  },
+  {
+    "sku": "VEY-ER-001",
+    "product_code": "mayurakshi-temple-jhumkas",
+    "slug": "mayurakshi-temple-jhumkas",
+    "name": "Mayurakshi Temple Jhumkas",
+    "category": "Earrings",
+    "description": "Sculpted peacocks perching atop dome-shaped bell jhumkas with ruby eyes and chiming gold bead fringes.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "19.500",
+    "size": "Standard",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/mayurakshi-temple-jhumkas/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "162000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "gemstones"
+    ],
+    "craftsmanship": [
+      "temple-craft",
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-ER-002",
+    "product_code": "chandramukhi-polki-chandbalis",
+    "slug": "chandramukhi-polki-chandbalis",
+    "name": "Chandramukhi Polki Chandbalis",
+    "category": "Earrings",
+    "description": "Layered crescent-moon chandbalis studded with uncut polki diamonds, emerald drops, and seed pearl borders.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "22.400",
+    "size": "Standard",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/chandramukhi-polki-chandbalis/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "195000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "gemstones",
+      "pearl"
+    ],
+    "craftsmanship": [
+      "polki",
+      "jadau"
+    ],
+    "collections": [
+      "gold",
+      "bridal",
+      "festive"
+    ]
+  },
+  {
+    "sku": "VEY-ER-003",
+    "product_code": "roshni-kundan-floral-studs",
+    "slug": "roshni-kundan-floral-studs",
+    "name": "Roshni Kundan Floral Studs",
+    "category": "Earrings",
+    "description": "Classic eight-petal floral studs set with glass-backed Kundan stones and centered with ruby accents.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "8.600",
+    "size": "Standard",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/roshni-kundan-floral-studs/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "69000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "gemstones",
+      "pearl"
+    ],
+    "craftsmanship": [
+      "kundan",
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "everyday-wear",
+      "festive"
+    ]
+  },
+  {
+    "sku": "VEY-ER-004",
+    "product_code": "aditi-traditional-gold-jhumkas",
+    "slug": "aditi-traditional-gold-jhumkas",
+    "name": "Aditi Traditional Gold Jhumkas",
+    "category": "Earrings",
+    "description": "Pure 22K gold bell jhumkas chiseled with filigree bands and delicate hanging fringe.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "14.800",
+    "size": "Standard",
+    "finish": "polished-gold",
+    "image": "/assets/products/aditi-traditional-gold-jhumkas/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "124000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [],
+    "craftsmanship": [
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-ER-005",
+    "product_code": "aashi-oxidised-silver-tribal-danglers",
+    "slug": "aashi-oxidised-silver-tribal-danglers",
+    "name": "Aashi Oxidised Silver Tribal Danglers",
+    "category": "Earrings",
+    "description": "Statement silver earrings featuring etched mandala discs and dancing ghungroo droplets.",
+    "metal": "Silver",
+    "purity": "925",
+    "net_weight_g": "18.200",
+    "size": "Standard",
+    "finish": "oxidised-finish",
+    "image": "/assets/products/aashi-oxidised-silver-tribal-danglers/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "7800.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "oxidised-silver",
+    "additional_materials": [],
+    "craftsmanship": [
+      "handcrafted",
+      "antique-craft"
+    ],
+    "collections": [
+      "silver",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-ER-006",
+    "product_code": "laxmi-kasu-temple-coin-ear-drops",
+    "slug": "laxmi-kasu-temple-coin-ear-drops",
+    "name": "Laxmi Kasu Temple Coin Ear Drops",
+    "category": "Earrings",
+    "description": "Embossed Goddess Lakshmi coin drops hanging from intricate floral ear tops in 22K antique gold.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "11.200",
+    "size": "Standard",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/laxmi-kasu-temple-coin-ear-drops/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "92000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [],
+    "craftsmanship": [
+      "temple-craft",
+      "traditional-engraving"
+    ],
+    "collections": [
+      "gold",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-ER-007",
+    "product_code": "hansika-meenakari-chandelier-earrings",
+    "slug": "hansika-meenakari-chandelier-earrings",
+    "name": "Hansika Meenakari Chandelier Earrings",
+    "category": "Earrings",
+    "description": "Regal chandelier earrings displaying white and cobalt Jaipur enamel work with cultured pearl fringes.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "17.400",
+    "size": "Standard",
+    "finish": "polished-gold",
+    "image": "/assets/products/hansika-meenakari-chandelier-earrings/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "144000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "mixed-materials",
+      "pearl"
+    ],
+    "craftsmanship": [
+      "meenakari",
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "festive"
+    ]
+  },
+  {
+    "sku": "VEY-ER-008",
+    "product_code": "tara-925-sterling-silver-filigree-drops",
+    "slug": "tara-925-sterling-silver-filigree-drops",
+    "name": "Tara 925 Sterling Silver Filigree Drops",
+    "category": "Earrings",
+    "description": "Feather-light teardrop silver earrings spun from twisted sterling wire lace.",
+    "metal": "Silver",
+    "purity": "925",
+    "net_weight_g": "12.000",
+    "size": "Standard",
+    "finish": "silver-finish",
+    "image": "/assets/products/tara-925-sterling-silver-filigree-drops/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "5800.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "silver",
+    "additional_materials": [],
+    "craftsmanship": [
+      "filigree",
+      "handcrafted"
+    ],
+    "collections": [
+      "silver",
+      "everyday-wear"
+    ]
+  },
+  {
+    "sku": "VEY-ER-009",
+    "product_code": "mugdha-emerald-pearl-sui-dhaga-earrings",
+    "slug": "mugdha-emerald-pearl-sui-dhaga-earrings",
+    "name": "Mugdha Emerald & Pearl Sui Dhaga Earrings",
+    "category": "Earrings",
+    "description": "Flowing threader ear chains in 18K gold tipped with emerald beads and lustrous freshwater pearls.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "5.800",
+    "size": "Standard",
+    "finish": "polished-gold",
+    "image": "/assets/products/mugdha-emerald-pearl-sui-dhaga-earrings/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "46000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "gemstones",
+      "pearl"
+    ],
+    "craftsmanship": [
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "everyday-wear"
+    ]
+  },
+  {
+    "sku": "VEY-ER-010",
+    "product_code": "tanvi-diamond-solitaire-daily-studs",
+    "slug": "tanvi-diamond-solitaire-daily-studs",
+    "name": "Tanvi Diamond Solitaire Daily Studs",
+    "category": "Earrings",
+    "description": "Timeless four-prong brilliant cut natural diamond studs set in solid 18K yellow gold.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "2.800",
+    "size": "Standard",
+    "finish": "high-polish",
+    "image": "/assets/products/tanvi-diamond-solitaire-daily-studs/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "42000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "diamond"
+    ],
+    "craftsmanship": [
+      "stone-setting"
+    ],
+    "collections": [
+      "gold",
+      "everyday-wear"
+    ]
+  },
+  {
+    "sku": "VEY-ER-011",
+    "product_code": "bhavani-antique-temple-jhumka-with-pearls",
+    "slug": "bhavani-antique-temple-jhumka-with-pearls",
+    "name": "Bhavani Antique Temple Jhumka with Pearls",
+    "category": "Earrings",
+    "description": "Grand three-tiered temple jhumkas draped in cluster seed pearls with hand-carved floral tops.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "21.000",
+    "size": "Standard",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/bhavani-antique-temple-jhumka-with-pearls/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "174000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "pearl"
+    ],
+    "craftsmanship": [
+      "temple-craft",
+      "antique-craft"
+    ],
+    "collections": [
+      "gold",
+      "bridal",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-ER-012",
+    "product_code": "anokhi-oxidised-silver-jhumkas-with-mirror",
+    "slug": "anokhi-oxidised-silver-jhumkas-with-mirror",
+    "name": "Anokhi Oxidised Silver Jhumkas with Mirror",
+    "category": "Earrings",
+    "description": "Bohemian mirrored center studs blooming into bell jhumkas with oxidized sterling silver bells.",
+    "metal": "Silver",
+    "purity": "925",
+    "net_weight_g": "16.500",
+    "size": "Standard",
+    "finish": "oxidised-finish",
+    "image": "/assets/products/anokhi-oxidised-silver-jhumkas-with-mirror/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "6900.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "oxidised-silver",
+    "additional_materials": [
+      "mixed-materials"
+    ],
+    "craftsmanship": [
+      "handcrafted"
+    ],
+    "collections": [
+      "silver",
+      "festive"
+    ]
+  },
+  {
+    "sku": "VEY-ER-013",
+    "product_code": "pooja-polki-solitaire-huggie-hoops",
+    "slug": "pooja-polki-solitaire-huggie-hoops",
+    "name": "Pooja Polki Solitaire Huggie Hoops",
+    "category": "Earrings",
+    "description": "Close-fitting everyday gold huggie hoops bezel-set with organic uncut Polki diamond slices.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "7.200",
+    "size": "Standard",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/pooja-polki-solitaire-huggie-hoops/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "62000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [],
+    "craftsmanship": [
+      "polki",
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "everyday-wear"
+    ]
+  },
+  {
+    "sku": "VEY-ER-014",
+    "product_code": "ritujadau-heritage-ear-tops",
+    "slug": "ritujadau-heritage-ear-tops",
+    "name": "Ritujadau Heritage Ear Tops",
+    "category": "Earrings",
+    "description": "Regal button ear tops studded with ruby centerstones in authentic Jadau pure gold casing.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "10.500",
+    "size": "Standard",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/ritujadau-heritage-ear-tops/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "88000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "gemstones"
+    ],
+    "craftsmanship": [
+      "jadau",
+      "kundan"
+    ],
+    "collections": [
+      "gold",
+      "festive"
+    ]
+  },
+  {
+    "sku": "VEY-ER-015",
+    "product_code": "shreya-rose-gold-diamond-hoops",
+    "slug": "shreya-rose-gold-diamond-hoops",
+    "name": "Shreya Rose Gold Diamond Hoops",
+    "category": "Earrings",
+    "description": "Inside-out diamond pavé hoops in warm 18K rose gold tailored for modern versatile styling.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "6.400",
+    "size": "Standard",
+    "finish": "rose-gold-finish",
+    "image": "/assets/products/shreya-rose-gold-diamond-hoops/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "58000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "diamond"
+    ],
+    "craftsmanship": [
+      "stone-setting"
+    ],
+    "collections": [
+      "gold",
+      "everyday-wear"
+    ]
+  },
+  {
+    "sku": "VEY-ER-016",
+    "product_code": "veda-nakshi-deity-ear-studs",
+    "slug": "veda-nakshi-deity-ear-studs",
+    "name": "Veda Nakshi Deity Ear Studs",
+    "category": "Earrings",
+    "description": "Chiseled floral and Goddess Lakshmi motif ear studs rendered with classical Nakshi precision.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "9.600",
+    "size": "Standard",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/veda-nakshi-deity-ear-studs/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "79000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [],
+    "craftsmanship": [
+      "nakshi",
+      "temple-craft"
+    ],
+    "collections": [
+      "gold",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-ER-017",
+    "product_code": "kashvi-dual-tone-silver-filigree-chandbalis",
+    "slug": "kashvi-dual-tone-silver-filigree-chandbalis",
+    "name": "Kashvi Dual-Tone Silver Filigree Chandbalis",
+    "category": "Earrings",
+    "description": "Intricately woven silver wire crescent chandbalis with gold-gilded accents and pearl drops.",
+    "metal": "Silver",
+    "purity": "925",
+    "net_weight_g": "20.000",
+    "size": "Standard",
+    "finish": "silver-finish",
+    "image": "/assets/products/kashvi-dual-tone-silver-filigree-chandbalis/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "9400.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "silver",
+    "additional_materials": [],
+    "craftsmanship": [
+      "filigree"
+    ],
+    "collections": [
+      "silver",
+      "festive"
+    ]
+  },
+  {
+    "sku": "VEY-ER-018",
+    "product_code": "kriti-navratna-heritage-drop-earrings",
+    "slug": "kriti-navratna-heritage-drop-earrings",
+    "name": "Kriti Navratna Heritage Drop Earrings",
+    "category": "Earrings",
+    "description": "Auspicious nine-gem drops set into golden florets bringing cosmic harmony and royal beauty.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "13.200",
+    "size": "Standard",
+    "finish": "polished-gold",
+    "image": "/assets/products/kriti-navratna-heritage-drop-earrings/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "112000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "gemstones"
+    ],
+    "craftsmanship": [
+      "stone-setting",
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-RG-001",
+    "product_code": "rajkumari-royal-kundan-cocktail-ring",
+    "slug": "rajkumari-royal-kundan-cocktail-ring",
+    "name": "Rajkumari Royal Kundan Cocktail Ring",
+    "category": "Rings",
+    "description": "Grand oversized cocktail ring with a central foil-set Kundan solitaire framed by seed pearls and floral Meenakari on the reverse.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "12.400",
+    "size": "14",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/rajkumari-royal-kundan-cocktail-ring/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "98000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "gemstones",
+      "pearl"
+    ],
+    "craftsmanship": [
+      "kundan",
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "bridal",
+      "festive"
+    ]
+  },
+  {
+    "sku": "VEY-RG-002",
+    "product_code": "aadya-traditional-gold-vanki-ring",
+    "slug": "aadya-traditional-gold-vanki-ring",
+    "name": "Aadya Traditional Gold Vanki Ring",
+    "category": "Rings",
+    "description": "Iconic South Indian V-shaped Vanki ring chiseled with auspicious floral repoussé and crowned with a ruby cabochon.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "7.800",
+    "size": "14",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/aadya-traditional-gold-vanki-ring/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "64000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "gemstones"
+    ],
+    "craftsmanship": [
+      "temple-craft",
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-RG-003",
+    "product_code": "navratna-imperial-gemstone-ring",
+    "slug": "navratna-imperial-gemstone-ring",
+    "name": "Navratna Imperial Gemstone Ring",
+    "category": "Rings",
+    "description": "Nine celestial Vedic gemstones bezel-set in a sacred floral mandala on solid 22K yellow gold.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "9.200",
+    "size": "14",
+    "finish": "polished-gold",
+    "image": "/assets/products/navratna-imperial-gemstone-ring/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "78000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "gemstones"
+    ],
+    "craftsmanship": [
+      "stone-setting",
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-RG-004",
+    "product_code": "ishita-polki-diamond-band",
+    "slug": "ishita-polki-diamond-band",
+    "name": "Ishita Polki Diamond Band",
+    "category": "Rings",
+    "description": "Continuous eternity-style band set with uncut organic Polki diamonds in traditional open gold bezels.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "5.400",
+    "size": "14",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/ishita-polki-diamond-band/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "48000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [],
+    "craftsmanship": [
+      "polki",
+      "jadau"
+    ],
+    "collections": [
+      "gold",
+      "everyday-wear"
+    ]
+  },
+  {
+    "sku": "VEY-RG-005",
+    "product_code": "chandani-oxidised-silver-mandala-ring",
+    "slug": "chandani-oxidised-silver-mandala-ring",
+    "name": "Chandani Oxidised Silver Mandala Ring",
+    "category": "Rings",
+    "description": "Statement circular shield ring in 925 oxidised silver adorned with concentric sunray etchings.",
+    "metal": "Silver",
+    "purity": "925",
+    "net_weight_g": "11.500",
+    "size": "14",
+    "finish": "oxidised-finish",
+    "image": "/assets/products/chandani-oxidised-silver-mandala-ring/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "3800.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "oxidised-silver",
+    "additional_materials": [],
+    "craftsmanship": [
+      "handcrafted",
+      "antique-craft"
+    ],
+    "collections": [
+      "silver",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-RG-006",
+    "product_code": "nayantara-diamond-solitaire-band",
+    "slug": "nayantara-diamond-solitaire-band",
+    "name": "Nayantara Diamond Solitaire Band",
+    "category": "Rings",
+    "description": "Flawless 18K yellow gold minimalist band crowned with a brilliant four-prong natural solitaire diamond.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "3.600",
+    "size": "14",
+    "finish": "high-polish",
+    "image": "/assets/products/nayantara-diamond-solitaire-band/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "46000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "diamond"
+    ],
+    "craftsmanship": [
+      "stone-setting"
+    ],
+    "collections": [
+      "gold",
+      "everyday-wear"
+    ]
+  },
+  {
+    "sku": "VEY-RG-007",
+    "product_code": "meenal-jaipur-meenakari-lotus-ring",
+    "slug": "meenal-jaipur-meenakari-lotus-ring",
+    "name": "Meenal Jaipur Meenakari Lotus Ring",
+    "category": "Rings",
+    "description": "Blooming pink enamel lotus ring with a golden stamen, celebrating Rajasthani miniature painting techniques.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "8.400",
+    "size": "14",
+    "finish": "polished-gold",
+    "image": "/assets/products/meenal-jaipur-meenakari-lotus-ring/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "71000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "mixed-materials"
+    ],
+    "craftsmanship": [
+      "meenakari",
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "festive"
+    ]
+  },
+  {
+    "sku": "VEY-RG-008",
+    "product_code": "suhasini-filigree-butterfly-silver-ring",
+    "slug": "suhasini-filigree-butterfly-silver-ring",
+    "name": "Suhasini Filigree Butterfly Silver Ring",
+    "category": "Rings",
+    "description": "Delicate openwork silver butterfly ring woven from whisper-soft 925 sterling wire threads.",
+    "metal": "Silver",
+    "purity": "925",
+    "net_weight_g": "6.200",
+    "size": "14",
+    "finish": "silver-finish",
+    "image": "/assets/products/suhasini-filigree-butterfly-silver-ring/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "2900.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "silver",
+    "additional_materials": [],
+    "craftsmanship": [
+      "filigree"
+    ],
+    "collections": [
+      "silver",
+      "everyday-wear"
+    ]
+  },
+  {
+    "sku": "VEY-RG-009",
+    "product_code": "devika-nakshi-temple-ring-with-ruby",
+    "slug": "devika-nakshi-temple-ring-with-ruby",
+    "name": "Devika Nakshi Temple Ring with Ruby",
+    "category": "Rings",
+    "description": "Heavy architectural temple ring carved with sacred elephant motifs and centered with an uncut ruby.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "10.800",
+    "size": "14",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/devika-nakshi-temple-ring-with-ruby/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "89000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "gemstones"
+    ],
+    "craftsmanship": [
+      "nakshi",
+      "temple-craft"
+    ],
+    "collections": [
+      "gold",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-RG-010",
+    "product_code": "rhea-modern-geometric-stack-ring",
+    "slug": "rhea-modern-geometric-stack-ring",
+    "name": "Rhea Modern Geometric Stack Ring",
+    "category": "Rings",
+    "description": "Crisp satin-finished 18K gold chevron band crafted for effortless stacking and standalone grace.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "4.100",
+    "size": "14",
+    "finish": "matte-finish",
+    "image": "/assets/products/rhea-modern-geometric-stack-ring/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "34000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [],
+    "craftsmanship": [
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "everyday-wear"
+    ]
+  },
+  {
+    "sku": "VEY-RG-011",
+    "product_code": "vasundhara-jadau-emerald-statement-ring",
+    "slug": "vasundhara-jadau-emerald-statement-ring",
+    "name": "Vasundhara Jadau Emerald Statement Ring",
+    "category": "Rings",
+    "description": "Square imperial Jadau ring highlighting an untreated Colombian emerald framed in Polki diamonds.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "13.600",
+    "size": "14",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/vasundhara-jadau-emerald-statement-ring/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "115000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "gemstones"
+    ],
+    "craftsmanship": [
+      "jadau",
+      "polki"
+    ],
+    "collections": [
+      "gold",
+      "bridal"
+    ]
+  },
+  {
+    "sku": "VEY-RG-012",
+    "product_code": "anika-rose-gold-pav-diamond-twist-ring",
+    "slug": "anika-rose-gold-pav-diamond-twist-ring",
+    "name": "Anika Rose Gold Pavé Diamond Twist Ring",
+    "category": "Rings",
+    "description": "Graceful entwined ribbon band in 18K rose gold accented with glittering micro-pavé diamonds.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "3.800",
+    "size": "14",
+    "finish": "rose-gold-finish",
+    "image": "/assets/products/anika-rose-gold-pav-diamond-twist-ring/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "41000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "diamond"
+    ],
+    "craftsmanship": [
+      "stone-setting"
+    ],
+    "collections": [
+      "gold",
+      "everyday-wear"
+    ]
+  },
+  {
+    "sku": "VEY-BR-001",
+    "product_code": "kashmira-royal-kundan-tennis-bracelet",
+    "slug": "kashmira-royal-kundan-tennis-bracelet",
+    "name": "Kashmira Royal Kundan Tennis Bracelet",
+    "category": "Bracelets",
+    "description": "Articulated flexible wristlet set with sparkling Kundan florets, secured by an ornate box clasp.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "16.500",
+    "size": "Standard",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/kashmira-royal-kundan-tennis-bracelet/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "135000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "gemstones"
+    ],
+    "craftsmanship": [
+      "kundan",
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "bridal",
+      "festive"
+    ]
+  },
+  {
+    "sku": "VEY-BR-002",
+    "product_code": "aparna-sculptural-open-gold-cuff",
+    "slug": "aparna-sculptural-open-gold-cuff",
+    "name": "Aparna Sculptural Open Gold Cuff",
+    "category": "Bracelets",
+    "description": "Bold fluid open cuff in mirror-polished 18K solid gold, tapering comfortably along the wrist.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "22.000",
+    "size": "Standard",
+    "finish": "high-polish",
+    "image": "/assets/products/aparna-sculptural-open-gold-cuff/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "178000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [],
+    "craftsmanship": [
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "everyday-wear"
+    ]
+  },
+  {
+    "sku": "VEY-BR-003",
+    "product_code": "sanskriti-oxidised-silver-tribal-cuff",
+    "slug": "sanskriti-oxidised-silver-tribal-cuff",
+    "name": "Sanskriti Oxidised Silver Tribal Cuff",
+    "category": "Bracelets",
+    "description": "Broad tribal silver cuff featuring hand-embossed elephant processions and antique darkened recesses.",
+    "metal": "Silver",
+    "purity": "925",
+    "net_weight_g": "36.000",
+    "size": "Standard",
+    "finish": "oxidised-finish",
+    "image": "/assets/products/sanskriti-oxidised-silver-tribal-cuff/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "12800.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "oxidised-silver",
+    "additional_materials": [],
+    "craftsmanship": [
+      "handcrafted",
+      "antique-craft"
+    ],
+    "collections": [
+      "silver",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-BR-004",
+    "product_code": "nandini-diamond-line-station-bracelet",
+    "slug": "nandini-diamond-line-station-bracelet",
+    "name": "Nandini Diamond Line Station Bracelet",
+    "category": "Bracelets",
+    "description": "Bezel-set natural round diamonds interspersed on a fluid 18K solid yellow gold link chain.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "8.400",
+    "size": "Standard",
+    "finish": "high-polish",
+    "image": "/assets/products/nandini-diamond-line-station-bracelet/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "79000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "diamond"
+    ],
+    "craftsmanship": [
+      "stone-setting"
+    ],
+    "collections": [
+      "gold",
+      "everyday-wear"
+    ]
+  },
+  {
+    "sku": "VEY-BR-005",
+    "product_code": "riddhi-temple-kasu-gold-bracelet",
+    "slug": "riddhi-temple-kasu-gold-bracelet",
+    "name": "Riddhi Temple Kasu Gold Bracelet",
+    "category": "Bracelets",
+    "description": "Interlinked Lakshmi coins finished in warm antique gold with an authentic heritage safety lock.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "19.200",
+    "size": "Standard",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/riddhi-temple-kasu-gold-bracelet/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "158000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [],
+    "craftsmanship": [
+      "temple-craft",
+      "traditional-engraving"
+    ],
+    "collections": [
+      "gold",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-BR-006",
+    "product_code": "chhaya-sterling-silver-filigree-bracelet",
+    "slug": "chhaya-sterling-silver-filigree-bracelet",
+    "name": "Chhaya Sterling Silver Filigree Bracelet",
+    "category": "Bracelets",
+    "description": "Lacy floral medallions linked with delicate wire loops in bright 925 sterling silver.",
+    "metal": "Silver",
+    "purity": "925",
+    "net_weight_g": "15.800",
+    "size": "Standard",
+    "finish": "silver-finish",
+    "image": "/assets/products/chhaya-sterling-silver-filigree-bracelet/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "7200.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "silver",
+    "additional_materials": [],
+    "craftsmanship": [
+      "filigree"
+    ],
+    "collections": [
+      "silver",
+      "everyday-wear"
+    ]
+  },
+  {
+    "sku": "VEY-BR-007",
+    "product_code": "manjula-meenakari-peacock-link-bracelet",
+    "slug": "manjula-meenakari-peacock-link-bracelet",
+    "name": "Manjula Meenakari Peacock Link Bracelet",
+    "category": "Bracelets",
+    "description": "Enameled peacock links in rich royal blue and emerald hues connected by polished gold hinges.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "18.000",
+    "size": "Standard",
+    "finish": "polished-gold",
+    "image": "/assets/products/manjula-meenakari-peacock-link-bracelet/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "148000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "mixed-materials"
+    ],
+    "craftsmanship": [
+      "meenakari",
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "festive"
+    ]
+  },
+  {
+    "sku": "VEY-BR-008",
+    "product_code": "tara-minimal-gold-charm-bracelet",
+    "slug": "tara-minimal-gold-charm-bracelet",
+    "name": "Tara Minimal Gold Charm Bracelet",
+    "category": "Bracelets",
+    "description": "Fine 18K gold chain carrying dainty hanging coin, lotus, and freshwater pearl charms.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "7.500",
+    "size": "Standard",
+    "finish": "polished-gold",
+    "image": "/assets/products/tara-minimal-gold-charm-bracelet/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "62000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "pearl"
+    ],
+    "craftsmanship": [
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "everyday-wear"
+    ]
+  },
+  {
+    "sku": "VEY-BR-009",
+    "product_code": "gauri-antique-floral-linked-bracelet",
+    "slug": "gauri-antique-floral-linked-bracelet",
+    "name": "Gauri Antique Floral Linked Bracelet",
+    "category": "Bracelets",
+    "description": "Hand-carved floral rosettes studded with ruby cabochons linked by antique golden pivots.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "21.500",
+    "size": "Standard",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/gauri-antique-floral-linked-bracelet/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "176000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "gemstones"
+    ],
+    "craftsmanship": [
+      "antique-craft",
+      "temple-craft"
+    ],
+    "collections": [
+      "gold",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-BR-010",
+    "product_code": "avani-rose-gold-diamond-bangle-bracelet",
+    "slug": "avani-rose-gold-diamond-bangle-bracelet",
+    "name": "Avani Rose Gold Diamond Bangle-Bracelet",
+    "category": "Bracelets",
+    "description": "Hinged oval bangle-bracelet in 18K rose gold accented with an asymmetric diamond cluster.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "11.800",
+    "size": "Standard",
+    "finish": "rose-gold-finish",
+    "image": "/assets/products/avani-rose-gold-diamond-bangle-bracelet/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "94000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "diamond"
+    ],
+    "craftsmanship": [
+      "stone-setting"
+    ],
+    "collections": [
+      "gold",
+      "everyday-wear"
+    ]
+  },
+  {
+    "sku": "VEY-BK-001",
+    "product_code": "gajraj-antique-temple-nakshi-kada",
+    "slug": "gajraj-antique-temple-nakshi-kada",
+    "name": "Gajraj Antique Temple Nakshi Kada",
+    "category": "Bangles and Kada",
+    "description": "Heirloom openable temple kada chiseled with facing royal elephants holding an uncut ruby flower.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "45.000",
+    "size": "2.4",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/gajraj-antique-temple-nakshi-kada/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "372000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "gemstones"
+    ],
+    "craftsmanship": [
+      "nakshi",
+      "temple-craft"
+    ],
+    "collections": [
+      "gold",
+      "traditional",
+      "bridal"
+    ]
+  },
+  {
+    "sku": "VEY-BK-002",
+    "product_code": "kangan-traditional-solid-gold-bangles-pair",
+    "slug": "kangan-traditional-solid-gold-bangles-pair",
+    "name": "Kangan Traditional Solid Gold Bangles (Pair)",
+    "category": "Bangles and Kada",
+    "description": "Pair of classic solid 22K gold bangles with delicate micro-diamond cutting along the perimeter.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "32.000",
+    "size": "2.4",
+    "finish": "polished-gold",
+    "image": "/assets/products/kangan-traditional-solid-gold-bangles-pair/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "264000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [],
+    "craftsmanship": [
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-BK-003",
+    "product_code": "rajputana-kundan-openable-kada",
+    "slug": "rajputana-kundan-openable-kada",
+    "name": "Rajputana Kundan Openable Kada",
+    "category": "Bangles and Kada",
+    "description": "Grand royal bridal kada lined with foil-set Kundan diamonds and vivid red meenakari on the inner rim.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "38.500",
+    "size": "2.4",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/rajputana-kundan-openable-kada/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "315000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "gemstones"
+    ],
+    "craftsmanship": [
+      "kundan",
+      "jadau"
+    ],
+    "collections": [
+      "gold",
+      "bridal"
+    ]
+  },
+  {
+    "sku": "VEY-BK-004",
+    "product_code": "devyani-antique-filigree-kada",
+    "slug": "devyani-antique-filigree-kada",
+    "name": "Devyani Antique Filigree Kada",
+    "category": "Bangles and Kada",
+    "description": "Exquisite openwork filigree gold kada featuring intertwining vine motifs and a discreet screw clasp.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "28.000",
+    "size": "2.4",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/devyani-antique-filigree-kada/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "232000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [],
+    "craftsmanship": [
+      "filigree",
+      "antique-craft"
+    ],
+    "collections": [
+      "gold",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-BK-005",
+    "product_code": "veera-oxidised-silver-tribal-kada",
+    "slug": "veera-oxidised-silver-tribal-kada",
+    "name": "Veera Oxidised Silver Tribal Kada",
+    "category": "Bangles and Kada",
+    "description": "Heavy solid 925 sterling silver kada featuring sculpted makara mythical creature terminals.",
+    "metal": "Silver",
+    "purity": "925",
+    "net_weight_g": "42.000",
+    "size": "2.4",
+    "finish": "oxidised-finish",
+    "image": "/assets/products/veera-oxidised-silver-tribal-kada/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "14500.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "oxidised-silver",
+    "additional_materials": [],
+    "craftsmanship": [
+      "handcrafted",
+      "antique-craft"
+    ],
+    "collections": [
+      "silver",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-BK-006",
+    "product_code": "shree-lakshmi-kasu-temple-bangles-pair",
+    "slug": "shree-lakshmi-kasu-temple-bangles-pair",
+    "name": "Shree Lakshmi Kasu Temple Bangles (Pair)",
+    "category": "Bangles and Kada",
+    "description": "Pair of continuous gold coin bangles embossing Goddess Lakshmi within scalloped borders.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "36.500",
+    "size": "2.4",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/shree-lakshmi-kasu-temple-bangles-pair/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "298000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [],
+    "craftsmanship": [
+      "temple-craft"
+    ],
+    "collections": [
+      "gold",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-BK-007",
+    "product_code": "meenal-jaipur-meenakari-floral-kada",
+    "slug": "meenal-jaipur-meenakari-floral-kada",
+    "name": "Meenal Jaipur Meenakari Floral Kada",
+    "category": "Bangles and Kada",
+    "description": "Hand-painted enamel kada portraying lotus ponds and peacocks on a warm 22K gold foundation.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "31.200",
+    "size": "2.4",
+    "finish": "polished-gold",
+    "image": "/assets/products/meenal-jaipur-meenakari-floral-kada/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "256000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "mixed-materials"
+    ],
+    "craftsmanship": [
+      "meenakari",
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "festive"
+    ]
+  },
+  {
+    "sku": "VEY-BK-008",
+    "product_code": "tara-minimal-diamond-pav-bangle",
+    "slug": "tara-minimal-diamond-pav-bangle",
+    "name": "Tara Minimal Diamond Pavé Bangle",
+    "category": "Bangles and Kada",
+    "description": "Sleek oval bangle in 18K gold embedded with a single line of micro-pavé brilliant diamonds.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "14.000",
+    "size": "2.4",
+    "finish": "high-polish",
+    "image": "/assets/products/tara-minimal-diamond-pav-bangle/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "118000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "diamond"
+    ],
+    "craftsmanship": [
+      "stone-setting"
+    ],
+    "collections": [
+      "gold",
+      "everyday-wear"
+    ]
+  },
+  {
+    "sku": "VEY-BK-009",
+    "product_code": "chitralekha-polki-openable-kada",
+    "slug": "chitralekha-polki-openable-kada",
+    "name": "Chitralekha Polki Openable Kada",
+    "category": "Bangles and Kada",
+    "description": "Uncut Polki diamond florets bordered by green tourmaline cabochons in traditional pure gold collets.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "34.000",
+    "size": "2.4",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/chitralekha-polki-openable-kada/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "282000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "gemstones"
+    ],
+    "craftsmanship": [
+      "polki",
+      "jadau"
+    ],
+    "collections": [
+      "gold",
+      "bridal"
+    ]
+  },
+  {
+    "sku": "VEY-BK-010",
+    "product_code": "rukmini-matte-gold-patli-bangles-set-of-4",
+    "slug": "rukmini-matte-gold-patli-bangles-set-of-4",
+    "name": "Rukmini Matte Gold Patli Bangles (Set of 4)",
+    "category": "Bangles and Kada",
+    "description": "Set of four slender satin-finished 22K gold bangles engineered for smooth comfortable everyday stacking.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "28.800",
+    "size": "2.4",
+    "finish": "matte-finish",
+    "image": "/assets/products/rukmini-matte-gold-patli-bangles-set-of-4/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "238000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [],
+    "craftsmanship": [
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "everyday-wear",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-MN-001",
+    "product_code": "chandrika-kundan-bridal-maang-tikka",
+    "slug": "chandrika-kundan-bridal-maang-tikka",
+    "name": "Chandrika Kundan Bridal Maang Tikka",
+    "category": "Maang Tikka and Nath",
+    "description": "Crescent-shaped forehead ornament with multi-layered pearl chain, uncut Kundan stones, and emerald drops.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "12.800",
+    "size": "Standard",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/chandrika-kundan-bridal-maang-tikka/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "96000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "gemstones",
+      "pearl"
+    ],
+    "craftsmanship": [
+      "kundan",
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "bridal"
+    ]
+  },
+  {
+    "sku": "VEY-MN-002",
+    "product_code": "padmavati-royal-pearl-matha-patti",
+    "slug": "padmavati-royal-pearl-matha-patti",
+    "name": "Padmavati Royal Pearl Matha Patti",
+    "category": "Maang Tikka and Nath",
+    "description": "Opulent multi-tiered bridal hairline band draped with cultured pearls and floral Kundan medallions.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "26.400",
+    "size": "Standard",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/padmavati-royal-pearl-matha-patti/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "198000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "pearl",
+      "gemstones"
+    ],
+    "craftsmanship": [
+      "kundan",
+      "jadau"
+    ],
+    "collections": [
+      "gold",
+      "bridal"
+    ]
+  },
+  {
+    "sku": "VEY-MN-003",
+    "product_code": "kolhapuri-peshwai-pearl-nath",
+    "slug": "kolhapuri-peshwai-pearl-nath",
+    "name": "Kolhapuri Peshwai Pearl Nath",
+    "category": "Maang Tikka and Nath",
+    "description": "Sacred Maharashtrian cashew-shaped bridal nath strung with Basra pearls and red kempu gemstones.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "4.800",
+    "size": "Standard",
+    "finish": "polished-gold",
+    "image": "/assets/products/kolhapuri-peshwai-pearl-nath/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "42000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "pearl",
+      "gemstones"
+    ],
+    "craftsmanship": [
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "traditional",
+      "bridal"
+    ]
+  },
+  {
+    "sku": "VEY-MN-004",
+    "product_code": "noor-rajasthani-kundan-borla",
+    "slug": "noor-rajasthani-kundan-borla",
+    "name": "Noor Rajasthani Kundan Borla",
+    "category": "Maang Tikka and Nath",
+    "description": "Spherical Rajasthani Borla encrusted with Kundan stones and crowned with a delicate pearl hairline string.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "9.600",
+    "size": "Standard",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/noor-rajasthani-kundan-borla/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "74000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "gemstones",
+      "pearl"
+    ],
+    "craftsmanship": [
+      "kundan",
+      "meenakari"
+    ],
+    "collections": [
+      "gold",
+      "traditional",
+      "bridal"
+    ]
+  },
+  {
+    "sku": "VEY-MN-005",
+    "product_code": "anandi-clip-on-traditional-pearl-nath",
+    "slug": "anandi-clip-on-traditional-pearl-nath",
+    "name": "Anandi Clip-On Traditional Pearl Nath",
+    "category": "Maang Tikka and Nath",
+    "description": "Non-pierced traditional Maharashtrian clip-on nose jewel studded with lustrous pearls and green enamel.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "3.600",
+    "size": "Standard",
+    "finish": "polished-gold",
+    "image": "/assets/products/anandi-clip-on-traditional-pearl-nath/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "32000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "pearl"
+    ],
+    "craftsmanship": [
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-MN-006",
+    "product_code": "tarini-polki-minimal-maang-tikka",
+    "slug": "tarini-polki-minimal-maang-tikka",
+    "name": "Tarini Polki Minimal Maang Tikka",
+    "category": "Maang Tikka and Nath",
+    "description": "Lightweight geometric Polki forehead jewel on a single delicate gold hairline chain.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "7.200",
+    "size": "Standard",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/tarini-polki-minimal-maang-tikka/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "58000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [],
+    "craftsmanship": [
+      "polki"
+    ],
+    "collections": [
+      "gold",
+      "festive"
+    ]
+  },
+  {
+    "sku": "VEY-AP-001",
+    "product_code": "rupali-925-sterling-silver-bridal-payal-pair",
+    "slug": "rupali-925-sterling-silver-bridal-payal-pair",
+    "name": "Rupali 925 Sterling Silver Bridal Payal (Pair)",
+    "category": "Anklets and Payal",
+    "description": "Heirloom heavy sterling silver bridal payal pair with musical jingling ghungroo bells and floral clasp.",
+    "metal": "Silver",
+    "purity": "925",
+    "net_weight_g": "58.000",
+    "size": "Standard",
+    "finish": "silver-finish",
+    "image": "/assets/products/rupali-925-sterling-silver-bridal-payal-pair/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "21500.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "silver",
+    "additional_materials": [],
+    "craftsmanship": [
+      "handcrafted"
+    ],
+    "collections": [
+      "silver",
+      "bridal",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-AP-002",
+    "product_code": "apeksha-oxidised-silver-tribal-anklet",
+    "slug": "apeksha-oxidised-silver-tribal-anklet",
+    "name": "Apeksha Oxidised Silver Tribal Anklet",
+    "category": "Anklets and Payal",
+    "description": "Intricately patterned vintage Rajasthani oxidised silver ankle chain with geometric charm links.",
+    "metal": "Silver",
+    "purity": "925",
+    "net_weight_g": "38.000",
+    "size": "Standard",
+    "finish": "oxidised-finish",
+    "image": "/assets/products/apeksha-oxidised-silver-tribal-anklet/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "13800.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "oxidised-silver",
+    "additional_materials": [],
+    "craftsmanship": [
+      "handcrafted",
+      "antique-craft"
+    ],
+    "collections": [
+      "silver",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-AP-003",
+    "product_code": "kavita-delicate-925-silver-payal",
+    "slug": "kavita-delicate-925-silver-payal",
+    "name": "Kavita Delicate 925 Silver Payal",
+    "category": "Anklets and Payal",
+    "description": "Comfortable daily wear single sterling silver anklet with dainty hanging droplet charms.",
+    "metal": "Silver",
+    "purity": "925",
+    "net_weight_g": "22.000",
+    "size": "Standard",
+    "finish": "silver-finish",
+    "image": "/assets/products/kavita-delicate-925-silver-payal/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "8400.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "silver",
+    "additional_materials": [],
+    "craftsmanship": [
+      "handcrafted"
+    ],
+    "collections": [
+      "silver",
+      "everyday-wear"
+    ]
+  },
+  {
+    "sku": "VEY-AP-004",
+    "product_code": "tanvi-gold-plated-station-anklet",
+    "slug": "tanvi-gold-plated-station-anklet",
+    "name": "Tanvi Gold Plated Station Anklet",
+    "category": "Anklets and Payal",
+    "description": "24K gold-plated brass ankle chain dotted with freshwater pearl beads and secure lobster lock.",
+    "metal": "Brass",
+    "purity": "Gold Plated",
+    "net_weight_g": "14.000",
+    "size": "Standard",
+    "finish": "gold-plated",
+    "image": "/assets/products/tanvi-gold-plated-station-anklet/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "4800.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "brass",
+    "additional_materials": [
+      "pearl"
+    ],
+    "craftsmanship": [
+      "handcrafted"
+    ],
+    "collections": [
+      "festive",
+      "everyday-wear"
+    ]
+  },
+  {
+    "sku": "VEY-AP-005",
+    "product_code": "suhani-sterling-silver-ghungroo-payal-pair",
+    "slug": "suhani-sterling-silver-ghungroo-payal-pair",
+    "name": "Suhani Sterling Silver Ghungroo Payal (Pair)",
+    "category": "Anklets and Payal",
+    "description": "Classic silver anklet pair with rhythmic sounding bells handcrafted in authentic Kolhapuri tradition.",
+    "metal": "Silver",
+    "purity": "925",
+    "net_weight_g": "46.000",
+    "size": "Standard",
+    "finish": "silver-finish",
+    "image": "/assets/products/suhani-sterling-silver-ghungroo-payal-pair/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "17200.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "silver",
+    "additional_materials": [],
+    "craftsmanship": [
+      "handcrafted",
+      "traditional-engraving"
+    ],
+    "collections": [
+      "silver",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-JS-001",
+    "product_code": "aishwarya-imperial-kundan-bridal-parure-set",
+    "slug": "aishwarya-imperial-kundan-bridal-parure-set",
+    "name": "Aishwarya Imperial Kundan Bridal Parure Set",
+    "category": "Jewellery Sets",
+    "description": "Complete royal bridal parure comprising a grand choker, matching chandelier earrings, and maang tikka set with uncut Kundan and emeralds.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "68.000",
+    "size": "Standard",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/aishwarya-imperial-kundan-bridal-parure-set/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "580000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "gemstones",
+      "pearl"
+    ],
+    "craftsmanship": [
+      "kundan",
+      "jadau"
+    ],
+    "collections": [
+      "gold",
+      "bridal"
+    ]
+  },
+  {
+    "sku": "VEY-JS-002",
+    "product_code": "devaki-temple-heritage-choker-jhumka-set",
+    "slug": "devaki-temple-heritage-choker-jhumka-set",
+    "name": "Devaki Temple Heritage Choker & Jhumka Set",
+    "category": "Jewellery Sets",
+    "description": "Sacred temple choker accompanied by grand peacock jhumkas, chiseled in pure 22K gold with ruby accents.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "58.500",
+    "size": "Standard",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/devaki-temple-heritage-choker-jhumka-set/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "485000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "gemstones"
+    ],
+    "craftsmanship": [
+      "temple-craft",
+      "nakshi"
+    ],
+    "collections": [
+      "gold",
+      "traditional",
+      "bridal"
+    ]
+  },
+  {
+    "sku": "VEY-JS-003",
+    "product_code": "noorani-polki-diamond-celebration-set",
+    "slug": "noorani-polki-diamond-celebration-set",
+    "name": "Noorani Polki Diamond Celebration Set",
+    "category": "Jewellery Sets",
+    "description": "Scintillating Polki diamond necklace with matching tiered ear drops, set in antique-finished pure gold collets.",
+    "metal": "Gold",
+    "purity": "18K",
+    "net_weight_g": "62.000",
+    "size": "Standard",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/noorani-polki-diamond-celebration-set/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "540000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "gemstones"
+    ],
+    "craftsmanship": [
+      "polki",
+      "jadau"
+    ],
+    "collections": [
+      "gold",
+      "bridal",
+      "festive"
+    ]
+  },
+  {
+    "sku": "VEY-JS-004",
+    "product_code": "urmila-pastel-meenakari-festive-set",
+    "slug": "urmila-pastel-meenakari-festive-set",
+    "name": "Urmila Pastel Meenakari Festive Set",
+    "category": "Jewellery Sets",
+    "description": "Harmonious pastel peach and seafoam Meenakari necklace with matching button studs and floral details.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "44.000",
+    "size": "Standard",
+    "finish": "polished-gold",
+    "image": "/assets/products/urmila-pastel-meenakari-festive-set/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "365000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "mixed-materials",
+      "pearl"
+    ],
+    "craftsmanship": [
+      "meenakari",
+      "handcrafted"
+    ],
+    "collections": [
+      "gold",
+      "festive"
+    ]
+  },
+  {
+    "sku": "VEY-JS-005",
+    "product_code": "samyukta-antique-gold-rani-haar-bangles-set",
+    "slug": "samyukta-antique-gold-rani-haar-bangles-set",
+    "name": "Samyukta Antique Gold Rani Haar & Bangles Set",
+    "category": "Jewellery Sets",
+    "description": "Grand royal trousseau set uniting a long layered Rani Haar with a matching pair of heavy Nakshi temple kada.",
+    "metal": "Gold",
+    "purity": "22K",
+    "net_weight_g": "84.000",
+    "size": "Standard",
+    "finish": "antique-gold-finish",
+    "image": "/assets/products/samyukta-antique-gold-rani-haar-bangles-set/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "695000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "gold",
+    "additional_materials": [
+      "gemstones"
+    ],
+    "craftsmanship": [
+      "temple-craft",
+      "antique-craft"
+    ],
+    "collections": [
+      "gold",
+      "bridal",
+      "traditional"
+    ]
+  },
+  {
+    "sku": "VEY-JS-006",
+    "product_code": "tarkasi-silver-filigree-choker-earring-set",
+    "slug": "tarkasi-silver-filigree-choker-earring-set",
+    "name": "Tarkasi Silver Filigree Choker & Earring Set",
+    "category": "Jewellery Sets",
+    "description": "Lacy 925 sterling silver filigree choker set paired with matching teardrop danglers.",
+    "metal": "Silver",
+    "purity": "925",
+    "net_weight_g": "48.000",
+    "size": "Standard",
+    "finish": "silver-finish",
+    "image": "/assets/products/tarkasi-silver-filigree-choker-earring-set/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "24500.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "silver",
+    "additional_materials": [],
+    "craftsmanship": [
+      "filigree"
+    ],
+    "collections": [
+      "silver",
+      "festive"
+    ]
+  },
+  {
+    "sku": "VEY-JS-007",
+    "product_code": "shakuntala-tribal-oxidised-silver-bridal-set",
+    "slug": "shakuntala-tribal-oxidised-silver-bridal-set",
+    "name": "Shakuntala Tribal Oxidised Silver Bridal Set",
+    "category": "Jewellery Sets",
+    "description": "Complete tribal statement set featuring heavy hasli necklace, oversized chandbalis, and openable kada.",
+    "metal": "Silver",
+    "purity": "925",
+    "net_weight_g": "72.000",
+    "size": "Standard",
+    "finish": "oxidised-finish",
+    "image": "/assets/products/shakuntala-tribal-oxidised-silver-bridal-set/hero.webp",
+    "pricing_mode": "FIXED",
+    "fixed_price": "28000.00",
+    "making_flat": "0",
+    "making_percent": "0",
+    "stone_charge": "0",
+    "other_charge": "0",
+    "stock": 12,
+    "status": "published",
+    "supplier": "Veyora Heritage Atelier",
+    "primary_material": "oxidised-silver",
+    "additional_materials": [],
+    "craftsmanship": [
+      "handcrafted",
+      "antique-craft"
+    ],
+    "collections": [
+      "silver",
+      "traditional"
+    ]
+  }
+]

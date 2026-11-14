@@ -4,48 +4,103 @@ import { db, now } from '../server/db.js';
 
 export const categoriesData = [
   {
-    slug: 'earrings',
-    name: 'Earrings',
-    description: 'Luminous cultured pearl and gold earrings, drops, and studs designed for everyday wear and quiet luxury.',
-    thumbnail: '/assets/products/lune-pearl-drops/hero.webp',
-    banner: '/assets/banners/festive-silver-coins.webp',
-    status: 'active',
-    sort_order: 1,
-    seo_title: 'Fine Pearl & Gold Earrings | Veyora Jewels',
-    meta_description: 'Handcrafted gold and pearl earrings, studs, and drops designed to be worn close every day.'
-  },
-  {
     slug: 'necklaces',
     name: 'Necklaces',
-    description: 'Handcrafted gold collars, pearl strands, and delicate pendants made to rest gracefully near the heart.',
+    description: 'Handcrafted gold collars, Kundan chokers, temple harams, and delicate pendants made to rest gracefully near the heart.',
     thumbnail: '/assets/products/atelier-pearl-collar/hero.webp',
     banner: '/assets/banners/festive-silver-coins.webp',
     status: 'active',
+    sort_order: 1,
+    seo_title: 'Handcrafted Gold, Kundan & Pearl Necklaces | Veyora Jewels',
+    meta_description: 'Discover solid gold, Kundan, Polki, and heirloom necklaces crafted with timeless artistry.'
+  },
+  {
+    slug: 'mangalsutra',
+    name: 'Mangalsutra',
+    description: 'Sacred black bead chains paired with auspicious gold, diamond, and Maharashtrian vati pendants.',
+    thumbnail: '/assets/products/lune-pearl-drops/hero.webp',
+    banner: '/assets/banners/festive-silver-coins.webp',
+    status: 'active',
     sort_order: 2,
-    seo_title: 'Handcrafted Pearl Necklaces & Chokers | Veyora Jewels',
-    meta_description: 'Discover solid gold and pearl necklaces crafted with timeless restraint and beauty.'
+    seo_title: 'Sacred Gold & Diamond Mangalsutras | Veyora Jewels',
+    meta_description: 'Traditional and modern everyday mangalsutras celebrating eternal union.'
+  },
+  {
+    slug: 'earrings',
+    name: 'Earrings',
+    description: 'Traditional jhumkas, royal chandbalis, Kundan studs, and luminous pearls designed for celebratory and everyday grace.',
+    thumbnail: '/assets/products/lune-pearl-drops/hero.webp',
+    banner: '/assets/banners/festive-silver-coins.webp',
+    status: 'active',
+    sort_order: 3,
+    seo_title: 'Fine Jhumkas, Chandbalis & Gold Earrings | Veyora Jewels',
+    meta_description: 'Handcrafted gold, Kundan, and pearl earrings, studs, and drops designed for radiant presence.'
   },
   {
     slug: 'rings',
     name: 'Rings',
-    description: 'Signature pearl rings and everyday bands in solid 18K gold. An understated signature for your hands.',
+    description: 'Signature gold bands, Kundan cocktail rings, gemstone solitaires, and antique royal statements.',
     thumbnail: '/assets/products/eclipse-ring/hero.webp',
     banner: '/assets/banners/festive-silver-coins.webp',
     status: 'active',
-    sort_order: 3,
-    seo_title: 'Signature Gold & Pearl Rings | Veyora Jewels',
-    meta_description: 'Solid gold rings featuring luminous cultured pearls, designed for effortless daily wear.'
+    sort_order: 4,
+    seo_title: 'Signature Gold, Kundan & Gemstone Rings | Veyora Jewels',
+    meta_description: 'Solid gold rings featuring royal uncut polki, kundan, and gemstones for effortless daily luxury.'
   },
   {
     slug: 'bracelets',
     name: 'Bracelets',
-    description: 'Sculptural open cuffs, tennis bracelets, and pearl station chains tailored for modern elegance.',
+    description: 'Sculptural open cuffs, tennis link bracelets, and station chains tailored for modern elegance.',
     thumbnail: '/assets/products/nocturne-cuff/hero.webp',
     banner: '/assets/banners/festive-silver-coins.webp',
     status: 'active',
-    sort_order: 4,
-    seo_title: 'Gold & Pearl Cuffs and Bracelets | Veyora Jewels',
-    meta_description: 'Artisanal gold cuffs and pearl bracelets made to be worn alone or thoughtfully layered.'
+    sort_order: 5,
+    seo_title: 'Gold & Silver Cuffs and Bracelets | Veyora Jewels',
+    meta_description: 'Artisanal gold cuffs and delicate bracelets made to be worn alone or thoughtfully layered.'
+  },
+  {
+    slug: 'bangles-and-kada',
+    name: 'Bangles and Kada',
+    description: 'Heritage temple kada, solid gold bangles, and openable filigree cuffs carrying hereditary karigar motifs.',
+    thumbnail: '/assets/products/nocturne-cuff/hero.webp',
+    banner: '/assets/banners/festive-silver-coins.webp',
+    status: 'active',
+    sort_order: 6,
+    seo_title: 'Traditional Gold Bangles & Temple Kada | Veyora Jewels',
+    meta_description: 'Discover handcrafted gold bangles, Nakshi temple kada, and antique cuffs.'
+  },
+  {
+    slug: 'maang-tikka-and-nath',
+    name: 'Maang Tikka and Nath',
+    description: 'Regal forehead ornaments, pearl matha pattis, and traditional Maharashtrian clip-on and pierced naths.',
+    thumbnail: '/assets/products/atelier-pearl-collar/hero.webp',
+    banner: '/assets/banners/festive-silver-coins.webp',
+    status: 'active',
+    sort_order: 7,
+    seo_title: 'Bridal Maang Tikka & Traditional Nath | Veyora Jewels',
+    meta_description: 'Exquisite bridal maang tikkas, borlas, and traditional pearl naths.'
+  },
+  {
+    slug: 'anklets-and-payal',
+    name: 'Anklets and Payal',
+    description: 'Lustrous 925 sterling silver payal, antique oxidised tribal anklets, and delicate gold station ankle chains.',
+    thumbnail: '/assets/products/nocturne-cuff/hero.webp',
+    banner: '/assets/banners/festive-silver-coins.webp',
+    status: 'active',
+    sort_order: 8,
+    seo_title: '925 Silver Payal & Traditional Anklets | Veyora Jewels',
+    meta_description: 'Heirloom sterling silver payal, ghungroo anklets, and minimalist designs.'
+  },
+  {
+    slug: 'jewellery-sets',
+    name: 'Jewellery Sets',
+    description: 'Complete ceremonial Kundan, Temple and Polki bridal parures uniting necklace, matching earrings, and maang tikka.',
+    thumbnail: '/assets/products/atelier-pearl-collar/hero.webp',
+    banner: '/assets/banners/festive-silver-coins.webp',
+    status: 'active',
+    sort_order: 9,
+    seo_title: 'Complete Bridal & Festive Jewellery Sets | Veyora Jewels',
+    meta_description: 'Imperial Kundan and Temple bridal jewellery sets for auspicious celebrations.'
   },
   {
     slug: 'coins',
@@ -54,9 +109,20 @@ export const categoriesData = [
     thumbnail: '/assets/coins/coin-au-1g/hero.webp',
     banner: '/assets/banners/festive-silver-coins.webp',
     status: 'active',
-    sort_order: 5,
+    sort_order: 10,
     seo_title: 'Investment Bullion Coins – 24K Gold & 999 Silver | Veyora Jewels',
     meta_description: 'Buy certified 24K gold and 999 silver coins with live market rates and zero hidden charges.'
+  },
+  {
+    slug: 'kurtas',
+    name: 'Chicken Curry Kurtas',
+    description: 'Authentic handcrafted Lucknowi Chikankari kurtas in breathable pure mulmul cotton, chanderi, and georgette.',
+    thumbnail: '/assets/products/lucknowi-ivory-chikankari-cotton-kurta/hero.webp',
+    banner: '/assets/banners/festive-silver-coins.webp',
+    status: 'active',
+    sort_order: 11,
+    seo_title: 'Handcrafted Lucknowi Chikankari Kurtas | Veyora Jewels',
+    meta_description: 'Discover pure cotton and georgette Chikankari kurtas across sizes XS to XXXL.'
   }
 ];
 
@@ -99,17 +165,5 @@ export async function CategorySeeder(k = db) {
     }
 
     return { inserted, updated, total: categoriesData.length };
-  });
-}
-
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  try {
-    const res = await CategorySeeder();
-    console.log('CategorySeeder complete:', JSON.stringify(res, null, 2));
-  } catch (err) {
-    console.error('CategorySeeder failed:', err);
-    process.exitCode = 1;
-  } finally {
-    await db.destroy();
-  }
+  }, k.client.config.client === 'mysql2' ? { isolationLevel: 'read committed' } : {});
 }

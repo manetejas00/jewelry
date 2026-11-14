@@ -1,0 +1,4 @@
+slug,name,description,thumbnail,status,sort_order
+gold,Gold,Precious gold of standard 22K and 18K hallmarks,/assets/materials/gold.webp,active,1
+silver,Silver,Fine 999 bullion silver and 925 hallmarked sterling jewellery silver,/assets/materials/silver.webp,active,2
+pearl,Pearl,Luminous cultured freshwater and South Sea baroque pearls,/assets/materials/pearl.webp,active,4

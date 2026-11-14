@@ -36,6 +36,10 @@ import {purgeRetainedChats} from './chat/service.js';
 import {listActiveCategories,categoryBySlug,adminListCategories,createCategory,updateCategory,deleteCategory} from './categories.js';
 import {listKurtas,kurtaBySlug,adminListKurtas,createKurta,updateKurta,deleteKurta} from './kurtas.js';
 import {registerPwa} from './pwa.js';
+import {registerMaterialRoutes} from './materials.js';
+import {registerCraftsmanshipRoutes} from './craftsmanship.js';
+import {registerCollectionRoutes} from './collections.js';
+import {registerRecommendationRoutes} from './recommendations.js';
 import {
   getProductReviews,
   submitReview,
@@ -741,12 +745,12 @@ app.delete('/api/admin/reviews/:id', auth(['owner', 'manager']), route(async (re
   res.json(result);
 }));
 
-app.get('/api/admin/samples/:file',auth(),(req,res)=>{const allowed=['gold-rates-template.csv','gold-rates-example.csv','products-template.csv','products-example.csv','coins-template.csv','coins-example.csv','kurtas-template.csv','kurtas-example.csv','import-errors-example.csv'];if(!allowed.includes(req.params.file))return res.sendStatus(404);res.download(path.resolve('samples',req.params.file));});
+app.get('/api/admin/samples/:file',auth(),(req,res)=>{const allowed=['gold-rates-template.csv','gold-rates-example.csv','products-template.csv','products-example.csv','coins-template.csv','coins-example.csv','kurtas-template.csv','kurtas-example.csv','import-errors-example.csv','jewellery-template.csv','jewellery-example.csv','gold-jewellery-template.csv','gold-jewellery-example.csv','silver-jewellery-template.csv','silver-jewellery-example.csv','kurta-designs-template.csv','kurta-designs-example.csv','kurta-variants-template.csv','kurta-variants-example.csv','materials-template.csv','materials-example.csv','craftsmanship-template.csv','craftsmanship-example.csv','collections-template.csv','collections-example.csv'];if(!allowed.includes(req.params.file))return res.sendStatus(404);res.download(path.resolve('samples',req.params.file));});
 app.post('/api/admin/orders/:id/status',auth(['owner','manager']),route(async(req,res)=>{const result=await updateOrderStatus(db,req.params.id,req.body.status);await audit(req,'order_status',{id:req.params.id,status:result.status});res.json(result);}));
 app.get('/api/admin/staff',auth(['owner']),route(async(req,res)=>res.json(await db('staff').select('id','email','role','disabled_at').orderBy('id'))));
 app.post('/api/admin/staff',auth(['owner']),route(async(req,res)=>{const created=await createStaff(db,req.body);await audit(req,'staff_created',{id:created.id,email:created.email,role:created.role});res.status(201).json(created);}));
 app.post('/api/admin/staff/:id/access',auth(['owner']),route(async(req,res)=>{const result=await setStaffAccess(db,req.session.staff.id,req.params.id,req.body.disabled===true);await audit(req,'staff_access',result);res.json(result);}));
-app.get('/api/admin/export/:kind',auth(),route(async(req,res)=>{const k=req.params.kind,d=new Date().toISOString().slice(0,10);if(k==='orders'&&req.session.staff.role==='viewer')return res.status(403).json({error:'Order export requires a manager'});if(k==='products'){const rows=await db('products').orderBy('product_code');return res.type('text/csv').attachment(`products-${d}.csv`).send(exportCsv('products',rows));}if(k==='coins'){const rows=await db('coins').orderBy('id','desc');return res.type('text/csv').attachment(`coins-${d}.csv`).send(exportCsv('coins',rows));}if(k==='kurtas'){const rows=await db('products').where(function(){this.where({is_kurta:true}).orWhere({category:'Chicken Curry Kurtas'}).orWhere('category','like','%Kurta%');}).orderBy('product_code').orderBy('sku');return res.type('text/csv').attachment(`kurtas-${d}.csv`).send(exportCsv('kurtas',rows));}if(k==='gold'){const rows=await db('rates').orderBy('id','desc');return res.type('text/csv').attachment(`gold-rates-${d}.csv`).send(exportCsv('gold',rows));}if(k==='orders'){const rows=await db('orders').orderBy('created_at','desc');return res.type('text/csv').attachment(`orders-${d}.csv`).send(ordersCsv(rows));}res.sendStatus(404);}));
+app.get('/api/admin/export/:kind',auth(),route(async(req,res)=>{const k=req.params.kind,d=new Date().toISOString().slice(0,10);if(k==='orders'&&req.session.staff.role==='viewer')return res.status(403).json({error:'Order export requires a manager'});if(k==='products'||k==='jewellery'){const rows=await db('products').where(k==='jewellery'?{is_kurta:0}:{}).orderBy('product_code');return res.type('text/csv').attachment(`${k}-${d}.csv`).send(exportCsv('products',rows));}if(k==='coins'){const rows=await db('coins').orderBy('id','desc');return res.type('text/csv').attachment(`coins-${d}.csv`).send(exportCsv('coins',rows));}if(k==='kurtas'){const rows=await db('products').where(function(){this.where({is_kurta:true}).orWhere({category:'Chicken Curry Kurtas'}).orWhere('category','like','%Kurta%');}).orderBy('product_code').orderBy('sku');return res.type('text/csv').attachment(`kurtas-${d}.csv`).send(exportCsv('kurtas',rows));}if(k==='gold'){const rows=await db('rates').orderBy('id','desc');return res.type('text/csv').attachment(`gold-rates-${d}.csv`).send(exportCsv('gold',rows));}if(k==='orders'){const rows=await db('orders').orderBy('created_at','desc');return res.type('text/csv').attachment(`orders-${d}.csv`).send(ordersCsv(rows));}res.sendStatus(404);}));
 app.post('/api/admin/import/preview',auth(['owner','manager']),route(async(req,res)=>{if(typeof req.body.csv!=='string')throw validationError('Upload a UTF-8 CSV file');res.json(await previewImport(db,req.body.kind,req.body.csv,req.session.staff.id));}));
 app.post('/api/admin/import/:id/publish',auth(['owner','manager']),route(async(req,res)=>{const out=await publishImport(db,Number(req.params.id),req.session.staff.id);invalidateSearchCache();return res.json(out);}));
 app.get('/api/admin/import/:id/errors',auth(),route(async(req,res)=>{res.type('text/csv').attachment(`batch-${req.params.id}-errors.csv`).send(errorCsv(await db('import_errors').where({batch_id:req.params.id})));}));
@@ -846,6 +850,10 @@ app.post('/api/admin/ai/drafts/:id/approve',auth(['owner','manager']),route(asyn
 app.post('/api/admin/ai/drafts/:id/reject',auth(['owner','manager']),route(async(req,res)=>res.json(await rejectCatalogueDraft(db,Number(req.params.id),req.session.staff.id))));
 registerCustomerAdminRoutes(app,{db,route,auth});
 registerChatRoutes(app,{db,route,auth,rateLimit});
+registerMaterialRoutes(app,{db,route,auth});
+registerCraftsmanshipRoutes(app,{db,route,auth});
+registerCollectionRoutes(app,{db,route,auth});
+registerRecommendationRoutes(app,{db,route,auth});
 registerSeo(app,db,{preview,route});
 app.use('/api',(req,res)=>res.status(404).json({error:'API endpoint not found'}));
 registerPwa(app,{production});
