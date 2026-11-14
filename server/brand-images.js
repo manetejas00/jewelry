@@ -54,12 +54,7 @@ export async function brandedImageFile(source,{publicDir,uploadsDir,cacheDir,pub
    const chunks=[];let size=0;for await(const chunk of response.body){size+=chunk.length;if(size>8*1024*1024)throw Error('Image too large');chunks.push(chunk)}buffer=Buffer.concat(chunks);
   }
   const base=await sharp(buffer,{limitInputPixels:40000000,pages:1}).rotate().resize({width:1920,height:1920,fit:'inside',withoutEnlargement:true}).toBuffer();
-  const {width,height}=await sharp(base).metadata();
-  const markWidth=Math.max(1,Math.min(width,Math.floor(height*1.5),Math.max(24,Math.min(200,Math.round(width*.20)))));
-  const {data:opacity,info:meta}=await sharp(logo).resize({width:markWidth}).ensureAlpha().raw().toBuffer({resolveWithObject:true});
-  for(let i=3;i<opacity.length;i+=4)opacity[i]=Math.round(opacity[i]*.48);
-  const input=await sharp(opacity,{raw:{width:meta.width,height:meta.height,channels:4}}).png().toBuffer();
-  const output=await sharp(base).composite([{input,left:Math.max(0,width-markWidth-Math.round(Math.min(width,height)*.12)),top:Math.max(0,height-meta.height-Math.round(Math.min(width,height)*.12))}]).webp({quality:86}).toBuffer();
+  const output=await sharp(base).webp({quality:86}).toBuffer();
   await fs.mkdir(cacheDir,{recursive:true});const temp=target+'.'+crypto.randomUUID()+'.tmp';try{await fs.writeFile(temp,output);await fs.rename(temp,target)}finally{await fs.unlink(temp).catch(()=>{})}return target;
  });
  queue=job.catch(()=>{});pending.set(key,job);try{return await job}finally{pending.delete(key)}

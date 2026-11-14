@@ -2588,7 +2588,7 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
 .modal-backdrop,.admin-modal-backdrop,.review-photo-lightbox,.image-viewer{top:var(--overlay-viewport-top,0px);bottom:var(--overlay-viewport-bottom,0px)}
 @media(max-width:700px){.veyora-chat-panel{height:min(var(--overlay-viewport-height,100dvh),720px);bottom:var(--overlay-viewport-bottom,0px)}}
 
-/* Approved VJ identity; media watermarks are baked into cached derivatives. */
+/* Approved VJ brand identity */
 .brand .brand-logo{display:block;width:150px;height:100px;object-fit:contain;flex-shrink:0}
 footer .brand .brand-logo{width:180px;height:120px}
 .admin-sidebar .brand .brand-logo{width:170px;height:80px;background:var(--ivory)}
@@ -2596,7 +2596,6 @@ footer .brand .brand-logo{width:180px;height:120px}
 img.is-brand-fallback{object-fit:contain!important;background:#f8f6f0}
 @media(max-width:800px){.header .brand .brand-logo{width:104px;height:74px}}
 .chat-brand-logo{display:block;width:75px;height:50px;object-fit:contain;background:#f8f6f0}
-.hero-photo:has(video.is-active)::before{content:"";position:absolute;right:12%;bottom:12%;width:clamp(64px,12vw,180px);aspect-ratio:3/2;background:url('/assets/brand/logo.webp') center/contain no-repeat;opacity:.48;pointer-events:none;z-index:3}
 .veyora-chat-usage{margin:0;border:0}
 .veyora-chat-usage>summary{display:flex;align-items:center;justify-content:space-between;gap:8px;list-style:none;cursor:pointer;font-size:12px}
 .veyora-chat-usage>summary::-webkit-details-marker{display:none}
