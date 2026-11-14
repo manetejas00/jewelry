@@ -30,9 +30,10 @@ export async function updateOrderStatus(k, id, status) {
    for (const item of items) {
     const product = await t('products').where({sku: item.sku}).first();
     if (product) await t('products').where({sku: item.sku}).increment('stock', item.quantity);
-    else if (await t.schema.hasTable('coins')) {
-     const coin = await t('coins').where({sku: item.sku}).first();
-     if (coin) await t('coins').where({sku: item.sku}).increment('stock', item.quantity);
+    else if (await t.schema.hasTable('coins') && (await t('coins').where({sku: item.sku}).first())) {
+     await t('coins').where({sku: item.sku}).increment('stock', item.quantity);
+    } else if (await t.schema.hasTable('combos') && (await t('combos').where({sku: item.sku}).first())) {
+     await t('combos').where({sku: item.sku}).increment('stock', item.quantity);
     }
    }
   }
@@ -51,12 +52,16 @@ export async function checkout(k,{items,token,customer,idempotencyKey,paymentMod
  const skus=items.map(i=>i.sku);
  await t('products').whereIn('sku',skus).orderBy('sku').forUpdate();
  if(await t.schema.hasTable('coins'))await t('coins').whereIn('sku',skus).orderBy('sku').forUpdate();
+ if(await t.schema.hasTable('combos'))await t('combos').whereIn('sku',skus).orderBy('sku').forUpdate();
  const fresh=await quote(t,items,{code:offerCode||null});if(fresh.token!==token){const e=validationError('The price has changed. Please review and accept the updated total.');e.status=409;e.quote=fresh;throw e;}
  const id=`VEY-${crypto.randomBytes(6).toString('hex').toUpperCase()}`;
  for(const line of fresh.lines){
   let updated=await t('products').where({sku:line.sku}).where('stock','>=',line.quantity).decrement('stock',line.quantity);
   if(updated!==1&&await t.schema.hasTable('coins')){
    updated=await t('coins').where({sku:line.sku}).where('stock','>=',line.quantity).decrement('stock',line.quantity);
+  }
+  if(updated!==1&&await t.schema.hasTable('combos')){
+   updated=await t('combos').where({sku:line.sku}).where('stock','>=',line.quantity).decrement('stock',line.quantity);
   }
   if(updated!==1)throw validationError('Stock changed. Please review your bag.');
  }

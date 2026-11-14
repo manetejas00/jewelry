@@ -1,26 +1,73 @@
 import {pricedProductBySlug,pricedCoinBySku} from './pricing.js';
+import {comboBySlug} from './combos.js';
+
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const origin=()=>new URL(process.env.APP_URL||'http://localhost:3000').origin;
+
 export async function pageMetadata(k,pathname){
  const brand=process.env.BRAND_NAME||'Veyora Jewels';
- let title=brand+' — Objects of quiet beauty',description='Discover jewellery and gold and silver coins from '+brand+'.',status=200,indexable=true,image,product;
+ let title=brand+' — Objects of quiet beauty',description='Discover jewellery, Chicken Curry kurtas, and curated combos from '+brand+'.',status=200,indexable=true,image,product;
  if(pathname.startsWith('/products/'))product=await pricedProductBySlug(k,decodeURIComponent(pathname.slice(10)));
  else if(pathname.startsWith('/coins/product/'))product=await pricedCoinBySku(k,decodeURIComponent(pathname.slice(15)));
- const labels={'/':'','/collections/all':'All jewellery','/collections/pearls':'The Pearl Edit','/collections/rings':'Rings','/collections/earrings':'Earrings','/collections/necklaces':'Necklaces','/collections/bracelets':'Bracelets','/coins':'Gold & silver coins','/coins/gold':'Gold coins','/coins/silver':'Silver coins','/information/shipping':'Shipping information','/information/care':'Jewellery care','/information/returns':'Returns information','/information/contact':'Contact','/information/about':'About Veyora','/information/privacy':'Privacy policy','/information/terms':'Terms and conditions'};
- if(product){title=product.seo_title||product.name+' | '+brand;description=product.meta_description||String(product.description||product.name).slice(0,160);image=product.image;}
+ else if(pathname.startsWith('/combos/')){
+   const c=await comboBySlug(k,decodeURIComponent(pathname.slice(8)));
+   if(c){product={...c,image:c.image_url||c.thumbnail};}
+ }
+ const labels={'/':'','/collections/all':'All jewellery','/collections/pearls':'The Pearl Edit','/collections/rings':'Rings','/collections/earrings':'Earrings','/collections/necklaces':'Necklaces','/collections/bracelets':'Bracelets','/combos':'Curated Combos & Sets','/coins':'Gold & silver coins','/coins/gold':'Gold coins','/coins/silver':'Silver coins','/information/shipping':'Shipping information','/information/care':'Jewellery care','/information/returns':'Returns information','/information/contact':'Contact','/information/about':'About Veyora','/information/privacy':'Privacy policy','/information/terms':'Terms and conditions'};
+ if(product){title=product.seo_title||product.name+' | '+brand;description=product.meta_description||String(product.description||product.name).slice(0,160);image=product.image||product.thumbnail;}
  else if(pathname==='/collections/saved'){title='Your saved pieces | '+brand;indexable=false;}
  else if(pathname in labels){if(labels[pathname])title=labels[pathname]+' | '+brand;}
+ else if(pathname.startsWith('/collections/')){
+   const catSlug=pathname.slice(13);
+   const cat=await k.schema.hasTable('categories')?await k('categories').where({slug:catSlug,status:'active'}).first():null;
+   if(cat){
+     title=cat.seo_title||cat.meta_title||(cat.name+' | '+brand);
+     description=cat.meta_description||cat.description||description;
+     image=cat.banner||cat.banner_url||cat.thumbnail;
+   }else{
+     title='Collection | '+brand;
+   }
+ }
  else if(/^\/(account|admin|bag|checkout|order)(\/|$)/.test(pathname)){title='Your account and orders | '+brand;indexable=false;}
  else{title='Page not found | '+brand;indexable=false;status=404;}
  return {title,description,status,indexable:indexable&&process.env.NODE_ENV==='production'&&process.env.MERCHANT_READY==='true',url:origin()+pathname,path:pathname,image,product};
 }
+
 export function renderMetadata(html,meta){
  const tags=[`<link rel="canonical" href="${escape(meta.url)}">`,`<meta name="robots" content="${meta.indexable?'index,follow':'noindex,nofollow'}">`,`<meta property="og:type" content="${meta.product?'product':'website'}">`,...['title','description','url','image'].filter(key=>meta[key]).map(key=>`<meta property="og:${key}" content="${escape(key==='image'?new URL(meta[key],origin()).href:meta[key])}">`),'<meta name="twitter:card" content="summary_large_image">'];
  if(meta.path==='/'){const org={'@context':'https://schema.org','@type':'JewelryStore',name:process.env.BRAND_NAME||'Veyora Jewels',url:origin(),areaServed:'IN',currenciesAccepted:'INR'};if(process.env.MERCHANT_EMAIL)org.email=process.env.MERCHANT_EMAIL;tags.push(`<script type="application/ld+json">${JSON.stringify(org).replace(/</g,'\\u003c')}</script>`);}
  if(meta.product){const p=meta.product;const schema={'@context':'https://schema.org','@type':'Product',name:p.name,description:meta.description,sku:p.sku,image:meta.image?new URL(meta.image,origin()).href:undefined,url:meta.url,brand:{'@type':'Brand',name:process.env.BRAND_NAME||'Veyora Jewels'}};if(Number.isFinite(p.price))schema.offers={'@type':'Offer',priceCurrency:'INR',price:p.price,url:meta.url,availability:'https://schema.org/'+(p.checkout_available?'InStock':'OutOfStock')};tags.push(`<script type="application/ld+json">${JSON.stringify(schema).replace(/</g,'\\u003c')}</script>`);}
  return html.replace(/<title>.*?<\/title>/s,`<title>${escape(meta.title)}</title>`).replace(/<meta name="description"[^>]*>/,`<meta name="description" content="${escape(meta.description)}">`).replace('</head>',tags.join('')+'</head>');
 }
+
 export function registerSeo(app,k,{preview,route}){
  app.get('/robots.txt',(req,res)=>res.type('text/plain').send(preview||process.env.MERCHANT_READY!=='true'?'User-agent: *\nDisallow: /\n':`User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /admin\nDisallow: /account\nDisallow: /checkout\nDisallow: /bag\nDisallow: /order/\nSitemap: ${origin()}/sitemap.xml\n`));
- app.get('/sitemap.xml',route(async(req,res)=>{const products=await k('products').where({status:'published'}).select('slug','updated_at'),coins=await k.schema.hasTable('coins')?await k('coins').where({status:'published'}).select('sku','updated_at'):[];const dated=[['/',''] ,['/collections/all',''],['/collections/pearls',''],['/collections/rings',''],['/collections/earrings',''],['/collections/necklaces',''],['/collections/bracelets',''],['/coins',''],['/information/shipping',''],['/information/care',''],['/information/returns',''],['/information/contact',''],['/information/about',''],['/information/privacy',''],['/information/terms',''],...products.map(p=>['/products/'+encodeURIComponent(p.slug),String(p.updated_at||'').slice(0,10)]),...coins.map(c=>['/coins/product/'+encodeURIComponent(c.sku),String(c.updated_at||'').slice(0,10)])];const seen=new Set();const urls=dated.filter(([path])=>seen.has(path)?false:seen.add(path));res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map(([path,mod])=>'<url><loc>'+escape(origin()+path)+'</loc>'+(mod?'<lastmod>'+escape(mod)+'</lastmod>':'')+'</url>').join('')}</urlset>`);}));
+ app.get('/sitemap.xml',route(async(req,res)=>{
+   const products=await k('products').where({status:'published'}).select('slug','updated_at');
+   const coins=await k.schema.hasTable('coins')?await k('coins').where({status:'published'}).select('sku','updated_at'):[];
+   const combos=await k.schema.hasTable('combos')?await k('combos').where({status:'published'}).select('slug','updated_at'):[];
+   const cats=await k.schema.hasTable('categories')?await k('categories').where({status:'active'}).select('slug','updated_at'):[];
+   const dated=[
+     ['/',''],
+     ['/collections/all',''],
+     ['/combos',''],
+     ['/coins',''],
+     ['/coins/gold',''],
+     ['/coins/silver',''],
+     ['/information/shipping',''],
+     ['/information/care',''],
+     ['/information/returns',''],
+     ['/information/contact',''],
+     ['/information/about',''],
+     ['/information/privacy',''],
+     ['/information/terms',''],
+     ...cats.map(c=>['/collections/'+encodeURIComponent(c.slug),String(c.updated_at||'').slice(0,10)]),
+     ...products.map(p=>['/products/'+encodeURIComponent(p.slug),String(p.updated_at||'').slice(0,10)]),
+     ...combos.map(cb=>['/combos/'+encodeURIComponent(cb.slug),String(cb.updated_at||'').slice(0,10)]),
+     ...coins.map(c=>['/coins/product/'+encodeURIComponent(c.sku),String(c.updated_at||'').slice(0,10)])
+   ];
+   const seen=new Set();
+   const urls=dated.filter(([path])=>seen.has(path)?false:seen.add(path));
+   res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map(([path,mod])=>'<url><loc>'+escape(origin()+path)+'</loc>'+(mod?'<lastmod>'+escape(mod)+'</lastmod>':'')+'</url>').join('')}</urlset>`);
+ }));
 }

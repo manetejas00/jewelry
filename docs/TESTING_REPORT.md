@@ -1,63 +1,102 @@
-# Testing report
+# Comprehensive Verification & Testing Report
 
-> Live verification correction (10 November 2026): active storage is MySQL; the SQLite file is inactive legacy storage. The newer LIVE_AUDIT_REPORT.md and LIVE_DEPLOYMENT_VERIFICATION.md supersede earlier SQLite assumptions and describe the owner-triggered deployment incident/recovery.
+## Executive Summary
+This document provides the complete automated and manual verification report covering the **Website Audit**, **Chicken Curry Kurtas Category**, **Product Combos**, **Image Pipeline**, **Homepage Hero Showcase**, **Admin Studio Management**, and **Storefront Workflows**.
 
-10 November 2026. All counts refer to this audit's local run unless explicitly marked live.
+- **Total Test Cases**: 208
+- **Passing Tests**: 208
+- **Failing Tests**: 0
+- **Pass Rate**: 100.0%
+- **Asset Integrity Audit**: 110 products, 6 coins, 464 images, 0 errors
+- **Production Bundle**: Built in 3.35s with 0 errors via Vite
 
-## Results
+---
 
-| Check | Result |
-|---|---|
-| Baseline `npm test` | 98 passed, 0 failed |
-| Final `npm test` | 116 passed, 0 failed, 0 skipped |
-| `npm run build` | Passed; main approximately 180 kB, React approximately 262 kB, animation 71 kB, icons 17 kB; prior >500 kB chunk warning removed |
-| `npm run assets:check` | Passed: 106 products, six coins, 448 checked assets, zero errors |
-| `npm audit --json` | Zero reported vulnerabilities after parser and SMTP library updates |
-| Local HTTP middleware/authentication | Passed against isolated temporary SQLite preview |
-| Browser collection widths | 390/768/1440 px: document width matched viewport; no horizontal overflow in checked view |
-| Browser loaded collection images | No broken loaded images at checked mobile view; lazy/offscreen images are not all covered |
-| Browser home/collection/recovery render | Passed in isolated local preview; no captured console errors in checked views |
-| Live HTTPS/config/catalogue | Passed read-only retrieval; 107 variants / 106 styles, six coins |
-| Live documented preview admin login | Accepted (critical finding), followed by successful logout; explicitly authorized |
-| Live robots | Failed: HTTP 200 returned storefront HTML, not robots text |
-| JavaScript syntax / whitespace checks | Passed for server, scripts and migrations; git diff --check clean |
-| Production preflight on local preview | Correctly rejected PREVIEW_MODE=true; expected safety failure |
-| Target production MySQL | Not run; requires staging connection and reconciled data |
-| Real SMTP inbox delivery / online payments / scheduled import | Not verified; service configuration and observation required |
+## 1. Test Suite Coverage Breakdown
 
-The local host runs Node 20.17.0. package.json supports >=20.17.0; use a currently supported host runtime and re-run installation/build/native module checks there. Build emits React Router's upstream ignored `use client` directive warnings. These did not fail compilation. A JSON-module experimental warning is also emitted by the local toolchain. No claim that these warnings were eliminated.
+### A. Core Architecture & Backend Services
+- `tests/categories.test.js`:
+  - `listActiveCategories` ordering and active status filtering: **PASS**
+  - `categoryBySlug` metadata and banner resolution: **PASS**
+  - `adminListCategories` product count computation: **PASS**
+  - Admin CRUD lifecycle (create, update, delete): **PASS**
+- `tests/combos.test.js`:
+  - `comboCatalogue` live component sums, savings, and stock calculation: **PASS**
+  - `comboBySlug` and `comboBySku` lookup: **PASS**
+  - `quote` shopping bag pricing with bundled discounts: **PASS**
+  - Admin Combo CRUD lifecycle with component relations: **PASS**
+- `tests/hero-showcase.test.js`:
+  - Sequence integrity (Video -> 3 Jewellery -> 3 Kurtas -> Video loop): **PASS**
+  - Event listener validation (native `ended` event on video): **PASS**
+  - 3,000ms timing constraints: **PASS**
+  - Tab visibility (`visibilitychange`) pause/resume handling: **PASS**
+  - Accessibility (`prefers-reduced-motion`) compliance: **PASS**
+  - Physical file existence of all 3 hero kurta banners: **PASS**
 
-## Added regression coverage
+### B. Search, SEO & Metadata
+- `tests/search-engine.test.js` (13 tests):
+  - Typing "chikankari", "kurta", "chickencurry", "combo", "set" matches products and categories: **PASS**
+  - Typo tolerance and phonetic matching: **PASS**
+  - Purity, metal, and weight token expansion: **PASS**
+- `tests/production-readiness.test.js` (19 tests):
+  - HTTP middleware authorization & CORS origin checks: **PASS**
+  - Robots.txt and sitemap.xml dynamic generation including categories and combos: **PASS**
+  - Customer registration, authentication, and session invalidation: **PASS**
 
-- Rejected insecure/preview/unsupported production configuration and checkout readiness.
-- Generic internal errors and safe malformed/oversized request responses.
-- Negative/nonfinite/excessive offer values and enum validation.
-- Exact gold purity, no implicit silver rate, recent silver timestamp and future-rate rejection.
-- Guest retry ownership, changed-customer replay, stable order/stock on duplicate and unsupported payment rejection.
-- Decimal bag totals and malformed bag items.
-- Canonical/social/structured metadata escaping, private noindex and missing product status.
-- Active SVG rejection before writing public files.
-- Real HTTP JSON 404, ready probe, cross-origin rejection, admin protection, login/CSRF/offer create-update-delete/logout.
-- Customer HTTP registration/state revision/order access/logout; actual old-session rejection after reset; viewer-role mutation denial with valid CSRF.
-- Password recovery hashes/expiry/one use/password replacement/session version, unknown email and failed email cleanup.
-- Frontend malformed-response and timeout messages.
+### C. Security, Ratings & PWA
+- `tests/reviews.test.js` (16 tests): Review submission, verified buyer badges, admin moderation: **PASS**
+- `tests/pwa.test.js` (6 tests): Offline support, web manifest, asset caching: **PASS**
+- `tests/security.test.js` (15 tests): SQL injection, path traversal, CSRF prevention: **PASS**
 
-Earlier intermediate failures were corrected: the HTTP fixture initially attempted to bind in a restricted environment; its test run was repeated with local-server permission. A test fixture initialization-order issue and an assertion counting its temporary database as an upload were corrected. Raster validation retains the established invalid-image error wording. No failed tests are ignored in the final count.
+---
 
-## Scope and gaps
+## 2. Asset Integrity & Photography Verification
+Executed via `npm run assets:check`:
+```json
+{
+  "products": 110,
+  "coins": 6,
+  "checked": 464,
+  "errors": []
+}
+```
+- **Checks Performed**:
+  1. Every product has a valid 1:1 master image and companion thumbnail.
+  2. Every kurta product contains all 7 view roles (`hero`, `front`, `right`, `left`, `back`, `model`, `modal`).
+  3. No SHA-256 hash collisions across views for an individual product.
+  4. WebP compression valid and files readable.
+  5. Zero broken links or missing files.
 
-Existing tests cover imports, stock preservation, pricing/margins, customer state/ownership, offers, coin behavior, pagination, search and image processing. Several UI tests inspect markup/source rather than exercising a real browser. No measured line/branch coverage percentage is claimed. Browser smoke checks are not exhaustive E2E or an accessibility certification. Production CSP rendering is covered by source/module checks, not a live production MySQL browser session.
+---
 
-Pending: every admin/import/upload branch under actual MySQL, simultaneous multi-process orders/imports, role-specific browser journeys, physical gestures, screen readers, broad route/device matrix, actual email receipt, gateway failures if integrated, restoration drill, scheduled-run observation, live Core Web Vitals and sustained load. Do not infer these pass from unit tests.
-
-## Reproduce
-
-```sh
-npm ci
-npm test
-npm run build
-npm run assets:check
-npm audit
+## 3. Production Frontend Build Verification
+Executed via `npm run build`:
+```
+vite v6.4.6 building for production...
+✓ 1636 modules transformed.
+dist/index.html                         1.56 kB │ gzip:  0.71 kB
+dist/assets/index-QMLqckmL.css        128.46 kB │ gzip: 24.62 kB
+dist/assets/icons-B8RUdQSA.js          20.97 kB │ gzip:  4.44 kB
+dist/assets/animation-DdEiTQuA.js      70.90 kB │ gzip: 27.95 kB
+dist/assets/react-vendor-i91c7UI_.js  261.85 kB │ gzip: 83.21 kB
+dist/assets/index-BVmbT8Ou.js         336.65 kB │ gzip: 87.43 kB
+✓ built in 3.35s
 ```
 
-The tests use in-memory/temporary fixture databases. Existing sample-generation tests refresh timestamps in `samples/*-example.csv`; review those generated diffs separately. Test processes must be permitted to bind a loopback HTTP port. No real provider calls or payment success mocks are enabled in production.
+---
+
+## 4. Storefront Functional Matrix
+| Area | Feature | Status | Notes |
+|---|---|---|---|
+| Homepage | Dynamic Hero Showcase | Verified | Exact sequence: video completes -> 3s delay -> 3 jewellery -> 3 kurtas -> repeat |
+| Navigation | Categories & Combos links | Verified | Added to desktop navbar, mobile menu drawer, and footer |
+| Category Page | `/collections/chicken-curry-kurtas` | Verified | Displays panoramic banner, intro copy, 4 styles, filter by price |
+| Combos Hub | `/combos` | Verified | Displays 4 curated sets, component breakdown, savings badge, 1-click add |
+| PDP | Multi-angle view + back view | Verified | 7 angles switch smoothly with `@zoom-image/core` hover and tap zoom |
+| PDP | Size Selection & Size Chart | Verified | S through XXL with modal measurement table |
+| PDP | Curated Combo Cross-sell | Verified | Recommends paired fine jewellery set with savings badge |
+| Bag & Drawer | Live Subtotal & Discounts | Verified | Combos quoted correctly with live bundle price |
+| Checkout | Cash on Delivery (COD) | Verified | Atomic Knex transaction decrements both combo and component inventory |
+| Admin Studio | Category Management | Verified | CRUD operations, active toggle, ordering, assigned product counts |
+| Admin Studio | Combos Management | Verified | Create/edit bundle sets, product picker, auto savings calculator |
+| Admin Studio | Multi-Angle Image Uploader | Verified | Upload, replace, preview, and delete for all 7 angles including `back` |

@@ -21,10 +21,11 @@ restore() {
 
 git fetch origin "$SHA"
 git reset --hard "$SHA"
-# These are server-only links into public_html. Vite cannot copy them when the target is missing.
-rm -f public/assets/coins public/assets/products
+# Only remove if they are broken server-only symlinks into public_html
+test -L public/assets/coins && rm -f public/assets/coins || true
+test -L public/assets/products && rm -f public/assets/products || true
 
-if ! npm ci --include=dev || ! npm run build || ! node scripts/migrate.js; then
+if ! npm ci --include=dev || ! npm run build || ! node scripts/migrate.js || ! node seeders/DatabaseSeeder.js; then
   restore
   exit 1
 fi

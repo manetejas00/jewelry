@@ -1,4 +1,5 @@
 import {catalogue, coinCatalogue} from './pricing.js';
+import {comboCatalogue} from './combos.js';
 
 let cache = null;
 let cacheTime = 0;
@@ -43,7 +44,19 @@ const TYPO_MAP = {
   nocturn: 'nocturne',
   nocture: 'nocturne',
   eclise: 'eclipse',
-  eclips: 'eclipse'
+  eclips: 'eclipse',
+  chikan: 'chikankari',
+  chikankary: 'chikankari',
+  chickencurry: 'chikankari',
+  chickencurrykurta: 'kurta',
+  kurti: 'kurta',
+  kurtas: 'kurta',
+  kurtis: 'kurta',
+  cmbo: 'combo',
+  combos: 'combo',
+  georget: 'georgette',
+  chander: 'chanderi',
+  mulmul: 'mulmul'
 };
 
 const VOCABULARY = [
@@ -53,7 +66,10 @@ const VOCABULARY = [
   'cast', 'pure', 'bullion', 'eclipse', 'nocturne', 'lune', 'atelier',
   'aurelia', 'solenne', 'celeste', 'mirelle', 'estelle', 'elodie',
   'seraphine', 'amelie', 'rosalie', 'vesper', 'aster', 'calista', 'daphne',
-  'gram', 'grams', 'weight', 'purity', 'velours', 'halo'
+  'gram', 'grams', 'weight', 'purity', 'velours', 'halo',
+  'kurta', 'kurtas', 'chikankari', 'lucknowi', 'mulmul', 'georgette', 'chanderi',
+  'cotton', 'ethnic', 'festive', 'combo', 'combos', 'set', 'sets', 'embroidery',
+  'ivory', 'blush', 'sage', 'sky'
 ];
 
 function levenshtein(a, b) {
@@ -113,6 +129,8 @@ function expandTokens(rawQuery) {
 }
 
 const CATEGORY_MAP = [
+  { name: 'Chicken Curry Kurtas', url: '/collections/chicken-curry-kurtas', keywords: ['kurta', 'kurtas', 'chikankari', 'chickencurry', 'chicken curry', 'lucknowi', 'mulmul'] },
+  { name: 'Kurta & Jewellery Combos', url: '/combos', keywords: ['combo', 'combos', 'gift set', 'gift sets', 'kurta combo', 'set'] },
   { name: 'The Pearl Edit', url: '/collections/pearls', keywords: ['pearl', 'pearls'] },
   { name: 'All Jewellery', url: '/collections/all', keywords: ['jewellery', 'jewelry'] },
   { name: 'Gold & Silver Coins', url: '/coins', keywords: ['coin', 'coins', 'bullion'] },
@@ -121,16 +139,20 @@ const CATEGORY_MAP = [
   { name: 'Earrings', url: '/collections/earrings', keywords: ['earring', 'earrings', 'drops', 'studs'] },
   { name: 'Necklaces', url: '/collections/necklaces', keywords: ['necklace', 'necklaces', 'collar', 'choker'] },
   { name: 'Rings', url: '/collections/rings', keywords: ['ring', 'rings', 'solitaire'] },
-  { name: 'Bracelets', url: '/collections/bracelets', keywords: ['bracelet', 'bracelets', 'cuff', 'bangle'] }
+  { name: 'Bracelets', url: '/collections/bracelets', keywords: ['bracelet', 'bracelets', 'cuff', 'bangle'] },
+  { name: 'Festive Kurtas', url: '/collections/festive-kurtas', keywords: ['festive', 'festive kurta'] },
+  { name: 'Everyday Ethnic Wear', url: '/collections/everyday-ethnic-wear', keywords: ['everyday', 'daily wear'] }
 ];
 
 const POPULAR_SEARCHES = [
+  'Chikankari Kurta',
+  'Kurta & Jewellery Combo',
   'Pearl Ring',
   'Gold Necklace',
   'Silver Coin',
+  'Lucknowi Ivory Kurta',
   '10 Gram Gold Coin',
   'Nocturne Cuff',
-  '999 Silver',
   'Earrings'
 ];
 
@@ -139,11 +161,12 @@ export async function getSearchIndex(db) {
   if (cache && (now - cacheTime < CACHE_TTL_MS)) {
     return cache;
   }
-  const [prods, coins] = await Promise.all([
+  const [prods, coins, combos] = await Promise.all([
     catalogue(db).catch(() => []),
-    coinCatalogue(db).catch(() => [])
+    coinCatalogue(db).catch(() => []),
+    comboCatalogue(db).catch(() => [])
   ]);
-  cache = { prods, coins, indexedAt: now };
+  cache = { prods, coins, combos, indexedAt: now };
   cacheTime = now;
   return cache;
 }
@@ -164,7 +187,7 @@ export async function searchCatalogue(db, rawQuery, { maxProducts = 8, maxSugges
   }
 
   const { normalized, rawTokens, expanded } = expandTokens(query);
-  const { prods, coins } = await getSearchIndex(db);
+  const { prods, coins, combos = [] } = await getSearchIndex(db);
 
   // Score each product & coin
   function scoreItem(item, isCoin) {
@@ -295,8 +318,34 @@ export async function searchCatalogue(db, rawQuery, { maxProducts = 8, maxSugges
     }
   }
 
+  // Score combos
+  const scoredCombos = [];
+  for (const cb of combos) {
+    const s = scoreItem(cb, false);
+    if (s > 0) {
+      scoredCombos.push({
+        item: {
+          id: cb.id,
+          sku: cb.sku,
+          product_code: cb.sku,
+          name: cb.name,
+          category: 'Curated Combo',
+          price: cb.price,
+          original_price: cb.original_price,
+          discount_amount: cb.savings,
+          thumbnail: cb.thumbnail,
+          stock: cb.stock,
+          checkout_available: cb.checkout_available,
+          url: `/combos/${cb.slug}`,
+          is_combo: true
+        },
+        score: s + 10 // Slight boost for curated combos on matching queries
+      });
+    }
+  }
+
   // Combine and sort
-  const allScored = [...scoredProducts, ...scoredCoins].sort((a, b) => b.score - a.score);
+  const allScored = [...scoredProducts, ...scoredCoins, ...scoredCombos].sort((a, b) => b.score - a.score);
 
   // Group jewellery variants by product_code unless exact SKU match
   const deduplicated = [];

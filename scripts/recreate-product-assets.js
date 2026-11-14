@@ -54,7 +54,7 @@ export async function recreateProductAssets(k = db, {publicDir = path.join(root,
     if (!fs.existsSync(base)) continue;
     for (const entry of fs.readdirSync(base, { withFileTypes: true })) {
       if (!entry.isDirectory()) continue;
-      for (const role of ['hero', 'front', 'left', 'right', 'modal', 'model']) {
+      for (const role of ['hero', 'front', 'left', 'right', 'back', 'modal', 'model']) {
         const source = path.join(base, entry.name, `${role}.webp`);
         const target = path.join(base, entry.name, `${role}-thumb.webp`);
         if (!fs.existsSync(source)) continue;
@@ -90,6 +90,7 @@ export async function recreateProductAssets(k = db, {publicDir = path.join(root,
       const frontExists = fs.existsSync(path.join(folder, 'front.webp'));
       const leftExists = fs.existsSync(path.join(folder, 'left.webp'));
       const rightExists = fs.existsSync(path.join(folder, 'right.webp'));
+      const backExists = fs.existsSync(path.join(folder, 'back.webp'));
       const modalExists = fs.existsSync(path.join(folder, 'modal.webp'));
       const modelExists = fs.existsSync(path.join(folder, 'model.webp'));
 
@@ -144,13 +145,23 @@ export async function recreateProductAssets(k = db, {publicDir = path.join(root,
           created_at: timestamp,
           updated_at: timestamp,
         },
+        ...(backExists ? [{
+          product_code: code,
+          sku: null,
+          role: 'back',
+          url: `/assets/products/${code}/back.webp`,
+          alt_text: `${name} Back View`,
+          sort_order: 5,
+          created_at: timestamp,
+          updated_at: timestamp,
+        }] : []),
         {
           product_code: code,
           sku: null,
           role: 'detail',
           url: modalUrl,
           alt_text: `${name} Macro Detail`,
-          sort_order: 6,
+          sort_order: 7,
           created_at: timestamp,
           updated_at: timestamp,
         },
@@ -160,7 +171,7 @@ export async function recreateProductAssets(k = db, {publicDir = path.join(root,
           role: 'model',
           url: modelUrl,
           alt_text: `${name} Model Shot`,
-          sort_order: 5,
+          sort_order: 6,
           created_at: timestamp,
           updated_at: timestamp,
         }
@@ -180,6 +191,7 @@ export async function recreateProductAssets(k = db, {publicDir = path.join(root,
       const frontExists = fs.existsSync(path.join(folder, 'front.webp'));
       const leftExists = fs.existsSync(path.join(folder, 'left.webp'));
       const rightExists = fs.existsSync(path.join(folder, 'right.webp'));
+      const backExists = fs.existsSync(path.join(folder, 'back.webp'));
       const modalExists = fs.existsSync(path.join(folder, 'modal.webp'));
       const modelExists = fs.existsSync(path.join(folder, 'model.webp'));
 

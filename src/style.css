@@ -2602,3 +2602,34 @@ img.is-brand-fallback{object-fit:contain!important;background:#f8f6f0}
 .veyora-chat-usage>summary::-webkit-details-marker{display:none}
 .veyora-chat-usage[open]>summary svg{transform:rotate(180deg)}
 .veyora-chat-usage-content{padding-top:10px}
+
+/* Multi-angle back role & grid adjustments */
+.angle-slots-grid{grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}
+.role-badge--back{background:#f1ece1;color:#5a4a35;border-color:#ded5c5}
+
+/* Category header banner */
+.category-header-banner{width:100%;max-height:340px;overflow:hidden;border-radius:4px;margin-bottom:24px;border:1px solid var(--line)}
+.category-header-banner img{width:100%;height:100%;object-fit:cover;object-position:center 30%}
+
+/* Curated Combo & Sets Styles */
+.combos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:32px;margin-top:24px}
+.combo-card{display:flex;flex-direction:column;border:1px solid var(--line);background:#fff;border-radius:4px;overflow:hidden;transition:box-shadow .25s ease,transform .25s ease}
+.combo-card:hover{box-shadow:0 8px 24px rgba(24,44,44,.08);transform:translateY(-2px)}
+.combo-photo{position:relative;width:100%;aspect-ratio:1/1;overflow:hidden;background:var(--ivory)}
+.combo-savings-badge{position:absolute;top:12px;left:12px;background:#2e7d32;color:#ffffff;font-size:9px;font-weight:700;letter-spacing:.5px;padding:4px 8px;border-radius:2px;display:inline-flex;align-items:center;gap:4px;z-index:2;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.combo-card-details{padding:20px;display:flex;flex-direction:column;flex:1}
+.combo-title{font-size:19px;margin:6px 0 8px;line-height:1.25}
+.combo-title a{color:var(--ink);transition:color .2s}
+.combo-title a:hover{color:var(--gold)}
+.combo-card-description{font-size:12px;line-height:1.6;color:var(--muted);margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.combo-components-list{list-style:none;padding:0;margin:0 0 16px;border-top:1px dashed var(--line);border-bottom:1px dashed var(--line);padding:10px 0}
+.combo-components-list li{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--ink);padding:3px 0}
+.combo-components-list .bullet{color:var(--gold);margin-right:6px}
+.combo-components-list .val{color:var(--muted);font-size:10px}
+.combo-card-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:auto;padding-top:12px}
+.combo-pricing{display:flex;align-items:baseline;gap:8px}
+.combo-current-price{font-size:18px;font-weight:600;color:var(--ink)}
+.combo-original-price{font-size:12px;color:var(--muted)}
+
+/* Paired combo section on PDP */
+.paired-combo-section{background:#faf9f5;border:1px solid var(--line);padding:20px 24px;border-radius:4px;margin:24px 0}

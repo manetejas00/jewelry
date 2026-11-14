@@ -33,6 +33,8 @@ import {listCopySkills, createCatalogueDraft, approveCatalogueDraft, rejectCatal
 import {registerCustomerAdminRoutes} from './customer-admin.js';
 import {registerChatRoutes} from './chat/routes.js';
 import {purgeRetainedChats} from './chat/service.js';
+import {listActiveCategories,categoryBySlug,adminListCategories,createCategory,updateCategory,deleteCategory} from './categories.js';
+import {comboCatalogue,comboBySlug,adminListCombos,createCombo,updateCombo,deleteCombo} from './combos.js';
 import {registerPwa} from './pwa.js';
 import {
   getProductReviews,
@@ -84,6 +86,10 @@ app.get('/api/thumbnail',async(req,res)=>{
 });
 app.get('/api/products',route(async(req,res)=>res.json(await catalogue(db))));
 app.get('/api/coins',route(async(req,res)=>res.json(await coinCatalogue(db))));
+app.get('/api/categories',route(async(req,res)=>res.json(await listActiveCategories(db))));
+app.get('/api/categories/:slug',route(async(req,res)=>{const c=await categoryBySlug(db,req.params.slug);if(!c)return res.status(404).json({error:'Category not found'});res.json(c);}));
+app.get('/api/combos',route(async(req,res)=>res.json(await comboCatalogue(db))));
+app.get('/api/combos/:slug',route(async(req,res)=>{const c=await comboBySlug(db,req.params.slug);if(!c)return res.status(404).json({error:'Combo not found'});res.json(c);}));
 app.get('/api/search',route(async(req,res)=>{const q=String(req.query.q||'').slice(0,100);res.json(await searchCatalogue(db,q));}));
 app.get('/api/offers',route(async(req,res)=>{
   const hasOffers=await db.schema.hasTable('offers').catch(()=>false);
@@ -154,6 +160,15 @@ app.delete('/api/admin/offers/:id',auth(['owner','manager']),route(async(req,res
   await audit(req,'delete_offer',{id:req.params.id,name:offer.name});
   res.json({ok:true});
 }));
+app.get('/api/admin/categories',auth(),route(async(req,res)=>res.json(await adminListCategories(db))));
+app.post('/api/admin/categories',auth(['owner','manager']),route(async(req,res)=>{const cat=await createCategory(db,req.body);await audit(req,'create_category',cat);res.json({ok:true,category:cat});}));
+app.patch('/api/admin/categories/:id',auth(['owner','manager']),route(async(req,res)=>{const updated=await updateCategory(db,Number(req.params.id),req.body);await audit(req,'update_category',{id:req.params.id});res.json(updated);}));
+app.delete('/api/admin/categories/:id',auth(['owner','manager']),route(async(req,res)=>{const deleted=await deleteCategory(db,Number(req.params.id));await audit(req,'delete_category',{id:req.params.id});res.json(deleted);}));
+
+app.get('/api/admin/combos',auth(),route(async(req,res)=>res.json(await adminListCombos(db))));
+app.post('/api/admin/combos',auth(['owner','manager']),route(async(req,res)=>{const combo=await createCombo(db,req.body);await audit(req,'create_combo',combo);res.json({ok:true,combo});}));
+app.patch('/api/admin/combos/:id',auth(['owner','manager']),route(async(req,res)=>{const updated=await updateCombo(db,Number(req.params.id),req.body);await audit(req,'update_combo',{id:req.params.id});res.json(updated);}));
+app.delete('/api/admin/combos/:id',auth(['owner','manager']),route(async(req,res)=>{const deleted=await deleteCombo(db,Number(req.params.id));await audit(req,'delete_combo',{id:req.params.id});res.json(deleted);}));
 app.post('/api/quote',route(async(req,res)=>res.json(await quote(db,req.body.items,{code:req.body.offerCode}))));
 app.post('/api/checkout',rateLimit({windowMs:60000,limit:20}),route(async(req,res)=>{if(commerceConfig(process.env,preview).checkoutEnabled===false)return res.status(503).json({error:'Checkout is awaiting merchant configuration.'});requireSignedInCsrf(req);req.session.checkoutScope ||= crypto.randomUUID();const held=await prepareCheckoutOtp(db,req.session,req.body,process.env,otpGateway);try{const result=await checkout(db,{...req.body,offerCode:req.body.offerCode||null},preview,req.session.customer?.id||null,req.session.checkoutScope);req.session.orderIds=[...new Set([...(req.session.orderIds||[]),result.id])].slice(-100);res.json(result);}catch(error){if(held)await releaseVerified(db,held);throw error;}}));
 app.get('/api/orders/:id',route(async(req,res)=>{const order=await db('orders').where({id:req.params.id}).first();if(!mayReadOrder(req.session,order))return res.status(404).json({error:'Order not found'});res.json({...order,customer:parse(order.customer),items:(await db('order_items').where({order_id:order.id})).map(i=>parse(i.snapshot))});}));
@@ -532,7 +547,7 @@ app.post('/api/admin/upload-image',auth(['owner','manager']),route(async(req,res
  const targetCode=product_code||req.body.sku;
  if(targetCode&&role){
   const nowStr=now();
-  const validRole=['hero','front','left','right','model','modal','detail'].includes(role)?role:'front';
+  const validRole=['hero','front','left','right','back','model','modal','detail'].includes(role)?role:'front';
   const hasImages=await db.schema.hasTable('product_images').catch(()=>false);
   if(hasImages){
    const existing=await db('product_images').where(function(){this.where({product_code:targetCode,role:validRole}).orWhere({sku:targetCode,role:validRole});}).first();
@@ -540,7 +555,7 @@ app.post('/api/admin/upload-image',auth(['owner','manager']),route(async(req,res
     await db('product_images').where({id:existing.id}).update({url,updated_at:nowStr});
     imageRecord={...existing,url,updated_at:nowStr};
    }else{
-    const sortOrder={'hero':1,'front':2,'left':3,'right':4,'model':5,'modal':5,'detail':6}[validRole]||10;
+    const sortOrder={'hero':1,'front':2,'left':3,'right':4,'back':5,'model':6,'modal':6,'detail':7}[validRole]||10;
     const [id]=await db('product_images').insert({product_code:targetCode,sku:req.body.sku||targetCode,role:validRole,url,sort_order:sortOrder,created_at:nowStr,updated_at:nowStr});
     imageRecord={id,product_code:targetCode,sku:req.body.sku||targetCode,role:validRole,url,sort_order:sortOrder};
    }
@@ -579,13 +594,13 @@ app.post('/api/admin/upload-images',auth(['owner','manager']),route(async(req,re
   let imageRecord=null;
   const targetCode=product_code||file.sku;
   if(targetCode&&role&&hasImages){
-   const validRole=['hero','front','left','right','model','modal','detail'].includes(role)?role:'front';
+   const validRole=['hero','front','left','right','back','model','modal','detail'].includes(role)?role:'front';
    const existing=await db('product_images').where(function(){this.where({product_code:targetCode,role:validRole}).orWhere({sku:targetCode,role:validRole});}).first();
    if(existing){
     await db('product_images').where({id:existing.id}).update({url,updated_at:nowStr});
     imageRecord={...existing,url,updated_at:nowStr};
    }else{
-    const sortOrder={'hero':1,'front':2,'left':3,'right':4,'model':5,'modal':5,'detail':6}[validRole]||10;
+    const sortOrder={'hero':1,'front':2,'left':3,'right':4,'back':5,'model':6,'modal':6,'detail':7}[validRole]||10;
     const [id]=await db('product_images').insert({product_code:targetCode,sku:file.sku||targetCode,role:validRole,url,sort_order:sortOrder,created_at:nowStr,updated_at:nowStr});
     imageRecord={id,product_code:targetCode,sku:file.sku||targetCode,role:validRole,url,sort_order:sortOrder};
    }
@@ -612,11 +627,11 @@ app.get('/api/admin/product-images/:product_code',auth(),route(async(req,res)=>{
 app.post('/api/admin/product-images',auth(['owner','manager']),route(async(req,res)=>{
  const {product_code,sku,role,url,alt_text,sort_order}=req.body;
  if(!isSafeMediaUrl(url))throw validationError('Use an HTTPS image or a saved /uploads or /assets image');
- const validRole=['hero','front','left','right','model','modal','detail'].includes(role)?role:'front';
+ const validRole=['hero','front','left','right','back','model','modal','detail'].includes(role)?role:'front';
  const targetCode=product_code||sku;
  if(!targetCode)throw validationError('Product code or SKU is required');
  const nowStr=now();
- const sortMap={'hero':1,'front':2,'left':3,'right':4,'model':5,'modal':5,'detail':6};
+ const sortMap={'hero':1,'front':2,'left':3,'right':4,'back':5,'model':6,'modal':6,'detail':7};
  const order=sort_order!==undefined?Number(sort_order):sortMap[validRole]||10;
 
  const existing=await db('product_images').where(function(){this.where({product_code:targetCode,role:validRole}).orWhere({sku:targetCode,role:validRole});}).first();

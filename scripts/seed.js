@@ -3,6 +3,9 @@ import bcrypt from 'bcryptjs';
 import {db,migrate,preview} from '../server/db.js';
 import {previewImport,publishImport} from '../server/importer.js';
 import {writeSamples} from './samples.js';
+import {CategorySeeder} from '../seeders/CategorySeeder.js';
+import {KurtaSeeder} from '../seeders/KurtaSeeder.js';
+import {ComboSeeder} from '../seeders/ComboSeeder.js';
 import {ReviewSeeder} from '../seeders/ReviewSeeder.js';
 export const seedReviews = (k=db) => ReviewSeeder(k);
 const base='https://cdnstatic.tencentcs.com/edgeone/pages/product-activities/jewelry/';
@@ -142,5 +145,5 @@ export async function seedRates(k=db){
   }
 }
 
-export async function seed(k=db){if(!preview)throw Error('Fictional seed data is restricted to preview mode');if(!(await k('staff').where({email:'preview@veyora.local'}).first()))await k('staff').insert({email:'preview@veyora.local',password_hash:await bcrypt.hash('preview-veyora-2026',12),role:'owner'});if(!(await k('staff').where({email:'catalogue@veyora.local'}).first()))await k('staff').insert({email:'catalogue@veyora.local',password_hash:await bcrypt.hash('preview-veyora-2026',12),role:'manager'});if(!(await k('products').first())){writeSamples();for(const [kind,file] of [['gold','gold-rates'],['products','products']]){const batch=await previewImport(k,kind,fs.readFileSync(`samples/${file}-example.csv`,'utf8'));if(batch.errors.length)throw Error(JSON.stringify(batch.errors));await publishImport(k,batch.id);}}await seedRates(k);await seedCoins(k);await seedProductImages(k);await seedOffers(k);await seedReviews(k);}
+export async function seed(k=db){if(!preview)throw Error('Fictional seed data is restricted to preview mode');if(!(await k('staff').where({email:'preview@veyora.local'}).first()))await k('staff').insert({email:'preview@veyora.local',password_hash:await bcrypt.hash('preview-veyora-2026',12),role:'owner'});if(!(await k('staff').where({email:'catalogue@veyora.local'}).first()))await k('staff').insert({email:'catalogue@veyora.local',password_hash:await bcrypt.hash('preview-veyora-2026',12),role:'manager'});if(!(await k('products').first())){writeSamples();for(const [kind,file] of [['gold','gold-rates'],['products','products']]){const batch=await previewImport(k,kind,fs.readFileSync(`samples/${file}-example.csv`,'utf8'));if(batch.errors.length)throw Error(JSON.stringify(batch.errors));await publishImport(k,batch.id);}}await seedRates(k);await seedCoins(k);await CategorySeeder(k);await KurtaSeeder(k);await ComboSeeder(k);await seedProductImages(k);await seedOffers(k);await seedReviews(k);}
 if(process.argv[1]?.endsWith('/seed.js')){await migrate();await seed();await db.destroy();}
