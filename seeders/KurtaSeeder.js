@@ -1,214 +1,179 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { db, now } from '../server/db.js';
+import { KURTA_SIZES } from '../src/kurta-constants.js';
+import { KURTA_STYLES } from '../scripts/seed-expanded-kurtas.js';
 
 export const kurtaSupplier = 'Lucknow Heritage Maison';
 
-export const kurtaProducts = [
-  {
-    product_code: 'lucknowi-ivory-chikankari-cotton-kurta',
-    name: 'Noor-e-Awadh Ivory Chikankari Mulmul Kurta',
-    category: 'Chicken Curry Kurtas for Women',
-    description: 'An ode to Awadhi heritage, the Noor-e-Awadh kurta is meticulously handcrafted from feather-light pure mulmul cotton. Features traditional tone-on-tone Lucknowi Chikankari needlework—blending delicate Bakhiya (shadow work) and Phanda (pearl stitch) motifs across the Mandarin collar, placket, and hemline. Breathable weave and tailored side slits offer effortless elegance for daytime celebrations.',
-    metal: 'Pure Mulmul Cotton',
-    purity: 'Handcrafted Chikankari',
-    finish: 'White-on-White Shadow Work',
-    image: '/assets/products/lucknowi-ivory-chikankari-cotton-kurta/hero.webp',
-    pricing_mode: 'FIXED',
-    base_price: 2990,
-    seo_title: 'Noor-e-Awadh Ivory Chikankari Cotton Kurta | Veyora',
-    meta_description: 'Pure mulmul cotton Lucknowi Chikankari embroidered kurta for women in pristine ivory white. Handcrafted floral needlework with side slits and soft drape.',
-    variants: [
-      { sku: 'CCK-IVORY-XS', size: 'XS (34)', stock: 8 },
-      { sku: 'CCK-IVORY-S', size: 'S (36)', stock: 12 },
-      { sku: 'CCK-IVORY-M', size: 'M (38)', stock: 15 },
-      { sku: 'CCK-IVORY-L', size: 'L (40)', stock: 18 },
-      { sku: 'CCK-IVORY-XL', size: 'XL (42)', stock: 10 },
-      { sku: 'CCK-IVORY-XXL', size: 'XXL (44)', stock: 8 },
-      { sku: 'CCK-IVORY-XXXL', size: 'XXXL (46)', stock: 5 }
-    ]
-  },
-  {
-    product_code: 'rose-blush-georgette-chikankari-kurta',
-    name: 'Gulzar Rose Blush Georgette Chikankari Kurta',
-    category: 'Chicken Curry Kurtas for Women',
-    description: 'Adorned in a romantic blush pink hue, the Gulzar kurta is tailored in fluid viscose georgette with intricate all-over floral jaal embroidery. Embellished with delicate Ghaspatti and Keel Kangan stitches, complemented by matching inner lining and scalloped sleeve hems. Perfect for festive celebrations and evening gatherings.',
-    metal: 'Viscose Georgette',
-    purity: 'Handcrafted Chikankari',
-    finish: 'Floral Jaal Embroidery',
-    image: '/assets/products/rose-blush-georgette-chikankari-kurta/hero.webp',
-    pricing_mode: 'FIXED',
-    base_price: 3490,
-    seo_title: 'Gulzar Rose Blush Georgette Chikankari Kurta | Veyora',
-    meta_description: 'Exquisite blush pink viscose georgette Chikankari kurta with intricate floral jaal embroidery, scalloped borders, and flattering festive silhouette.',
-    variants: [
-      { sku: 'CCK-BLUSH-XS', size: 'XS (34)', stock: 6 },
-      { sku: 'CCK-BLUSH-S', size: 'S (36)', stock: 10 },
-      { sku: 'CCK-BLUSH-M', size: 'M (38)', stock: 14 },
-      { sku: 'CCK-BLUSH-L', size: 'L (40)', stock: 16 },
-      { sku: 'CCK-BLUSH-XL', size: 'XL (42)', stock: 8 },
-      { sku: 'CCK-BLUSH-XXL', size: 'XXL (44)', stock: 6 },
-      { sku: 'CCK-BLUSH-XXXL', size: 'XXXL (46)', stock: 4 }
-    ]
-  },
-  {
-    product_code: 'sage-green-chanderi-chikankari-kurta',
-    name: 'Nazakat Sage Green Chanderi Chikankari Kurta',
-    category: 'Chicken Curry Kurtas for Women',
-    description: 'Crafted in shimmering handloom Chanderi silk with a serene sage green tint. The Nazakat kurta features heritage Murri and Tepchi needlework intertwined with subtle zari accents along the V-neckline and sleeve borders. Combines regal poise with contemporary comfort.',
-    metal: 'Chanderi Silk',
-    purity: 'Handcrafted Chikankari',
-    finish: 'Murri & Zari Needlework',
-    image: '/assets/products/sage-green-chanderi-chikankari-kurta/hero.webp',
-    pricing_mode: 'FIXED',
-    base_price: 3890,
-    seo_title: 'Nazakat Sage Green Chanderi Chikankari Kurta | Veyora',
-    meta_description: 'Luxury sage green handloom Chanderi silk kurta with authentic Chikankari needlework and subtle zari borders. Regal poise for festive occasions.',
-    variants: [
-      { sku: 'CCK-SAGE-XS', size: 'XS (34)', stock: 5 },
-      { sku: 'CCK-SAGE-S', size: 'S (36)', stock: 8 },
-      { sku: 'CCK-SAGE-M', size: 'M (38)', stock: 12 },
-      { sku: 'CCK-SAGE-L', size: 'L (40)', stock: 14 },
-      { sku: 'CCK-SAGE-XL', size: 'XL (42)', stock: 7 },
-      { sku: 'CCK-SAGE-XXL', size: 'XXL (44)', stock: 5 },
-      { sku: 'CCK-SAGE-XXXL', size: 'XXXL (46)', stock: 3 }
-    ]
-  },
-  {
-    product_code: 'sky-blue-mulmul-chikankari-kurta',
-    name: 'Fiza Sky Blue Hand-Embroidered Chikankari Kurta',
-    category: 'Chicken Curry Kurtas for Women',
-    description: 'Capturing the serene calm of morning skies, the Fiza kurta features authentic white cotton thread embroidery on pastel sky-blue mulmul cotton. Detailed with floral sprigs (butis), a gracefully embroidered round slit neckline, and fine side-slit finishings.',
-    metal: 'Fine Mulmul Cotton',
-    purity: 'Handcrafted Chikankari',
-    finish: 'Pastel Shadow Needlework',
-    image: '/assets/products/sky-blue-mulmul-chikankari-kurta/hero.webp',
-    pricing_mode: 'FIXED',
-    base_price: 2790,
-    seo_title: 'Fiza Sky Blue Mulmul Chikankari Kurta | Veyora',
-    meta_description: 'Breezy sky blue fine cotton Chikankari kurta for women with hand-embroidered floral motifs and delicate neckline. Everyday elegance.',
-    variants: [
-      { sku: 'CCK-SKY-XS', size: 'XS (34)', stock: 7 },
-      { sku: 'CCK-SKY-S', size: 'S (36)', stock: 10 },
-      { sku: 'CCK-SKY-M', size: 'M (38)', stock: 15 },
-      { sku: 'CCK-SKY-L', size: 'L (40)', stock: 16 },
-      { sku: 'CCK-SKY-XL', size: 'XL (42)', stock: 9 },
-      { sku: 'CCK-SKY-XXL', size: 'XXL (44)', stock: 6 },
-      { sku: 'CCK-SKY-XXXL', size: 'XXXL (46)', stock: 4 }
-    ]
-  }
-];
-
 export async function KurtaSeeder(k = db) {
-  if (!await k.schema.hasTable('products')) {
+  if (!(await k.schema.hasTable('products'))) {
     throw Error('Run migrations before running KurtaSeeder.');
   }
 
   const hasIsKurta = await k.schema.hasColumn('products', 'is_kurta');
+  const hasColor = await k.schema.hasColumn('products', 'color');
+  const timestamp = now();
 
-  return k.transaction(async (t) => {
-    let insertedProducts = 0;
-    let updatedProducts = 0;
-    let insertedImages = 0;
-    const timestamp = now();
+  const productRows = [];
+  const imageRows = [];
+  const supplierRows = [];
 
-    for (const style of kurtaProducts) {
-      const code = style.product_code;
+  const angleRoles = [
+    { role: 'hero', file: 'hero.webp', label: 'Hero Catalog Shot' },
+    { role: 'front', file: 'front.webp', label: 'Front Angle' },
+    { role: 'model', file: 'model.webp', label: 'On-Model Wearing View' },
+    { role: 'back', file: 'back.webp', label: 'Back View & Draped Embroidery' },
+    { role: 'left', file: 'left.webp', label: 'Left Silhouette Profile' },
+    { role: 'right', file: 'right.webp', label: 'Right Silhouette Profile' },
+    { role: 'detail', file: 'detail.webp', label: 'Handcrafted Stitchwork Detail' },
+    { role: 'modal', file: 'modal.webp', label: 'High-Resolution Zoom & Drape' },
+    { role: 'neckline', file: 'neckline.webp', label: 'Artisan Neckline & Placket' },
+    { role: 'embroidery', file: 'embroidery.webp', label: 'Tonal Bakhiya & Shadow Work' },
+    { role: 'fabric', file: 'fabric.webp', label: 'Natural Weave & Texture' },
+    { role: 'sleeve', file: 'sleeve.webp', label: 'Intricate Sleeve Border' }
+  ];
 
-      // Clean existing records for this style to allow clean re-indexing across XS-XXXL
-      await t('products').where({ product_code: code }).delete();
+  for (const [sIdx, style] of KURTA_STYLES.entries()) {
+    const code = style.product_code;
 
-      for (const [idx, v] of style.variants.entries()) {
-        const sizeSlug = v.size.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-        const slug = idx === 0 ? code : `${code}-${sizeSlug}`;
+    for (const [cIdx, col] of style.colors.entries()) {
+      const isPrimaryColor = cIdx === 0;
+      const colorSubdir = isPrimaryColor ? '' : `${col.code}/`;
+      const colorHeroUrl = `/assets/products/${code}/${colorSubdir}hero.webp`;
+
+      // 12 Angle Images per color variant
+      for (const [order, angle] of angleRoles.entries()) {
+        const imgUrl = `/assets/products/${code}/${colorSubdir}${angle.file}`;
+        const altText = `${style.name} in ${col.name} - ${angle.label}`;
+        imageRows.push({
+          product_code: code,
+          sku: null,
+          role: angle.role,
+          url: imgUrl,
+          alt_text: altText,
+          sort_order: isPrimaryColor ? (order + 1) : (100 + cIdx * 20 + order + 1),
+          color: col.code,
+          created_at: timestamp,
+          updated_at: timestamp
+        });
+      }
+
+      // 7 Size Variants (XS, S, M, L, XL, XXL, XXXL)
+      for (const [sizeIdx, sizeInfo] of KURTA_SIZES.entries()) {
+        let variantSku;
+        let variantName;
+
+        if (isPrimaryColor && code === 'lucknowi-ivory-chikankari-cotton-kurta') {
+          variantSku = `CCK-IVORY-${sizeInfo.code}`;
+          variantName = 'Noor-e-Awadh Ivory Chikankari Mulmul Kurta';
+        } else if (isPrimaryColor && code === 'rose-blush-georgette-chikankari-kurta') {
+          variantSku = `CCK-BLUSH-${sizeInfo.code}`;
+          variantName = 'Gulzar Rose Blush Georgette Chikankari Kurta';
+        } else if (isPrimaryColor && code === 'sage-green-chanderi-chikankari-kurta') {
+          variantSku = `CCK-SAGE-${sizeInfo.code}`;
+          variantName = 'Nazakat Sage Green Chanderi Chikankari Kurta';
+        } else if (isPrimaryColor && code === 'sky-blue-mulmul-chikankari-kurta') {
+          variantSku = `CCK-SKY-${sizeInfo.code}`;
+          variantName = 'Fiza Sky Blue Hand-Embroidered Chikankari Kurta';
+        } else {
+          const codePrefix = code.split('-').slice(0, 2).map(w => w.slice(0, 3).toUpperCase()).join('');
+          const colPrefix = col.code.slice(0, 3).toUpperCase();
+          variantSku = `CCK-${codePrefix}-${colPrefix}-${sizeInfo.code}`;
+          variantName = `${style.name} - ${col.name}`;
+        }
+
+        const sizeSlug = sizeInfo.code.toLowerCase();
+        const variantSlug = isPrimaryColor && sizeIdx === 0
+          ? code
+          : `${code}-${col.code}-${sizeSlug}`;
+
+        const baseStock = 8 + ((sIdx * 3 + cIdx * 7 + sizeInfo.code.charCodeAt(0)) % 14);
 
         const productData = {
           supplier: kurtaSupplier,
           product_code: code,
-          slug,
-          sku: v.sku,
-          name: style.name,
-          category: style.category,
+          sku: variantSku,
+          slug: variantSlug,
+          name: variantName,
+          category: 'Chicken Curry Kurtas',
           description: style.description,
-          metal: style.metal,
-          purity: style.purity,
+          metal: style.fabric,
+          purity: style.craftsmanship,
           net_weight_g: null,
-          size: v.size,
-          finish: style.finish,
-          image: style.image,
-          pricing_mode: style.pricing_mode,
-          fixed_price: style.base_price,
-          making_flat: 0,
-          making_percent: 0,
-          stone_charge: 0,
-          other_charge: 0,
-          stock: v.stock,
+          size: sizeInfo.label,
+          finish: 'Hand Embroidered',
+          image: colorHeroUrl,
+          pricing_mode: 'FIXED',
+          fixed_price: String(Number(style.price).toFixed(2)),
+          making_flat: '0.00',
+          making_percent: '0.0000',
+          stone_charge: '0.00',
+          other_charge: '0.00',
+          stock: baseStock,
           status: 'published',
           source_timestamp: timestamp,
           updated_at: timestamp,
-          seo_title: style.seo_title,
-          meta_description: style.meta_description
+          seo_title: `${variantName} | Lucknowi Chikankari | Veyora`,
+          meta_description: `Handcrafted ${variantName}. Authentic Lucknowi Chikankari embroidery in ${style.fabric}. Complimentary shipping across India.`
         };
 
         if (hasIsKurta) {
-          productData.is_kurta = true;
+          productData.is_kurta = 1;
         }
 
-        await t('products').insert(productData);
-        await t('supplier_skus').insert({
+        if (hasColor) {
+          productData.color = col.name;
+          productData.color_code = col.code;
+          productData.hex_color = col.hex;
+        }
+
+        productRows.push(productData);
+        supplierRows.push({
           supplier: kurtaSupplier,
-          supplier_sku: v.sku,
-          sku: v.sku
-        }).onConflict(['supplier', 'supplier_sku']).merge();
-        insertedProducts++;
+          supplier_sku: variantSku,
+          sku: variantSku
+        });
       }
+    }
+  }
 
-      // 2. Populate product_images table for all multi-angle views
-      const imageRoles = [
-        { role: 'hero', file: 'hero.webp', alt: `${style.name} Hero View` },
-        { role: 'front', file: 'front.webp', alt: `${style.name} Front View` },
-        { role: 'left', file: 'left.webp', alt: `${style.name} Left Profile View` },
-        { role: 'right', file: 'right.webp', alt: `${style.name} Right Profile View` },
-        { role: 'back', file: 'back.webp', alt: `${style.name} Back View` },
-        { role: 'model', file: 'model.webp', alt: `${style.name} On-Model Lifestyle View` },
-        { role: 'detail', file: 'modal.webp', alt: `${style.name} Hand Embroidery Craftsmanship Detail` }
-      ];
+  return k.transaction(async (trx) => {
+    // 1. Delete existing kurta images
+    const kurtaCodes = KURTA_STYLES.map(s => s.product_code);
+    await trx('product_images').whereIn('product_code', kurtaCodes).del();
 
-      for (const [order, img] of imageRoles.entries()) {
-        const url = `/assets/products/${code}/${img.file}`;
-        const existingImg = await t('product_images').where({
-          product_code: code,
-          role: img.role
-        }).first();
+    // 2. Insert all product_images in batches
+    const batchSize = 100;
+    for (let i = 0; i < imageRows.length; i += batchSize) {
+      await trx('product_images').insert(imageRows.slice(i, i + batchSize));
+    }
 
-        if (existingImg) {
-          await t('product_images').where({ id: existingImg.id }).update({
-            url,
-            alt_text: img.alt,
-            sort_order: order + 1,
-            updated_at: timestamp
-          });
-        } else {
-          await t('product_images').insert({
-            product_code: code,
-            sku: null,
-            role: img.role,
-            url,
-            alt_text: img.alt,
-            sort_order: order + 1,
-            created_at: timestamp,
-            updated_at: timestamp
-          });
-          insertedImages++;
-        }
-      }
+    // 3. Delete existing kurta products
+    await trx('products').where(function () {
+      this.where({ is_kurta: 1 })
+        .orWhere({ category: 'Chicken Curry Kurtas' })
+        .orWhere({ category: 'Chicken Curry Kurtas for Women' })
+        .orWhereIn('product_code', kurtaCodes);
+    }).del();
+
+    // 4. Insert all kurta variants in batches
+    for (let i = 0; i < productRows.length; i += batchSize) {
+      await trx('products').insert(productRows.slice(i, i + batchSize));
+    }
+
+    // 5. Insert supplier SKUs
+    for (let i = 0; i < supplierRows.length; i += batchSize) {
+      await trx('supplier_skus')
+        .insert(supplierRows.slice(i, i + batchSize))
+        .onConflict(['supplier', 'supplier_sku'])
+        .merge();
     }
 
     return {
-      insertedProducts,
-      updatedProducts,
-      totalVariants: kurtaProducts.length * 7,
-      insertedImages
+      stylesCount: KURTA_STYLES.length,
+      totalVariants: productRows.length,
+      totalImages: imageRows.length
     };
   });
 }
