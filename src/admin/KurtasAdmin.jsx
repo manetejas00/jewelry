@@ -300,6 +300,28 @@ export function KurtasAdmin({ readonly, ProductAngleManager }) {
                     <div>
                       <strong style={{ display: 'block', fontSize: '14px' }}>{k.name}</strong>
                       <span className="small muted" style={{ fontFamily: 'monospace' }}>{k.product_code}</span>
+                      {k.colors && k.colors.length > 0 && (
+                        <div style={{ display: 'flex', gap: '4px', marginTop: '6px', alignItems: 'center' }}>
+                          {k.colors.map(col => (
+                            <span
+                              key={col.name}
+                              title={col.name}
+                              style={{
+                                display: 'inline-block',
+                                width: '12px',
+                                height: '12px',
+                                borderRadius: '50%',
+                                backgroundColor: col.hex,
+                                border: '1px solid var(--line)',
+                                boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                              }}
+                            />
+                          ))}
+                          <span className="small muted" style={{ fontSize: '10px', marginLeft: '2px' }}>
+                            {k.colors.length} colours · {k.variantCount || (k.colors.length * 7)} SKUs
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </td>

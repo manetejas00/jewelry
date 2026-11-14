@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Sparkles,
   ShoppingBag,
@@ -11,18 +11,15 @@ import {
   Check,
   X,
   SlidersHorizontal,
-  ChevronRight,
   Info
 } from 'lucide-react';
 import { useStore } from './store.jsx';
 import { api } from './api.js';
 import { money } from './catalogue.js';
-import BrandedImage from './BrandedImage.jsx';
-import ProductMagicZoom from './ProductMagicZoom.jsx';
-import ImageViewer from './ImageViewer.jsx';
-import { RatingBadge, ProductReviewsSection } from './Reviews.jsx';
 import { KURTA_SIZES } from './kurta-constants.js';
 import useScrollLock from './useScrollLock.js';
+import CommonPLP from './components/CommonPLP.jsx';
+import CommonPDP from './components/CommonPDP.jsx';
 
 function KurtaModal({ title, children, onClose }) {
   const el = useRef();
@@ -143,18 +140,17 @@ const kurtaPriceBrackets = [
   { label: 'All prices', value: '' },
   { label: 'Under ₹3,000', value: '0-3000' },
   { label: '₹3,000 – ₹3,500', value: '3000-3500' },
-  { label: 'Above ₹3,500', value: '3500-' }
+  { label: '₹3,500 – ₹4,000', value: '3500-4000' },
+  { label: 'Above ₹4,000', value: '4000-' }
 ];
 
 function matchKurtaPrice(price, bracket) {
   if (!bracket) return true;
   if (price === null || price === undefined) return false;
-  if (bracket === 'under-3500') return price < 3500;
-  if (bracket === '3500-4500') return price >= 3500 && price <= 4500;
-  if (bracket === 'above-4500') return price > 4500;
   if (bracket === '0-3000') return price < 3000;
   if (bracket === '3000-3500') return price >= 3000 && price <= 3500;
-  if (bracket === '3500-') return price > 3500;
+  if (bracket === '3500-4000') return price >= 3500 && price <= 4000;
+  if (bracket === '4000-') return price > 4000;
   if (bracket.includes('-')) {
     const [minStr, maxStr] = bracket.split('-');
     if (minStr && price < Number(minStr)) return false;
@@ -170,13 +166,15 @@ export function KurtasPage({ Layout, ProductCard }) {
   const [loading, setLoading] = useState(true);
   const [fabricFilter, setFabricFilter] = useState('');
   const [sizeFilter, setSizeFilter] = useState('');
+  const [colorFilter, setColorFilter] = useState('');
   const [priceBracket, setPriceBracket] = useState('');
   const [inStockOnly, setInStockOnly] = useState(false);
   const [sortBy, setSortBy] = useState('featured');
   const [searchQuery, setSearchQuery] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
+  const [visible, setVisible] = useState(24);
 
   useEffect(() => {
+    document.title = 'Chicken Curry Kurtas | Authentic Lucknowi Chikankari | Veyora';
     let active = true;
     setLoading(true);
     api('/kurtas')
@@ -188,7 +186,6 @@ export function KurtasPage({ Layout, ProductCard }) {
       })
       .catch(() => {
         if (active) {
-          // Fallback to store products with is_kurta = true
           const fallback = products.filter(p => p.is_kurta || p.category === 'Chicken Curry Kurtas');
           setKurtas(fallback);
           setLoading(false);
@@ -205,7 +202,8 @@ export function KurtasPage({ Layout, ProductCard }) {
       list = list.filter(k =>
         k.name.toLowerCase().includes(q) ||
         (k.description && k.description.toLowerCase().includes(q)) ||
-        (k.metal && k.metal.toLowerCase().includes(q))
+        (k.metal && k.metal.toLowerCase().includes(q)) ||
+        (k.colors && k.colors.some(c => c.name.toLowerCase().includes(q)))
       );
     }
 
@@ -221,6 +219,13 @@ export function KurtasPage({ Layout, ProductCard }) {
       );
     }
 
+    if (colorFilter) {
+      list = list.filter(k =>
+        (k.colors && k.colors.some(c => c.name.toLowerCase().includes(colorFilter.toLowerCase()) || c.code === colorFilter.toLowerCase())) ||
+        (k.color && k.color.toLowerCase().includes(colorFilter.toLowerCase()))
+      );
+    }
+
     if (priceBracket) {
       list = list.filter(k => matchKurtaPrice(k.minPrice || k.price, priceBracket));
     }
@@ -230,199 +235,110 @@ export function KurtasPage({ Layout, ProductCard }) {
     }
 
     // Sort
-    if (sortBy === 'price-low') {
+    if (sortBy === 'price-asc' || sortBy === 'price-low') {
       list.sort((a, b) => (a.minPrice || a.price) - (b.minPrice || b.price));
-    } else if (sortBy === 'price-high') {
+    } else if (sortBy === 'price-desc' || sortBy === 'price-high') {
       list.sort((a, b) => (b.maxPrice || b.price) - (a.maxPrice || a.price));
-    } else if (sortBy === 'name') {
-      list.sort((a, b) => a.name.localeCompare(b.name));
     }
 
     return list;
-  }, [kurtas, searchQuery, fabricFilter, sizeFilter, priceBracket, inStockOnly, sortBy]);
+  }, [kurtas, searchQuery, fabricFilter, sizeFilter, colorFilter, priceBracket, inStockOnly, sortBy]);
 
   const clearFilters = () => {
     setFabricFilter('');
     setSizeFilter('');
+    setColorFilter('');
     setPriceBracket('');
     setInStockOnly(false);
     setSearchQuery('');
     setSortBy('featured');
   };
 
-  const hasActiveFilters = Boolean(fabricFilter || sizeFilter || priceBracket || inStockOnly || searchQuery);
+  const tabs = [
+    { label: 'Chicken Curry Kurtas', href: '/kurtas', active: true },
+    { label: 'All jewellery', href: '/collections/all', active: false },
+    { label: 'The Pearl Edit', href: '/collections/pearls', active: false },
+    { label: 'Earrings', href: '/collections/earrings', active: false },
+    { label: 'Necklaces', href: '/collections/necklaces', active: false },
+    { label: 'Rings', href: '/collections/rings', active: false },
+    { label: 'Bracelets', href: '/collections/bracelets', active: false },
+    { label: 'Coins', href: '/coins', active: false }
+  ];
+
+  const facets = [
+    {
+      key: 'fabric',
+      label: 'Fabric',
+      allLabel: 'All Fabrics',
+      options: [
+        { label: 'Pure Mulmul Cotton', value: 'mulmul' },
+        { label: 'Viscose Georgette', value: 'georgette' },
+        { label: 'Chanderi Silk', value: 'chanderi' },
+        { label: 'Modal Cotton', value: 'modal' },
+        { label: 'Kota Doria Cotton', value: 'kota' },
+        { label: 'Tussar Silk', value: 'tussar' },
+        { label: 'Silk Organza', value: 'organza' },
+        { label: 'Linen Blend', value: 'linen' }
+      ]
+    },
+    {
+      key: 'size',
+      label: 'Size',
+      allLabel: 'All Sizes',
+      options: KURTA_SIZES.map(s => ({ label: s.label, value: s.code }))
+    }
+  ];
+
+  const handleFilterChange = (key, val) => {
+    if (key === 'fabric') setFabricFilter(val);
+    if (key === 'size') setSizeFilter(val);
+    if (key === 'stock') setInStockOnly(Boolean(val));
+  };
 
   return (
     <Layout>
-      <div className="collection-intro">
-        <span className="eyebrow">THE VEYORA COLLECTIONS</span>
-        <h1>Chicken Curry Kurtas</h1>
-        <p>Exquisite hand-embroidered Lucknowi Chikankari needlecraft in pure mulmul cotton, fluid georgette, and shimmering Chanderi silk.</p>
-        <div className="collection-tabs">
-          <Link className="active" to="/kurtas">Chicken Curry Kurtas</Link>
-          <Link to="/collections/all">All jewellery</Link>
-          <Link to="/collections/pearls">The Pearl Edit</Link>
-          <Link to="/collections/earrings">Earrings</Link>
-          <Link to="/collections/necklaces">Necklaces</Link>
-          <Link to="/collections/rings">Rings</Link>
-          <Link to="/collections/bracelets">Bracelets</Link>
-          <Link to="/coins">Coins</Link>
-        </div>
-        <div className="price-bracket-bar" role="group" aria-label="Filter by price bracket">
-          <span className="price-bracket-title">Price:</span>
-          {kurtaPriceBrackets.map(b => {
-            const isActive = (priceBracket || '') === b.value;
-            return (
-              <button
-                key={b.value}
-                type="button"
-                className={'price-bracket-pill ' + (isActive ? 'active' : '')}
-                onClick={() => setPriceBracket(isActive && b.value ? '' : b.value)}
-                aria-pressed={isActive}
-              >
-                {b.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <section className="section catalogue kurta-catalogue">
-        <div className="filter-toolbar">
-          <button className="text-button" onClick={() => setShowFilters(s => !s)}>
-            <SlidersHorizontal size={16} /> Filter & refine {hasActiveFilters ? '(Active)' : ''}
-          </button>
-          <span>{filteredKurtas.length} pieces</span>
-          <label>Sort by <select aria-label="Sort products" value={sortBy} onChange={e => setSortBy(e.target.value)}>
-            <option value="featured">Featured</option>
-            <option value="price-low">Price: low to high</option>
-            <option value="price-high">Price: high to low</option>
-            <option value="name">Name: A to Z</option>
-          </select></label>
-        </div>
-
-        {hasActiveFilters && (
-          <div className="active-filters-row">
-            {searchQuery && (
-              <button type="button" className="active-filter-chip" onClick={() => setSearchQuery('')}>
-                Search: “{searchQuery}” <X size={12} />
-              </button>
-            )}
-            {fabricFilter && (
-              <button type="button" className="active-filter-chip" onClick={() => setFabricFilter('')}>
-                Fabric: {fabricFilter} <X size={12} />
-              </button>
-            )}
-            {sizeFilter && (
-              <button type="button" className="active-filter-chip" onClick={() => setSizeFilter('')}>
-                Size: {sizeFilter} <X size={12} />
-              </button>
-            )}
-            {priceBracket && (
-              <button type="button" className="active-filter-chip" onClick={() => setPriceBracket('')}>
-                Price: {kurtaPriceBrackets.find(p => p.value === priceBracket)?.label || priceBracket} <X size={12} />
-              </button>
-            )}
-            {inStockOnly && (
-              <button type="button" className="active-filter-chip" onClick={() => setInStockOnly(false)}>
-                In stock only <X size={12} />
-              </button>
-            )}
-            <button type="button" className="underlink" onClick={clearFilters} style={{ fontSize: '11px', marginLeft: '6px' }}>
-              Clear all
-            </button>
-          </div>
-        )}
-
-        {showFilters && (
-          <div className="filters" style={{ margin: '0 0 28px', padding: '18px 20px', background: '#faf9f5', border: '1px solid var(--line)', borderRadius: '3px' }}>
-            <label>
-              Search
-              <input
-                placeholder="Search styles, fabrics, embroidery…"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-              />
-            </label>
-
-            <label>
-              Fabric
-              <select value={fabricFilter} onChange={e => setFabricFilter(e.target.value)}>
-                <option value="">All Fabrics</option>
-                <option value="mulmul">Pure Mulmul Cotton</option>
-                <option value="georgette">Viscose Georgette</option>
-                <option value="chanderi">Chanderi Silk</option>
-              </select>
-            </label>
-
-            <label>
-              Size
-              <select value={sizeFilter} onChange={e => setSizeFilter(e.target.value)}>
-                <option value="">All Sizes (XS–XXXL)</option>
-                <option value="XS">XS (34)</option>
-                <option value="S">S (36)</option>
-                <option value="M">M (38)</option>
-                <option value="L">L (40)</option>
-                <option value="XL">XL (42)</option>
-                <option value="XXL">XXL (44)</option>
-                <option value="XXXL">XXXL (46)</option>
-              </select>
-            </label>
-
-            <label>
-              Price Bracket
-              <select value={priceBracket} onChange={e => setPriceBracket(e.target.value)}>
-                <option value="">All Prices</option>
-                <option value="0-3000">Under ₹3,000</option>
-                <option value="3000-3500">₹3,000 – ₹3,500</option>
-                <option value="3500-">Above ₹3,500</option>
-              </select>
-            </label>
-
-            <label className="checkbox" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={inStockOnly}
-                onChange={e => setInStockOnly(e.target.checked)}
-              />
-              In stock only
-            </label>
-
-            <button type="button" className="text-button" onClick={clearFilters}>
-              Clear all filters
-            </button>
-          </div>
-        )}
-
-        {loading ? (
-          <p className="empty" role="status">Curating Chicken Curry Kurtas…</p>
-        ) : filteredKurtas.length ? (
-          <div className="product-grid">
-            {filteredKurtas.map(k => (
-              <ProductCard key={k.sku || k.product_code} p={k} />
-            ))}
-          </div>
-        ) : (
-          <div className="empty">
-            <Sparkles size={36} color="var(--gold)" />
-            <h2>No kurtas matched your search</h2>
-            <p>Try clearing your filters or explore our complete handcrafted collection.</p>
-            <button className="button dark" onClick={clearFilters} style={{ marginTop: '16px' }}>
-              Show all kurtas
-            </button>
-          </div>
-        )}
-      </section>
+      <CommonPLP
+        eyebrow="THE VEYORA COLLECTIONS"
+        title="Chicken Curry Kurtas"
+        description="Exquisite hand-embroidered Lucknowi Chikankari needlecraft in pure mulmul cotton, fluid georgette, and shimmering Chanderi silk."
+        tabs={tabs}
+        priceBrackets={kurtaPriceBrackets}
+        activePrice={priceBracket}
+        onPriceChange={setPriceBracket}
+        items={filteredKurtas}
+        loading={loading}
+        error={error}
+        sortBy={sortBy}
+        onSortChange={setSortBy}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        activeFilters={{
+          fabric: fabricFilter,
+          size: sizeFilter,
+          stock: inStockOnly ? '1' : ''
+        }}
+        onFilterChange={handleFilterChange}
+        onClearFilters={clearFilters}
+        facets={facets}
+        emptyIcon={Sparkles}
+        emptyTitle="No kurtas matched your search"
+        emptyMessage="Try clearing your filters or explore our complete handcrafted Lucknowi collection."
+        ProductCardComponent={ProductCard}
+        visible={visible}
+        onLoadMore={() => setVisible(v => v + 24)}
+        itemLabel="handcrafted silhouettes"
+      />
     </Layout>
   );
 }
 
 export function KurtaDetailPage({ Layout, StructuredProduct, ProductCard }) {
   const { slug } = useParams();
-  const navigate = useNavigate();
-  const { products, add, saved, toggleSave, accountReady, error, refreshCatalogue } = useStore();
+  const [searchParams] = useSearchParams();
+  const { products, add, saved, toggleSave } = useStore();
   const [kurtaData, setKurtaData] = useState(null);
   const [selectedSku, setSelectedSku] = useState('');
+  const [selectedColor, setSelectedColor] = useState('');
   const [showChart, setShowChart] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -433,12 +349,13 @@ export function KurtaDetailPage({ Layout, StructuredProduct, ProductCard }) {
       .then(data => {
         if (active) {
           setKurtaData(data);
+          const initColor = searchParams.get('color') || data.color || (data.colors && data.colors[0]?.name) || '';
+          setSelectedColor(initColor);
           setSelectedSku(data.sku);
           setLoading(false);
         }
       })
       .catch(() => {
-        // Fallback to store products
         if (active) {
           const match = products.find(p => p.slug === slug || p.product_code === slug);
           if (match) {
@@ -454,10 +371,20 @@ export function KurtaDetailPage({ Layout, StructuredProduct, ProductCard }) {
         }
       });
     return () => { active = false; };
-  }, [slug, products]);
+  }, [slug, products, searchParams]);
 
-  const variants = kurtaData?.variants || [];
-  const currentVariant = variants.find(v => v.sku === selectedSku) || kurtaData;
+  const allVariants = kurtaData?.all_variants || kurtaData?.variants || [];
+  const colors = kurtaData?.colors || [];
+
+  // Filter variants and images for active color
+  const activeColorName = selectedColor || kurtaData?.color || (colors.length ? colors[0].name : '');
+  const activeVariants = useMemo(() => {
+    if (!allVariants.length) return [];
+    const forColor = allVariants.filter(v => v.color === activeColorName);
+    return forColor.length ? forColor : allVariants.slice(0, 7);
+  }, [allVariants, activeColorName]);
+
+  const currentVariant = activeVariants.find(v => v.sku === selectedSku) || activeVariants[0] || kurtaData;
 
   useEffect(() => {
     if (currentVariant) {
@@ -486,214 +413,84 @@ export function KurtaDetailPage({ Layout, StructuredProduct, ProductCard }) {
   }
 
   const p = currentVariant;
-  const angleImages = (p.images && p.images.length) ? p.images : [
+
+  // Filter gallery images by active colour
+  const colorFilteredImages = (kurtaData.images || []).filter(img =>
+    !img.color || img.color === activeColorName
+  );
+  const angleImages = colorFilteredImages.length ? colorFilteredImages : (kurtaData.images || [
     { id: 'hero', role: 'hero', url: p.image, alt_text: p.name }
-  ];
+  ]);
 
   const relatedKurtas = products.filter(item =>
     item.product_code !== p.product_code && (item.is_kurta || item.category === 'Chicken Curry Kurtas')
   ).slice(0, 4);
 
+  const breadcrumbs = [
+    { label: 'Home', href: '/' },
+    { label: 'Chicken Curry Kurtas', href: '/kurtas' },
+    { label: p.name }
+  ];
+
+  const specs = [
+    ['Fabric', p.metal || 'Pure Mulmul Cotton'],
+    ['Craftsmanship', p.purity || 'Authentic Lucknowi Chikankari Needlework'],
+    ['Selected Colour', p.color || activeColorName || 'Natural Ivory'],
+    ['Selected Size', p.size],
+    ['SKU', p.sku]
+  ];
+
+  const craftsmanshipAccordion = (
+    <details>
+      <summary>Authentic Craftsmanship & Stitches <Plus size={15} /></summary>
+      <p style={{ margin: '8px 0', fontSize: '13px', lineHeight: 1.6, color: 'var(--muted)' }}>
+        Each piece features handcrafted Lucknowi Chikankari stitches: <em>Bakhiya</em> (shadow stitch worked on the reverse for an opaque glow), <em>Phanda</em> (delicate pearl milgrain knots), and <em>Keel Kangan</em> (chain-stitch floral vines). Sourced directly from Lucknow master needlecrafters.
+      </p>
+    </details>
+  );
+
+  const careAccordion = (
+    <details>
+      <summary>Garment Care & Fabric Maintenance <Plus size={15} /></summary>
+      <p style={{ margin: '8px 0', fontSize: '13px', lineHeight: 1.6, color: 'var(--muted)' }}>
+        Hand-wash gently in cold water using mild liquid detergent. Do not wring or soak. Dry flat in natural shade. Warm iron on reverse side to retain stitch embossing.
+      </p>
+    </details>
+  );
+
   return (
     <Layout>
-      {StructuredProduct && <StructuredProduct p={p} />}
-
-      <div className="breadcrumbs section">
-        <Link to="/">Home</Link>
-        <span>/</span>
-        <Link to="/kurtas">Chicken Curry Kurtas</Link>
-        <span>/</span>
-        <span>{p.name}</span>
-      </div>
-
-      <section className="product-detail section">
-        <ProductMagicZoom
-          id={p.sku}
-          images={angleImages}
-          title={`${p.name}, ${p.size}, ${p.metal}`}
-        >
-          <p className="caption">
-            {angleImages.length > 1
-              ? 'AUTHENTIC LUCKNOWI MULTI-ANGLE PHOTOGRAPHY'
-              : 'HANDCRAFTED CHIKANKARI EDITORIAL PHOTOGRAPHY'}
-          </p>
-        </ProductMagicZoom>
-
-        <div className="detail-copy">
-          <span className="eyebrow" style={{ color: 'var(--gold)' }}>
-            CHICKEN CURRY KURTAS · HERITAGE NEEDLECRAFT
-          </span>
-          <h1>{p.name}</h1>
-          <p className="material-line">
-            {p.metal} · {p.purity || 'Handcrafted Lucknowi Chikankari Embroidery'}
-          </p>
-
-          <div className="pdp-rating-row" style={{ marginBottom: '10px' }}>
-            <RatingBadge
-              rating={p.rating_average}
-              count={p.rating_count}
-              showEmpty={true}
-              size="md"
-              onClick={() => {
-                const el = document.getElementById('reviews');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }}
-            />
-          </div>
-
-          <div className="detail-price">
-            {p.original_price && p.original_price > p.price ? (
-              <div className="price-row" style={{ alignItems: 'baseline', gap: '10px', margin: 0 }}>
-                <span className="discounted-price" style={{ fontSize: '26px' }}>{money(p.price)}</span>
-                <del className="original-price-del" style={{ fontSize: '16px' }}>{money(p.original_price)}</del>
-                {p.discount_amount > 0 && <span className="offer-save-tag">SAVE {money(p.discount_amount)}</span>}
-              </div>
-            ) : (
-              money(p.price)
-            )}
-          </div>
-
-          <p className="small muted">Handcrafted in Lucknow · Free shipping across India</p>
-
-          <p className="detail-description">{p.description}</p>
-
-          {/* Sizing Section: XS to XXXL */}
-          <div className="kurta-size-selector" style={{ margin: '20px 0' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <label style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                Select Kurta Size (XS to XXXL)
-              </label>
-              <button
-                type="button"
-                className="underlink"
-                onClick={() => setShowChart(true)}
-                style={{ fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-              >
-                Size Guide & Measurements ↗
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              {variants.map(v => {
-                const isSelected = v.sku === p.sku;
-                const isOutOfStock = v.stock === 0;
-                return (
-                  <button
-                    key={v.sku}
-                    type="button"
-                    disabled={isOutOfStock}
-                    onClick={() => setSelectedSku(v.sku)}
-                    style={{
-                      minWidth: '54px',
-                      padding: '8px 14px',
-                      fontSize: '13px',
-                      fontWeight: isSelected ? 700 : 500,
-                      borderRadius: '3px',
-                      border: isSelected ? '2px solid var(--ink)' : '1px solid var(--line)',
-                      background: isSelected ? 'var(--ink)' : isOutOfStock ? '#f5f5f5' : '#fff',
-                      color: isSelected ? '#fff' : isOutOfStock ? '#999' : 'var(--ink)',
-                      cursor: isOutOfStock ? 'not-allowed' : 'pointer',
-                      textDecoration: isOutOfStock ? 'line-through' : 'none',
-                      transition: 'all 0.15s ease'
-                    }}
-                    title={isOutOfStock ? `${v.size} is currently out of stock` : `Select size ${v.size} (${v.stock} in stock)`}
-                  >
-                    {v.size.split(' ')[0]}
-                  </button>
-                );
-              })}
-            </div>
-            <span className="small muted" style={{ display: 'block', marginTop: '6px' }}>
-              Selected: <strong>{p.size}</strong> {p.stock > 0 ? `(${p.stock} ready in stock)` : '— Currently Out of Stock'}
-            </span>
-          </div>
-
-          <p className={'stock ' + (p.stock === 0 ? 'unavailable' : '')}>
-            <span />
-            {p.stock === 0
-              ? 'This size is currently sold out. Please select another size.'
-              : `${p.stock} pieces in stock · Ready to dispatch`}
-          </p>
-
-          <div className="add-row">
-            <button
-              className="button dark"
-              disabled={p.stock === 0}
-              onClick={() => add(p)}
-            >
-              {p.stock === 0 ? 'Out of Stock' : 'Add to Shopping Bag'}
-              <ShoppingBag size={18} />
-            </button>
-
-            <button
-              className={'wishlist-button ' + (saved.includes(p.product_code) ? 'selected' : '')}
-              aria-label={saved.includes(p.product_code) ? `Remove ${p.name} from saved` : `Save ${p.name}`}
-              onClick={() => toggleSave(p.product_code)}
-            >
-              <Heart fill={saved.includes(p.product_code) ? 'currentColor' : 'none'} size={20} />
-            </button>
-          </div>
-
-          {/* Specifications Accordion */}
-          <dl className="specs">
-            <div>
-              <dt>Fabric</dt>
-              <dd>{p.metal || 'Pure Mulmul Cotton'}</dd>
-            </div>
-            <div>
-              <dt>Craftsmanship</dt>
-              <dd>{p.purity || 'Authentic Lucknowi Chikankari Needlework'}</dd>
-            </div>
-            <div>
-              <dt>Selected Size</dt>
-              <dd>{p.size}</dd>
-            </div>
-            <div>
-              <dt>SKU</dt>
-              <dd>{p.sku}</dd>
-            </div>
-          </dl>
-
-          <details>
-            <summary>Authentic Craftsmanship & Stitches <Plus size={15} /></summary>
-            <p style={{ margin: '8px 0', fontSize: '13px', lineHeight: 1.6, color: 'var(--muted)' }}>
-              Each piece features handcrafted Lucknowi Chikankari stitches: <em>Bakhiya</em> (shadow stitch worked on the reverse for an opaque glow), <em>Phanda</em> (delicate pearl milgrain knots), and <em>Keel Kangan</em> (chain-stitch floral vines). Sourced directly from Lucknow master needlecrafters.
-            </p>
-          </details>
-
-          <details>
-            <summary>Garment Care & Fabric Maintenance <Plus size={15} /></summary>
-            <p style={{ margin: '8px 0', fontSize: '13px', lineHeight: 1.6, color: 'var(--muted)' }}>
-              Hand-wash gently in cold water using mild liquid detergent. Do not wring or soak. Dry flat in natural shade. Warm iron on reverse side to retain stitch embossing.
-            </p>
-          </details>
-        </div>
-      </section>
-
-      {/* Reviews */}
-      <ProductReviewsSection product={p} />
-
-      {/* Related Kurtas */}
-      {relatedKurtas.length > 0 && (
-        <section className="related-products-section section">
-          <div className="section-heading">
-            <div>
-              <span className="eyebrow">CURATED SILHOUETTES</span>
-              <h2>Complementary Chikankari Pieces</h2>
-            </div>
-            <Link className="underlink" to="/kurtas">
-              Explore all Chicken Curry Kurtas <ArrowUpRight size={16} />
-            </Link>
-          </div>
-          <div className="product-grid">
-            {relatedKurtas.map(rel => (
-              <ProductCard key={rel.sku} p={rel} />
-            ))}
-          </div>
-        </section>
-      )}
+      <CommonPDP
+        product={p}
+        variants={activeVariants}
+        allVariants={allVariants}
+        colors={colors}
+        selectedColor={activeColorName}
+        onColorSelect={colName => {
+          setSelectedColor(colName);
+          const matchVar = allVariants.find(v => v.color === colName && v.size === p.size) || allVariants.find(v => v.color === colName);
+          if (matchVar) setSelectedSku(matchVar.sku);
+        }}
+        selectedSku={p.sku}
+        onSkuSelect={setSelectedSku}
+        images={angleImages}
+        breadcrumbs={breadcrumbs}
+        onAdd={add}
+        isSaved={saved.includes(p.product_code)}
+        onToggleSave={() => toggleSave(p.product_code)}
+        sizeType="kurta"
+        onOpenSizeGuide={() => setShowChart(true)}
+        specs={specs}
+        craftsmanshipNode={craftsmanshipAccordion}
+        careNode={careAccordion}
+        relatedProducts={relatedKurtas}
+        ProductCardComponent={ProductCard}
+        StructuredProductComponent={StructuredProduct}
+      />
 
       {showChart && <KurtaSizeChartModal onClose={() => setShowChart(false)} />}
     </Layout>
   );
 }
+
+export default KurtasPage;

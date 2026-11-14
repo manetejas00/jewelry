@@ -105,6 +105,24 @@ export async function listKurtas(k, options = {}) {
   }
 
   for (const fam of familyMap.values()) {
+    // Unique colours for the style
+    const colorMap = new Map();
+    for (const v of fam.variants) {
+      if (v.color && !colorMap.has(v.color)) {
+        const colorImgs = (fam.images || []).filter(img => img.color === v.color);
+        const repImg = colorImgs[0]?.url || v.image;
+        colorMap.set(v.color, {
+          name: v.color,
+          code: v.color_code || v.color.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+          hex: v.hex_color || '#d4af37',
+          image: repImg,
+          price: v.price,
+          in_stock: fam.variants.some(item => item.color === v.color && item.stock > 0)
+        });
+      }
+    }
+    fam.colors = [...colorMap.values()];
+
     fam.sizes = KURTA_SIZES.map(s => {
       const v = fam.variants.find(item => item.size.startsWith(s.code));
       return {
@@ -161,13 +179,37 @@ export async function kurtaBySlug(k, slug, options = {}) {
 
   const rep = pricedVariants.find(v => v.slug === cleanSlug) || pricedVariants.find(v => v.stock > 0) || pricedVariants[0];
 
+  // Group colors
+  const colorMap = new Map();
+  for (const v of pricedVariants) {
+    if (v.color && !colorMap.has(v.color)) {
+      const colorImgs = distinctImages.filter(img => img.color === v.color);
+      colorMap.set(v.color, {
+        name: v.color,
+        code: v.color_code || v.color.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        hex: v.hex_color || '#d4af37',
+        image: colorImgs[0]?.url || v.image
+      });
+    }
+  }
+
+  // Active color variants for size selection (7 sizes)
+  const activeColor = options.color || rep.color;
+  const activeColorVariants = activeColor
+    ? pricedVariants.filter(v => v.color === activeColor)
+    : pricedVariants.slice(0, 7);
+
+  const finalVariants = activeColorVariants.length === 7 ? activeColorVariants : pricedVariants.slice(0, 7);
+
   return {
     ...rep,
     is_kurta: true,
     thumbnail: listingThumbnail(rep),
     images: distinctImages,
     angle_images: distinctImages,
-    variants: pricedVariants,
+    variants: finalVariants,
+    all_variants: pricedVariants,
+    colors: [...colorMap.values()],
     rating_average: ratingData ? ratingData.average : null,
     rating_count: ratingData ? ratingData.count : 0,
     size_chart: KURTA_SIZES
@@ -209,11 +251,21 @@ export async function adminListKurtas(k) {
         images: imagesByCode[code] || [],
         totalStock: 0,
         sizes: {},
-        stocks: {}
+        stocks: {},
+        variantCount: 0,
+        _colorMap: new Map()
       });
     }
     const fam = families.get(code);
     fam.totalStock += p.stock;
+    fam.variantCount += 1;
+    if (p.color && !fam._colorMap.has(p.color)) {
+      fam._colorMap.set(p.color, {
+        name: p.color,
+        code: p.color_code || p.color.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        hex: p.hex_color || '#e0d8cc'
+      });
+    }
     const sizeData = {
       id: p.id,
       sku: p.sku,
@@ -223,6 +275,11 @@ export async function adminListKurtas(k) {
     };
     fam.sizes[p.size] = sizeData;
     fam.stocks[p.size] = p.stock;
+  }
+
+  for (const fam of families.values()) {
+    fam.colors = [...fam._colorMap.values()];
+    delete fam._colorMap;
   }
 
   return [...families.values()];

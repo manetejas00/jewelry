@@ -263,6 +263,19 @@
 .product-card-actions{margin-top:auto;padding-top:12px}
 .product-card-cart{margin-top:0;height:auto;min-height:46px;padding:10px 14px;white-space:normal;text-align:center;overflow-wrap:anywhere;font-size:11px;font-weight:600}
 .product-card-cart svg{flex-shrink:0}
+/* Colour Swatches for Cards and PDP */
+.product-card-swatches{display:flex;gap:6px;align-items:center;margin:6px 0 8px;padding:0;flex-wrap:wrap;min-height:22px}
+.product-card-swatch{width:16px;height:16px;border-radius:50%;border:1px solid rgba(0,0,0,0.18);padding:0;cursor:pointer;transition:transform .15s ease,box-shadow .15s ease;display:inline-block;outline:none}
+.product-card-swatch:hover{transform:scale(1.2);box-shadow:0 0 0 2px var(--ivory),0 0 0 3px var(--ink)}
+.product-card-swatch.active{transform:scale(1.15);box-shadow:0 0 0 2px var(--ivory),0 0 0 3.5px var(--ink)}
+.pdp-color-selector{margin:18px 0 16px;padding:12px 14px;background:#faf9f5;border:1px solid var(--line);border-radius:3px}
+.pdp-color-heading{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.pdp-color-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink)}
+.pdp-color-active-name{font-weight:500;color:var(--muted);margin-left:6px;text-transform:none}
+.pdp-color-swatches{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.pdp-color-swatch-btn{width:28px;height:28px;border-radius:50%;border:1px solid rgba(0,0,0,0.2);position:relative;cursor:pointer;padding:0;transition:all .18s cubic-bezier(0.16,1,0.3,1)}
+.pdp-color-swatch-btn:hover{transform:scale(1.15);box-shadow:0 0 0 2px var(--ivory),0 0 0 3px var(--ink)}
+.pdp-color-swatch-btn.active{transform:scale(1.1);box-shadow:0 0 0 2px var(--ivory),0 0 0 4px var(--ink)}
 .product-photo>.offer-ribbon-badge,.product-photo>.gold-linked-badge{top:10px;left:10px;max-width:calc(100% - 54px);white-space:normal;overflow-wrap:anywhere;font-size:9px}
 .product-label{max-width:calc(100% - 20px);white-space:normal;font-size:9px;letter-spacing:1px;font-weight:700}
 .save-piece{width:38px;height:38px;display:grid;place-items:center;padding:0;border-radius:50%}

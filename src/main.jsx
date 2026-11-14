@@ -25,6 +25,8 @@ import ProductMagicZoom from './ProductMagicZoom.jsx';
 import { KurtasPage, KurtaDetailPage } from './Kurtas.jsx';
 import { CategoriesAdmin } from './admin/CategoriesAdmin.jsx';
 import { KurtasAdmin } from './admin/KurtasAdmin.jsx';
+import CommonPLP from './components/CommonPLP.jsx';
+import CommonPDP from './components/CommonPDP.jsx';
 const money=v=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:2,minimumFractionDigits:0}).format(v||0);
 const date=v=>v?new Date(v).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',dateStyle:'medium',timeStyle:'short'}):'—';
 const media=name=>'https://cdnstatic.tencentcs.com/edgeone/pages/product-activities/jewelry/'+encodeURIComponent(name)+'.png';
@@ -329,13 +331,14 @@ function FestiveGridBanner({offer}){
   </article>;
 }
 // One information layout for jewellery, bullion and future catalogue categories.
-function CardInfo({product:p,href,specifications,price,note,action}){
+function CardInfo({product:p,href,specifications,price,note,action,swatches}){
   return <div className="product-info">
     <Link className="product-card-title" to={href} title={p.name}><h3>{p.name}</h3></Link>
     <div className="product-card-rating">
       <RatingBadge rating={p.rating_average} count={p.rating_count} showEmpty={true} size="sm" />
     </div>
     <div className="product-card-specifications"><span>{specifications}</span>{p.image_kind==='illustration'&&<small className="illustration-note">Illustrative image</small>}</div>
+    {swatches}
     <div className="product-card-price">{p.original_price&&p.original_price>p.price?<div className="price-row"><span className="discounted-price">{money(p.price)}</span><del className="original-price-del">{money(p.original_price)}</del>{p.discount_amount>0&&<span className="offer-save-tag">SAVE {money(p.discount_amount)}</span>}</div>:<p>{price}</p>}</div>
     <div className="product-card-note">{note}</div>
     <div className="product-card-actions">{action}</div>
@@ -344,14 +347,61 @@ function CardInfo({product:p,href,specifications,price,note,action}){
 function ProductCard({p}){
   const {products,add,saved,toggleSave}=useStore();
   const isCoin=p.is_coin||!!p.coin_type||p.sku?.startsWith('COIN-');
-  const href=isCoin?'/coins/product/'+encodeURIComponent(p.sku):'/products/'+p.slug;
+  const isKurta=p.is_kurta||p.category==='Chicken Curry Kurtas'||p.category==='Chicken Curry Kurtas for Women';
+  const defaultHref=isCoin?'/coins/product/'+encodeURIComponent(p.sku):isKurta?'/kurtas/'+(p.slug||p.product_code):'/products/'+p.slug;
   const hasVariants=!isCoin&&products.filter(product=>product.product_code===p.product_code).length>1;
   const hasRange=!isCoin&&p.minPrice&&p.maxPrice&&p.minPrice!==p.maxPrice;
   const isGoldLinked=p.pricing_mode==='GOLD_LINKED'||(isCoin&&p.pricing_mode==='METAL_LINKED');
+
+  const colors = p.colors || (p.variants && [...new Map(p.variants.filter(v=>v.color).map(v=>[v.color, {name: v.color, code: v.color_code, hex: v.hex_color || '#d4af37', image: v.image}])).values()]) || [];
+  const [activeColor, setActiveColor] = useState(p.color || (colors.length ? colors[0].name : ''));
+
+  const activeImage = useMemo(() => {
+    if (activeColor && colors.length) {
+      const match = colors.find(c => c.name === activeColor || c.code === activeColor);
+      if (match?.image) return match.image;
+    }
+    return p.image;
+  }, [activeColor, colors, p.image]);
+
+  const activeHref = activeColor && isKurta
+    ? `/kurtas/${p.product_code || p.slug}?color=${encodeURIComponent(colors.find(c => c.name === activeColor)?.code || activeColor)}`
+    : defaultHref;
+
+  const displayProduct = useMemo(() => ({
+    ...p,
+    image: activeImage || p.image
+  }), [p, activeImage]);
+
+  const swatches = colors.length > 1 ? (
+    <div className="product-card-swatches" role="group" aria-label={`Available colours for ${p.name}`}>
+      {colors.map(col => {
+        const isSelected = (activeColor || colors[0]?.name) === col.name;
+        return (
+          <button
+            key={col.name}
+            type="button"
+            className={`product-card-swatch ${isSelected ? 'active' : ''}`}
+            style={{ backgroundColor: col.hex }}
+            title={`${col.name}${col.in_stock === false ? ' (Out of stock)' : ''}`}
+            aria-label={`Select ${col.name} colour`}
+            aria-pressed={isSelected}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setActiveColor(col.name);
+            }}
+            onMouseEnter={() => setActiveColor(col.name)}
+          />
+        );
+      })}
+    </div>
+  ) : null;
+
   return <article className="product-card">
     <div className="product-photo">
-      <Link className="product-card-link" to={href} aria-label={`View ${p.name}`}>
-        <ListingImage product={p} alt={`${p.name}, ${p.metal} ${p.purity}`}/>
+      <Link className="product-card-link" to={activeHref} aria-label={`View ${p.name}`}>
+        <ListingImage product={displayProduct} alt={`${p.name}, ${p.metal} ${p.purity}`}/>
       </Link>
       {p.offer?.badge_text && (
         <span className="offer-ribbon-badge" title={p.offer.name}>
@@ -360,13 +410,14 @@ function ProductCard({p}){
       )}
       {isGoldLinked&&!p.offer?.badge_text&&<span className="gold-linked-badge" title="Dynamic price linked to live bullion rate"><Sparkles size={10}/> {isCoin?'LIVE METAL RATE':'GOLD-LINKED RATE'}</span>}
       {!isCoin&&<button className={'save-piece icon '+(saved.includes(p.product_code)?'selected':'')} aria-label={`Save ${p.name}`} aria-pressed={saved.includes(p.product_code)} onClick={()=>toggleSave(p.product_code)}><Heart size={18}/></button>}
-      <span className="product-label">{p.stock===0?'CURRENTLY UNAVAILABLE':isCoin?`${p.purity} ${p.metal.toUpperCase()}`:p.category==='Rings'?'YOUR EVERYDAY SIGNATURE':'THE PEARL EDIT'}</span>
+      <span className="product-label">{p.stock===0?'CURRENTLY UNAVAILABLE':isCoin?`${p.purity} ${p.metal.toUpperCase()}`:isKurta?'CHICKEN CURRY KURTAS':p.category==='Rings'?'YOUR EVERYDAY SIGNATURE':'THE PEARL EDIT'}</span>
     </div>
-    <CardInfo product={p} href={href}
-      specifications={isCoin?`${p.weight_g}g · ${p.purity} ${p.metal}${p.dimension?` · ${p.dimension}`:''}`:`${p.metal} · ${p.purity} · ${p.category}`}
+    <CardInfo product={p} href={activeHref}
+      specifications={isCoin?`${p.weight_g}g · ${p.purity} ${p.metal}${p.dimension?` · ${p.dimension}`:''}`:isKurta?`${p.metal} · ${p.purity}`:`${p.metal} · ${p.purity} · ${p.category}`}
       price={p.price===null?'Price awaiting rate':(hasRange?`${money(p.minPrice)} – ${money(p.maxPrice)}`:`${money(p.price)}${p.category==='Rings'?' onwards':''}`)}
       note={isGoldLinked&&<span className="gold-linked-subtext">✦ Live {isCoin?'Metal':'Gold'}-Linked Pricing</span>}
-      action={hasVariants?<Link className="button dark product-card-cart" to={href}>Choose options <ArrowRight size={16}/></Link>:<button type="button" className="button dark product-card-cart" disabled={!p.checkout_available} onClick={()=>add(isCoin?{sku:p.sku,name:p.name,image:p.image,price:p.price,stock:p.stock,size:`${p.weight_g}g (${p.purity})`,slug:'coins'}:p)}>{p.checkout_available?'Add to cart':p.stock===0?'Out of stock':'Currently unavailable'}<ShoppingBag size={16}/></button>}/>
+      swatches={swatches}
+      action={isKurta?<Link className="button dark product-card-cart" to={activeHref}>Choose size (XS–XXXL) <ArrowRight size={16}/></Link>:hasVariants?<Link className="button dark product-card-cart" to={activeHref}>Choose options <ArrowRight size={16}/></Link>:<button type="button" className="button dark product-card-cart" disabled={!p.checkout_available} onClick={()=>add(isCoin?{sku:p.sku,name:p.name,image:p.image,price:p.price,stock:p.stock,size:`${p.weight_g}g (${p.purity})`,slug:'coins'}:p)}>{p.checkout_available?'Add to cart':p.stock===0?'Out of stock':'Currently unavailable'}<ShoppingBag size={16}/></button>}/>
 
   </article>;
 }
@@ -446,58 +497,60 @@ function Collection(){
   const title=q?`Search results for “${q}”`:categoryMeta?.name||({all:'The jewellery collection',pearls:'The Pearl Edit',saved:'Your saved pieces'}[category]||category.replace(/-/g,' '));
   const gridOffer=offers.find(o=>o.show_in_grid)||offers[0];
 
+  const tabs=[
+    {label:'Chicken Curry Kurtas',href:'/kurtas',active:false},
+    {label:'All jewellery',href:'/collections/all',active:category==='all'},
+    {label:'The Pearl Edit',href:'/collections/pearls',active:category==='pearls'},
+    {label:'Earrings',href:'/collections/earrings',active:category==='earrings'},
+    {label:'Necklaces',href:'/collections/necklaces',active:category==='necklaces'},
+    {label:'Rings',href:'/collections/rings',active:category==='rings'},
+    {label:'Bracelets',href:'/collections/bracelets',active:category==='bracelets'},
+    {label:'Coins',href:'/coins',active:false},
+    ...(category==='saved'?[{label:`Saved pieces (${saved.length})`,href:'/collections/saved',active:true}]:[])
+  ];
+
+  const facets=[
+    {
+      key:'purity',
+      label:'Purity',
+      allLabel:'All purities',
+      options:[
+        {label:'18K',value:'18K'},
+        {label:'22K',value:'22K'},
+        {label:'925',value:'925'}
+      ]
+    }
+  ];
+
   return <Layout>
-    <div className="collection-intro">
-      <span className="eyebrow">{q?`FOUND ${items.length} MATCHING PIECES`:'THE VEYORA COLLECTIONS'}</span>
-      <h1>{title}</h1>
-      <p>{q?`Showing items matching “${q}”.`:categoryMeta?.description||'Considered pieces. Quiet statements. Endlessly you.'}</p>
-      <div className="collection-tabs">
-        <Link to="/kurtas">Chicken Curry Kurtas</Link>
-        <Link className={category==='all'?'active':''} to="/collections/all">All jewellery</Link>
-        <Link className={category==='pearls'?'active':''} to="/collections/pearls">The Pearl Edit</Link>
-        <Link className={category==='earrings'?'active':''} to="/collections/earrings">Earrings</Link>
-        <Link className={category==='necklaces'?'active':''} to="/collections/necklaces">Necklaces</Link>
-        <Link className={category==='rings'?'active':''} to="/collections/rings">Rings</Link>
-        <Link className={category==='bracelets'?'active':''} to="/collections/bracelets">Bracelets</Link>
-        <Link to="/coins">Coins</Link>
-        {category==='saved'&&<Link className="active" to="/collections/saved">Saved pieces ({saved.length})</Link>}
-      </div>
-      <div className="price-bracket-bar" role="group" aria-label="Filter by price bracket">
-        <span className="price-bracket-title">Price:</span>
-        {priceBrackets.map(b=>{
-          const isActive=(params.get('price')||'')===b.value;
-          return <button key={b.value} type="button" className={'price-bracket-pill '+(isActive?'active':'')} onClick={()=>update('price',isActive&&b.value?'':b.value)} aria-pressed={isActive}>{b.label}</button>;
-        })}
-      </div>
-    </div>
-    <section className="section catalogue" ref={listRef}>
-      <div className="filter-toolbar">
-        <button className="text-button" onClick={()=>setFilters(!filters)}>
-          <SlidersHorizontal size={16}/> Filter & refine {params.size>0&&`(${params.size})`}
-        </button>
-        <span>{items.length} pieces</span>
-        <label>Sort by <select aria-label="Sort products" value={params.get('sort')||'featured'} onChange={e=>update('sort',e.target.value)}>
-          <option value="featured">Featured</option>
-          <option value="price-asc">Price: low to high</option>
-          <option value="price-desc">Price: high to low</option>
-        </select></label>
-      </div>
-      {params.size>0&&<div className="active-filters-row">
-        {params.get('q')&&<button className="active-filter-chip" onClick={()=>update('q','')}>Search: “{params.get('q')}” <X size={12}/></button>}
-        {params.get('purity')&&<button className="active-filter-chip" onClick={()=>update('purity','')}>Purity: {params.get('purity')} <X size={12}/></button>}
-        {params.get('price')&&<button className="active-filter-chip" onClick={()=>update('price','')}>Price: {priceBrackets.find(p=>p.value===params.get('price'))?.label||params.get('price')} <X size={12}/></button>}
-        {params.get('stock')&&<button className="active-filter-chip" onClick={()=>update('stock','')}>In stock only <X size={12}/></button>}
-        <button className="underlink" style={{fontSize:'10px',padding:0}} onClick={()=>setParams({})}>Clear all</button>
-      </div>}
-      {filters&&<div className="filters">
-        <label>Search<input placeholder="Search the collection" value={q} onChange={e=>update('q',e.target.value)}/></label>
-        <label>Purity<select value={params.get('purity')||''} onChange={e=>update('purity',e.target.value)}><option value="">All purities</option><option>18K</option><option>22K</option><option>925</option></select></label>
-        <label>Price bracket<select value={params.get('price')||''} onChange={e=>update('price',e.target.value)}>{priceBrackets.map(b=><option key={b.value} value={b.value}>{b.label}</option>)}</select></label>
-        <label className="checkbox"><input type="checkbox" checked={!!params.get('stock')} onChange={e=>update('stock',e.target.checked?'1':'')}/> In stock only</label>
-        <button className="text-button" onClick={()=>setParams({})}>Clear all</button>
-      </div>}
-      {error?<div className="empty"><p className="error" role="alert">{error}</p><button className="underlink" onClick={()=>refreshCatalogue().catch(()=>{})}>Try again</button></div>:!accountReady?<p className="empty" role="status">Loading jewellery…</p>:items.length?<><div className="product-grid">{items.slice(0,visible).map((p,idx)=><React.Fragment key={p.sku}>{idx===2&&gridOffer&&<FestiveGridBanner offer={gridOffer}/>}<ProductCard p={p}/></React.Fragment>)}</div>{items.length>visible&&<div className="load-more"><button className="button dark" onClick={()=>setVisible(n=>n+24)}>Load more ({items.length-visible} remaining)</button></div>}</>:<div className="empty"><Gem size={36}/><h2>No pieces found</h2><p>Try clearing your filters or exploring our full jewellery catalogue.</p><div style={{display:'flex',gap:'12px',justifyContent:'center',flexWrap:'wrap',marginTop:'18px'}}>{params.size>0&&<button className="button dark" onClick={()=>setParams({})}>Clear all filters</button>}<Link className="button secondary" to="/collections/all">Explore all jewellery</Link></div></div>}
-    </section>
+    <CommonPLP
+      eyebrow={q?`FOUND ${items.length} MATCHING PIECES`:'THE VEYORA COLLECTIONS'}
+      title={title}
+      description={q?`Showing items matching “${q}”.`:categoryMeta?.description||'Considered pieces. Quiet statements. Endlessly you.'}
+      tabs={tabs}
+      priceBrackets={priceBrackets}
+      activePrice={params.get('price')||''}
+      onPriceChange={v=>update('price',v)}
+      items={items}
+      loading={!accountReady}
+      error={error}
+      sortBy={params.get('sort')||'featured'}
+      onSortChange={v=>update('sort',v)}
+      searchQuery={q}
+      onSearchChange={v=>update('q',v)}
+      activeFilters={{
+        purity:params.get('purity')||'',
+        stock:params.get('stock')||''
+      }}
+      onFilterChange={(k,v)=>update(k,v)}
+      onClearFilters={()=>setParams({})}
+      facets={facets}
+      onRetry={()=>refreshCatalogue().catch(()=>{})}
+      ProductCardComponent={ProductCard}
+      visible={visible}
+      onLoadMore={()=>setVisible(n=>n+24)}
+      itemLabel="pieces"
+    />
   </Layout>;
 }
 function Modal({title,children,onClose}){const el=useRef();useScrollLock(true,el,{onEscape:onClose,trapFocus:true});return <div className="modal-backdrop" onClick={onClose}><section ref={el} tabIndex={-1} role="dialog" aria-modal="true" aria-label={title} className="modal" onClick={e=>e.stopPropagation()}><div className="modal-heading"><h2>{title}</h2><button className="icon" aria-label="Close dialog" onClick={onClose}><X/></button></div>{children}</section></div>}
@@ -532,7 +585,130 @@ function Product(){
   const photos=galleryPhotos(p.images);
   const angleImages=photos.length?photos:galleryPhotos([{id:'default',role:'hero',url:p.image,alt_text:p.name}]);
 
-  return <Layout><StructuredProduct p={p}/><div className="breadcrumbs section"><Link to="/collections/all">{isKurta?'Ethnic Wear':'Jewellery'}</Link><span>/</span><Link to={'/collections/'+p.category.toLowerCase().replace(/[^a-z0-9]+/g,'-')}>{p.category}</Link><span>/</span><span>{p.name}</span></div><section className="product-detail section"><ProductMagicZoom id={p.sku} images={angleImages} title={`${p.name}, ${p.size}, ${p.purity||''} ${p.metal}`}><p className="caption">{angleImages.length>1?'MULTI-ANGLE PHOTOGRAPHY · PREVIEW CATALOGUE':'PRODUCT IMAGE · PREVIEW CATALOGUE'}</p></ProductMagicZoom><div className="detail-copy"><span className="eyebrow">{isKurta?'CHICKEN CURRY KURTAS · LUCKNOWI NEEDLECRAFT':'THE PEARL EDIT'}</span><h1>{p.name}</h1><p className="material-line">{isKurta?`${p.metal} · Handcrafted Chikankari Embroidery`:`${p.purity} ${p.metal} · ${p.finish} finish`}</p><div className="pdp-rating-row" style={{marginBottom:'10px'}}><RatingBadge rating={p.rating_average} count={p.rating_count} showEmpty={true} size="md" onClick={()=>{const el=document.getElementById('reviews');if(el)el.scrollIntoView({behavior:'smooth'});}}/></div><div className="detail-price">{p.original_price&&p.original_price>p.price?<div className="price-row" style={{alignItems:'baseline',gap:'10px',margin:0}}><span className="discounted-price" style={{fontSize:'26px'}}>{money(p.price)}</span><del className="original-price-del" style={{fontSize:'16px'}}>{money(p.original_price)}</del>{p.discount_amount>0&&<span className="offer-save-tag">SAVE {money(p.discount_amount)}</span>}</div>:p.price===null?'Awaiting approved rate':money(p.price)}</div>{p.offer&&<div style={{marginTop:'8px',display:'flex',alignItems:'center',gap:'8px',flexWrap:'wrap'}}><span className="offer-ribbon-badge" style={{position:'static',clipPath:'none',borderRadius:'2px',padding:'4px 10px',fontSize:'10px',boxShadow:'none'}}>✦ {p.offer.name}: {p.offer.badge_text}</span>{p.offer.code&&<span className="status-badge" style={{fontSize:'9px'}}>CODE: {p.offer.code}</span>}</div>}{p.pricing_mode==='GOLD_LINKED'&&<div style={{marginTop:'6px'}}><span className="gold-linked-pill"><Sparkles size={12}/> Live Gold-Linked Rate</span></div>}<p className="small muted">Preview price · Shipping calculated before payment</p><p className="detail-description">{p.description}</p><div className="size-label"><label htmlFor="size">{isKurta?'Kurta Size (Chest / Fit)':p.category==='Rings'?'Ring size':'Size / length'}</label><button className="underlink" onClick={()=>setGuide(true)}>{isKurta?'Kurta size chart ↗':'Size guide ↗'}</button></div><select id="size" value={p.sku} onChange={e=>{const next=variants.find(item=>item.sku===e.target.value);if(!next)return;setSku(next.sku);if(next.slug!==slug)navigate('/products/'+next.slug);}}>{variants.map(v=><option value={v.sku} key={v.sku}>{v.size}{v.stock===0?' — Out of stock':''}</option>)}</select><p className={'stock '+(!p.checkout_available?'unavailable':'')}><span/>{p.stock===0?'Currently out of stock':!p.checkout_available?'Awaiting a fresh verified gold rate':`${p.stock} available · Ready for your next chapter`}</p><div className="add-row"><button className="button dark" disabled={!p.checkout_available} onClick={()=>add(p)}>{p.checkout_available?'Add to cart':p.stock===0?'Out of stock':'Currently unavailable'}<ShoppingBag size={18}/></button><button className={'wishlist-button '+(saved.includes(p.product_code)?'selected':'')} aria-label={saved.includes(p.product_code)?`Remove ${p.name} from saved`:`Save ${p.name}`} aria-pressed={saved.includes(p.product_code)} onClick={()=>toggleSave(p.product_code)}><Heart fill={saved.includes(p.product_code)?'currentColor':'none'} size={20}/></button></div><dl className="specs"><div><dt>{isKurta?'Fabric':'Metal & purity'}</dt><dd>{isKurta?p.metal:`${p.metal}, ${p.purity}`}</dd></div><div><dt>{isKurta?'Craftsmanship':'Net metal weight'}</dt><dd>{isKurta?'Handcrafted Chikankari Needlework':`${Number(p.net_weight_g).toFixed(3)} g`}</dd></div><div><dt>{isKurta?'Size':'Size / finish'}</dt><dd>{p.size}{!isKurta?` / ${p.finish}`:''}</dd></div><div><dt>SKU</dt><dd>{p.sku}</dd></div></dl><details><summary>Price details <Plus size={15}/></summary>{p.breakdown?.mode==='GOLD_LINKED'?<div className="breakdown">{[['Metal value',p.breakdown.metal],p.breakdown.original_making!==undefined&&p.breakdown.original_making!==p.breakdown.making?['Original making charges',p.breakdown.original_making]:null,p.breakdown.discount_amount>0?['Festive offer savings',-p.breakdown.discount_amount]:null,['Making charges'+(p.offer?' (discounted)':''),p.breakdown.making],['Stone charges',p.breakdown.stone],['Other charges',p.breakdown.other],['Margin',p.breakdown.margin||0],['Tax',p.breakdown.tax]].filter(Boolean).map(([l,v])=><p key={l} style={v<0?{color:'#2e7d32',fontWeight:600}:{}}><span>{l}</span>{v<0?`-${money(Math.abs(v))}`:money(v)}</p>)}{p.offer&&<p className="small" style={{color:'#b7791f',fontWeight:600,marginTop:'8px'}}>✦ Applied offer: {p.offer.name} ({p.offer.badge_text})</p>}<p className="small">Rate: {money(p.breakdown.rate)}/g · {p.breakdown.rate_date}</p></div>:<p>Merchant selling price {money(p.fixed_price)} + margin {money(p.breakdown?.margin||0)}{p.breakdown?.discount_amount>0?` − offer ${money(p.breakdown.discount_amount)}`:''}. Gold-rate changes do not change this fixed base price.</p>}</details><details><summary>Delivery & returns <Plus size={15}/></summary><p>Delivery and return policies are awaiting merchant details. <Link to="/information/shipping">View current information</Link>.</p></details></div></section><ProductReviewsSection product={p}/>{relatedProducts.length>0&&<section className="related-products-section section"><div className="section-heading"><div><span className="eyebrow">CURATED COMPLEMENTS</span><h2>You may also adore</h2></div><Link className="underlink" to={'/collections/'+p.category.toLowerCase().replace(/[^a-z0-9]+/g,'-')}>Explore more {p.category} <ArrowUpRight size={16}/></Link></div><div className="product-grid">{relatedProducts.map(rel=><ProductCard key={rel.sku} p={rel}/>)}</div></section>}{guide&&<Modal title={isKurta?'Kurta Sizing Chart':'Find your fit'} onClose={()=>setGuide(false)}>{isKurta?<><p>Our Lucknowi Chikankari kurtas feature an authentic classic straight cut tailored in breathable natural fabrics. Measurements are in inches:</p><table style={{margin:'14px 0'}}><thead><tr><th>Size</th><th>Garment Chest</th><th>Shoulder</th><th>Length</th></tr></thead><tbody><tr><td>S</td><td>38"</td><td>14.5"</td><td>44"</td></tr><tr><td>M</td><td>40"</td><td>15.0"</td><td>44"</td></tr><tr><td>L</td><td>42"</td><td>15.5"</td><td>45"</td></tr><tr><td>XL</td><td>44"</td><td>16.0"</td><td>45"</td></tr><tr><td>XXL</td><td>46"</td><td>16.5"</td><td>46"</td></tr></tbody></table><p className="small muted">Tip: Choose your body chest measurement plus 2 to 3 inches for a comfortable traditional fit.</p></>:<><p>For a ring, measure the inside diameter of a comfortable ring. These are general reference sizes; confirm the final merchant sizing chart before ordering.</p><table><thead><tr><th>Indian size</th><th>Inside diameter</th></tr></thead><tbody><tr><td>12</td><td>16.5 mm</td></tr><tr><td>14</td><td>17.2 mm</td></tr></tbody></table><p>For necklaces, use a soft tape to check the listed length. Cuff sizing requires the merchant’s wrist measurements.</p></>}</Modal>}</Layout>}
+  const specs = [
+    [isKurta ? 'Fabric' : 'Metal & purity', isKurta ? p.metal : `${p.metal}, ${p.purity}`],
+    [isKurta ? 'Craftsmanship' : 'Net metal weight', isKurta ? 'Handcrafted Chikankari Needlework' : `${Number(p.net_weight_g).toFixed(3)} g`],
+    [isKurta ? 'Size' : 'Size / finish', `${p.size}${!isKurta ? ` / ${p.finish}` : ''}`],
+    ['SKU', p.sku]
+  ];
+
+  const priceDetailsNode = (
+    <details>
+      <summary>Price details <Plus size={15} /></summary>
+      {p.breakdown?.mode === 'GOLD_LINKED' ? (
+        <div className="breakdown">
+          {[
+            ['Metal value', p.breakdown.metal],
+            p.breakdown.original_making !== undefined && p.breakdown.original_making !== p.breakdown.making
+              ? ['Original making charges', p.breakdown.original_making]
+              : null,
+            p.breakdown.discount_amount > 0 ? ['Festive offer savings', -p.breakdown.discount_amount] : null,
+            ['Making charges' + (p.offer ? ' (discounted)' : ''), p.breakdown.making],
+            ['Stone charges', p.breakdown.stone],
+            ['Other charges', p.breakdown.other],
+            ['Margin', p.breakdown.margin || 0],
+            ['Tax', p.breakdown.tax]
+          ]
+            .filter(Boolean)
+            .map(([l, v]) => (
+              <p key={l} style={v < 0 ? { color: '#2e7d32', fontWeight: 600 } : {}}>
+                <span>{l}</span>
+                {v < 0 ? `-${money(Math.abs(v))}` : money(v)}
+              </p>
+            ))}
+          {p.offer && (
+            <p className="small" style={{ color: '#b7791f', fontWeight: 600, marginTop: '8px' }}>
+              ✦ Applied offer: {p.offer.name} ({p.offer.badge_text})
+            </p>
+          )}
+          <p className="small">Rate: {money(p.breakdown.rate)}/g · {p.breakdown.rate_date}</p>
+        </div>
+      ) : (
+        <p>
+          Merchant selling price {money(p.fixed_price)} + margin {money(p.breakdown?.margin || 0)}
+          {p.breakdown?.discount_amount > 0 ? ` − offer ${money(p.breakdown.discount_amount)}` : ''}.
+          Gold-rate changes do not change this fixed base price.
+        </p>
+      )}
+    </details>
+  );
+
+  return (
+    <Layout>
+      <CommonPDP
+        product={p}
+        variants={variants}
+        selectedSku={p.sku}
+        onSkuSelect={nextSku => {
+          const next = variants.find(item => item.sku === nextSku);
+          if (!next) return;
+          setSku(next.sku);
+          if (next.slug !== slug) navigate('/products/' + next.slug);
+        }}
+        images={angleImages}
+        breadcrumbs={[
+          { label: isKurta ? 'Ethnic Wear' : 'Jewellery', href: '/collections/all' },
+          { label: p.category, href: '/collections/' + p.category.toLowerCase().replace(/[^a-z0-9]+/g, '-') },
+          { label: p.name }
+        ]}
+        onAdd={add}
+        isSaved={saved.includes(p.product_code)}
+        onToggleSave={() => toggleSave(p.product_code)}
+        sizeType={p.category === 'Rings' ? 'ring' : 'standard'}
+        onOpenSizeGuide={() => setGuide(true)}
+        specs={specs}
+        priceDetailsNode={priceDetailsNode}
+        relatedProducts={relatedProducts}
+        ProductCardComponent={ProductCard}
+        StructuredProductComponent={StructuredProduct}
+      />
+      {guide && (
+        <Modal title={isKurta ? 'Kurta Sizing Chart' : 'Find your fit'} onClose={() => setGuide(false)}>
+          {isKurta ? (
+            <>
+              <p>Our Lucknowi Chikankari kurtas feature an authentic classic straight cut tailored in breathable natural fabrics. Measurements are in inches:</p>
+              <table style={{ margin: '14px 0' }}>
+                <thead>
+                  <tr>
+                    <th>Size</th>
+                    <th>Garment Chest</th>
+                    <th>Shoulder</th>
+                    <th>Length</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td>S</td><td>38"</td><td>14.5"</td><td>44"</td></tr>
+                  <tr><td>M</td><td>40"</td><td>15.0"</td><td>44"</td></tr>
+                  <tr><td>L</td><td>42"</td><td>15.5"</td><td>45"</td></tr>
+                  <tr><td>XL</td><td>44"</td><td>16.0"</td><td>45"</td></tr>
+                  <tr><td>XXL</td><td>46"</td><td>16.5"</td><td>46"</td></tr>
+                </tbody>
+              </table>
+              <p className="small muted">Tip: Choose your body chest measurement plus 2 to 3 inches for a comfortable traditional fit.</p>
+            </>
+          ) : (
+            <>
+              <p>For a ring, measure the inside diameter of a comfortable ring. These are general reference sizes; confirm the final merchant sizing chart before ordering.</p>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Indian size</th>
+                    <th>Inside diameter</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td>12</td><td>16.5 mm</td></tr>
+                  <tr><td>14</td><td>17.2 mm</td></tr>
+                </tbody>
+              </table>
+              <p>For necklaces, use a soft tape to check the listed length. Cuff sizing requires the merchant’s wrist measurements.</p>
+            </>
+          )}
+        </Modal>
+      )}
+    </Layout>
+  );
+}
 function BagLines(){const {bag,setBag,setBagOpen}=useStore();const change=(sku,n)=>setBag(b=>b.map(p=>p.sku===sku?{...p,quantity:p.quantity+n}:p).filter(p=>p.quantity>0));return bag.map(p=><div className="bag-line" key={p.sku}><Link onClick={()=>setBagOpen(false)} to={(p.slug==='coins'||p.kind==='coin'||p.sku?.startsWith('COIN-'))?'/coins/product/'+encodeURIComponent(p.sku):'/products/'+(p.slug||p.sku)}><BrandedImage src={coinImage(p.image,true)} alt={p.name}/></Link><div><h3>{p.name}</h3><p>{p.size} · {p.sku}</p><strong>{p.price==null?'Price awaiting rate':money(p.price)}</strong>{p.unavailable&&<p className="error">Currently unavailable. Remove this piece to continue.</p>}<div className="quantity"><button aria-label={`Remove one ${p.name}`} onClick={()=>change(p.sku,-1)}><Minus size={13}/></button><span>{p.quantity}</span><button aria-label={`Add one ${p.name}`} onClick={()=>change(p.sku,1)} disabled={p.quantity>=Math.min(20,p.stock??20)||p.unavailable}><Plus size={13}/></button><button className="remove" onClick={()=>setBag(b=>b.filter(x=>x.sku!==p.sku))}>Remove</button></div></div></div>)}
 function BagDrawer(){const {bagOpen,setBagOpen,bag}=useStore();const nav=useNavigate();if(!bagOpen)return null;return <Modal title={`Your bag (${bag.reduce((n,p)=>n+p.quantity,0)})`} onClose={()=>setBagOpen(false)}>{bag.length?<><BagLines/><div className="summary-line"><span>Estimated subtotal</span><strong>{money(bag.reduce((n,p)=>n+p.price*p.quantity,0))}</strong></div><p className="small muted">Current price, availability and delivery charges are checked at checkout.</p><button className="button dark full" onClick={()=>{setBagOpen(false);nav('/checkout')}}>Continue to checkout <ArrowRight size={17}/></button><button className="text-button full" onClick={()=>{setBagOpen(false);nav('/collections/all')}}>Continue discovering</button></>:<div className="empty"><ShoppingBag size={32}/><h3>A little room for wonder.</h3><p>Your bag is waiting for something special.</p><button className="button dark" onClick={()=>{setBagOpen(false);nav('/collections/all')}}>Explore the collection</button></div>}</Modal>}
 function Bag(){
@@ -2283,87 +2459,59 @@ function CoinsPage(){
   if(params.get('sort')==='price-asc')items.sort((a,b)=>(a.price||0)-(b.price||0));
   if(params.get('sort')==='price-desc')items.sort((a,b)=>(b.price||0)-(a.price||0));
 
-  return <Layout>
-    <div className="collection-intro">
-      <span className="eyebrow">PURE BULLION & HEIRLOOMS</span>
-      <h1>Gold & Silver Coins</h1>
-      <p>Explore the gold and silver coin catalogue. Confirm the manufacturer, listed purity, packaging and supporting documentation with the merchant before ordering.</p>
-      
-      <div className="collection-tabs">
-        <Link className={selectedCategory==='all'?'active':''} to="/coins">All Coins ({coins.length})</Link>
-        <Link className={selectedCategory==='gold'?'active':''} to="/coins/gold">Gold Coins</Link>
-        <Link className={selectedCategory==='silver'?'active':''} to="/coins/silver">Silver Coins</Link>
-      </div>
+  const tabs = [
+    { label: `All Coins (${coins.length})`, href: '/coins', active: selectedCategory === 'all' },
+    { label: 'Gold Coins', href: '/coins/gold', active: selectedCategory === 'gold' },
+    { label: 'Silver Coins', href: '/coins/silver', active: selectedCategory === 'silver' }
+  ];
 
-      <div className="price-bracket-bar" role="group" aria-label="Filter by price bracket">
-        <span className="price-bracket-title">Price:</span>
-        {priceBrackets.map(b=><button key={b.value} type="button" className={'price-bracket-pill '+((params.get('price')||'')===b.value?'active':'')} onClick={()=>update('price',b.value)} aria-pressed={(params.get('price')||'')===b.value}>{b.label}</button>)}
+  const trustBanner = (
+    <div className="coin-trust-banner">
+      <div className="coin-trust-item">
+        <ShieldCheck size={24}/>
+        <div>
+          <strong>Listed metal & purity</strong>
+          <p className="muted" style={{margin:0,fontSize:'10px'}}>24K 999 Pure Gold & 999 Fine Silver</p>
+        </div>
+      </div>
+      <div className="coin-trust-item">
+        <Package size={24}/>
+        <div>
+          <strong>Packaging details</strong>
+          <p className="muted" style={{margin:0,fontSize:'10px'}}>Confirm supplied packaging with the merchant</p>
+        </div>
+      </div>
+      <div className="coin-trust-item">
+        <ChartNoAxesCombined size={24}/>
+        <div>
+          <strong>Live Market Pricing</strong>
+          <p className="muted" style={{margin:0,fontSize:'10px'}}>Transparent bullion pricing linked to daily rates</p>
+        </div>
       </div>
     </div>
+  );
 
-    <section className="section catalogue">
-      {/* Purity Guarantee Trust Banner */}
-      <div className="coin-trust-banner">
-        <div className="coin-trust-item">
-          <ShieldCheck size={24}/>
-          <div>
-            <strong>Listed metal & purity</strong>
-            <p className="muted" style={{margin:0,fontSize:'10px'}}>24K 999 Pure Gold & 999 Fine Silver</p>
-          </div>
-        </div>
-        <div className="coin-trust-item">
-          <Package size={24}/>
-          <div>
-            <strong>Packaging details</strong>
-            <p className="muted" style={{margin:0,fontSize:'10px'}}>Confirm supplied packaging with the merchant</p>
-          </div>
-        </div>
-        <div className="coin-trust-item">
-          <ChartNoAxesCombined size={24}/>
-          <div>
-            <strong>Live Market Pricing</strong>
-            <p className="muted" style={{margin:0,fontSize:'10px'}}>Transparent bullion pricing linked to daily rates</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="filter-toolbar">
-        <span>{items.length} minted coins</span>
-        <label>Sort by <select aria-label="Sort coins" value={params.get('sort')||'featured'} onChange={e=>update('sort',e.target.value)}>
-          <option value="featured">Featured</option>
-          <option value="price-asc">Price: low to high</option>
-          <option value="price-desc">Price: high to low</option>
-        </select></label>
-      </div>
-
-      {loading?<p className="empty">Loading minted coins…</p>:error?<p className="error">{error}</p>:items.length?<div className="product-grid">
-        {items.map((c,idx)=><React.Fragment key={c.sku}>
-          {idx===2&&gridOffer&&<FestiveGridBanner offer={gridOffer}/>}
-          <article className="product-card">
-            <Link to={'/coins/product/'+encodeURIComponent(c.sku)} className="product-photo coin-photo-button" aria-label={`View ${c.name}`} style={{cursor:'pointer',position:'relative'}}>
-              {c.offer?.badge_text&&<span className="offer-ribbon-badge">{c.offer.badge_text}</span>}
-              <ListingImage product={c}/>
-              <span className={'product-label '+(c.metal==='Silver'?'':'gold')}>{`${c.purity} ${c.metal.toUpperCase()}`}</span>
-            </Link>
-            <CardInfo product={c} href={'/coins/product/'+encodeURIComponent(c.sku)}
-              specifications={`${c.weight_g}g · ${c.purity} ${c.metal}${c.dimension?` · ${c.dimension}`:''}`}
-              price={c.price!==null?money(c.price):'Price awaiting rate'}
-              note={c.breakdown&&<span className="price-suffix">Metal {money(c.breakdown.metal)} + Making {money(c.breakdown.making)}</span>}
-              action={<button type="button" className="button dark product-card-cart" disabled={!c.checkout_available}
-                onClick={()=>add({sku:c.sku,name:c.name,image:c.image,price:c.price,stock:c.stock,size:`${c.weight_g}g (${c.purity})`,slug:'coins'})}>
-                {c.stock===0?'Out of stock':!c.checkout_available?'Awaiting live rate':'Add to bag'}<ShoppingBag size={14}/>
-              </button>}/>
-
-          </article>
-        </React.Fragment>)}
-      </div>:<div className="empty">
-        <CoinsIcon size={36}/>
-        <h2>No coins found</h2>
-        <p>Try clearing filters or view all coins.</p>
-        <Link className="button dark" to="/coins">View all coins</Link>
-      </div>}
-    </section>
-
+  return <Layout>
+    <CommonPLP
+      eyebrow="PURE BULLION & HEIRLOOMS"
+      title="Gold & Silver Coins"
+      description="Explore the gold and silver coin catalogue. Confirm the manufacturer, listed purity, packaging and supporting documentation with the merchant before ordering."
+      tabs={tabs}
+      priceBrackets={priceBrackets}
+      activePrice={params.get('price') || ''}
+      onPriceChange={v => update('price', v)}
+      items={items}
+      loading={loading}
+      error={error}
+      sortBy={params.get('sort') || 'featured'}
+      onSortChange={v => update('sort', v)}
+      trustBanner={trustBanner}
+      emptyIcon={CoinsIcon}
+      emptyTitle="No coins found"
+      emptyMessage="Try clearing filters or view all coins."
+      ProductCardComponent={ProductCard}
+      itemLabel="minted coins"
+    />
   </Layout>;
 }
 
@@ -2385,36 +2533,60 @@ function CoinProduct(){
   if(loading||error||!p)return <Layout><section className="empty"><h1>{loading?'Finding your coin…':error?'Could not load this coin':'Coin not found'}</h1>{error&&<><p className="error" role="alert">{error}</p><button className="button dark" onClick={()=>setRetry(n=>n+1)}>Try again</button></>}<Link className="underlink" to="/coins">Back to coins</Link></section></Layout>;
   const photos=galleryPhotos(p.images);
   const angleImages=(photos.length?photos:galleryPhotos([{id:'default',role:'hero',url:p.image,alt_text:p.name}])).map(img=>({...img,url:coinImage(img.url)||img.url})).filter(img=>img.url);
-  const caption=angleImages.length>1?'MULTI-ANGLE PHOTOGRAPHY · PREVIEW CATALOGUE':p.image_kind==='illustration'?'ILLUSTRATIVE IMAGE · PREVIEW CATALOGUE':'PRODUCT IMAGE · PREVIEW CATALOGUE';
-  return <Layout><StructuredProduct p={p}/><div className="breadcrumbs section"><Link to="/coins">Coins</Link><span>/</span><Link to={'/coins/'+p.metal.toLowerCase()}>{p.metal} coins</Link><span>/</span><span>{p.name}</span></div>
-    <section className="product-detail section">
-      <ProductMagicZoom images={angleImages} title={`${p.name}, ${p.weight_g}g, ${p.purity} ${p.metal}`}><p className="caption">{caption}</p></ProductMagicZoom>
-      <div className="detail-copy">
-        <span className="eyebrow">THE COIN COLLECTION</span>
-        <h1>{p.name}</h1>
-        <p className="material-line">{p.purity} {p.metal} · {p.weight_g} g</p>
-        <div className="pdp-rating-row" style={{marginBottom:'10px'}}><RatingBadge rating={p.rating_average} count={p.rating_count} showEmpty={true} size="md" onClick={()=>{const el=document.getElementById('reviews');if(el)el.scrollIntoView({behavior:'smooth'});}}/></div>
-        <div className="detail-price">{p.original_price&&p.original_price>p.price?<div className="price-row" style={{alignItems:'baseline',gap:'10px',margin:0}}><span className="discounted-price" style={{fontSize:'26px'}}>{money(p.price)}</span><del className="original-price-del" style={{fontSize:'16px'}}>{money(p.original_price)}</del>{p.discount_amount>0&&<span className="offer-save-tag">SAVE {money(p.discount_amount)}</span>}</div>:p.price===null?'Awaiting approved rate':money(p.price)}</div>
-        {p.offer&&<div style={{marginTop:'8px',display:'flex',alignItems:'center',gap:'8px',flexWrap:'wrap'}}><span className="offer-ribbon-badge" style={{position:'static',clipPath:'none',borderRadius:'2px',padding:'4px 10px',fontSize:'10px',boxShadow:'none'}}>✦ {p.offer.name}: {p.offer.badge_text}</span>{p.offer.code&&<span className="status-badge" style={{fontSize:'9px'}}>CODE: {p.offer.code}</span>}</div>}
-        <div style={{marginTop:'6px'}}><span className="gold-linked-pill"><Sparkles size={12}/> Live Metal-Linked Rate</span></div>
-        <p className="small muted">Preview price · Shipping calculated before payment</p>
-        <p className="detail-description">{p.description}</p>
-        <div className="size-label"><label htmlFor="coin-weight">Weight</label></div>
-        <select id="coin-weight" value={p.sku} onChange={e=>navigate('/coins/product/'+encodeURIComponent(e.target.value))}>{weights.map(c=><option key={c.sku} value={c.sku}>{c.weight_g} g{c.stock===0?' — Out of stock':''}</option>)}</select>
-        <p className={'stock '+(!p.checkout_available?'unavailable':'')}><span/>{p.stock===0?'Currently out of stock':!p.checkout_available?'Awaiting a fresh verified metal rate':`${p.stock} available · Ready for your next chapter`}</p>
-        <div className="add-row"><button className="button dark" disabled={!p.checkout_available} onClick={()=>add({...p,size:`${p.weight_g}g (${p.purity})`,slug:'coins'})}>{p.checkout_available?'Add to cart':p.stock===0?'Out of stock':'Currently unavailable'}<ShoppingBag size={18}/></button></div>
-        <dl className="specs"><div><dt>Metal & purity</dt><dd>{p.metal}, {p.purity}</dd></div><div><dt>Net metal weight</dt><dd>{Number(p.weight_g).toFixed(3)} g</dd></div>{p.dimension&&<div><dt>Dimensions</dt><dd>{p.dimension}</dd></div>}<div><dt>SKU</dt><dd>{p.sku}</dd></div></dl>
-        <details><summary>Price details <Plus size={15}/></summary>{p.breakdown?<div className="breakdown">{[
-          ['Metal value',p.breakdown.metal],
-          p.breakdown.original_making!==undefined&&p.breakdown.original_making!==p.breakdown.making?['Original minting & packaging',p.breakdown.original_making]:null,
-          p.breakdown.discount_amount>0?['Festive offer savings',-p.breakdown.discount_amount]:null,
-          ['Minting & packaging',p.breakdown.making],['Margin',p.breakdown.margin||0],['Tax',p.breakdown.tax||0],['Total',p.price]
-        ].filter(Boolean).map(([label,value])=><p key={label} style={value<0?{color:'#2e7d32',fontWeight:600}:{}}><span>{label}</span>{value<0?`-${money(Math.abs(value))}`:money(value)}</p>)}</div>:<p>Pricing is awaiting an approved metal rate.</p>}</details>
-        <details><summary>Delivery & returns <Plus size={15}/></summary><p>Delivery and return policies are awaiting merchant details. <Link to="/information/shipping">View current information</Link>.</p></details>
-      </div>
-    </section>
-    <ProductReviewsSection product={{...p,product_code:p.sku}}/>
-  </Layout>;
+
+  const related = coins.filter(c=>c.metal===p.metal&&c.sku!==p.sku).slice(0,4);
+
+  const specs = [
+    ['Metal & purity', `${p.purity} ${p.metal}`],
+    ['Gross & fine weight', `${p.weight_g} g`],
+    ['Coin shape & finish', `${p.coin_type} · Mint finish`],
+    ...(p.dimension ? [['Dimensions', p.dimension]] : []),
+    ['SKU', p.sku]
+  ];
+
+  const priceDetailsNode = (
+    <details>
+      <summary>Price details <Plus size={15}/></summary>
+      {p.breakdown?(
+        <div className="breakdown">
+          {[
+            ['Metal value',p.breakdown.metal],
+            p.breakdown.original_making!==undefined&&p.breakdown.original_making!==p.breakdown.making?['Original minting & packaging',p.breakdown.original_making]:null,
+            p.breakdown.discount_amount>0?['Festive offer savings',-p.breakdown.discount_amount]:null,
+            ['Minting & packaging',p.breakdown.making],
+            ['Margin',p.breakdown.margin||0],
+            ['Tax',p.breakdown.tax||0],
+            ['Total',p.price]
+          ].filter(Boolean).map(([label,value])=><p key={label} style={value<0?{color:'#2e7d32',fontWeight:600}:{}}><span>{label}</span>{value<0?`-${money(Math.abs(value))}`:money(value)}</p>)}
+        </div>
+      ):(
+        <p>Pricing is awaiting an approved metal rate.</p>
+      )}
+    </details>
+  );
+
+  return (
+    <Layout>
+      <CommonPDP
+        product={p}
+        variants={weights}
+        selectedSku={p.sku}
+        images={angleImages}
+        breadcrumbs={[
+          { label: 'Coins', href: '/coins' },
+          { label: `${p.metal} coins`, href: '/coins/' + p.metal.toLowerCase() },
+          { label: p.name }
+        ]}
+        onAdd={() => add({ ...p, size: `${p.weight_g}g (${p.purity})`, slug: 'coins' })}
+        sizeType="coin"
+        specs={specs}
+        priceDetailsNode={priceDetailsNode}
+        relatedProducts={related}
+        ProductCardComponent={ProductCard}
+        StructuredProductComponent={StructuredProduct}
+      />
+    </Layout>
+  );
 }
 
 function NotFound(){return <Layout><section className="empty"><span className="eyebrow">A SMALL DETOUR</span><h1>This page is yet to be discovered.</h1><p>The link you followed may have changed, or the piece may have moved.</p><div style={{display:'flex',gap:'14px',justifyContent:'center',flexWrap:'wrap',marginTop:'20px'}}><Link className="button dark" to="/collections/all">Explore all jewellery</Link><Link className="underlink" to="/">Return to home</Link></div></section></Layout>}
