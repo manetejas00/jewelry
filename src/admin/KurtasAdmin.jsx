@@ -493,7 +493,7 @@ export function KurtasAdmin({ readonly, ProductAngleManager, ImportPanel }) {
                 <input
                   type="number"
                   min="0"
-                  step="10"
+                  step="1"
                   required
                   value={formData.price}
                   onChange={e => setFormData({ ...formData, price: e.target.value })}
