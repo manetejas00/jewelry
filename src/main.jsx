@@ -448,7 +448,6 @@ function Collection(){
 
   return <Layout>
     <div className="collection-intro">
-      {categoryMeta?.banner&&<div className="category-header-banner" style={{marginBottom:'24px',borderRadius:'4px',overflow:'hidden'}}><img src={categoryMeta.banner} alt={categoryMeta.name} style={{width:'100%',maxHeight:'320px',objectFit:'cover'}}/></div>}
       <span className="eyebrow">{q?`FOUND ${items.length} MATCHING PIECES`:'THE VEYORA COLLECTIONS'}</span>
       <h1>{title}</h1>
       <p>{q?`Showing items matching “${q}”.`:categoryMeta?.description||'Considered pieces. Quiet statements. Endlessly you.'}</p>
