@@ -46,6 +46,54 @@ const matchPrice=(price,bracket)=>{if(!bracket)return true;if(price===null||pric
 function Scroll(){const loc=useLocation();useEffect(()=>{if(!loc.pathname.startsWith('/collections'))window.scrollTo(0,0);},[loc.pathname]);return null}
 function Brand(){return <Link className="brand" to="/" aria-label="Veyora Jewels home"><img className="brand-logo" src="/assets/brand/logo.webp" alt="Veyora Jewels" width="150" height="100"/></Link>}
 
+export const STORE_NAV_ITEMS = [
+  { label: 'Chicken Curry Kurtas', href: '/kurtas', matchPrefixes: ['/kurtas'], categoryKey: 'kurtas' },
+  { label: 'All jewellery', href: '/collections/all', exact: true, categoryKey: 'all' },
+  { label: 'The Pearl Edit', href: '/collections/pearls', matchPrefixes: ['/collections/pearls'], categoryKey: 'pearls' },
+  { label: 'Coins', href: '/coins', matchPrefixes: ['/coins'], categoryKey: 'coins' },
+  { label: 'Earrings', href: '/collections/earrings', matchPrefixes: ['/collections/earrings'], categoryKey: 'earrings' },
+  { label: 'Necklaces', href: '/collections/necklaces', matchPrefixes: ['/collections/necklaces'], categoryKey: 'necklaces' },
+  { label: 'Rings', href: '/collections/rings', matchPrefixes: ['/collections/rings'], categoryKey: 'rings' },
+  { label: 'Bracelets', href: '/collections/bracelets', matchPrefixes: ['/collections/bracelets'], categoryKey: 'bracelets' }
+];
+
+export function isStoreNavActive(item, pathname, products = []) {
+  if (!pathname) return false;
+  const norm = pathname.replace(/\/+$/, '') || '/';
+
+  // 1. Exact match (e.g. All jewellery only matches /collections/all)
+  if (item.exact) {
+    return norm === item.href;
+  }
+
+  // 2. Prefix match (e.g. /kurtas/*, /coins/*, /collections/earrings/*)
+  if (item.matchPrefixes) {
+    for (const prefix of item.matchPrefixes) {
+      if (norm === prefix || norm.startsWith(prefix + '/')) {
+        return true;
+      }
+    }
+  }
+
+  // 3. Nested PDP match (/products/:slug)
+  if (norm.startsWith('/products/')) {
+    const slug = norm.replace('/products/', '').split('/')[0].split('?')[0];
+    const prod = products.find(p => p.slug === slug || p.product_code === slug || p.sku === slug);
+    if (prod) {
+      const cat = (prod.category || '').toLowerCase();
+      if (item.categoryKey === 'earrings' && cat.includes('earring')) return true;
+      if (item.categoryKey === 'necklaces' && cat.includes('necklace')) return true;
+      if (item.categoryKey === 'rings' && cat.includes('ring')) return true;
+      if (item.categoryKey === 'bracelets' && cat.includes('bracelet')) return true;
+      if (item.categoryKey === 'pearls' && (cat.includes('pearl') || prod.pearl || (prod.material && prod.material.toLowerCase().includes('pearl')))) return true;
+      if (item.categoryKey === 'kurtas' && (prod.is_kurta || cat.includes('kurta'))) return true;
+      if (item.categoryKey === 'coins' && (prod.is_coin || cat.includes('coin'))) return true;
+    }
+  }
+
+  return false;
+}
+
 function Header(){
   const {bag,setBagOpen,saved,customer,logoutCustomer,syncError,refreshAccount,offers=[],products=[]}=useStore();
   const [menu,setMenu]=useState(false),[search,setSearch]=useState(false),[q,setQ]=useState('');
@@ -117,15 +165,21 @@ function Header(){
         {menu?<X size={22}/>:<Menu size={22}/>}
       </button>
       <Brand/>
-      <nav ref={menuRef} id="store-navigation" className={menu?'nav open':'nav'}>
-        <Link onClick={()=>setMenu(false)} to="/kurtas">Chicken Curry Kurtas</Link>
-        <Link onClick={()=>setMenu(false)} to="/collections/all">All jewellery</Link>
-        <Link onClick={()=>setMenu(false)} to="/collections/pearls">The Pearl Edit</Link>
-        <Link onClick={()=>setMenu(false)} to="/coins">Coins</Link>
-        <Link onClick={()=>setMenu(false)} to="/collections/earrings">Earrings</Link>
-        <Link onClick={()=>setMenu(false)} to="/collections/necklaces">Necklaces</Link>
-        <Link onClick={()=>setMenu(false)} to="/collections/rings">Rings</Link>
-        <Link onClick={()=>setMenu(false)} to="/collections/bracelets">Bracelets</Link>
+      <nav ref={menuRef} id="store-navigation" className={menu?'nav open':'nav'} aria-label="Main store navigation">
+        {STORE_NAV_ITEMS.map(item => {
+          const isActive = isStoreNavActive(item, location.pathname, products);
+          return (
+            <Link
+              key={item.href}
+              onClick={()=>setMenu(false)}
+              to={item.href}
+              className={isActive ? 'active' : ''}
+              aria-current={isActive ? 'page' : undefined}
+            >
+              {item.label}
+            </Link>
+          );
+        })}
         {menu&&<div className="mobile-nav-footer">
           {customer?(
             <>
