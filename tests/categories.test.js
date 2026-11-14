@@ -16,15 +16,15 @@ test('categories: listActiveCategories returns all active categories ordered by 
   try {
     const cats = await listActiveCategories(db);
     assert.ok(Array.isArray(cats));
-    assert.ok(cats.length >= 8, 'Expected at least 8 categories');
+    assert.ok(cats.length >= 5, 'Expected at least 5 pure jewellery categories');
     
-    // Check Chicken Curry Kurtas category exists
-    const kurtaCat = cats.find(c => c.slug === 'chicken-curry-kurtas');
-    assert.ok(kurtaCat, 'Expected chicken-curry-kurtas category to be present');
-    assert.equal(kurtaCat.name, 'Chicken Curry Kurtas for Women');
-    assert.ok(kurtaCat.banner, 'Expected category banner to be set');
-    assert.ok(kurtaCat.thumbnail, 'Expected category thumbnail to be set');
-    assert.equal(kurtaCat.status, 'active');
+    // Check Earrings category exists
+    const earringCat = cats.find(c => c.slug === 'earrings');
+    assert.ok(earringCat, 'Expected earrings category to be present');
+    assert.equal(earringCat.name, 'Earrings');
+    assert.ok(earringCat.banner, 'Expected category banner to be set');
+    assert.ok(earringCat.thumbnail, 'Expected category thumbnail to be set');
+    assert.equal(earringCat.status, 'active');
 
     // Ensure sort_order is ascending
     for (let i = 1; i < cats.length; i++) {
@@ -38,10 +38,10 @@ test('categories: listActiveCategories returns all active categories ordered by 
 test('categories: categoryBySlug resolves slug with metadata and banner', async () => {
   const db = testDb();
   try {
-    const cat = await categoryBySlug(db, 'chicken-curry-kurtas');
+    const cat = await categoryBySlug(db, 'earrings');
     assert.ok(cat);
-    assert.equal(cat.slug, 'chicken-curry-kurtas');
-    assert.ok(cat.description.includes('Lucknowi Chikankari'));
+    assert.equal(cat.slug, 'earrings');
+    assert.ok(cat.description);
     assert.ok(cat.banner_url || cat.banner);
     assert.ok(cat.thumbnail_url || cat.thumbnail);
 
@@ -57,9 +57,9 @@ test('categories: adminListCategories computes product counts correctly', async 
   try {
     const cats = await adminListCategories(db);
     assert.ok(Array.isArray(cats));
-    const kurtaCat = cats.find(c => c.slug === 'chicken-curry-kurtas');
-    assert.ok(kurtaCat);
-    assert.ok(kurtaCat.product_count > 0, 'Expected products to be assigned to Chicken Curry Kurtas');
+    const earringCat = cats.find(c => c.slug === 'earrings');
+    assert.ok(earringCat);
+    assert.ok(earringCat.product_count > 0, 'Expected products to be assigned to Earrings');
   } finally {
     await db.destroy();
   }

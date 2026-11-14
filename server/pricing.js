@@ -4,7 +4,6 @@ import Decimal from 'decimal.js';
 import crypto from 'node:crypto';
 import {calculateMargin} from './pricing-rules.js';
 import {getAllProductsRatingSummaries} from './reviews.js';
-import {comboCatalogue} from './combos.js';
 
 export async function activeOffers(k){
   try{
@@ -328,8 +327,8 @@ export async function quote(k,items,options={}){
  if(!Array.isArray(items)||!items.length||items.length>50)throw validationError('Your bag is empty or too large');
  if(items.some(i=>!i||typeof i.sku!=='string'||!i.sku||i.sku.length>80))throw validationError('Invalid bag item');
  if(new Set(items.map(i=>i.sku)).size!==items.length)throw validationError('Duplicate bag SKU');
-  const [products,coins,combos]=await Promise.all([catalogue(k,options),coinCatalogue(k,options),comboCatalogue(k,options)]);
-  const allItems=[...products,...coins,...combos];
+  const [products,coins]=await Promise.all([catalogue(k,options),coinCatalogue(k,options)]);
+  const allItems=[...products,...coins];
   let subtotal=0;const lines=[];
   for(const i of items){
     const p=allItems.find(p=>p.sku===i.sku);
@@ -338,7 +337,7 @@ export async function quote(k,items,options={}){
     const line={
       sku:p.sku,
       name:p.name,
-      size:p.dimension||p.size||(p.is_combo?'Curated Set':`${p.weight_g||'Standard'}`),
+      size:p.dimension||p.size||`${p.weight_g||'Standard'}`,
      image:p.image,
      quantity:i.quantity,
      unit_price:p.price,

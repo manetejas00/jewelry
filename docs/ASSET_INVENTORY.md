@@ -1,7 +1,7 @@
 # Asset Inventory & Media Registry
 
 ## Overview
-This document logs the complete asset inventory generated, processed, and registered for the **Chicken Curry Kurtas Collection**, **Curated Combos**, **Category Banners**, and **Hero Showcase**.
+This document logs the complete asset inventory generated, processed, and registered for the **Chicken Curry Kurtas Collection**, **Category Banners**, and **Hero Showcase**.
 
 ---
 
@@ -62,16 +62,7 @@ Directory: `public/assets/categories/`
 
 ---
 
-## 3. Product Combo Flat-Lays
-Directory: `public/assets/combos/`
-1. `combo-ivory-kurta-lune-pearl-drops.webp` (1024x1024) & `combo-ivory-kurta-lune-pearl-drops-thumb.webp` (200x200)
-2. `combo-blush-kurta-atelier-collar.webp` (1024x1024) & `combo-blush-kurta-atelier-collar-thumb.webp` (200x200)
-3. `combo-sage-kurta-nocturne-cuff.webp` (1024x1024) & `combo-sage-kurta-nocturne-cuff-thumb.webp` (200x200)
-4. `combo-sky-kurta-eclipse-ring.webp` (1024x1024) & `combo-sky-kurta-eclipse-ring-thumb.webp` (200x200)
-
----
-
-## 4. Homepage Hero Showcase Kurta Banners
+## 3. Homepage Hero Showcase Kurta Banners
 Directory: `public/assets/banners/`
 1. `hero-kurta-1.webp` (1920x1080) — Noor-e-Awadh Ivory Chikankari Campaign
 2. `hero-kurta-2.webp` (1920x1080) — Rose Blush Georgette Festive Edit
@@ -79,7 +70,7 @@ Directory: `public/assets/banners/`
 
 ---
 
-## 5. Asset Verification Summary
+## 4. Asset Verification Summary
 - **Total Products Monitored**: 110 (100 jewellery variants + 20 kurta variants across 4 styles)
 - **Total Bullion Coins**: 6
 - **Total Media Assets Verified**: 464

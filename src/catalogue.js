@@ -1,3 +1,5 @@
+export const money=v=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:2,minimumFractionDigits:0}).format(v||0);
+
 export const grouped=products=>[...products.reduce((map,p)=>{
   const old=map.get(p.product_code);
   const curP=p.price!==null&&p.price!==undefined?Number(p.price):null;

@@ -34,7 +34,7 @@ import {registerCustomerAdminRoutes} from './customer-admin.js';
 import {registerChatRoutes} from './chat/routes.js';
 import {purgeRetainedChats} from './chat/service.js';
 import {listActiveCategories,categoryBySlug,adminListCategories,createCategory,updateCategory,deleteCategory} from './categories.js';
-import {comboCatalogue,comboBySlug,adminListCombos,createCombo,updateCombo,deleteCombo} from './combos.js';
+import {listKurtas,kurtaBySlug,adminListKurtas,createKurta,updateKurta,deleteKurta} from './kurtas.js';
 import {registerPwa} from './pwa.js';
 import {
   getProductReviews,
@@ -88,8 +88,8 @@ app.get('/api/products',route(async(req,res)=>res.json(await catalogue(db))));
 app.get('/api/coins',route(async(req,res)=>res.json(await coinCatalogue(db))));
 app.get('/api/categories',route(async(req,res)=>res.json(await listActiveCategories(db))));
 app.get('/api/categories/:slug',route(async(req,res)=>{const c=await categoryBySlug(db,req.params.slug);if(!c)return res.status(404).json({error:'Category not found'});res.json(c);}));
-app.get('/api/combos',route(async(req,res)=>res.json(await comboCatalogue(db))));
-app.get('/api/combos/:slug',route(async(req,res)=>{const c=await comboBySlug(db,req.params.slug);if(!c)return res.status(404).json({error:'Combo not found'});res.json(c);}));
+app.get('/api/kurtas',route(async(req,res)=>res.json(await listKurtas(db))));
+app.get('/api/kurtas/:slug',route(async(req,res)=>{const k=await kurtaBySlug(db,req.params.slug);if(!k)return res.status(404).json({error:'Kurta not found'});res.json(k);}));
 app.get('/api/search',route(async(req,res)=>{const q=String(req.query.q||'').slice(0,100);res.json(await searchCatalogue(db,q));}));
 app.get('/api/offers',route(async(req,res)=>{
   const hasOffers=await db.schema.hasTable('offers').catch(()=>false);
@@ -165,10 +165,10 @@ app.post('/api/admin/categories',auth(['owner','manager']),route(async(req,res)=
 app.patch('/api/admin/categories/:id',auth(['owner','manager']),route(async(req,res)=>{const updated=await updateCategory(db,Number(req.params.id),req.body);await audit(req,'update_category',{id:req.params.id});res.json(updated);}));
 app.delete('/api/admin/categories/:id',auth(['owner','manager']),route(async(req,res)=>{const deleted=await deleteCategory(db,Number(req.params.id));await audit(req,'delete_category',{id:req.params.id});res.json(deleted);}));
 
-app.get('/api/admin/combos',auth(),route(async(req,res)=>res.json(await adminListCombos(db))));
-app.post('/api/admin/combos',auth(['owner','manager']),route(async(req,res)=>{const combo=await createCombo(db,req.body);await audit(req,'create_combo',combo);res.json({ok:true,combo});}));
-app.patch('/api/admin/combos/:id',auth(['owner','manager']),route(async(req,res)=>{const updated=await updateCombo(db,Number(req.params.id),req.body);await audit(req,'update_combo',{id:req.params.id});res.json(updated);}));
-app.delete('/api/admin/combos/:id',auth(['owner','manager']),route(async(req,res)=>{const deleted=await deleteCombo(db,Number(req.params.id));await audit(req,'delete_combo',{id:req.params.id});res.json(deleted);}));
+app.get('/api/admin/kurtas',auth(),route(async(req,res)=>res.json(await adminListKurtas(db))));
+app.post('/api/admin/kurtas',auth(['owner','manager']),route(async(req,res)=>{const kurta=await createKurta(db,req.body);await audit(req,'create_kurta',kurta);res.json({ok:true,kurta});}));
+app.patch('/api/admin/kurtas/:code',auth(['owner','manager']),route(async(req,res)=>{const updated=await updateKurta(db,req.params.code,req.body);await audit(req,'update_kurta',{product_code:req.params.code});res.json(updated);}));
+app.delete('/api/admin/kurtas/:code',auth(['owner','manager']),route(async(req,res)=>{const deleted=await deleteKurta(db,req.params.code);await audit(req,'delete_kurta',{product_code:req.params.code});res.json(deleted);}));
 app.post('/api/quote',route(async(req,res)=>res.json(await quote(db,req.body.items,{code:req.body.offerCode}))));
 app.post('/api/checkout',rateLimit({windowMs:60000,limit:20}),route(async(req,res)=>{if(commerceConfig(process.env,preview).checkoutEnabled===false)return res.status(503).json({error:'Checkout is awaiting merchant configuration.'});requireSignedInCsrf(req);req.session.checkoutScope ||= crypto.randomUUID();const held=await prepareCheckoutOtp(db,req.session,req.body,process.env,otpGateway);try{const result=await checkout(db,{...req.body,offerCode:req.body.offerCode||null},preview,req.session.customer?.id||null,req.session.checkoutScope);req.session.orderIds=[...new Set([...(req.session.orderIds||[]),result.id])].slice(-100);res.json(result);}catch(error){if(held)await releaseVerified(db,held);throw error;}}));
 app.get('/api/orders/:id',route(async(req,res)=>{const order=await db('orders').where({id:req.params.id}).first();if(!mayReadOrder(req.session,order))return res.status(404).json({error:'Order not found'});res.json({...order,customer:parse(order.customer),items:(await db('order_items').where({order_id:order.id})).map(i=>parse(i.snapshot))});}));

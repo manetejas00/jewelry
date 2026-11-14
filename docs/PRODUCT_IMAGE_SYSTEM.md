@@ -28,7 +28,6 @@ public/assets/products/<product-slug>/
 
 Additionally:
 - **Category Banners & Thumbs**: `public/assets/categories/<slug>-banner.webp` (1600x500) and `public/assets/categories/<slug>-thumb.webp` (600x600).
-- **Combos**: `public/assets/combos/<slug>.webp` (1024x1024) and `public/assets/combos/<slug>-thumb.webp` (200x200).
 - **Homepage Hero Showcases**: `public/assets/banners/hero-kurta-1.webp`, `hero-kurta-2.webp`, `hero-kurta-3.webp` (1920x1080).
 
 ---

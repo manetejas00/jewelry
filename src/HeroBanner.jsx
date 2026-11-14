@@ -75,8 +75,8 @@ const slides = [
     lead: 'Timeless ',
     emphasis: 'heritage.',
     copy: <>Authentic Lucknowi Chikankari on pure mulmul cotton.<br />Delicate shadow-work and tonal floral jaal.</>,
-    to: '/collections/chicken-curry-kurtas',
-    cta: 'Shop Lucknowi Kurtas',
+    to: '/kurtas',
+    cta: 'Shop Chicken Curry Kurtas',
     alt: 'Lucknowi Ivory Chikankari Cotton Kurta'
   },
   // 6. Kurta image 2
@@ -88,7 +88,7 @@ const slides = [
     lead: 'Ethereal ',
     emphasis: 'poetry.',
     copy: <>Rose blush sheer georgette with artisan needlecraft.<br />A celebration of feminine drape and craftsmanship.</>,
-    to: '/collections/chicken-curry-kurtas',
+    to: '/kurtas',
     cta: 'Discover Rose Blush',
     alt: 'Rose Blush Georgette Chikankari Kurta'
   },
@@ -100,9 +100,9 @@ const slides = [
     title: 'Royal sheen.',
     lead: 'Chanderi ',
     emphasis: 'grandeur.',
-    copy: <>Regal sage green Chanderi with intricate bakhiya embroidery.<br />Paired seamlessly with Veyora fine jewellery.</>,
-    to: '/combos',
-    cta: 'Shop Kurta & Combos',
+    copy: <>Regal sage green Chanderi with intricate bakhiya embroidery.<br />Handcrafted Awadhi needlecraft for timeless celebrations.</>,
+    to: '/kurtas',
+    cta: 'Explore All Kurtas',
     alt: 'Sage Green Chanderi Chikankari Kurta'
   }
 ];

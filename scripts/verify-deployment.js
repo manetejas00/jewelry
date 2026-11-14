@@ -10,5 +10,5 @@ for(const route of ['/','/admin','/collections/all']){
 }
 const configText=await read('/api/config','application/json');
 if(configText){try{const config=JSON.parse(configText);if(config.preview&&process.argv[3]!=='--allow-preview')failures.push('Preview mode is active');}catch{failures.push('Config returned invalid JSON');}}
-for(const route of ['/api/products','/api/coins','/api/categories','/api/combos']){const text=await read(route,'application/json');if(text){try{if(!Array.isArray(JSON.parse(text)))throw Error();}catch{failures.push(route+': invalid catalogue JSON');}}}
+for(const route of ['/api/products','/api/coins','/api/categories','/api/kurtas']){const text=await read(route,'application/json');if(text){try{if(!Array.isArray(JSON.parse(text)))throw Error();}catch{failures.push(route+': invalid catalogue JSON');}}}
 console.log(JSON.stringify({origin,passed:failures.length===0,failures},null,2));if(failures.length)process.exitCode=1;

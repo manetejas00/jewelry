@@ -1,7 +1,7 @@
 # Production Deployment Guide
 
 ## Overview
-This document outlines the standard deployment procedure, environment variables, preflight verification, database migrations, and rollbacks for Veyora Jewels.
+This document outlines the standard deployment procedure, environment variables, preflight verification, database migrations, asset checks, and post-deployment validation for Veyora Jewels.
 
 ---
 
@@ -18,7 +18,7 @@ Ensure the following environment variables are defined in production:
 ```ini
 NODE_ENV=production
 PORT=3000
-APP_URL=https://veyora.example.com
+APP_URL=https://test3.avinyacarefoundation.org
 BRAND_NAME=Veyora Jewels
 
 # Database (SQLite default or MySQL)
@@ -41,19 +41,20 @@ SESSION_SECRET=super-secret-random-32-byte-hex-string
 
 ### Step 1: Install Dependencies
 ```bash
-npm ci --omit=dev
+npm ci
 ```
 
 ### Step 2: Run Database Migrations
-Runs all migrations including `019_categories_and_combos.js`:
+Runs all migrations including `020_kurta_module_and_remove_combos.js`:
 ```bash
 npm run migrate
 ```
 
-### Step 3: Run Database Seeders (Preview / Fresh Deployments)
-Idempotently inserts categories, kurta styles, and combos without duplicating existing records:
+### Step 3: Run Seeders (Fresh / Staging Deployments)
+Idempotently seeds categories and the 4 Chicken Curry Kurta styles across all 7 sizes (XS–XXXL = 28 variants):
 ```bash
-npm run seed:preview
+node seeders/CategorySeeder.js
+node seeders/KurtaSeeder.js
 ```
 
 ### Step 4: Asset Integrity Check
@@ -68,50 +69,30 @@ Compile the React 19 application using Vite:
 npm run build
 ```
 
-### Step 6: Execute Automated Test Suite
-Run all 208 unit and integration tests:
+### Step 6: Full Preflight Verification
+Runs automated tests, production build, and asset validation:
 ```bash
-npm test
+npm run check
 ```
 
-### Step 7: Launch Service
-Start the production Node.js Express server:
+### Step 7: Restart Application Service
 ```bash
-npm start
+pm2 restart veyora || npm run start
 ```
-Or via PM2 / systemd:
+
+### Step 8: Live Post-Deployment Acceptance Gate
+Run the independent verification script against the live host:
 ```bash
-pm2 start server/index.js --name "veyora-production" -i max
+node scripts/verify-deployment.js https://test3.avinyacarefoundation.org
 ```
 
 ---
 
-## 4. Verification Checkpoints
-After starting the server:
-1. `GET /health/ready` -> Expected HTTP 200 OK.
-2. `GET /robots.txt` -> Expected valid robots rules.
-3. `GET /sitemap.xml` -> Expected `<urlset>` containing categories, products, and combos.
-4. `GET /api/categories` -> Expected array of active categories.
-5. `GET /api/combos` -> Expected array of published combos.
-6. `GET /` -> Verify Homepage Hero Showcase starts video and cycles properly.
-
----
-
-## 5. Rollback Strategy
-If any issues arise during deployment:
-1. Revert to previous Git release tag:
+## 4. Rollback Procedure
+If an issue occurs in production:
+1. **Application Rollback:** Revert git commit: `git revert HEAD` and trigger deployment.
+2. **Database Rollback:** If migration rollback is required:
    ```bash
-   git checkout tags/v1.X.X
+   node scripts/rollback.js
    ```
-2. Re-run client build:
-   ```bash
-   npm run build
-   ```
-3. Restart process manager:
-   ```bash
-   pm2 restart veyora-production
-   ```
-4. Database rollbacks (if needed):
-   ```bash
-   node scripts/migrate-rollback.js
-   ```
+3. **Cache Purge:** In Hostinger or CDN panel, clear static asset caches for `/assets/products/*` and `/assets/banners/*`.

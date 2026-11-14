@@ -19,11 +19,13 @@ export const kurtaProducts = [
     seo_title: 'Noor-e-Awadh Ivory Chikankari Cotton Kurta | Veyora',
     meta_description: 'Pure mulmul cotton Lucknowi Chikankari embroidered kurta for women in pristine ivory white. Handcrafted floral needlework with side slits and soft drape.',
     variants: [
+      { sku: 'CCK-IVORY-XS', size: 'XS (34)', stock: 8 },
       { sku: 'CCK-IVORY-S', size: 'S (36)', stock: 12 },
       { sku: 'CCK-IVORY-M', size: 'M (38)', stock: 15 },
       { sku: 'CCK-IVORY-L', size: 'L (40)', stock: 18 },
       { sku: 'CCK-IVORY-XL', size: 'XL (42)', stock: 10 },
-      { sku: 'CCK-IVORY-XXL', size: 'XXL (44)', stock: 8 }
+      { sku: 'CCK-IVORY-XXL', size: 'XXL (44)', stock: 8 },
+      { sku: 'CCK-IVORY-XXXL', size: 'XXXL (46)', stock: 5 }
     ]
   },
   {
@@ -40,11 +42,13 @@ export const kurtaProducts = [
     seo_title: 'Gulzar Rose Blush Georgette Chikankari Kurta | Veyora',
     meta_description: 'Exquisite blush pink viscose georgette Chikankari kurta with intricate floral jaal embroidery, scalloped borders, and flattering festive silhouette.',
     variants: [
+      { sku: 'CCK-BLUSH-XS', size: 'XS (34)', stock: 6 },
       { sku: 'CCK-BLUSH-S', size: 'S (36)', stock: 10 },
       { sku: 'CCK-BLUSH-M', size: 'M (38)', stock: 14 },
       { sku: 'CCK-BLUSH-L', size: 'L (40)', stock: 16 },
       { sku: 'CCK-BLUSH-XL', size: 'XL (42)', stock: 8 },
-      { sku: 'CCK-BLUSH-XXL', size: 'XXL (44)', stock: 6 }
+      { sku: 'CCK-BLUSH-XXL', size: 'XXL (44)', stock: 6 },
+      { sku: 'CCK-BLUSH-XXXL', size: 'XXXL (46)', stock: 4 }
     ]
   },
   {
@@ -61,11 +65,13 @@ export const kurtaProducts = [
     seo_title: 'Nazakat Sage Green Chanderi Chikankari Kurta | Veyora',
     meta_description: 'Luxury sage green handloom Chanderi silk kurta with authentic Chikankari needlework and subtle zari borders. Regal poise for festive occasions.',
     variants: [
+      { sku: 'CCK-SAGE-XS', size: 'XS (34)', stock: 5 },
       { sku: 'CCK-SAGE-S', size: 'S (36)', stock: 8 },
       { sku: 'CCK-SAGE-M', size: 'M (38)', stock: 12 },
       { sku: 'CCK-SAGE-L', size: 'L (40)', stock: 14 },
       { sku: 'CCK-SAGE-XL', size: 'XL (42)', stock: 7 },
-      { sku: 'CCK-SAGE-XXL', size: 'XXL (44)', stock: 5 }
+      { sku: 'CCK-SAGE-XXL', size: 'XXL (44)', stock: 5 },
+      { sku: 'CCK-SAGE-XXXL', size: 'XXXL (46)', stock: 3 }
     ]
   },
   {
@@ -82,11 +88,13 @@ export const kurtaProducts = [
     seo_title: 'Fiza Sky Blue Mulmul Chikankari Kurta | Veyora',
     meta_description: 'Breezy sky blue fine cotton Chikankari kurta for women with hand-embroidered floral motifs and delicate neckline. Everyday elegance.',
     variants: [
+      { sku: 'CCK-SKY-XS', size: 'XS (34)', stock: 7 },
       { sku: 'CCK-SKY-S', size: 'S (36)', stock: 10 },
       { sku: 'CCK-SKY-M', size: 'M (38)', stock: 15 },
       { sku: 'CCK-SKY-L', size: 'L (40)', stock: 16 },
       { sku: 'CCK-SKY-XL', size: 'XL (42)', stock: 9 },
-      { sku: 'CCK-SKY-XXL', size: 'XXL (44)', stock: 6 }
+      { sku: 'CCK-SKY-XXL', size: 'XXL (44)', stock: 6 },
+      { sku: 'CCK-SKY-XXXL', size: 'XXXL (46)', stock: 4 }
     ]
   }
 ];
@@ -95,6 +103,8 @@ export async function KurtaSeeder(k = db) {
   if (!await k.schema.hasTable('products')) {
     throw Error('Run migrations before running KurtaSeeder.');
   }
+
+  const hasIsKurta = await k.schema.hasColumn('products', 'is_kurta');
 
   return k.transaction(async (t) => {
     let insertedProducts = 0;
@@ -105,9 +115,12 @@ export async function KurtaSeeder(k = db) {
     for (const style of kurtaProducts) {
       const code = style.product_code;
 
+      // Clean existing records for this style to allow clean re-indexing across XS-XXXL
+      await t('products').where({ product_code: code }).delete();
+
       for (const [idx, v] of style.variants.entries()) {
-        const slug = idx === 0 ? code : `${code}-${v.size.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
-        const existing = await t('products').where({ sku: v.sku }).first();
+        const sizeSlug = v.size.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+        const slug = idx === 0 ? code : `${code}-${sizeSlug}`;
 
         const productData = {
           supplier: kurtaSupplier,
@@ -137,63 +150,66 @@ export async function KurtaSeeder(k = db) {
           meta_description: style.meta_description
         };
 
-        if (existing) {
-          await t('products').where({ id: existing.id }).update({
-            name: productData.name,
-            category: productData.category,
-            description: productData.description,
-            metal: productData.metal,
-            purity: productData.purity,
-            size: productData.size,
-            finish: productData.finish,
-            image: productData.image,
-            fixed_price: productData.fixed_price,
-            stock: v.stock,
-            status: 'published',
-            seo_title: productData.seo_title,
-            meta_description: productData.meta_description,
-            updated_at: timestamp
-          });
-          updatedProducts++;
-        } else {
-          await t('products').insert(productData);
-          await t('supplier_skus').insert({
-            supplier: kurtaSupplier,
-            supplier_sku: v.sku,
-            sku: v.sku
-          }).onConflict(['supplier', 'supplier_sku']).ignore();
-          insertedProducts++;
+        if (hasIsKurta) {
+          productData.is_kurta = true;
         }
+
+        await t('products').insert(productData);
+        await t('supplier_skus').insert({
+          supplier: kurtaSupplier,
+          supplier_sku: v.sku,
+          sku: v.sku
+        }).onConflict(['supplier', 'supplier_sku']).merge();
+        insertedProducts++;
       }
 
-      // Populate multi-angle photography records for the product code
-      const angles = [
-        { role: 'hero', url: `/assets/products/${code}/hero.webp`, alt_text: `${style.name} Hero View`, sort_order: 1 },
-        { role: 'front', url: `/assets/products/${code}/front.webp`, alt_text: `${style.name} Front View`, sort_order: 2 },
-        { role: 'left', url: `/assets/products/${code}/left.webp`, alt_text: `${style.name} Left Profile View`, sort_order: 3 },
-        { role: 'right', url: `/assets/products/${code}/right.webp`, alt_text: `${style.name} Right Profile View`, sort_order: 4 },
-        { role: 'back', url: `/assets/products/${code}/back.webp`, alt_text: `${style.name} Back View`, sort_order: 5 },
-        { role: 'model', url: `/assets/products/${code}/model.webp`, alt_text: `${style.name} On-Model Lifestyle View`, sort_order: 6 },
-        { role: 'detail', url: `/assets/products/${code}/modal.webp`, alt_text: `${style.name} Hand Embroidery Craftsmanship Detail`, sort_order: 7 }
+      // 2. Populate product_images table for all multi-angle views
+      const imageRoles = [
+        { role: 'hero', file: 'hero.webp', alt: `${style.name} Hero View` },
+        { role: 'front', file: 'front.webp', alt: `${style.name} Front View` },
+        { role: 'left', file: 'left.webp', alt: `${style.name} Left Profile View` },
+        { role: 'right', file: 'right.webp', alt: `${style.name} Right Profile View` },
+        { role: 'back', file: 'back.webp', alt: `${style.name} Back View` },
+        { role: 'model', file: 'model.webp', alt: `${style.name} On-Model Lifestyle View` },
+        { role: 'detail', file: 'modal.webp', alt: `${style.name} Hand Embroidery Craftsmanship Detail` }
       ];
 
-      await t('product_images').where({ product_code: code }).del();
-      for (const a of angles) {
-        await t('product_images').insert({
+      for (const [order, img] of imageRoles.entries()) {
+        const url = `/assets/products/${code}/${img.file}`;
+        const existingImg = await t('product_images').where({
           product_code: code,
-          sku: null,
-          role: a.role,
-          url: a.url,
-          alt_text: a.alt_text,
-          sort_order: a.sort_order,
-          created_at: timestamp,
-          updated_at: timestamp
-        });
-        insertedImages++;
+          role: img.role
+        }).first();
+
+        if (existingImg) {
+          await t('product_images').where({ id: existingImg.id }).update({
+            url,
+            alt_text: img.alt,
+            sort_order: order + 1,
+            updated_at: timestamp
+          });
+        } else {
+          await t('product_images').insert({
+            product_code: code,
+            sku: null,
+            role: img.role,
+            url,
+            alt_text: img.alt,
+            sort_order: order + 1,
+            created_at: timestamp,
+            updated_at: timestamp
+          });
+          insertedImages++;
+        }
       }
     }
 
-    return { insertedProducts, updatedProducts, insertedImages, stylesCount: kurtaProducts.length };
+    return {
+      insertedProducts,
+      updatedProducts,
+      totalVariants: kurtaProducts.length * 7,
+      insertedImages
+    };
   });
 }
 

@@ -4,7 +4,6 @@ import {db} from '../server/db.js';
 import {CategorySeeder} from './CategorySeeder.js';
 import {ProductSeeder} from './ProductSeeder.js';
 import {KurtaSeeder} from './KurtaSeeder.js';
-import {ComboSeeder} from './ComboSeeder.js';
 import {ReviewSeeder} from './ReviewSeeder.js';
 
 export async function DatabaseSeeder(k=db){
@@ -12,7 +11,6 @@ export async function DatabaseSeeder(k=db){
     categories: await CategorySeeder(k),
     products: await ProductSeeder(k),
     kurtas: await KurtaSeeder(k),
-    combos: await ComboSeeder(k),
     reviews: await ReviewSeeder(k)
   };
 }

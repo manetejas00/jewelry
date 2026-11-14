@@ -1,19 +1,15 @@
 import {pricedProductBySlug,pricedCoinBySku} from './pricing.js';
-import {comboBySlug} from './combos.js';
 
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const origin=()=>new URL(process.env.APP_URL||'http://localhost:3000').origin;
 
 export async function pageMetadata(k,pathname){
  const brand=process.env.BRAND_NAME||'Veyora Jewels';
- let title=brand+' — Objects of quiet beauty',description='Discover jewellery, Chicken Curry kurtas, and curated combos from '+brand+'.',status=200,indexable=true,image,product;
+ let title=brand+' — Objects of quiet beauty',description='Discover fine jewellery and handcrafted Lucknowi Chicken Curry kurtas from '+brand+'.',status=200,indexable=true,image,product;
  if(pathname.startsWith('/products/'))product=await pricedProductBySlug(k,decodeURIComponent(pathname.slice(10)));
+ else if(pathname.startsWith('/kurtas/'))product=await pricedProductBySlug(k,decodeURIComponent(pathname.slice(8)));
  else if(pathname.startsWith('/coins/product/'))product=await pricedCoinBySku(k,decodeURIComponent(pathname.slice(15)));
- else if(pathname.startsWith('/combos/')){
-   const c=await comboBySlug(k,decodeURIComponent(pathname.slice(8)));
-   if(c){product={...c,image:c.image_url||c.thumbnail};}
- }
- const labels={'/':'','/collections/all':'All jewellery','/collections/pearls':'The Pearl Edit','/collections/rings':'Rings','/collections/earrings':'Earrings','/collections/necklaces':'Necklaces','/collections/bracelets':'Bracelets','/combos':'Curated Combos & Sets','/coins':'Gold & silver coins','/coins/gold':'Gold coins','/coins/silver':'Silver coins','/information/shipping':'Shipping information','/information/care':'Jewellery care','/information/returns':'Returns information','/information/contact':'Contact','/information/about':'About Veyora','/information/privacy':'Privacy policy','/information/terms':'Terms and conditions'};
+ const labels={'/':'','/collections/all':'All jewellery','/collections/pearls':'The Pearl Edit','/collections/rings':'Rings','/collections/earrings':'Earrings','/collections/necklaces':'Necklaces','/collections/bracelets':'Bracelets','/kurtas':'Chicken Curry Kurtas for Women','/coins':'Gold & silver coins','/coins/gold':'Gold coins','/coins/silver':'Silver coins','/information/shipping':'Shipping information','/information/care':'Jewellery care','/information/returns':'Returns information','/information/contact':'Contact','/information/about':'About Veyora','/information/privacy':'Privacy policy','/information/terms':'Terms and conditions'};
  if(product){title=product.seo_title||product.name+' | '+brand;description=product.meta_description||String(product.description||product.name).slice(0,160);image=product.image||product.thumbnail;}
  else if(pathname==='/collections/saved'){title='Your saved pieces | '+brand;indexable=false;}
  else if(pathname in labels){if(labels[pathname])title=labels[pathname]+' | '+brand;}
@@ -43,14 +39,14 @@ export function renderMetadata(html,meta){
 export function registerSeo(app,k,{preview,route}){
  app.get('/robots.txt',(req,res)=>res.type('text/plain').send(preview||process.env.MERCHANT_READY!=='true'?'User-agent: *\nDisallow: /\n':`User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /admin\nDisallow: /account\nDisallow: /checkout\nDisallow: /bag\nDisallow: /order/\nSitemap: ${origin()}/sitemap.xml\n`));
  app.get('/sitemap.xml',route(async(req,res)=>{
-   const products=await k('products').where({status:'published'}).select('slug','updated_at');
+   const products=await k('products').where({status:'published'}).select('slug','updated_at','is_kurta','category');
    const coins=await k.schema.hasTable('coins')?await k('coins').where({status:'published'}).select('sku','updated_at'):[];
-   const combos=await k.schema.hasTable('combos')?await k('combos').where({status:'published'}).select('slug','updated_at'):[];
    const cats=await k.schema.hasTable('categories')?await k('categories').where({status:'active'}).select('slug','updated_at'):[];
+   const kurtas=products.filter(p=>p.is_kurta||p.category==='Chicken Curry Kurtas');
    const dated=[
      ['/',''],
      ['/collections/all',''],
-     ['/combos',''],
+     ['/kurtas',''],
      ['/coins',''],
      ['/coins/gold',''],
      ['/coins/silver',''],
@@ -63,7 +59,7 @@ export function registerSeo(app,k,{preview,route}){
      ['/information/terms',''],
      ...cats.map(c=>['/collections/'+encodeURIComponent(c.slug),String(c.updated_at||'').slice(0,10)]),
      ...products.map(p=>['/products/'+encodeURIComponent(p.slug),String(p.updated_at||'').slice(0,10)]),
-     ...combos.map(cb=>['/combos/'+encodeURIComponent(cb.slug),String(cb.updated_at||'').slice(0,10)]),
+     ...kurtas.map(p=>['/kurtas/'+encodeURIComponent(p.slug),String(p.updated_at||'').slice(0,10)]),
      ...coins.map(c=>['/coins/product/'+encodeURIComponent(c.sku),String(c.updated_at||'').slice(0,10)])
    ];
    const seen=new Set();

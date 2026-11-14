@@ -1,105 +1,101 @@
 # Database Schema Changes & Migrations
 
 ## Overview
-This document logs all database schema changes, table creations, foreign keys, indexes, and idempotency guarantees introduced to support the **Categories & Taxonomy** and **Product Combos** architecture.
+This document specifies all database schema changes, migrations, indexes, and idempotency guarantees implemented for the **Dedicated Chicken Curry Kurtas Module** and the complete removal of combo-related tables.
 
 ---
 
-## 1. Migration: `019_categories_and_combos.js`
+## 1. Migration: `020_kurta_module_and_remove_combos.js`
 Executed via Knex migration runner (`npm run migrate`).
 
-### Table: `categories`
-Stores store taxonomy, SEO metadata, banners, thumbnails, and display ordering.
+### A. Dedicated `is_kurta` Identification
+Added boolean column `is_kurta` to the `products` table with an index to facilitate lightning-fast queries and distinguish Chicken Curry Kurtas from fine jewellery and bullion coins:
 
 ```sql
-CREATE TABLE `categories` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `slug` VARCHAR(100) NOT NULL UNIQUE,
-  `name` VARCHAR(150) NOT NULL,
-  `description` TEXT NULL,
-  `thumbnail` TEXT NULL,
-  `banner` TEXT NULL,
-  `status` VARCHAR(20) NOT NULL DEFAULT 'active',
-  `sort_order` INTEGER DEFAULT 0,
-  `seo_title` VARCHAR(150) NULL,
-  `meta_description` VARCHAR(255) NULL,
-  `created_at` VARCHAR(255) NOT NULL,
-  `updated_at` VARCHAR(255) NOT NULL
-);
-
-CREATE INDEX `categories_slug_index` ON `categories` (`slug`);
-CREATE INDEX `categories_status_index` ON `categories` (`status`);
-CREATE INDEX `categories_sort_order_index` ON `categories` (`sort_order`);
+ALTER TABLE `products` ADD COLUMN `is_kurta` BOOLEAN DEFAULT 0;
+CREATE INDEX `products_is_kurta_index` ON `products` (`is_kurta`);
 ```
 
-### Table: `combos`
-Stores curated bundle sets, pricing, discount percentages, savings amounts, and publication state.
+### B. Complete Removal of Combo Functionality (Phase 10 Mandate)
+Dropped legacy combo tables and purged combo records from categories:
 
 ```sql
-CREATE TABLE `combos` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `slug` VARCHAR(100) NOT NULL UNIQUE,
-  `sku` VARCHAR(100) NOT NULL UNIQUE,
-  `name` VARCHAR(200) NOT NULL,
-  `description` TEXT NULL,
-  `category` VARCHAR(100) NULL,
-  `image` TEXT NULL,
-  `status` VARCHAR(20) NOT NULL DEFAULT 'published',
-  `combo_price` DECIMAL(14, 2) NOT NULL,
-  `original_price` DECIMAL(14, 2) NULL,
-  `discount_percent` DECIMAL(5, 2) NULL,
-  `savings` DECIMAL(14, 2) NULL,
-  `stock` INTEGER DEFAULT 10,
-  `seo_title` VARCHAR(150) NULL,
-  `meta_description` VARCHAR(255) NULL,
-  `created_at` VARCHAR(255) NOT NULL,
-  `updated_at` VARCHAR(255) NOT NULL
-);
-
-CREATE INDEX `combos_slug_index` ON `combos` (`slug`);
-CREATE INDEX `combos_sku_index` ON `combos` (`sku`);
-CREATE INDEX `combos_status_index` ON `combos` (`status`);
-CREATE INDEX `combos_category_index` ON `combos` (`category`);
-```
-
-### Table: `combo_items`
-Relational join table mapping component products to combos.
-
-```sql
-CREATE TABLE `combo_items` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `combo_id` INTEGER NOT NULL REFERENCES `combos`(`id`) ON DELETE CASCADE,
-  `product_sku` VARCHAR(100) NOT NULL,
-  `quantity` INTEGER NOT NULL DEFAULT 1,
-  `is_primary` BOOLEAN NOT NULL DEFAULT 0
-);
-
-CREATE INDEX `combo_items_combo_id_index` ON `combo_items` (`combo_id`);
-CREATE INDEX `combo_items_product_sku_index` ON `combo_items` (`product_sku`);
+DROP TABLE IF EXISTS `combo_items`;
+DROP TABLE IF EXISTS `combos`;
+DELETE FROM `categories` WHERE `slug` = 'combos' OR `name` LIKE '%Combo%';
 ```
 
 ---
 
-## 2. Seeders
-All seeders execute idempotently (can be run repeatedly without duplicating records or throwing unique constraint violations):
+## 2. Updated Table Specifications
 
-### 1. `CategorySeeder.js`
-- Populates 13 categories:
-  - 8 new collections (`Chicken Curry Kurtas for Women`, `Chicken Curry Kurta Collection`, `Kurta & Jewellery Combo`, `Premium Ethnic Wear`, `Festive Kurta Collection`, `Everyday Women's Ethnic Wear`, `Kurta Gift Sets`, `Premium Jewellery & Kurta Sets`).
-  - 5 existing jewellery and bullion categories (`The Pearl Edit`, `Earrings`, `Necklaces`, `Rings`, `Bracelets`, `Gold & Silver Coins`).
+### Table: `products` (Expanded for Kurta Styles & Sizes)
+Stores both jewellery pieces, bullion coins, and dedicated Chicken Curry Kurta size variants:
 
-### 2. `KurtaSeeder.js`
-- Populates 4 flagship Chikankari kurta styles (`CCK-IVORY`, `CCK-BLUSH`, `CCK-SAGE`, `CCK-SKY`).
-- Generates 20 size variants (`S`, `M`, `L`, `XL`, `XXL`).
-- Links 28 multi-angle image entries (`hero`, `front`, `right`, `left`, `back`, `model`, `modal`) into `product_images`.
+```sql
+CREATE TABLE `products` (
+  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `supplier` VARCHAR(255) NULL,
+  `product_code` VARCHAR(255) NOT NULL,
+  `sku` VARCHAR(255) NOT NULL UNIQUE,
+  `slug` VARCHAR(255) NOT NULL UNIQUE,
+  `name` VARCHAR(255) NOT NULL,
+  `category` VARCHAR(255) NOT NULL,
+  `is_kurta` BOOLEAN DEFAULT 0,
+  `description` TEXT NULL,
+  `metal` VARCHAR(255) NULL,           -- Stores fabric (e.g., 'Pure Mulmul Cotton')
+  `purity` VARCHAR(255) NULL,          -- Stores embroidery craft (e.g., 'Handcrafted Chikankari')
+  `finish` VARCHAR(255) NULL,          -- Stores stitch technique (e.g., 'Shadow Work')
+  `size` VARCHAR(50) NULL,             -- Stores size (e.g., 'XS (34)', 'S (36)', etc.)
+  `image` TEXT NULL,
+  `pricing_mode` VARCHAR(50) NOT NULL, -- 'FIXED' for kurtas
+  `fixed_price` DECIMAL(14, 2) NULL,
+  `stock` INTEGER DEFAULT 0,
+  `status` VARCHAR(50) NOT NULL DEFAULT 'published',
+  `seo_title` VARCHAR(255) NULL,
+  `meta_description` TEXT NULL,
+  `source_timestamp` VARCHAR(255) NOT NULL,
+  `updated_at` VARCHAR(255) NOT NULL
+);
 
-### 3. `ComboSeeder.js`
-- Populates 4 curated combos with component mappings and 15% bundle discounts.
+CREATE INDEX `products_is_kurta_index` ON `products` (`is_kurta`);
+CREATE INDEX `products_product_code_index` ON `products` (`product_code`);
+CREATE INDEX `products_sku_index` ON `products` (`sku`);
+CREATE INDEX `products_status_index` ON `products` (`status`);
+```
 
-### 4. `DatabaseSeeder.js` & `scripts/seed.js`
-- Chained to execute in sequence:
-  ```javascript
-  await CategorySeeder(db);
-  await KurtaSeeder(db);
-  await ComboSeeder(db);
-  ```
+### Table: `product_images` (Multi-Angle Photography Roles)
+Maps high-resolution WebP photographs to product styles and roles:
+
+```sql
+CREATE TABLE `product_images` (
+  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `product_code` VARCHAR(255) NOT NULL,
+  `sku` VARCHAR(255) NULL,
+  `role` VARCHAR(50) NOT NULL,         -- 'hero', 'front', 'right', 'left', 'back', 'model', 'detail'
+  `url` TEXT NOT NULL,
+  `alt_text` TEXT NULL,
+  `sort_order` INTEGER DEFAULT 0,
+  `created_at` VARCHAR(255) NOT NULL,
+  `updated_at` VARCHAR(255) NOT NULL
+);
+
+CREATE INDEX `product_images_product_code_index` ON `product_images` (`product_code`);
+CREATE INDEX `product_images_sku_index` ON `product_images` (`sku`);
+```
+
+---
+
+## 3. Idempotent Seeders
+
+### 1. `KurtaSeeder.js`
+- Populates all 4 authentic Chikankari styles:
+  1. `lucknowi-ivory-chikankari-cotton-kurta`
+  2. `rose-blush-georgette-chikankari-kurta`
+  3. `sage-green-chanderi-chikankari-kurta`
+  4. `sky-blue-mulmul-chikankari-kurta`
+- Generates all 7 sizes (`XS` to `XXXL`) for each style = 28 variants total.
+- Associates 6 distinct image roles (`hero`, `front`, `right`, `left`, `back`, `model`, `detail`) per style.
+
+### 2. `CategorySeeder.js`
+- Restored to the 5 pure jewellery and coin categories: `Earrings`, `Necklaces`, `Rings`, `Bracelets`, and `Gold & Silver Coins`.
