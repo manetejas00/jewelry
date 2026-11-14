@@ -29,7 +29,7 @@ Production uses `npm start`, explicit migrations (`npm run migrate`) and `PREVIE
 
 ## Operating notes
 
-[Import guide](docs/import-guide.md) · [Hostinger setup](docs/hostinger-setup.md) · [Audit and change summary](docs/audit.md) · [Verification results](docs/test-results.md)
+[Documentation index](docs/README.md) · [Import guide](docs/import-guide.md) · [Hostinger setup](docs/hostinger-setup.md) · [Audit and change summary](docs/audit.md) · [Verification results](docs/test-results.md)
 
 Live payment integration is deliberately unavailable until the merchant identifies the gateway and supplies its approved server-side integration details. Test checkout is not a payment gateway. There is no claim that the Hostinger database or scheduler is connected. Product structured data is populated from the published catalogue. All certification and hallmarking claims have been omitted.
 

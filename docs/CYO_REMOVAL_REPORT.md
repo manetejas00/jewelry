@@ -1,5 +1,7 @@
 # CYO (Create Your Own) Removal Report – Veyora Jewels
 
+This report records the original removal work. The current [migration 024](../migrations/024_cyo_jewellery_studio.js) is present in the repository and drops the former CYO tables when applied.
+
 ## Executive Summary
 All **CYO (Create Your Own)** functionality has been permanently and cleanly removed from Veyora Jewels across the frontend, backend, database, admin panel, documentation, and automated tests.
 

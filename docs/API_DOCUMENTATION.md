@@ -307,115 +307,49 @@ Fetches a single kurta design silhouette along with its complete 7-size variant 
 
 ## 5. Shared Type-Aware Subsystems
 
-### 5.1 Pricing Quotes (`POST /api/pricing/quote`)
-Calculates item-level prices and applied discounts across heterogeneous cart contents.
+### 5.1 Pricing Quotes (`POST /api/quote`)
 
-- **Request Body**:
+Send the cart items and an optional `offerCode`.
+
 ```json
 {
-  "items": [
-    { "sku": "JWL-RNG-001-S12", "qty": 1 },
-    { "sku": "COIN-G-1G", "qty": 2 },
-    { "sku": "CK-001-IVR-M38", "qty": 1 }
-  ],
+  "items": [{ "sku": "JWL-RNG-001-S12", "quantity": 1 }],
   "offerCode": "FESTIVE10"
 }
 ```
-- **Response `200 OK`**:
+
+The response contains `lines`, `subtotal`, `shipping`, `total`, and a `token` for checkout. Each line includes the SKU, name, quantity, unit price, and price breakdown. Use the returned total and token for the exact cart being purchased.
+
+### 5.2 Checkout and Orders (`POST /api/checkout`)
+
+Checkout supports cash on delivery (`cod`). Use the items and token from the quote. Reuse the same `idempotencyKey` when retrying an identical request. Signed-in customers send the `x-customer-csrf` header. When checkout verification is configured, complete the applicable OTP flow.
+
 ```json
 {
-  "lines": [
-    {
-      "sku": "JWL-RNG-001-S12",
-      "item_type": "jewelry",
-      "name": "Aurora Solitaire Diamond Ring (Size 12)",
-      "unit_price": 47251.25,
-      "qty": 1,
-      "total": 47251.25
-    },
-    {
-      "sku": "COIN-G-1G",
-      "item_type": "coin",
-      "name": "1 Gram 24K 999 Lakshmi Gold Coin",
-      "unit_price": 7850.0,
-      "qty": 2,
-      "total": 15700.0
-    },
-    {
-      "sku": "CK-001-IVR-M38",
-      "item_type": "kurta",
-      "name": "Heritage Mulmul Chikankari Kurta - Ivory White (M 38)",
-      "unit_price": 2999.0,
-      "qty": 1,
-      "total": 2999.0
-    }
-  ],
-  "subtotal": 65950.25,
-  "discount": 1500.0,
-  "tax": 1978.51,
-  "shipping": 0.0,
-  "grand_total": 66428.76
-}
-```
-
----
-
-### 5.2 Checkout & Orders (`POST /api/orders/checkout`)
-Processes purchase, locks and decrements inventory in the appropriate module inventory table (`jewelry_inventory`, `coin_inventory`, or `kurta_inventory`), and records polymorphic order items.
-
-- **Request Body**:
-```json
-{
+  "items": [{ "sku": "JWL-RNG-001-S12", "quantity": 1 }],
+  "token": "<token from quote>",
+  "offerCode": "FESTIVE10",
+  "idempotencyKey": "checkout-example-001",
+  "paymentMode": "cod",
   "customer": {
     "name": "Aarav Sharma",
     "email": "aarav.sharma@example.com",
-    "mobile": "9876543210"
-  },
-  "shipping_address": {
-    "line1": "Flat 402, Royal Palms",
+    "phone": "9876543210",
+    "address": "Flat 402, Royal Palms",
     "city": "Mumbai",
-    "state": "Maharashtra",
-    "postal_code": "400050",
-    "country": "IN"
-  },
-  "items": [
-    { "sku": "JWL-RNG-001-S12", "qty": 1 },
-    { "sku": "CK-001-IVR-M38", "qty": 1 }
-  ],
-  "payment_method": "razorpay"
-}
-```
-- **Response `200 OK`**:
-```json
-{
-  "ok": true,
-  "order_id": 1042,
-  "order_number": "ORD-2026-1042",
-  "grand_total": 50250.25,
-  "status": "pending_payment"
+    "pincode": "400050"
+  }
 }
 ```
 
----
+A successful response contains `id` and `total`. An identical retry can also return `duplicate: true`. A price change returns HTTP 409 with an updated `quote`. Retrieve the order with `GET /api/orders/:id` using the owning customer account or guest session.
 
-### 5.3 Reviews & Ratings (`POST /api/reviews`)
-Polymorphic customer feedback endpoint accepting target `item_type`.
+### 5.3 Reviews and Ratings
 
-- **Request Body**:
-```json
-{
-  "item_type": "jewelry",
-  "subject_id": 101,
-  "rating": 5,
-  "title": "Exquisite craftsmanship!",
-  "body": "The diamond brilliance and gold finish surpassed expectations.",
-  "author_name": "Priyanka M."
-}
-```
-- **Supported `item_type` values**:
-  - `jewelry`: Links review to `jewelry_id`
-  - `coin`: Links review to `coin_id`
-  - `kurta`: Links review to `kurta_id`
+- `GET /api/products/:productId/reviews` returns the review list. It supports `page`, `limit`, `sort`, and `rating`.
+- `GET /api/products/:productId/ratings` returns the rating summary.
+- `POST /api/products/:productId/reviews` creates a pending review and returns HTTP 201. Send `rating`, `title`, `comment`, and optional `images`. The endpoint requires a customer session and `x-customer-csrf`.
+- `PUT /api/reviews/:id` edits a review owned by the signed-in customer and requires the same CSRF header.
 
 ---
 
@@ -437,24 +371,15 @@ Atomically executes the validated import batch and balances inventory ledger tab
 
 ## 6. HTTP Status Codes & Error Handling
 
-All error responses adhere to the standard JSON payload:
-```json
-{
-  "error": "Validation failed",
-  "fields": {
-    "sku": "SKU JWL-RNG-001 already exists in the jewelry catalog",
-    "net_weight_g": "Gold-linked jewelry requires a positive net_weight_g"
-  }
-}
-```
+The global API error handler returns a JSON object with an `error` message. A checkout price conflict also includes the updated `quote`.
 
 | HTTP Code | Description | Typical Cause |
 | :--- | :--- | :--- |
 | `200 OK` | Success | Request succeeded. |
 | `201 Created` | Created | Item successfully created. |
 | `400 Bad Request` | Bad Request | Malformed JSON or invalid query parameter. |
-| `401 Unauthorized` | Auth Required | Unauthenticated request to an admin endpoint. |
-| `403 Forbidden` | Access Denied | Staff role lacks required permissions (`manager` / `owner`). |
+| `401 Unauthorized` | Auth Required | A customer endpoint requires a signed-in account. |
+| `403 Forbidden` | Access Denied | Staff session, role, origin, or CSRF check failed. |
 | `404 Not Found` | Not Found | Item, category, or slug does not exist. |
-| `422 Unprocessable`| Validation Error | Field violation (duplicate SKU, non-positive weight, invalid metal). |
+| `409 Conflict` | Conflict | Duplicate record or checkout price change. |
 | `500 Server Error` | Server Error | Internal processing failure. |

@@ -1,5 +1,7 @@
 # Data Migration & Schema Evolution Report: Jewelry, Coin & Kurta Modules
 
+This document records the Migration 025 design and verification at the time of rollout. See the [current project architecture](PROJECT_ARCHITECTURE.md) for the relationship between dedicated and legacy catalogue paths.
+
 ## 1. Executive Summary & Migration Architecture
 
 Prior to Migration `025_independent_modules_jewelry_coin_kurta.js`, the platform utilized a monolithic, generic `products` table designed for jewelry with gold-linked pricing. As the catalog grew to encompass **Fine Jewelry**, **Bullion & Coins**, and **Lucknowi Chikankari Apparel (Kurtas)**, this single-table approach caused severe data modeling constraints:
@@ -227,11 +229,8 @@ export async function down(k) {
    - It remains intact in the SQLite database to allow side-by-side verification and fallback if needed.
 2. **Explicit User Approval Requirement**:
    - Any permanent drop of the legacy `products` table is classified as a destructive database operation and requires explicit user confirmation.
-3. **Database Backup**:
-   - Before executing any further destructive migrations, create a binary snapshot:
-     ```bash
-     cp private/store.sqlite private/store.sqlite.backup.$(date +%Y%m%d%H%M%S)
-     ```
+3. **Database Backup**
+   Use a database-consistent backup and verify that it can be restored before destructive work. For SQLite with write-ahead logging enabled, use SQLite’s backup facility so the snapshot includes committed changes in the WAL.
 
 ---
 

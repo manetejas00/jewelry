@@ -1,5 +1,7 @@
 # Database Restructuring: Jewelry, Coin & Kurta Modules
 
+This document records the Migration 025 design and verification at the time of rollout. See the [current project architecture](PROJECT_ARCHITECTURE.md) for the relationship between dedicated and legacy catalogue paths.
+
 ## 1. Executive Summary & Architecture Evolution
 
 Previously, the application utilized a generic, monolithic `products` table designed primarily around gold-linked jewelry pricing attributes. As the business expanded to offer three distinct luxury domains:

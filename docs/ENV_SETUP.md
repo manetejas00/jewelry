@@ -62,4 +62,4 @@ Start the internal gateway with `docker compose -f docker-compose.otp.yml up --b
 
 ## Storefront chatbot
 
-`AI_API_KEY` stays on the server and is shared with catalogue copy. `AI_API_URL` is the chatbot completions endpoint (default `https://api.openai.com/v1`). `AI_ENABLED`, `AI_MODEL`, `AI_MAX_DAILY_MESSAGES` (default 10), `AI_DAILY_RESET_TIMEZONE` (default `Asia/Kolkata`), `AI_MAX_INPUT_LENGTH`, and `AI_MAX_RESPONSE_TOKENS` configure the signed-in assistant. The browser never receives the key. See `AI_CHATBOT_SETUP.md`. Catalogue copy continues to use `AI_BASE_URL`.
+`AI_API_KEY` stays on the server and is shared with catalogue copy. `AI_API_URL` is the chatbot completions endpoint (default `https://api.openai.com/v1`). `AI_ENABLED`, `AI_MODEL`, `AI_MAX_DAILY_MESSAGES` (default 10), `AI_DAILY_RESET_TIMEZONE` (default `Asia/Kolkata`), `AI_MAX_INPUT_LENGTH`, and `AI_MAX_RESPONSE_TOKENS` configure the signed-in assistant. The browser never receives the key. See the [AI chatbot setup guide](AI_CHATBOT_SETUP.md). Catalogue copy continues to use `AI_BASE_URL`.
