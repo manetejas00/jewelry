@@ -60,7 +60,7 @@ test('hero showcase: video slide has visible CTA button, clearProps on animation
 
   // Verify slide 0 (video slide) defines a CTA button
   assert.match(heroContent, /cta:\s*['"]Shop the collection['"]/, 'Slide 0 must define CTA text');
-  assert.match(heroContent, /to:\s*['"]\/collections\/pearls['"]/, 'Slide 0 must define destination route');
+  assert.match(heroContent, /to:\s*['"]\/collections\/all['"]/, 'Slide 0 must define destination route');
 
   // Verify button markup
   assert.ok(heroContent.includes('hero-cta-button'), 'HeroBanner must render CTA with .hero-cta-button class');

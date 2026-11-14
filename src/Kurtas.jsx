@@ -257,7 +257,6 @@ export function KurtasPage({ Layout, ProductCard }) {
   const tabs = [
     { label: 'Kurtas', href: '/kurtas', active: true },
     { label: 'All jewellery', href: '/collections/all', active: false },
-    { label: 'The Pearl Edit', href: '/collections/pearls', active: false },
     { label: 'Earrings', href: '/collections/earrings', active: false },
     { label: 'Necklaces', href: '/collections/necklaces', active: false },
     { label: 'Rings', href: '/collections/rings', active: false },

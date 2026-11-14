@@ -24,7 +24,7 @@ No competitor homepage was fetched in this pass. The closest fetched pages are c
 4. Title pattern from Google’s title guide: a concise description of this page, brand once at the end. The current title is a tagline. It does not say jewellery, pearls, gold, silver, or coins. Do not pack “buy gold jewellery online India” in a repeated string. Google calls that stuffing.
 5. Meta description from Google’s snippet guide: one shop-level summary on the home page only. Say jewellery and gold and silver coins, India, INR, only if those are still what the shop sells. Do not reuse this sentence on collection or product pages. Google’s bad example is the same description on every page.
 6. `JewelryStore` or `Organization` only with facts the shop can show: name, URL, `areaServed` India, currency INR, and email once the email is not `.local`. Google’s product intro says return policy belongs on Organization when it is shop-wide. Do not invent a street address, phone, or `sameAs`. CaratLane’s fetched pages include Organization and ContactPoint; we do not have a ContactPoint to publish.
-7. Links in the first HTML to `/collections/rings`, `/collections/earrings`, `/collections/necklaces`, `/collections/bracelets`, `/collections/pearls`, `/coins/gold`, and `/coins/silver`. Googlebot discovers URLs from `href` in the response, then again after render. The live home response has no `href`.
+7. Links in the first HTML to `/collections/rings`, `/collections/earrings`, `/collections/necklaces`, `/collections/bracelets`, `/coins/gold`, and `/coins/silver`. Googlebot discovers URLs from `href` in the response, then again after render. The live home response has no `href`.
 
 ## URL
 

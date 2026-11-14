@@ -8,7 +8,6 @@ No ranking target. Nothing in these files is a change to the site yet.
 |---|---|---|
 | Home | [home.md](home.md) | Keep `/`. 301 only when the real domain replaces test3. |
 | All jewellery | [collection-all.md](collection-all.md) | Keep `/collections/all`. Canonicalise filter and sort queries. |
-| Pearls | [collection-pearls.md](collection-pearls.md) | Keep `/collections/pearls`. |
 | Rings | [collection-rings.md](collection-rings.md) | Keep `/collections/rings`. |
 | Earrings | [collection-earrings.md](collection-earrings.md) | Keep `/collections/earrings`. |
 | Necklaces | [collection-necklaces.md](collection-necklaces.md) | Keep `/collections/necklaces`. |

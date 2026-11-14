@@ -23,7 +23,6 @@ const DEFAULT_POPULAR = [
 ];
 
 const DEFAULT_CATEGORIES = [
-  { name: 'The Pearl Edit', url: '/collections/pearls' },
   { name: 'All Jewellery', url: '/collections/all' },
   { name: 'Gold & Silver Coins', url: '/coins' },
   { name: 'Gold Coins', url: '/coins/gold' },

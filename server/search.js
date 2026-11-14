@@ -127,7 +127,6 @@ function expandTokens(rawQuery) {
 
 const CATEGORY_MAP = [
   { name: 'Kurtas', url: '/kurtas', keywords: ['kurta', 'kurtas', 'kurti', 'chikankari', 'chickencurry', 'chicken curry', 'lucknowi', 'mulmul', 'georgette', 'chanderi', 'ethnic'] },
-  { name: 'The Pearl Edit', url: '/collections/pearls', keywords: ['pearl', 'pearls'] },
   { name: 'All Jewellery', url: '/collections/all', keywords: ['jewellery', 'jewelry'] },
   { name: 'Gold & Silver Coins', url: '/coins', keywords: ['coin', 'coins', 'bullion'] },
   { name: 'Gold Coins', url: '/coins/gold', keywords: ['gold coin', 'gold coins'] },

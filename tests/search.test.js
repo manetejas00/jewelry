@@ -45,9 +45,10 @@ test('searching "Pearl Ring" matches pearl rings with categories and thumbnail U
   assert.ok(first.thumbnail, 'Thumbnail must be provided');
   assert.ok(first.thumbnail.endsWith('.webp') || first.thumbnail.includes('/api/thumbnail'), 'Must be a thumbnail URL');
 
-  // Suggestions should include Rings and Pearl Edit
+  // Suggestions should include Rings but not the removed Pearl Edit collection
   const catSuggestions = res.suggestions.filter(s => s.type === 'category');
-  assert.ok(catSuggestions.some(c => c.text === 'The Pearl Edit' || c.text === 'Rings'));
+  assert.ok(catSuggestions.some(c => c.text === 'Rings'));
+  assert.ok(!catSuggestions.some(c => c.url === '/collections/pearls'));
 });
 
 test('searching "Gold Necklace" matches necklaces in gold', async () => {

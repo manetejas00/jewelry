@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-test('STORE_NAV_ITEMS defines all 8 shopping navigation menu items with proper URLs', () => {
+test('STORE_NAV_ITEMS defines all 7 shopping navigation menu items with proper URLs', () => {
   const mainJsx = fs.readFileSync('src/main.jsx', 'utf8');
 
   // Verify STORE_NAV_ITEMS is present
@@ -11,7 +11,6 @@ test('STORE_NAV_ITEMS defines all 8 shopping navigation menu items with proper U
   const expectedNav = [
     { label: 'Kurtas', href: '/kurtas' },
     { label: 'All jewellery', href: '/collections/all' },
-    { label: 'The Pearl Edit', href: '/collections/pearls' },
     { label: 'Coins', href: '/coins' },
     { label: 'Earrings', href: '/collections/earrings' },
     { label: 'Necklaces', href: '/collections/necklaces' },
@@ -45,7 +44,7 @@ test('isStoreNavActive accurately resolves active state across all routes and ch
   `);
   const { STORE_NAV_ITEMS, isStoreNavActive } = fnModule();
 
-  assert.equal(STORE_NAV_ITEMS.length, 8, 'There must be exactly 8 store navigation items');
+  assert.equal(STORE_NAV_ITEMS.length, 7, 'There must be exactly 7 store navigation items');
 
   const mockProducts = [
     { slug: 'lune-pearl-drops', product_code: 'lune-drops', category: 'Earrings' },
@@ -80,8 +79,7 @@ test('isStoreNavActive accurately resolves active state across all routes and ch
   const bracelets = getActiveItem('/collections/bracelets');
   assert.equal(bracelets?.label, 'Bracelets');
 
-  const pearls = getActiveItem('/collections/pearls');
-  assert.equal(pearls?.label, 'The Pearl Edit');
+  assert.equal(getActiveItem('/collections/pearls'), undefined, 'Removed collection must not activate navigation');
 
   // 3. Kurtas and nested kurta detail pages
   const kurtasRoot = getActiveItem('/kurtas');

@@ -55,7 +55,6 @@ function Brand(){return <Link className="brand" to="/" aria-label="Veyora Jewels
 export const STORE_NAV_ITEMS = [
   { label: 'Kurtas', href: '/kurtas', matchPrefixes: ['/kurtas', '/kurta'], categoryKey: 'kurtas' },
   { label: 'All jewellery', href: '/collections/all', matchPrefixes: ['/jewelry'], exact: true, categoryKey: 'all' },
-  { label: 'The Pearl Edit', href: '/collections/pearls', matchPrefixes: ['/collections/pearls'], categoryKey: 'pearls' },
   { label: 'Coins', href: '/coins', matchPrefixes: ['/coins', '/coin'], categoryKey: 'coins' },
   { label: 'Earrings', href: '/collections/earrings', matchPrefixes: ['/collections/earrings'], categoryKey: 'earrings' },
   { label: 'Necklaces', href: '/collections/necklaces', matchPrefixes: ['/collections/necklaces'], categoryKey: 'necklaces' },
@@ -91,7 +90,6 @@ export function isStoreNavActive(item, pathname, products = []) {
       if (item.categoryKey === 'necklaces' && cat.includes('necklace')) return true;
       if (item.categoryKey === 'rings' && cat.includes('ring')) return true;
       if (item.categoryKey === 'bracelets' && cat.includes('bracelet')) return true;
-      if (item.categoryKey === 'pearls' && (cat.includes('pearl') || prod.pearl || (prod.material && prod.material.toLowerCase().includes('pearl')))) return true;
       if (item.categoryKey === 'kurtas' && (prod.is_kurta || cat.includes('kurta'))) return true;
       if (item.categoryKey === 'coins' && (prod.is_coin || cat.includes('coin'))) return true;
     }
@@ -160,11 +158,11 @@ function Header(){
   };
 
   const bannerOffer=offers.find(o=>o.show_in_banner&&o.banner_headline)||offers[0];
-  const bannerTarget=bannerOffer?(bannerOffer.applies_to==='silver'?'/coins/silver':bannerOffer.applies_to==='coins'?'/coins':'/collections/all'):'/collections/pearls';
+  const bannerTarget=bannerOffer?(bannerOffer.applies_to==='silver'?'/coins/silver':bannerOffer.applies_to==='coins'?'/coins':'/collections/all'):'/collections/all';
 
   return <>
     <Link to={bannerTarget} className="announcement" aria-label="Announcement banner">
-      {bannerOffer?<><Sparkles size={11} color="#f9ca24"/> {bannerOffer.banner_headline} {bannerOffer.code?<span>Code: {bannerOffer.code} <ArrowRight size={12}/></span>:<span>Offer auto-applied <ArrowRight size={12}/></span>}</>:<>A little wonder. An everyday heirloom. <span>Discover the Pearl Edit <ArrowRight size={12}/></span></>}
+      {bannerOffer?<><Sparkles size={11} color="#f9ca24"/> {bannerOffer.banner_headline} {bannerOffer.code?<span>Code: {bannerOffer.code} <ArrowRight size={12}/></span>:<span>Offer auto-applied <ArrowRight size={12}/></span>}</>:<>A little wonder. An everyday heirloom. <span>Discover the collection <ArrowRight size={12}/></span></>}
     </Link>
     <header className="header">
       <button className="icon mobile-menu" aria-label={menu?'Close navigation menu':'Open navigation menu'} aria-expanded={menu} aria-controls="store-navigation" onClick={()=>setMenu(!menu)}>
@@ -470,7 +468,7 @@ function ProductCard({p}){
       )}
       {isGoldLinked&&!p.offer?.badge_text&&<span className="gold-linked-badge" title="Dynamic price linked to official metal rates"><Sparkles size={10}/> {isCoin?'DAILY METAL RATE':'GOLD-LINKED RATE'}</span>}
       {!isCoin&&<button className={'save-piece icon '+(saved.includes(p.product_code)?'selected':'')} aria-label={`Save ${p.name}`} aria-pressed={saved.includes(p.product_code)} onClick={()=>toggleSave(p.product_code)}><Heart size={18}/></button>}
-      <span className="product-label">{p.stock===0?'CURRENTLY UNAVAILABLE':isCoin?`${p.purity} ${p.metal.toUpperCase()}`:isKurta?'KURTAS':p.category==='Rings'?'YOUR EVERYDAY SIGNATURE':'THE PEARL EDIT'}</span>
+      <span className="product-label">{p.stock===0?'CURRENTLY UNAVAILABLE':isCoin?`${p.purity} ${p.metal.toUpperCase()}`:isKurta?'KURTAS':p.category==='Rings'?'YOUR EVERYDAY SIGNATURE':'SIGNATURE PIECE'}</span>
     </div>
     <CardInfo product={p} href={activeHref}
       specifications={isCoin?`${p.weight_g}g · ${p.purity} ${p.metal}${p.dimension?` · ${p.dimension}`:''}`:isKurta?`${p.metal} · ${p.purity}`:`${p.metal} · ${p.purity} · ${p.category}`}
@@ -491,7 +489,7 @@ function Collection(){
   const listRef=useRef();
   const q=params.get('q')||'';
   useEffect(()=>{
-    document.title=`${q?`Search: “${q}”`:category==='all'?'All jewellery':category==='pearls'?'The Pearl Edit':category} | Veyora Jewels`;
+    document.title=`${q?`Search: “${q}”`:category==='all'?'All jewellery':category} | Veyora Jewels`;
     if(!matchMedia('(prefers-reduced-motion: reduce)').matches)gsap.fromTo(listRef.current,{opacity:0,y:10},{opacity:1,y:0,duration:.5});
     const key='scroll:'+location.pathname+location.search;
     requestAnimationFrame(()=>window.scrollTo(0,Number(sessionStorage.getItem(key)||0)));
@@ -530,7 +528,7 @@ function Collection(){
 
   const [categoryMeta,setCategoryMeta]=useState(null);
   useEffect(()=>{
-    if(!['all','pearls','saved'].includes(category)){
+    if(!['all','saved'].includes(category)){
       api('/categories/'+encodeURIComponent(category)).then(setCategoryMeta).catch(()=>setCategoryMeta(null));
     }else{
       setCategoryMeta(null);
@@ -541,7 +539,6 @@ function Collection(){
     if(category==='all')return true;
     if(category==='gold')return (p.metal||'').toLowerCase()==='gold'||(p.collections||[]).includes('gold');
     if(category==='silver')return (p.metal||'').toLowerCase()==='silver'||(p.collections||[]).includes('silver');
-    if(category==='pearls')return p.category?.toLowerCase()==='pearls'||p.category?.toLowerCase()==='the pearl edit';
     if(category==='saved')return saved.includes(p.product_code);
     const pCatLower=(p.category||'').toLowerCase();
     const pCatSlug=pCatLower.replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
@@ -560,7 +557,6 @@ function Collection(){
     all:'The jewellery collection',
     gold:'The Gold Collection',
     silver:'The Silver Collection',
-    pearls:'The Pearl Edit',
     saved:'Your saved pieces'
   }[category]||category.replace(/-/g,' '));
   const categoryDescription=q?`Showing items matching “${q}”.`:categoryMeta?.description||({
@@ -573,7 +569,6 @@ function Collection(){
   const tabs=[
     {label:'Kurtas',href:'/kurtas',active:false},
     {label:'All jewellery',href:'/collections/all',active:category==='all'},
-    {label:'The Pearl Edit',href:'/collections/pearls',active:category==='pearls'},
     {label:'Earrings',href:'/collections/earrings',active:category==='earrings'},
     {label:'Necklaces',href:'/collections/necklaces',active:category==='necklaces'},
     {label:'Rings',href:'/collections/rings',active:category==='rings'},
@@ -2443,7 +2438,6 @@ function MaterialPage(){
         {label:'All jewellery',href:'/collections/all',active:false},
         {label:'Gold',href:'/collections/gold',active:false},
         {label:'Silver',href:'/collections/silver',active:false},
-        {label:'The Pearl Edit',href:'/collections/pearls',active:false},
         {label:'Coins',href:'/coins',active:false}
       ]}
       priceBrackets={priceBrackets}
@@ -2521,7 +2515,6 @@ function CraftsmanshipPage(){
         {label:'All jewellery',href:'/collections/all',active:false},
         {label:'Gold',href:'/collections/gold',active:false},
         {label:'Silver',href:'/collections/silver',active:false},
-        {label:'The Pearl Edit',href:'/collections/pearls',active:false},
         {label:'Coins',href:'/coins',active:false}
       ]}
       priceBrackets={priceBrackets}
