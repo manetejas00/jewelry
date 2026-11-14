@@ -371,7 +371,7 @@ export default function HeroBanner({ heroRef }) {
         </div>
       </div>
 
-      <a className="hero-scroll" href="#collections">
+      <a className="hero-scroll" href="#collections" aria-label="Explore collections">
         EXPLORE <span>↓</span>
       </a>
     </section>

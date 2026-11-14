@@ -41,6 +41,7 @@ import {registerCraftsmanshipRoutes} from './craftsmanship.js';
 import {registerCollectionRoutes} from './collections.js';
 import {registerRecommendationRoutes} from './recommendations.js';
 import {registerRateRoutes} from './rates.js';
+import {registerCyoRoutes} from './cyo.js';
 import {
   getProductReviews,
   submitReview,
@@ -856,6 +857,7 @@ registerCraftsmanshipRoutes(app,{db,route,auth});
 registerCollectionRoutes(app,{db,route,auth});
 registerRecommendationRoutes(app,{db,route,auth});
 registerRateRoutes(app,{db,route,auth,audit});
+registerCyoRoutes(app,{db,route,auth,customerAuth,customerCsrf,rateLimit});
 registerSeo(app,db,{preview,route});
 app.use('/api',(req,res)=>res.status(404).json({error:'API endpoint not found'}));
 registerPwa(app,{production});

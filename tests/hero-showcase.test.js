@@ -73,3 +73,17 @@ test('hero showcase: video slide has visible CTA button, clearProps on animation
   assert.match(cssContent, /\.hero-cta-button/, 'CSS must declare .hero-cta-button');
   assert.match(cssContent, /\.hero-copy\s*\{[^}]*z-index:\s*10/, 'CSS .hero-copy must have z-index: 10');
 });
+
+test('hero showcase: hero banner takes full viewport height below header across breakpoints', async () => {
+  const cssContent = await fs.readFile(path.resolve('src/style.css'), 'utf8');
+
+  // Verify full-screen viewport height calculation with 100vh and 100dvh
+  assert.match(cssContent, /\.hero\s*\{[^}]*height:\s*calc\([^)]*136px\)/, 'CSS .hero must calculate height subtracting 136px desktop top bars');
+  assert.match(cssContent, /100dvh/, 'CSS must support dynamic viewport height 100dvh');
+
+  // Verify mobile responsive full-screen calculation
+  assert.match(cssContent, /height:\s*calc\([^)]*113px\)/, 'CSS must calculate height subtracting 113px mobile top bars');
+
+  // Verify centered explore indicator
+  assert.match(cssContent, /\.hero-scroll\s*\{[^}]*transform:\s*translateX\(-50%\)/, 'CSS .hero-scroll must be horizontally centered');
+});
