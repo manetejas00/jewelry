@@ -52,6 +52,8 @@ This is the entry point for project documentation. Current guides, architecture 
 - [Catalogue import testing](catalogue-import-testing.md)
 - [Coin imports](coin-imports.md)
 - [Database changes](DATABASE_CHANGES.md)
+- [Jewelry and coin catalogue purge migration](CATALOGUE_PURGE_MIGRATION.md)
+- [Retired CYO and combo table drop migration](RETIRED_FEATURE_TABLE_DROP_MIGRATION.md)
 - [Data migration and schema evolution](DATA_MIGRATION.md)
 - [Database restructuring](DATABASE_RESTRUCTURING.md)
 

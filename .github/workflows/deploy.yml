@@ -2,6 +2,23 @@ name: Deploy main
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      run_migrations:
+        description: 'Apply pending database migrations during this release'
+        required: true
+        default: false
+        type: boolean
+      seed_catalogue:
+        description: 'Seed catalogue data (new databases only)'
+        required: true
+        default: false
+        type: boolean
+      confirm_catalogue_purge:
+        description: 'Confirm irreversible jewelry and coin catalogue purge (migration 027)'
+        required: true
+        default: false
+        type: boolean
 permissions:
   contents: read
 jobs:
@@ -13,6 +30,9 @@ jobs:
       - name: Deploy over SSH
         env:
           SSH_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
+          RUN_MIGRATIONS: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.run_migrations == 'true' && 'true' || 'false' }}
+          SEED_CATALOGUE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.seed_catalogue == 'true' && 'true' || 'false' }}
+          CONFIRM_CATALOGUE_PURGE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.confirm_catalogue_purge == 'true' && 'true' || 'false' }}
         run: |
           set -o pipefail
           test -n "$SSH_KEY"
@@ -21,7 +41,7 @@ jobs:
           chmod 600 ~/.ssh/hostinger
           ssh-keyscan -p 65002 82.112.239.95 >> ~/.ssh/known_hosts
           ssh -i ~/.ssh/hostinger -p 65002 -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
-            u382139760@82.112.239.95 "bash -s -- ${GITHUB_SHA}" < scripts/hostinger-deploy.sh | tee deploy.out
+            u382139760@82.112.239.95 "bash -s -- ${GITHUB_SHA} ${RUN_MIGRATIONS} ${SEED_CATALOGUE} ${CONFIRM_CATALOGUE_PURGE}" < scripts/hostinger-deploy.sh | tee deploy.out
           asset=$(grep '^DEPLOYED_ASSET=' deploy.out | tail -n 1 | cut -d= -f2-)
           test -n "$asset"
           curl -fsS https://test3.avinyacarefoundation.org/ | grep -F "$asset"

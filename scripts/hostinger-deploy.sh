@@ -4,9 +4,17 @@
 set -eu
 
 SHA=${1:?commit sha required}
+RUN_MIGRATIONS=${2:-false}
+SEED_CATALOGUE=${3:-false}
+CONFIRM_CATALOGUE_PURGE=${4:-false}
 APP=/home/u382139760/domains/test3.avinyacarefoundation.org/app
 PUBLIC=/home/u382139760/domains/test3.avinyacarefoundation.org/public_html
 export PATH=/opt/alt/alt-nodejs22/root/bin:$PATH
+export CONFIRM_CATALOGUE_PURGE
+
+for value in "$RUN_MIGRATIONS" "$SEED_CATALOGUE" "$CONFIRM_CATALOGUE_PURGE"; do
+  case "$value" in true|false) ;; *) echo "Invalid deployment control value" >&2; exit 2;; esac
+done
 
 cd "$APP"
 PREV=$(git rev-parse HEAD)
@@ -25,7 +33,18 @@ git reset --hard "$SHA"
 test -L public/assets/coins && rm -f public/assets/coins || true
 test -L public/assets/products && rm -f public/assets/products || true
 
-if ! npm ci --include=dev || ! npm run build || ! node scripts/migrate.js || ! node seeders/DatabaseSeeder.js; then
+if ! npm ci --include=dev || ! npm run build; then
+  restore
+  exit 1
+fi
+
+# A source push must not mutate the live catalogue. Apply migrations only in a
+# deliberate release window, and seed only when provisioning a new database.
+if [ "${RUN_MIGRATIONS:-false}" = "true" ] && ! node scripts/migrate.js; then
+  restore
+  exit 1
+fi
+if [ "${SEED_CATALOGUE:-false}" = "true" ] && ! node seeders/DatabaseSeeder.js; then
   restore
   exit 1
 fi

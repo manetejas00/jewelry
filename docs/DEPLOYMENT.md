@@ -17,6 +17,10 @@ npm audit
 npm run release:package
 ```
 
+## Database changes in GitHub releases
+
+Pushes to `main` deploy code only. They do not run migrations or seed the catalogue. Use **Run workflow** for `Deploy main` only during an approved maintenance window, turn on **Apply pending database migrations** when required, and leave **Seed catalogue data** off unless provisioning a new database. Seeding after a catalogue purge would repopulate the data. Migration `027` additionally requires **Confirm irreversible jewelry and coin catalogue purge**; take and verify the MySQL backup before enabling it.
+
 The package is `artifacts/veyora-reviewed-release.tar.gz`. Packaging includes compiled and source assets, migrations, tests and reports. It excludes `.env`, `.git`, `private/`, node_modules and existing public uploads. This is deliberate: live data/uploads must be preserved separately. Do not publish the archive under a public URL. Installation must include development dependencies for the build/test stage; a later runtime-only environment may omit them after assets exist.
 
 ## 2. Verified backup and isolated staging — stop until complete
