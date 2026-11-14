@@ -37,6 +37,8 @@ cp -a dist/assets/. "$PUBLIC/assets/"
 for file in favicon.png icon-192.png icon-512.png icon-maskable-512.png apple-touch-icon.png manifest.webmanifest sw.js pwa-boot.js offline.html; do
   cp "dist/$file" "$PUBLIC/$file"
 done
+# Purge any stale dynamic brand image cache
+rm -rf "$APP/private/brand-image-cache" "$APP/private/cache"
 mkdir -p "$APP/tmp"
 touch "$APP/tmp/restart.txt"
 

@@ -151,9 +151,15 @@ export default function HeroBanner({ heroRef }) {
     goToSlide(next);
   }, [goToSlide]);
 
-  // GSAP animation on slide change
+  const isFirstMountRef = useRef(true);
+
+  // GSAP animation on slide change (only on subsequent slide transitions)
   useEffect(() => {
     if (reduce) return;
+    if (isFirstMountRef.current) {
+      isFirstMountRef.current = false;
+      return;
+    }
     const ctx = gsap.context(() => {
       // Subtle photo scale & crossfade
       gsap.fromTo(

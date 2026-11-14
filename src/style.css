@@ -2465,8 +2465,13 @@
 .hero-photo:after{z-index:2;pointer-events:none}
 @keyframes hero-fade{from{opacity:0}to{opacity:1}}
 @media(prefers-reduced-motion:reduce){.hero-photo img.is-incoming{animation:none}}
+.hero, .hero-copy { color: #f3f0e6; }
+.hero h1 { color: #f3f0e6 !important; }
+.hero h1 em { color: #ddd2b9 !important; }
+.hero p { color: #c4cec8 !important; }
 .hero-copy > *{position:relative;z-index:10}
-.hero-cta-button, .hero-copy .button{position:relative;z-index:12;display:inline-flex;visibility:visible;opacity:1;pointer-events:auto;cursor:pointer}
+.hero-cta-button, .hero-copy .button{position:relative;z-index:12;display:inline-flex !important;visibility:visible !important;opacity:1 !important;pointer-events:auto !important;cursor:pointer;background:#f6f3e9 !important;color:#18302e !important}
+.hero-cta-button:hover, .hero-copy .button:hover{background:#d9c9a6 !important}
 
 @media (max-width: 420px) {
   .hero-copy { padding-bottom: 118px; }
