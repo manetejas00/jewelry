@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { db, now } from '../server/db.js';
-import { KURTA_SIZES } from '../src/kurta-constants.js';
+import { KURTA_SIZES } from '../shared/kurta-sizes.js';
 import { MSK_KURTA_STYLES as KURTA_STYLES } from '../scripts/msk-kurtas-data.js';
 import { KurtaCategorySeeder } from './KurtaCategorySeeder.js';
 import { KurtaVariantSeeder } from './KurtaVariantSeeder.js';

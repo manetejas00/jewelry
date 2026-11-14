@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { db, now } from '../server/db.js';
-import { coinArtwork } from '../server/coin-artwork.js';
+import { coinArtwork } from '../shared/coin-artwork.js';
 import { CoinCategorySeeder } from './CoinCategorySeeder.js';
 import { CoinVariantSeeder } from './CoinVariantSeeder.js';
 

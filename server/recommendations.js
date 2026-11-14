@@ -1,6 +1,6 @@
 import { db, now } from './db.js';
 import { activeRates, calculatePrice, activeOffers, matchOffer } from './pricing.js';
-import { listingThumbnail } from '../src/listing-media.js';
+import { listingThumbnail } from '../shared/listing-media.js';
 
 // In-memory cache with 15-minute TTL
 const memoryCache = new Map();

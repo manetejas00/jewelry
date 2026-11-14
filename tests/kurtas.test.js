@@ -1,11 +1,27 @@
-import { test, after } from 'node:test';
+import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { db } from '../server/db.js';
-import { listKurtas, kurtaBySlug, adminListKurtas, updateKurta, KURTA_SIZES } from '../server/kurtas.js';
+import { createDb, migrate } from '../server/db.js';
+import { listKurtas, kurtaBySlug, adminListKurtas, updateKurta, createKurta, KURTA_SIZES } from '../server/kurtas.js';
 
-after(async () => {
-  await db.destroy();
+const db = createDb(':memory:');
+before(async () => {
+  await migrate(db);
+  for (const [product_code, name] of [
+    ['lucknowi-ivory-chikankari-cotton-kurta', 'Noor-e-Awadh Ivory Chikankari Mulmul Kurta'],
+    ['sky-blue-mulmul-chikankari-kurta', 'Sky Blue Mulmul Kurta'],
+    ['rose-blush-georgette-chikankari-kurta', 'Rose Blush Georgette Kurta'],
+    ['sage-green-chanderi-chikankari-kurta', 'Sage Green Chanderi Kurta']
+  ]) {
+    await createKurta(db, {product_code, name});
+  }
+  // Older catalogue records keep their original SKUs after migration.
+  for (const {code, label} of KURTA_SIZES) {
+    await db('products')
+      .where({product_code: 'lucknowi-ivory-chikankari-cotton-kurta', size: label})
+      .update({sku: 'CCK-IVORY-' + code});
+  }
 });
+after(() => db.destroy());
 
 test('kurtas: KURTA_SIZES constant details all 7 sizes with full measurements', () => {
   const codes = KURTA_SIZES.map(s => s.code);

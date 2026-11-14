@@ -33,6 +33,9 @@ test('errorResponse correctly normalizes database constraints and sanitizes 500s
   assert.equal(resMysql.status, 409);
   assert.equal(resMysql.body.error, 'A record with this identifier already exists.');
 
+  const nativeSqliteFk = Object.assign(new Error('FOREIGN KEY constraint failed'), {code:'SQLITE_CONSTRAINT_FOREIGNKEY'});
+  assert.equal(errorResponse(nativeSqliteFk).status, 400);
+
   // 5. Foreign key violations map to 400 Bad Request
   const fkError = Object.assign(new Error('FOREIGN KEY constraint failed'), {
     code: 'SQLITE_CONSTRAINT'
@@ -48,7 +51,7 @@ test('server global error handler logs full diagnostic context for status >= 500
   assert.match(indexJs, /requestId:\s*req\.requestId/, 'Must include requestId in log');
   assert.match(indexJs, /message:\s*err\?\.message/, 'Must log error message');
   assert.match(indexJs, /stack:\s*err\?\.stack/, 'Must log stack trace');
-  assert.match(indexJs, /url:\s*req\.originalUrl/, 'Must log request URL');
+  assert.match(indexJs, /url:\s*\(req\.originalUrl\|\|req\.url\)\.split\('\?'\)\[0\]/, 'Must log request URL');
 });
 
 test('frontend ErrorBoundary is properly implemented and wraps application root', () => {

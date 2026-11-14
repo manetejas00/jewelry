@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
-import { coinArtwork } from '../server/coin-artwork.js';
+import { coinArtwork } from '../shared/coin-artwork.js';
 
 const COIN_ART_DIR = path.resolve('public/assets/coin-art');
 

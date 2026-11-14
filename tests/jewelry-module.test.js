@@ -1,20 +1,23 @@
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { db } from '../server/db.js';
+import { createDb, migrate } from '../server/db.js';
+import { JewelryCategorySeeder } from '../seeders/JewelryCategorySeeder.js';
+import { JewelrySeeder } from '../seeders/JewelrySeeder.js';
+import { seedRates } from '../scripts/seed.js';
 import { JewelryService } from '../server/modules/jewelry/Services/JewelryService.js';
 import { JewelryRepository } from '../server/modules/jewelry/Repositories/JewelryRepository.js';
 import { JewelryRequest } from '../server/modules/jewelry/Requests/JewelryRequest.js';
 import { JewelryMapper } from '../server/modules/jewelry/Mappers/JewelryMapper.js';
 import { JewelryPolicy } from '../server/modules/jewelry/Policies/JewelryPolicy.js';
 
-after(async () => {
-  // Clean up any test records
-  await db('jewelry_images').where({ sku: 'TEST-JW-SOLITAIRE' }).del().catch(() => {});
-  await db('jewelry_inventory').where({ sku: 'TEST-JW-SOLITAIRE' }).del().catch(() => {});
-  await db('jewelry_variants').where({ sku: 'TEST-JW-SOLITAIRE' }).del().catch(() => {});
-  await db('jewelries').where({ sku: 'TEST-JW-SOLITAIRE' }).del().catch(() => {});
-  await db.destroy();
+const db = createDb(':memory:');
+before(async () => {
+  await migrate(db);
+  await seedRates(db);
+  await JewelryCategorySeeder(db);
+  await JewelrySeeder(db);
 });
+after(() => db.destroy());
 
 test('jewelry: policies correctly enforce staff role permissions', () => {
   assert.equal(JewelryPolicy.canView({ role: 'viewer' }), true);

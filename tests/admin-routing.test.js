@@ -46,7 +46,7 @@ test('matchAdminRoute resolves exact, nested, and default admin routes correctly
 
   // Extract matchAdminRoute and adminRoutes to test them directly in node
   const startRoutes = mainJsx.indexOf('const adminRoutes');
-  const endMatch = mainJsx.indexOf('function adminStartTab');
+  const endMatch = mainJsx.indexOf('function orderCustomer');
   assert.ok(startRoutes > 0 && endMatch > startRoutes, 'Must extract routes code cleanly');
 
   // Create mock icons so we can evaluate the module logic

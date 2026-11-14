@@ -1,5 +1,5 @@
 import { db, now } from '../server/db.js';
-import { coinArtwork } from '../server/coin-artwork.js';
+import { coinArtwork } from '../shared/coin-artwork.js';
 
 export const coinSupplier = 'Veyora Bullion Refinery';
 

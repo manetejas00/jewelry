@@ -13,7 +13,7 @@ export function errorResponse(err) {
   if (code === 'ER_DUP_ENTRY' || code === 'SQLITE_CONSTRAINT_UNIQUE' || (code === 'SQLITE_CONSTRAINT' && msg.includes('UNIQUE'))) {
     return { status: 409, body: { error: 'A record with this identifier already exists.' } };
   }
-  if (code === 'ER_NO_REFERENCED_ROW_2' || (code === 'SQLITE_CONSTRAINT' && msg.includes('FOREIGN KEY'))) {
+  if (code === 'ER_NO_REFERENCED_ROW_2' || code === 'SQLITE_CONSTRAINT_FOREIGNKEY' || (code === 'SQLITE_CONSTRAINT' && msg.includes('FOREIGN KEY'))) {
     return { status: 400, body: { error: 'Referenced record was not found.' } };
   }
 

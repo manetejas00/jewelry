@@ -1,6 +1,9 @@
-import { test, after } from 'node:test';
+import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { db } from '../server/db.js';
+import { createDb, migrate } from '../server/db.js';
+import { KurtaCategorySeeder } from '../seeders/KurtaCategorySeeder.js';
+import { KurtaSeeder } from '../seeders/KurtaSeeder.js';
+import { seedRates } from '../scripts/seed.js';
 import { KurtaService } from '../server/modules/kurta/Services/KurtaService.js';
 import { KurtaRepository } from '../server/modules/kurta/Repositories/KurtaRepository.js';
 import { KurtaRequest } from '../server/modules/kurta/Requests/KurtaRequest.js';
@@ -8,14 +11,14 @@ import { KurtaMapper } from '../server/modules/kurta/Mappers/KurtaMapper.js';
 import { KurtaPolicy } from '../server/modules/kurta/Policies/KurtaPolicy.js';
 import { KURTA_SIZES } from '../server/modules/kurta/Constants/KurtaConstants.js';
 
-after(async () => {
-  const code = 'test-festive-silk-kurta';
-  await db('kurta_images').where({ product_code: code }).del().catch(() => {});
-  await db('kurta_inventory').whereIn('sku', KURTA_SIZES.map(s => `CCK-TEST-FESTIVE-${s.code}`)).del().catch(() => {});
-  await db('kurta_variants').where({ product_code: code }).del().catch(() => {});
-  await db('kurtas').where({ product_code: code }).del().catch(() => {});
-  await db.destroy();
+const db = createDb(':memory:');
+before(async () => {
+  await migrate(db);
+  await seedRates(db);
+  await KurtaCategorySeeder(db);
+  await KurtaSeeder(db);
 });
+after(() => db.destroy());
 
 test('kurta: policies enforce staff role permissions', () => {
   assert.equal(KurtaPolicy.canView({ role: 'viewer' }), true);

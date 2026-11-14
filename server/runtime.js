@@ -1,6 +1,20 @@
 // Validate before opening the database or serving public traffic.
 export function validateRuntime(env=process.env) {
- if(env.NODE_ENV!=='production')return;
+ for (const key of ['PORT', ...(env.DB_CLIENT === 'mysql2' ? ['DB_PORT'] : [])]) {
+  if (!env[key]) continue;
+  const port = Number(env[key]);
+  if (!Number.isInteger(port) || port < (key === 'PORT' ? 0 : 1) || port > 65535) {
+   throw Error(`Invalid ${key}`);
+  }
+ }
+ if (env.NODE_ENV !== 'production') {
+  if (env.APP_URL) {
+   let url;
+   try { url = new URL(env.APP_URL); } catch { throw Error('Invalid APP_URL'); }
+   if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) throw Error('Invalid APP_URL');
+  }
+  return;
+ }
  if(env.ALLOW_PREVIEW==='true')return;
  if(env.PREVIEW_MODE!=='false')throw Error('Production requires PREVIEW_MODE=false');
  if(!env.SESSION_SECRET||env.SESSION_SECRET.length<32||/replace|preview/i.test(env.SESSION_SECRET))throw Error('Production requires a strong SESSION_SECRET');

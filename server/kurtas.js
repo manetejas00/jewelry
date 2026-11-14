@@ -1,10 +1,10 @@
 import { validationError } from './errors.js';
-import { listingThumbnail } from '../src/listing-media.js';
+import { listingThumbnail } from '../shared/listing-media.js';
 import { getAllProductsRatingSummaries } from './reviews.js';
 import { activeOffers, matchOffer, calculatePrice, isFresh, activeRates } from './pricing.js';
 import { now } from './db.js';
 
-import { KURTA_SIZES } from '../src/kurta-constants.js';
+import { KURTA_SIZES } from '../shared/kurta-sizes.js';
 export { KURTA_SIZES };
 
 export async function listKurtas(k, options = {}) {

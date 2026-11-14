@@ -3,7 +3,7 @@ import path from 'node:path';
 import XLSX from 'xlsx';
 import sharp from 'sharp';
 import { db, now } from '../server/db.js';
-import { KURTA_SIZES } from '../src/kurta-constants.js';
+import { KURTA_SIZES } from '../shared/kurta-sizes.js';
 
 const products = [
   {

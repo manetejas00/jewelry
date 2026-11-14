@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import * as XLSX from 'xlsx';
 import { stringify } from 'csv-stringify/sync';
-import { coinArtwork } from '../server/coin-artwork.js';
+import { coinArtwork } from '../shared/coin-artwork.js';
 import { schemas } from '../server/importer.js';
 import { RATE_COLUMNS } from '../server/rates.js';
 

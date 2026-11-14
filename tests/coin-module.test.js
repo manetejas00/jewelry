@@ -1,19 +1,23 @@
-import { test, after } from 'node:test';
+import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { db } from '../server/db.js';
+import { createDb, migrate } from '../server/db.js';
+import { CoinCategorySeeder } from '../seeders/CoinCategorySeeder.js';
+import { CoinSeeder } from '../seeders/CoinSeeder.js';
+import { seedRates } from '../scripts/seed.js';
 import { CoinService } from '../server/modules/coin/Services/CoinService.js';
 import { CoinRepository } from '../server/modules/coin/Repositories/CoinRepository.js';
 import { CoinRequest } from '../server/modules/coin/Requests/CoinRequest.js';
 import { CoinMapper } from '../server/modules/coin/Mappers/CoinMapper.js';
 import { CoinPolicy } from '../server/modules/coin/Policies/CoinPolicy.js';
 
-after(async () => {
-  await db('coin_images').where({ sku: 'TEST-COIN-AU-50G' }).del().catch(() => {});
-  await db('coin_inventory').where({ sku: 'TEST-COIN-AU-50G' }).del().catch(() => {});
-  await db('coin_variants').where({ sku: 'TEST-COIN-AU-50G' }).del().catch(() => {});
-  await db('coins').where({ sku: 'TEST-COIN-AU-50G' }).del().catch(() => {});
-  await db.destroy();
+const db = createDb(':memory:');
+before(async () => {
+  await migrate(db);
+  await seedRates(db);
+  await CoinCategorySeeder(db);
+  await CoinSeeder(db);
 });
+after(() => db.destroy());
 
 test('coin: policies enforce staff role permissions', () => {
   assert.equal(CoinPolicy.canView({ role: 'viewer' }), true);

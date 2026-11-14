@@ -98,7 +98,42 @@ test('real HTTP middleware enforces admin authorization, origin checks, JSON err
  assert.match(await (await fetch(base+'/robots.txt')).text(),/Disallow: \//);
  assert.match(await (await fetch(base+'/sitemap.xml')).text(),/<urlset/);
 });
-function browserSession(){let cookie='';return async function call(url,body,method='GET',headers={}){const res=await fetch(base+url,{method,headers:{'Content-Type':'application/json',...(cookie?{Cookie:cookie}:{}),...headers},...(body!==undefined?{body:JSON.stringify(body)}:{})});const set=res.headers.get('set-cookie');if(set)cookie=set.split(';')[0];return {status:res.status,data:await res.json()};};}
+function browserSession(){let cookie='';return async function call(url,body,method='GET',headers={}){const res=await fetch(base+url,{method,headers:{'Content-Type':'application/json',...(cookie?{Cookie:cookie}:{}),...headers},...(body!==undefined?{body:JSON.stringify(body)}:{})});const set=res.headers.get('set-cookie');if(set)cookie=set.split(';')[0];return {status:res.status,data:await res.json(),cookie};};}
+test('HTTP catalogue and extracted routes preserve public and staff boundaries',async()=>{
+ const request=browserSession();
+ for (const path of ['/api/jewelry','/api/coin','/api/kurta','/api/products','/api/coins','/api/kurtas']) {
+  assert.equal((await request(path)).status,200,path);
+ }
+ assert.equal((await request('/api/admin/reviews')).status,403);
+ assert.equal((await request('/api/admin/export/products')).status,403);
+ assert.equal((await request('/api/otp/status?purpose=register')).status,200);
+ const login=await request('/api/admin/login',{email:'preview@veyora.local',password:'preview-veyora-2026'},'POST');
+ assert.equal(login.status,200);
+ for (const path of ['/api/admin/dashboard','/api/admin/reviews','/api/admin/jewelry','/api/admin/coin','/api/admin/kurta']) {
+  assert.equal((await request(path)).status,200,path);
+ }
+ const response=await fetch(base+'/api/admin/export/products',{headers:{Cookie:login.cookie}});
+ assert.equal(response.status,200);
+ assert.match(response.headers.get('content-type'),/text\/csv/);
+});
+test('HTTP COD checkout preserves idempotency and guest order ownership',async()=>{
+ const buyer=browserSession();
+ const items=[{sku:'VEY-LP-01',quantity:1}];
+ const quoted=await buyer('/api/quote',{items},'POST');
+ assert.equal(quoted.status,200,JSON.stringify(quoted.data));
+ const payload={items,token:quoted.data.token,customer,idempotencyKey:'http-preview-order-0001'};
+ const placed=await buyer('/api/checkout',payload,'POST');
+ assert.equal(placed.status,200,JSON.stringify(placed.data));
+ const retry=await buyer('/api/checkout',payload,'POST');
+ assert.equal(retry.status,200);
+ assert.equal(retry.data.id,placed.data.id);
+ const orderPath='/api/orders/'+placed.data.id;
+ const order=await buyer(orderPath);
+ assert.equal(order.status,200);
+ assert.equal(order.data.items[0].sku,items[0].sku);
+ const stranger=browserSession();
+ assert.equal((await stranger(orderPath)).status,404);
+});
 test('HTTP staff login, CSRF and offer CRUD preserve role boundaries',async()=>{
  const staff=browserSession();const login=await staff('/api/admin/login',{email:'preview@veyora.local',password:'preview-veyora-2026'},'POST');assert.equal(login.status,200);
  assert.equal((await staff('/api/admin/offers',{},'POST')).status,403);

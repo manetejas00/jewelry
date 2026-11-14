@@ -1,12 +1,15 @@
+import {registerCustomerRoutes} from './modules/customers/routes.js';
+import {registerPublicReviewRoutes, registerAdminReviewRoutes} from './modules/reviews/routes.js';
+import {registerOrderRoutes} from './modules/orders/routes.js';
+import {registerImportRoutes, registerSampleRoutes} from './modules/imports/routes.js';
 import {registerBrandImages} from './brand-images.js';
-import {resetConfigured,requestReset,completeReset,replacePassword} from './password-reset.js';
+import {resetConfigured} from './password-reset.js';
 import {createOtpGateway} from './otp-gateway.js';
-import {otpAvailability,sendOtp,sendPasswordResetOtp,verifyOtp,confirmOtp,resendOtp,otpStatus,spendVerified,releaseVerified,prepareCheckoutOtp,normalizeEmail,normalizeIndianMobile,SENT_MESSAGE} from './otp.js';
+import {otpAvailability} from './otp.js';
 import {registerSeo,pageMetadata,renderMetadata} from './seo.js';
 import {validateOffer} from './offers.js';
 import {commerceConfig} from './runtime.js';
-import {errorResponse} from './errors.js';
-import {validationError} from './errors.js';
+import {errorResponse, validationError} from './errors.js';
 import {listingThumbnailFile} from './listing-thumbnails.js';
 import express from 'express';
 import session from 'express-session';
@@ -17,15 +20,13 @@ import crypto from 'node:crypto';
 import path from 'node:path';
 import fs from 'node:fs';
 import {db,migrate,preview,now,json,parse} from './db.js';
-import {catalogue,coinCatalogue,calculateCoinPrice,getSilverRate,activeRates,calculatePrice,isFresh,quote,todayIndia,activeOffers,matchOffer,offerIsCurrent} from './pricing.js';
-import {previewImport,publishImport,errorCsv,exportCsv,ordersCsv,schemas,validate} from './importer.js';
-import {checkout,presentOrders,requireSignedInCsrf,updateOrderStatus} from './orders.js';
+import {catalogue,coinCatalogue,calculateCoinPrice,getSilverRate,activeRates,calculatePrice,isFresh,todayIndia,activeOffers,matchOffer,offerIsCurrent} from './pricing.js';
+import {exportCsv,validate} from './importer.js';
+import {presentOrders,updateOrderStatus} from './orders.js';
 import {staffIsActive,setStaffAccess,createStaff} from './staff-access.js';
 import {validatePricingRule} from './pricing-rules.js';
-import {registerCustomer,loginCustomer,customerState,saveCustomerState,mergeGuestState,claimSessionOrders,customerOrders,mayReadOrder,validateState} from './customers.js';
-import {daily} from './daily.js';
 import {loadFeedSettings as readFeedSettings} from './settings.js';
-import {coinArtwork} from './coin-artwork.js';
+import {coinArtwork} from '../shared/coin-artwork.js';
 import {seed} from '../scripts/seed.js';
 import {saveUploadedImage,ensureThumbnail,thumbnailUrl,isSafeMediaUrl} from './thumbnails.js';
 import {searchCatalogue,invalidateSearchCache} from './search.js';
@@ -44,17 +45,7 @@ import {registerRateRoutes} from './rates.js';
 import { createJewelryRouter } from './modules/jewelry/Routes/jewelryRoutes.js';
 import { createCoinRouter } from './modules/coin/Routes/coinRoutes.js';
 import { createKurtaRouter } from './modules/kurta/Routes/kurtaRoutes.js';
-import {
-  getProductReviews,
-  submitReview,
-  updateCustomerReview,
-  getAdminReviews,
-  getAdminReviewById,
-  adminUpdateReviewStatus,
-  adminBulkReviewStatus,
-  adminEditReview,
-  adminDeleteReview
-} from './reviews.js';
+
 const route=f=>(req,res,next)=>Promise.resolve(f(req,res,next)).catch(next);
 const app=express();const production=process.env.NODE_ENV==='production';
 if(production&&(!process.env.SESSION_SECRET||process.env.SESSION_SECRET.length<32))throw validationError('Production requires a strong SESSION_SECRET');
@@ -180,183 +171,9 @@ app.get('/api/admin/kurtas',auth(),route(async(req,res)=>res.json(await adminLis
 app.post('/api/admin/kurtas',auth(['owner','manager']),route(async(req,res)=>{const kurta=await createKurta(db,req.body);await audit(req,'create_kurta',kurta);res.json({ok:true,kurta});}));
 app.patch('/api/admin/kurtas/:code',auth(['owner','manager']),route(async(req,res)=>{const updated=await updateKurta(db,req.params.code,req.body);await audit(req,'update_kurta',{product_code:req.params.code});res.json(updated);}));
 app.delete('/api/admin/kurtas/:code',auth(['owner','manager']),route(async(req,res)=>{const deleted=await deleteKurta(db,req.params.code);await audit(req,'delete_kurta',{product_code:req.params.code});res.json(deleted);}));
-app.post('/api/quote',route(async(req,res)=>res.json(await quote(db,req.body.items,{code:req.body.offerCode}))));
-app.post('/api/checkout',rateLimit({windowMs:60000,limit:20}),route(async(req,res)=>{if(commerceConfig(process.env,preview).checkoutEnabled===false)return res.status(503).json({error:'Checkout is awaiting merchant configuration.'});requireSignedInCsrf(req);req.session.checkoutScope ||= crypto.randomUUID();const held=await prepareCheckoutOtp(db,req.session,req.body,process.env,otpGateway);try{const result=await checkout(db,{...req.body,offerCode:req.body.offerCode||null},preview,req.session.customer?.id||null,req.session.checkoutScope);req.session.orderIds=[...new Set([...(req.session.orderIds||[]),result.id])].slice(-100);res.json(result);}catch(error){if(held)await releaseVerified(db,held);throw error;}}));
-app.get('/api/orders/:id',route(async(req,res)=>{const order=await db('orders').where({id:req.params.id}).first();if(!mayReadOrder(req.session,order))return res.status(404).json({error:'Order not found'});res.json({...order,customer:parse(order.customer),items:(await db('order_items').where({order_id:order.id})).map(i=>parse(i.snapshot))});}));
-const customerAuth=(req,res,next)=>req.session.customer?next():res.status(401).json({error:'Please sign in to your customer account.'});
-const customerCsrf=(req,res,next)=>req.session.customerCsrf&&req.get('x-customer-csrf')===req.session.customerCsrf?next():res.status(403).json({error:'Please reload and try again.'});
-async function presentCustomer(customer){const row=await db('customers').where({id:customer.id}).select('phone','email_verified_at','phone_verified_at').first();return {...customer,phone:row?.phone||null,emailVerified:Boolean(row?.email_verified_at),phoneVerified:Boolean(row?.phone_verified_at)};}
-app.get('/api/account/session',route(async(req,res)=>{req.session.customerCsrf ||= crypto.randomBytes(24).toString('hex');if(req.session.customer)req.session.customer=await presentCustomer(req.session.customer);res.json({customer:req.session.customer||null,csrf:req.session.customerCsrf,state:req.session.customer?await customerState(db,req.session.customer.id):null});}));
-const resetLimit=rateLimit({windowMs:15*60000,limit:5});
-app.post('/api/account/forgot-password',resetLimit,customerCsrf,route(async(req,res)=>{
- if(!resetConfigured())throw validationError('Password recovery is not configured. Contact the merchant.',503);
- await requestReset(db,req.body.email);res.status(202).json({message:'If this email belongs to an account, a recovery link will be sent.'});
-}));
-app.post('/api/account/reset-password',resetLimit,customerCsrf,route(async(req,res)=>{await completeReset(db,req.body);res.json({ok:true});}));
-const customerLoginLimit=rateLimit({windowMs:15*60000,limit:20});
-async function establishCustomer(req,customer,guest){
- const active=await db('customers').where({id:customer.id}).whereNull('deleted_at').first();
- if(!active||(active.session_version||0)!==(customer.session_version||0))throw validationError('Please sign in again.',401);
-
- const presented=await presentCustomer(customer);
- const oldStaff=req.session.staff,adminCsrf=req.session.csrf,guestOrders=req.session.customer?[]:req.session.orderIds||[];
- await mergeGuestState(db,customer.id,guest);await claimSessionOrders(db,customer,guestOrders);
- await new Promise((resolve,reject)=>req.session.regenerate(e=>e?reject(e):resolve()));
- if(oldStaff){req.session.staff=oldStaff;req.session.csrf=adminCsrf;}
- req.session.customer=presented;req.session.customerCsrf=crypto.randomBytes(24).toString('hex');
- return {customer:presented,csrf:req.session.customerCsrf,state:await customerState(db,customer.id)};
-}
-app.post('/api/account/register',customerLoginLimit,customerCsrf,route(async(req,res)=>{
- if(req.session.customer)return res.status(409).json({error:'Sign out before switching customer accounts.'});
- const guest=validateState(req.body.guestState||{bag:[],saved:[]});
- let held=null;
- if(otpAvailability(process.env,otpGateway).requireRegister){
-  await confirmOtp(db,req.session,{purpose:'register',otp:req.body?.otp},process.env,otpGateway);
-  if(normalizeEmail(req.body?.email)!==req.session.otpFlows?.register?.destination)throw validationError('Verify the code sent to this email before creating an account.');
-  held=await spendVerified(db,req.session,'register',req.body.email);
- }
- try{
-  const customer=await registerCustomer(db,req.body);
-  if(held)await db('customers').where({id:customer.id}).update({email_verified_at:new Date().toISOString()});
-  res.json(await establishCustomer(req,customer,guest));
- }catch(error){if(held)await releaseVerified(db,held);throw error;}
-}));
-app.post('/api/account/login',customerLoginLimit,customerCsrf,route(async(req,res)=>{
- if(req.session.customer)return res.status(409).json({error:'Sign out before switching customer accounts.'});
- const guest=validateState(req.body.guestState||{bag:[],saved:[]});
- const customer=await loginCustomer(db,req.body);
- if(otpAvailability(process.env,otpGateway).requireLogin){
-  await sendOtp(db,req.session,{purpose:'login',channel:'email',destination:customer.email,customerId:customer.id},process.env,otpGateway);
-  req.session.pendingCustomer=customer;
-  return res.json({otpRequired:true});
- }
- res.json(await establishCustomer(req,customer,guest));
-}));
-app.post('/api/account/login/otp',customerLoginLimit,customerCsrf,route(async(req,res)=>{
- const pending=req.session.pendingCustomer;
- if(!pending)throw validationError('That code is incorrect.');
- const guest=validateState(req.body.guestState||{bag:[],saved:[]});
- await confirmOtp(db,req.session,{purpose:'login',otp:req.body?.otp},process.env,otpGateway);
- const held=await spendVerified(db,req.session,'login',pending.email);
- try{res.json(await establishCustomer(req,pending,guest));}catch(error){await releaseVerified(db,held);throw error;}
-}));
-app.get('/api/account/orders',customerAuth,route(async(req,res)=>{const page=Number(req.query.page||1);if(!Number.isInteger(page)||page<1||page>10000)throw validationError('Invalid order page');res.json(await customerOrders(db,req.session.customer.id,page));}));
-app.put('/api/account/state',customerAuth,customerCsrf,route(async(req,res)=>res.json(await saveCustomerState(db,req.session.customer.id,req.body))));
-const otpIpLimit=rateLimit({windowMs:10*60000,limit:10,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Too many verification requests. Try again later.'}});
-app.post('/api/otp/send',otpIpLimit,customerCsrf,route(async(req,res)=>{
- const purpose=req.body?.purpose,channel=req.body?.channel;
- if(!['register','checkout'].includes(purpose))throw validationError('Verification is not available.');
- await sendOtp(db,req.session,{purpose,channel,destination:req.body?.destination},process.env,otpGateway);
- res.status(202).json({message:SENT_MESSAGE});
-}));
-app.post('/api/otp/verify',otpIpLimit,customerCsrf,route(async(req,res)=>{
- if(!['register','checkout'].includes(req.body?.purpose))throw validationError('That code is incorrect.');
- await verifyOtp(db,req.session,{purpose:req.body.purpose,otp:req.body?.otp},process.env,otpGateway);
- res.json({verified:true});
-}));
-app.post('/api/otp/resend',otpIpLimit,customerCsrf,route(async(req,res)=>{
- if(!['register','checkout','verify_email','verify_phone','password_reset','login'].includes(req.body?.purpose))throw validationError('That code has expired. Request a new one.');
- res.status(202).json(await resendOtp(db,req.session,req.body.purpose,process.env,otpGateway));
-}));
-app.get('/api/otp/status',otpIpLimit,route(async(req,res)=>{
- const purpose=String(req.query.purpose||'');
- if(!['register','login','checkout','verify_email','verify_phone','password_reset'].includes(purpose))return res.json({state:'none'});
- res.json(await otpStatus(db,req.session,purpose));
-}));
-app.post('/api/account/verify-email/send',otpIpLimit,customerAuth,customerCsrf,route(async(req,res)=>{
- await sendOtp(db,req.session,{purpose:'verify_email',channel:'email',destination:req.session.customer.email,customerId:req.session.customer.id},process.env,otpGateway);
- res.status(202).json({message:SENT_MESSAGE});
-}));
-app.post('/api/account/verify-email',otpIpLimit,customerAuth,customerCsrf,route(async(req,res)=>{
- await confirmOtp(db,req.session,{purpose:'verify_email',otp:req.body?.otp},process.env,otpGateway);
- const held=await spendVerified(db,req.session,'verify_email',req.session.customer.email);
- try{await db('customers').where({id:req.session.customer.id}).update({email_verified_at:new Date().toISOString()});}catch(error){await releaseVerified(db,held);throw error;}
- req.session.customer=await presentCustomer(req.session.customer);
- res.json({customer:req.session.customer});
-}));
-app.post('/api/account/verify-phone/send',otpIpLimit,customerAuth,customerCsrf,route(async(req,res)=>{
- const phone=normalizeIndianMobile(req.body?.phone);
- if(!['sms','whatsapp'].includes(req.body?.channel))throw validationError('Verification is not available.');
- await sendOtp(db,req.session,{purpose:'verify_phone',channel:req.body.channel,destination:phone.e164,customerId:req.session.customer.id},process.env,otpGateway);
- res.status(202).json({message:SENT_MESSAGE});
-}));
-app.post('/api/account/verify-phone',otpIpLimit,customerAuth,customerCsrf,route(async(req,res)=>{
- await confirmOtp(db,req.session,{purpose:'verify_phone',otp:req.body?.otp},process.env,otpGateway);
- const phone=normalizeIndianMobile(req.session.otpFlows.verify_phone.destination);
- const held=await spendVerified(db,req.session,'verify_phone',phone.e164);
- try{await db('customers').where({id:req.session.customer.id}).update({phone:phone.national,phone_verified_at:new Date().toISOString()});}catch(error){await releaseVerified(db,held);throw error;}
- req.session.customer=await presentCustomer(req.session.customer);
- res.json({customer:req.session.customer});
-}));
-app.post('/api/account/forgot-password/otp',otpIpLimit,customerCsrf,route(async(req,res)=>{
- if(!otpAvailability(process.env,otpGateway).passwordReset)throw validationError('Password recovery is not configured. Contact the merchant.',503);
- await sendPasswordResetOtp(db,req.session,req.body?.email,process.env,otpGateway);
- res.status(202).json({message:SENT_MESSAGE});
-}));
-app.post('/api/account/reset-password/otp',otpIpLimit,customerCsrf,route(async(req,res)=>{
- if(!otpAvailability(process.env,otpGateway).passwordReset)throw validationError('Password recovery is not configured. Contact the merchant.',503);
- await confirmOtp(db,req.session,{purpose:'password_reset',otp:req.body?.otp},process.env,otpGateway);
- const email=req.session.otpFlows?.password_reset?.destination;
- const customer=email?await db('customers').where({email}).whereNull('deleted_at').first():null;
- if(!customer)throw validationError('That code is incorrect.');
- const held=await spendVerified(db,req.session,'password_reset',email);
- try{await replacePassword(db,customer.id,req.body?.password);}catch(error){await releaseVerified(db,held);throw error;}
- delete req.session.otpFlows.password_reset;
- res.json({ok:true});
-}));
-app.post('/api/account/logout',customerAuth,customerCsrf,route(async(req,res)=>{
- const staff=req.session.staff,csrf=req.session.csrf;
- await new Promise((resolve,reject)=>req.session.regenerate(e=>e?reject(e):resolve()));
- if(staff){req.session.staff=staff;req.session.csrf=csrf;}
- req.session.customerCsrf=crypto.randomBytes(24).toString('hex');res.json({csrf:req.session.customerCsrf});
-}));
-
-const reviewSubmissionLimit = rateLimit({windowMs:15*60000,limit:25,message:{error:'Too many reviews submitted. Please try again later.'}});
-const reviewUploadLimit = rateLimit({windowMs:15*60000,limit:30,message:{error:'Too many image uploads. Please try again later.'}});
-
-app.get('/api/products/:productId/reviews', route(async (req, res) => {
-  const currentCustomerId = req.session.customer?.id || null;
-  const result = await getProductReviews(db, req.params.productId, {
-    page: req.query.page,
-    limit: req.query.limit,
-    sort: req.query.sort,
-    ratingFilter: req.query.rating,
-    currentCustomerId
-  });
-  res.json(result);
-}));
-
-app.get('/api/products/:productId/ratings', route(async (req, res) => {
-  const result = await getProductReviews(db, req.params.productId, { limit: 1 });
-  res.json(result.summary);
-}));
-
-app.post('/api/products/:productId/reviews', reviewSubmissionLimit, customerAuth, customerCsrf, route(async (req, res) => {
-  const result = await submitReview(db, req.session.customer.id, req.params.productId, req.body);
-  invalidateSearchCache();
-  res.status(201).json(result);
-}));
-
-app.put('/api/reviews/:id', reviewSubmissionLimit, customerAuth, customerCsrf, route(async (req, res) => {
-  const result = await updateCustomerReview(db, req.session.customer.id, req.params.id, req.body);
-  invalidateSearchCache();
-  res.json(result);
-}));
-
-app.post('/api/reviews/upload-image', reviewUploadLimit, customerAuth, customerCsrf, route(async (req, res) => {
-  const { name, data } = req.body;
-  if (!data || typeof data !== 'string') throw validationError('Image data is required');
-  const match = data.match(/^data:image\/([a-zA-Z0-9+]+);base64,(.+)$/);
-  if (!match) throw validationError('Invalid image data format. Please upload a PNG, JPG, or WEBP image.');
-  const ext = match[1].toLowerCase().replace('jpeg', 'jpg');
-  if (!['jpg', 'png', 'webp'].includes(ext)) throw validationError('Supported review image formats: JPG, PNG, WEBP');
-  const buffer = Buffer.from(match[2], 'base64');
-  if (buffer.length > 5 * 1024 * 1024) throw validationError('Maximum review image size is 5 MB');
-  const cleanName = String(name || 'customer-photo').toLowerCase().replace(/\.[^.]+$/, '').replace(/[^a-z0-9_-]+/g, '-').slice(0, 30) || 'review';
-  const filename = `review-${Date.now()}-${crypto.randomUUID().slice(0, 8)}-${cleanName}.${ext}`;
-  const saved = await saveUploadedImage(uploadsDir, filename, buffer);
-  res.json({ ok: true, url: saved.url, thumbnail: saved.thumbnail });
-}));
+registerOrderRoutes(app, { db, route, preview, otpGateway });
+registerCustomerRoutes(app, { db, route, otpGateway });
+registerPublicReviewRoutes(app, { db, route, uploadsDir });
 app.post('/api/admin/login',rateLimit({windowMs:15*60000,limit:10}),route(async(req,res)=>{const staff=await db('staff').where({email:String(req.body.email).toLowerCase()}).first();if(!staff||staff.disabled_at||!await bcrypt.compare(String(req.body.password),staff.password_hash))return res.status(401).json({error:'Email or password is incorrect'});const customer=req.session.customer,customerCsrf=req.session.customerCsrf,orderIds=req.session.orderIds;await new Promise((resolve,reject)=>req.session.regenerate(e=>e?reject(e):resolve()));if(customer){req.session.customer=customer;req.session.customerCsrf=customerCsrf;}req.session.orderIds=orderIds;req.session.staff={id:staff.id,email:staff.email,role:staff.role};req.session.csrf=crypto.randomBytes(24).toString('hex');res.json({staff:req.session.staff,csrf:req.session.csrf});}));
 app.get('/api/admin/session',auth(),(req,res)=>res.json({staff:req.session.staff,csrf:req.session.csrf}));
 app.post('/api/admin/logout',auth(),route(async(req,res)=>{const customer=req.session.customer,customerCsrf=req.session.customerCsrf,orderIds=req.session.orderIds;await new Promise((resolve,reject)=>req.session.regenerate(e=>e?reject(e):resolve()));if(customer){req.session.customer=customer;req.session.customerCsrf=customerCsrf;}req.session.orderIds=orderIds;res.json({ok:true});}));
@@ -702,131 +519,13 @@ app.get('/api/admin/media',auth(),route(async(req,res)=>{
  res.json([...coinArtwork.map(a=>({name:a.name,filename:a.image.split('/').pop(),url:a.image,image_kind:'illustration'})),...list]);
 }));
 
-app.get('/api/admin/reviews', auth(), route(async (req, res) => {
-  const result = await getAdminReviews(db, {
-    page: req.query.page,
-    limit: req.query.limit,
-    status: req.query.status,
-    rating: req.query.rating,
-    productId: req.query.productId,
-    search: req.query.search,
-    dateFrom: req.query.dateFrom,
-    dateTo: req.query.dateTo,
-    sort: req.query.sort,
-    order: req.query.order
-  });
-  res.json(result);
-}));
-
-app.get('/api/admin/reviews/:id', auth(), route(async (req, res) => {
-  const review = await getAdminReviewById(db, req.params.id);
-  res.json(review);
-}));
-
-app.patch('/api/admin/reviews/:id/status', auth(['owner', 'manager']), route(async (req, res) => {
-  const result = await adminUpdateReviewStatus(db, req.params.id, req.body.status);
-  await audit(req, 'update_review_status', { reviewId: req.params.id, status: req.body.status });
-  invalidateSearchCache();
-  res.json(result);
-}));
-
-app.post('/api/admin/reviews/bulk-status', auth(['owner', 'manager']), route(async (req, res) => {
-  const result = await adminBulkReviewStatus(db, req.body.reviewIds, req.body.status);
-  await audit(req, 'bulk_update_review_status', { reviewIds: req.body.reviewIds, status: req.body.status, count: result.updatedCount });
-  invalidateSearchCache();
-  res.json(result);
-}));
-
-app.put('/api/admin/reviews/:id', auth(['owner', 'manager']), route(async (req, res) => {
-  const result = await adminEditReview(db, req.params.id, req.body);
-  await audit(req, 'edit_review', { reviewId: req.params.id, patch: req.body });
-  invalidateSearchCache();
-  res.json(result);
-}));
-
-app.delete('/api/admin/reviews/:id', auth(['owner', 'manager']), route(async (req, res) => {
-  const soft = req.query.soft === 'true' || req.body?.soft === true;
-  const result = await adminDeleteReview(db, req.params.id, { soft });
-  await audit(req, 'delete_review', { reviewId: req.params.id, soft });
-  invalidateSearchCache();
-  res.json(result);
-}));
-
-app.get('/api/admin/samples/:file',auth(),(req,res)=>{const allowed=['jewelry-template.csv','jewelry-example.csv','coin-template.csv','coin-example.csv','kurta-template.csv','kurta-example.csv','gold-rates-template.csv','gold-rates-example.csv','metal-rates-template.csv','metal-rates-example.csv','metal-rates-template.xlsx','metal-rates-example.xlsx','gold-rates-template.xlsx','gold-rates-example.xlsx','products-template.csv','products-example.csv','coins-template.csv','coins-example.csv','kurtas-template.csv','kurtas-example.csv','import-errors-example.csv','jewellery-template.csv','jewellery-example.csv','gold-jewellery-template.csv','gold-jewellery-example.csv','silver-jewellery-template.csv','silver-jewellery-example.csv','kurta-designs-template.csv','kurta-designs-example.csv','kurta-variants-template.csv','kurta-variants-example.csv','materials-template.csv','materials-example.csv','craftsmanship-template.csv','craftsmanship-example.csv','collections-template.csv','collections-example.csv'];if(!allowed.includes(req.params.file))return res.sendStatus(404);res.download(path.resolve('samples',req.params.file));});
+registerAdminReviewRoutes(app, { db, route, auth, audit });
+registerSampleRoutes(app, { auth });
 app.post('/api/admin/orders/:id/status',auth(['owner','manager']),route(async(req,res)=>{const result=await updateOrderStatus(db,req.params.id,req.body.status);await audit(req,'order_status',{id:req.params.id,status:result.status});res.json(result);}));
 app.get('/api/admin/staff',auth(['owner']),route(async(req,res)=>res.json(await db('staff').select('id','email','role','disabled_at').orderBy('id'))));
 app.post('/api/admin/staff',auth(['owner']),route(async(req,res)=>{const created=await createStaff(db,req.body);await audit(req,'staff_created',{id:created.id,email:created.email,role:created.role});res.status(201).json(created);}));
 app.post('/api/admin/staff/:id/access',auth(['owner']),route(async(req,res)=>{const result=await setStaffAccess(db,req.session.staff.id,req.params.id,req.body.disabled===true);await audit(req,'staff_access',result);res.json(result);}));
-app.get('/api/admin/export/:kind',auth(),route(async(req,res)=>{const k=req.params.kind,d=new Date().toISOString().slice(0,10);if(k==='orders'&&req.session.staff.role==='viewer')return res.status(403).json({error:'Order export requires a manager'});if(k==='products'||k==='jewellery'||k==='jewelry'){const rows=await db('products').where(k==='jewellery'||k==='jewelry'?{is_kurta:0}:{}).orderBy('product_code');return res.type('text/csv').attachment(`${k}-${d}.csv`).send(exportCsv('products',rows));}if(k==='coins'||k==='coin'){const rows=await db('coins').orderBy('id','desc');return res.type('text/csv').attachment(`coins-${d}.csv`).send(exportCsv('coins',rows));}if(k==='kurtas'||k==='kurta'){const rows=await db('products').where(function(){this.where({is_kurta:true}).orWhere({category:'Kurtas'}).orWhere({category:'Kurta'}).orWhere({category:'Chicken Curry Kurtas'}).orWhere('category','like','%Kurta%');}).orderBy('product_code').orderBy('sku');return res.type('text/csv').attachment(`kurtas-${d}.csv`).send(exportCsv('kurtas',rows));}if(k==='gold'){const rows=await db('rates').orderBy('id','desc');return res.type('text/csv').attachment(`gold-rates-${d}.csv`).send(exportCsv('gold',rows));}if(k==='orders'){const rows=await db('orders').orderBy('created_at','desc');return res.type('text/csv').attachment(`orders-${d}.csv`).send(ordersCsv(rows));}res.sendStatus(404);}));
-app.post('/api/admin/import/preview',auth(['owner','manager']),route(async(req,res)=>{if(typeof req.body.csv!=='string')throw validationError('Upload a UTF-8 CSV file');res.json(await previewImport(db,req.body.kind,req.body.csv,req.session.staff.id));}));
-app.post('/api/admin/import/:id/publish',auth(['owner','manager']),route(async(req,res)=>{const out=await publishImport(db,Number(req.params.id),req.session.staff.id);invalidateSearchCache();return res.json(out);}));
-app.get('/api/admin/import/:id/errors',auth(),route(async(req,res)=>{res.type('text/csv').attachment(`batch-${req.params.id}-errors.csv`).send(errorCsv(await db('import_errors').where({batch_id:req.params.id})));}));
-app.post('/api/admin/run',auth(['owner','manager']),route(async(req,res)=>{if(req.body.kind&&!schemas[req.body.kind])throw validationError('Unknown feed');await audit(req,'run_feed',{kind:req.body.kind||'daily'});res.json(await daily(db,'manual',req.body.kind,req.session.staff.id));}));
-app.post('/api/admin/feed-toggle',auth(['owner','manager']),route(async(req,res)=>{
- const {status,kind,enabled}=req.body;
- const changes={};
- if(status){
-  if(!['active','stopped'].includes(status))throw validationError('Status must be active or stopped');
-  changes.FEED_STATUS=status;
- }
- if(kind==='gold'&&enabled!==undefined){
-  changes.GOLD_FEED_ENABLED=String(Boolean(enabled));
- }
- if(kind==='products'&&enabled!==undefined){
-  changes.PRODUCT_FEED_ENABLED=String(Boolean(enabled));
- }
- await db.transaction(async t=>{
-  for(const [key,value] of Object.entries(changes))await t('settings').insert({key,value}).onConflict('key').merge();
-  await t('audit').insert({staff_id:req.session.staff.id,action:'feed_toggle',details:json(changes),created_at:now()});
- });
- await loadFeedSettings();
- res.json({ok:true,changes,feedStatus:process.env.FEED_STATUS||'active',goldFeedEnabled:process.env.GOLD_FEED_ENABLED!=='false',productFeedEnabled:process.env.PRODUCT_FEED_ENABLED!=='false'});
-}));
-app.post('/api/admin/feed-settings',auth(['owner']),route(async(req,res)=>{
- const r=req.body;
- const changes={};
- if(r.maxAgeHours!==undefined&&r.maxAgeHours!==''){
-  const age=Number(r.maxAgeHours);
-  if(!Number.isFinite(age)||age<1||age>168)throw validationError('Choose a rate age between 1 and 168 hours');
-  changes.GOLD_MAX_AGE_HOURS=String(age);
- }
- if(r.inventoryMode){
-  if(!['incremental','full'].includes(r.inventoryMode))throw validationError('Choose a supported inventory mode');
-  changes.INVENTORY_MODE=r.inventoryMode;
- }
- if(r.feedStatus){
-  if(!['active','stopped'].includes(r.feedStatus))throw validationError('Status must be active or stopped');
-  changes.FEED_STATUS=r.feedStatus;
- }
- if(r.goldFeedEnabled!==undefined){
-  changes.GOLD_FEED_ENABLED=String(r.goldFeedEnabled==='true'||r.goldFeedEnabled===true);
- }
- if(r.productFeedEnabled!==undefined){
-  changes.PRODUCT_FEED_ENABLED=String(r.productFeedEnabled==='true'||r.productFeedEnabled===true);
- }
- if(typeof r.overwriteFields==='string'){
-  const fields=r.overwriteFields.split(',').map(f=>f.trim()).filter(Boolean);
-  if(fields.some(f=>!schemas.products.includes(f)||['sku','supplier','product_code','source_timestamp'].includes(f)))throw validationError('Invalid supplier overwrite field');
-  changes.SUPPLIER_OVERWRITE_FIELDS=fields.join(',');
- }
- for(const [field,key] of [['goldUrl','GOLD_FEED_URL'],['productUrl','PRODUCT_FEED_URL']])if(r[field]!==undefined){
-  if(r[field]===''||r[field]===null){
-   changes[key]='';
-  }else if(field==='goldUrl'&&r[field]==='auto'){
-   changes[key]=r[field];
-  }else{
-   let u;try{u=new URL(r[field])}catch{throw validationError('Enter a valid HTTPS feed URL')}
-   if(u.protocol!=='https:'||u.username||u.password||u.search||u.hash)throw validationError('Feed URLs must be HTTPS without embedded credentials or query secrets; use server-side Bearer tokens');
-   changes[key]=u.href;
-  }
- }
- await db.transaction(async t=>{
-  for(const [key,value] of Object.entries(changes))await t('settings').insert({key,value}).onConflict('key').merge();
-  await t('audit').insert({staff_id:req.session.staff.id,action:'feed_settings',details:json({maxAgeHours:r.maxAgeHours,inventoryMode:r.inventoryMode,changes}),created_at:now()});
- });
- await loadFeedSettings();
- res.json({ok:true,changes});
-}));
+registerImportRoutes(app, { db, route, auth, audit, loadFeedSettings });
 app.post('/api/admin/rules/preview',auth(['owner']),route(async(req,res)=>{
  const rule=validatePricingRule(req.body);
  const [rates,silver,products,coins,current,offers]=await Promise.all([activeRates(db),getSilverRate(db),db('products'),db('coins'),db('pricing_rules').orderBy('id','desc').first(),activeOffers(db)]);
@@ -874,7 +573,7 @@ app.use((err,req,res,next)=>{
       event:'request_failed',
       requestId:req.requestId,
       method:req.method,
-      url:req.originalUrl||req.url,
+      url:(req.originalUrl||req.url).split('?')[0],
       status:out.status,
       message:err?.message||'Unknown error',
       code:err?.code||undefined,

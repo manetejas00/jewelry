@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
 import { db, now } from '../server/db.js';
-import { KURTA_SIZES } from '../src/kurta-constants.js';
+import { KURTA_SIZES } from '../shared/kurta-sizes.js';
 import { ALL_50_KURTA_STYLES } from './generate-50-kurtas-data.js';
 
 const artifactDir = '/Users/tejasmane/.gemini/antigravity/brain/60b1e6c9-b137-491f-a4c5-3d0afb3f1d40';

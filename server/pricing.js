@@ -1,5 +1,5 @@
 import {validationError} from './errors.js';
-import {listingThumbnail} from '../src/listing-media.js';
+import {listingThumbnail} from '../shared/listing-media.js';
 import Decimal from 'decimal.js';
 import crypto from 'node:crypto';
 import {calculateMargin} from './pricing-rules.js';
