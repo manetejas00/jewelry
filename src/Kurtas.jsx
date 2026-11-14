@@ -139,6 +139,31 @@ export function KurtaSizeChartModal({ onClose }) {
   );
 }
 
+const kurtaPriceBrackets = [
+  { label: 'All prices', value: '' },
+  { label: 'Under ₹3,000', value: '0-3000' },
+  { label: '₹3,000 – ₹3,500', value: '3000-3500' },
+  { label: 'Above ₹3,500', value: '3500-' }
+];
+
+function matchKurtaPrice(price, bracket) {
+  if (!bracket) return true;
+  if (price === null || price === undefined) return false;
+  if (bracket === 'under-3500') return price < 3500;
+  if (bracket === '3500-4500') return price >= 3500 && price <= 4500;
+  if (bracket === 'above-4500') return price > 4500;
+  if (bracket === '0-3000') return price < 3000;
+  if (bracket === '3000-3500') return price >= 3000 && price <= 3500;
+  if (bracket === '3500-') return price > 3500;
+  if (bracket.includes('-')) {
+    const [minStr, maxStr] = bracket.split('-');
+    if (minStr && price < Number(minStr)) return false;
+    if (maxStr && price > Number(maxStr)) return false;
+    return true;
+  }
+  return price <= Number(bracket);
+}
+
 export function KurtasPage({ Layout, ProductCard }) {
   const { products, error } = useStore();
   const [kurtas, setKurtas] = useState([]);
@@ -197,9 +222,7 @@ export function KurtasPage({ Layout, ProductCard }) {
     }
 
     if (priceBracket) {
-      if (priceBracket === 'under-3500') list = list.filter(k => (k.minPrice || k.price) < 3500);
-      else if (priceBracket === '3500-4500') list = list.filter(k => (k.minPrice || k.price) >= 3500 && (k.minPrice || k.price) <= 4500);
-      else if (priceBracket === 'above-4500') list = list.filter(k => (k.maxPrice || k.price) > 4500);
+      list = list.filter(k => matchKurtaPrice(k.minPrice || k.price, priceBracket));
     }
 
     if (inStockOnly) {
@@ -227,65 +250,89 @@ export function KurtasPage({ Layout, ProductCard }) {
     setSortBy('featured');
   };
 
+  const hasActiveFilters = Boolean(fabricFilter || sizeFilter || priceBracket || inStockOnly || searchQuery);
+
   return (
     <Layout>
-      <section className="section collection-header kurta-header" style={{ paddingTop: '28px' }}>
-        <div className="breadcrumbs" style={{ margin: '0 0 16px' }}>
-          <Link to="/">Home</Link>
-          <span>/</span>
-          <span>Chicken Curry Kurtas</span>
+      <div className="collection-intro">
+        <span className="eyebrow">THE VEYORA COLLECTIONS</span>
+        <h1>Chicken Curry Kurtas</h1>
+        <p>Exquisite hand-embroidered Lucknowi Chikankari needlecraft in pure mulmul cotton, fluid georgette, and shimmering Chanderi silk.</p>
+        <div className="collection-tabs">
+          <Link className="active" to="/kurtas">Chicken Curry Kurtas</Link>
+          <Link to="/collections/all">All jewellery</Link>
+          <Link to="/collections/pearls">The Pearl Edit</Link>
+          <Link to="/collections/earrings">Earrings</Link>
+          <Link to="/collections/necklaces">Necklaces</Link>
+          <Link to="/collections/rings">Rings</Link>
+          <Link to="/collections/bracelets">Bracelets</Link>
+          <Link to="/coins">Coins</Link>
+        </div>
+        <div className="price-bracket-bar" role="group" aria-label="Filter by price bracket">
+          <span className="price-bracket-title">Price:</span>
+          {kurtaPriceBrackets.map(b => {
+            const isActive = (priceBracket || '') === b.value;
+            return (
+              <button
+                key={b.value}
+                type="button"
+                className={'price-bracket-pill ' + (isActive ? 'active' : '')}
+                onClick={() => setPriceBracket(isActive && b.value ? '' : b.value)}
+                aria-pressed={isActive}
+              >
+                {b.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <section className="section catalogue kurta-catalogue">
+        <div className="filter-toolbar">
+          <button className="text-button" onClick={() => setShowFilters(s => !s)}>
+            <SlidersHorizontal size={16} /> Filter & refine {hasActiveFilters ? '(Active)' : ''}
+          </button>
+          <span>{filteredKurtas.length} pieces</span>
+          <label>Sort by <select aria-label="Sort products" value={sortBy} onChange={e => setSortBy(e.target.value)}>
+            <option value="featured">Featured</option>
+            <option value="price-low">Price: low to high</option>
+            <option value="price-high">Price: high to low</option>
+            <option value="name">Name: A to Z</option>
+          </select></label>
         </div>
 
-        <div className="kurta-banner-card" style={{
-          position: 'relative',
-          padding: '48px 36px',
-          background: 'linear-gradient(135deg, #182324 0%, #101c1e 100%)',
-          color: '#fff',
-          borderRadius: '4px',
-          overflow: 'hidden',
-          marginBottom: '32px'
-        }}>
-          <div style={{ position: 'relative', zIndex: 2, maxWidth: '640px' }}>
-            <span className="eyebrow" style={{ color: 'var(--gold)' }}>HERITAGE AWADHI NEEDLECRAFT · THE ETHNIC COLLECTION</span>
-            <h1 style={{ fontSize: 'clamp(28px, 4vw, 42px)', margin: '10px 0 14px', color: '#fff', fontFamily: 'var(--font-serif)', fontWeight: 400 }}>
-              Chicken Curry Kurtas for Women
-            </h1>
-            <p style={{ fontSize: '15px', lineHeight: 1.7, color: 'rgba(255,255,255,0.85)', margin: 0 }}>
-              Exquisite hand-embroidered Lucknowi Chikankari kurtas crafted by master artisans in pure mulmul cotton, fluid georgette, and shimmering Chanderi silk. Timeless shadow work and delicate pearl-stitch motifs tailored for everyday poise and festive celebrations.
-            </p>
-          </div>
-        </div>
-
-        <div className="collection-controls" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px', marginBottom: '24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span className="small muted">
-              Showing {filteredKurtas.length} {filteredKurtas.length === 1 ? 'kurta' : 'kurtas'}
-            </span>
-            <button
-              type="button"
-              className="button secondary small-button"
-              onClick={() => setShowFilters(s => !s)}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-            >
-              <SlidersHorizontal size={14} /> {showFilters ? 'Hide filters' : 'Filters'}
+        {hasActiveFilters && (
+          <div className="active-filters-row">
+            {searchQuery && (
+              <button type="button" className="active-filter-chip" onClick={() => setSearchQuery('')}>
+                Search: “{searchQuery}” <X size={12} />
+              </button>
+            )}
+            {fabricFilter && (
+              <button type="button" className="active-filter-chip" onClick={() => setFabricFilter('')}>
+                Fabric: {fabricFilter} <X size={12} />
+              </button>
+            )}
+            {sizeFilter && (
+              <button type="button" className="active-filter-chip" onClick={() => setSizeFilter('')}>
+                Size: {sizeFilter} <X size={12} />
+              </button>
+            )}
+            {priceBracket && (
+              <button type="button" className="active-filter-chip" onClick={() => setPriceBracket('')}>
+                Price: {kurtaPriceBrackets.find(p => p.value === priceBracket)?.label || priceBracket} <X size={12} />
+              </button>
+            )}
+            {inStockOnly && (
+              <button type="button" className="active-filter-chip" onClick={() => setInStockOnly(false)}>
+                In stock only <X size={12} />
+              </button>
+            )}
+            <button type="button" className="underlink" onClick={clearFilters} style={{ fontSize: '11px', marginLeft: '6px' }}>
+              Clear all
             </button>
           </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <label htmlFor="kurta-sort" className="small muted">Sort by:</label>
-            <select
-              id="kurta-sort"
-              value={sortBy}
-              onChange={e => setSortBy(e.target.value)}
-              style={{ padding: '6px 12px', fontSize: '13px', borderRadius: '3px', border: '1px solid var(--line)' }}
-            >
-              <option value="featured">Featured Collection</option>
-              <option value="price-low">Price: Low to High</option>
-              <option value="price-high">Price: High to Low</option>
-              <option value="name">Name: A to Z</option>
-            </select>
-          </div>
-        </div>
+        )}
 
         {showFilters && (
           <div className="filters" style={{ margin: '0 0 28px', padding: '18px 20px', background: '#faf9f5', border: '1px solid var(--line)', borderRadius: '3px' }}>
@@ -326,9 +373,9 @@ export function KurtasPage({ Layout, ProductCard }) {
               Price Bracket
               <select value={priceBracket} onChange={e => setPriceBracket(e.target.value)}>
                 <option value="">All Prices</option>
-                <option value="under-3500">Under ₹3,500</option>
-                <option value="3500-4500">₹3,500 – ₹4,500</option>
-                <option value="above-4500">Above ₹4,500</option>
+                <option value="0-3000">Under ₹3,000</option>
+                <option value="3000-3500">₹3,000 – ₹3,500</option>
+                <option value="3500-">Above ₹3,500</option>
               </select>
             </label>
 
