@@ -77,13 +77,25 @@ test('hero showcase: video slide has visible CTA button, clearProps on animation
 test('hero showcase: hero banner takes full viewport height below header across breakpoints', async () => {
   const cssContent = await fs.readFile(path.resolve('src/style.css'), 'utf8');
 
-  // Verify full-screen viewport height calculation with 100vh and 100dvh
+  // 1. Full-screen viewport height calculation with 100vh, 100svh, and 100dvh
   assert.match(cssContent, /\.hero\s*\{[^}]*height:\s*calc\([^)]*136px\)/, 'CSS .hero must calculate height subtracting 136px desktop top bars');
   assert.match(cssContent, /100dvh/, 'CSS must support dynamic viewport height 100dvh');
+  assert.match(cssContent, /100svh/, 'CSS must support small viewport height 100svh');
 
-  // Verify mobile responsive full-screen calculation
+  // 2. Background image object-fit and object-position framing (75% center / right center)
+  assert.match(cssContent, /\.hero-photo img[^}]*object-fit:\s*cover/, 'CSS must use object-fit: cover for seamless artwork scaling');
+  assert.match(cssContent, /\.hero-photo img[^}]*object-position:\s*75%\s*center/, 'CSS must set object-position: 75% center for subject framing on desktop & tablet');
+
+  // 3. Tablet gradient overlay specifications
+  assert.match(cssContent, /rgba\(16,\s*35,\s*39,\s*0\.85\)/, 'CSS must include tablet dark gradient overlay rgba(16, 35, 39, 0.85)');
+  assert.match(cssContent, /rgba\(16,\s*35,\s*39,\s*0\.4\)/, 'CSS must include tablet dark gradient overlay rgba(16, 35, 39, 0.4)');
+
+  // 4. Mobile responsive full-screen calculation with 85svh and top bars offset
+  assert.match(cssContent, /min-height:\s*85svh/, 'CSS must adjust mobile min-height to 85svh');
   assert.match(cssContent, /height:\s*calc\([^)]*113px\)/, 'CSS must calculate height subtracting 113px mobile top bars');
 
-  // Verify centered explore indicator
+  // 5. Controls anchored alignment across breakpoints
   assert.match(cssContent, /\.hero-scroll\s*\{[^}]*transform:\s*translateX\(-50%\)/, 'CSS .hero-scroll must be horizontally centered');
+  assert.match(cssContent, /\.hero-scroll\s*\{[^}]*left:\s*50%/, 'CSS .hero-scroll must be anchored at left: 50%');
+  assert.match(cssContent, /\.hero-index\s*\{[^}]*right:\s*6%/, 'CSS .hero-index must be anchored at right: 6% on desktop');
 });

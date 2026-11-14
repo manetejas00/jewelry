@@ -23,8 +23,7 @@ test('adminRoutes defines dedicated routes for all 15 sidebar menu items', () =>
     { label: 'Customers', path: '/admin/customers' },
     { label: 'Catalogue copy', path: '/admin/catalogue-copy' },
     { label: 'AI Chatbot', path: '/admin/ai-chatbot' },
-    { label: 'Settings', path: '/admin/settings' },
-    { label: 'AI Custom Designs', path: '/admin/custom-designs' }
+    { label: 'Settings', path: '/admin/settings' }
   ];
 
   for (const { label, path } of expectedRoutes) {
@@ -63,7 +62,7 @@ test('matchAdminRoute resolves exact, nested, and default admin routes correctly
   const fn = new Function(mockContext);
   const { adminRoutes, matchAdminRoute } = fn();
 
-  assert.equal(adminRoutes.length, 16, 'There must be 16 admin routes including AI Custom Designs');
+  assert.equal(adminRoutes.length, 15, 'There must be exactly 15 admin routes');
 
   // 1. Root /admin defaults to Dashboard
   assert.equal(matchAdminRoute('/admin').key, 'dashboard');
@@ -85,8 +84,6 @@ test('matchAdminRoute resolves exact, nested, and default admin routes correctly
   assert.equal(matchAdminRoute('/admin/catalogue-copy').key, 'catalogue-copy');
   assert.equal(matchAdminRoute('/admin/ai-chatbot').key, 'ai-chatbot');
   assert.equal(matchAdminRoute('/admin/settings').key, 'settings');
-  assert.equal(matchAdminRoute('/admin/custom-designs').key, 'custom-designs');
-  assert.equal(matchAdminRoute('/admin/cyo').key, 'custom-designs');
 
   // 3. Nested routes keep parent menu active
   assert.equal(matchAdminRoute('/admin/products/123/edit').key, 'products');

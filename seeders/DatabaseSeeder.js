@@ -1,28 +1,38 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { db } from '../server/db.js';
-import { CategorySeeder } from './CategorySeeder.js';
+import { JewelryCategorySeeder } from './JewelryCategorySeeder.js';
+import { JewelrySeeder } from './JewelrySeeder.js';
+import { CoinCategorySeeder } from './CoinCategorySeeder.js';
+import { CoinSeeder } from './CoinSeeder.js';
+import { KurtaCategorySeeder } from './KurtaCategorySeeder.js';
+import { KurtaSeeder } from './KurtaSeeder.js';
 import { MaterialSeeder } from './MaterialSeeder.js';
 import { CraftsmanshipSeeder } from './CraftsmanshipSeeder.js';
 import { FinishSeeder } from './FinishSeeder.js';
 import { CollectionSeeder } from './CollectionSeeder.js';
-import { ProductSeeder } from './ProductSeeder.js';
-import { JewelleryProductSeeder } from './JewelleryProductSeeder.js';
-import { CoinProductSeeder } from './CoinProductSeeder.js';
-import { KurtaSeeder } from './KurtaSeeder.js';
 import { ReviewSeeder } from './ReviewSeeder.js';
 
 export async function DatabaseSeeder(k = db) {
   return {
-    categories: await CategorySeeder(k),
-    materials: await MaterialSeeder(k),
-    craftsmanship: await CraftsmanshipSeeder(k),
-    finishes: await FinishSeeder(k),
-    collections: await CollectionSeeder(k),
-    products: await ProductSeeder(k),
-    jewellery: await JewelleryProductSeeder(k),
-    coins: await CoinProductSeeder(k),
+    materials: await MaterialSeeder(k).catch(() => null),
+    craftsmanship: await CraftsmanshipSeeder(k).catch(() => null),
+    finishes: await FinishSeeder(k).catch(() => null),
+    collections: await CollectionSeeder(k).catch(() => null),
+
+    // 1. Jewelry Module
+    jewelryCategories: await JewelryCategorySeeder(k),
+    jewelry: await JewelrySeeder(k),
+
+    // 2. Coin Module
+    coinCategories: await CoinCategorySeeder(k),
+    coins: await CoinSeeder(k),
+
+    // 3. Kurta Module
+    kurtaCategories: await KurtaCategorySeeder(k),
     kurtas: await KurtaSeeder(k),
+
+    // Reviews
     reviews: await ReviewSeeder(k)
   };
 }
