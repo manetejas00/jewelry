@@ -40,6 +40,7 @@ import {registerMaterialRoutes} from './materials.js';
 import {registerCraftsmanshipRoutes} from './craftsmanship.js';
 import {registerCollectionRoutes} from './collections.js';
 import {registerRecommendationRoutes} from './recommendations.js';
+import {registerRateRoutes} from './rates.js';
 import {
   getProductReviews,
   submitReview,
@@ -745,7 +746,7 @@ app.delete('/api/admin/reviews/:id', auth(['owner', 'manager']), route(async (re
   res.json(result);
 }));
 
-app.get('/api/admin/samples/:file',auth(),(req,res)=>{const allowed=['gold-rates-template.csv','gold-rates-example.csv','products-template.csv','products-example.csv','coins-template.csv','coins-example.csv','kurtas-template.csv','kurtas-example.csv','import-errors-example.csv','jewellery-template.csv','jewellery-example.csv','gold-jewellery-template.csv','gold-jewellery-example.csv','silver-jewellery-template.csv','silver-jewellery-example.csv','kurta-designs-template.csv','kurta-designs-example.csv','kurta-variants-template.csv','kurta-variants-example.csv','materials-template.csv','materials-example.csv','craftsmanship-template.csv','craftsmanship-example.csv','collections-template.csv','collections-example.csv'];if(!allowed.includes(req.params.file))return res.sendStatus(404);res.download(path.resolve('samples',req.params.file));});
+app.get('/api/admin/samples/:file',auth(),(req,res)=>{const allowed=['gold-rates-template.csv','gold-rates-example.csv','metal-rates-template.csv','metal-rates-example.csv','metal-rates-template.xlsx','metal-rates-example.xlsx','gold-rates-template.xlsx','gold-rates-example.xlsx','products-template.csv','products-example.csv','coins-template.csv','coins-example.csv','kurtas-template.csv','kurtas-example.csv','import-errors-example.csv','jewellery-template.csv','jewellery-example.csv','gold-jewellery-template.csv','gold-jewellery-example.csv','silver-jewellery-template.csv','silver-jewellery-example.csv','kurta-designs-template.csv','kurta-designs-example.csv','kurta-variants-template.csv','kurta-variants-example.csv','materials-template.csv','materials-example.csv','craftsmanship-template.csv','craftsmanship-example.csv','collections-template.csv','collections-example.csv'];if(!allowed.includes(req.params.file))return res.sendStatus(404);res.download(path.resolve('samples',req.params.file));});
 app.post('/api/admin/orders/:id/status',auth(['owner','manager']),route(async(req,res)=>{const result=await updateOrderStatus(db,req.params.id,req.body.status);await audit(req,'order_status',{id:req.params.id,status:result.status});res.json(result);}));
 app.get('/api/admin/staff',auth(['owner']),route(async(req,res)=>res.json(await db('staff').select('id','email','role','disabled_at').orderBy('id'))));
 app.post('/api/admin/staff',auth(['owner']),route(async(req,res)=>{const created=await createStaff(db,req.body);await audit(req,'staff_created',{id:created.id,email:created.email,role:created.role});res.status(201).json(created);}));
@@ -854,6 +855,7 @@ registerMaterialRoutes(app,{db,route,auth});
 registerCraftsmanshipRoutes(app,{db,route,auth});
 registerCollectionRoutes(app,{db,route,auth});
 registerRecommendationRoutes(app,{db,route,auth});
+registerRateRoutes(app,{db,route,auth,audit});
 registerSeo(app,db,{preview,route});
 app.use('/api',(req,res)=>res.status(404).json({error:'API endpoint not found'}));
 registerPwa(app,{production});

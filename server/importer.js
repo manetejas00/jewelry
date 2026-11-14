@@ -1,4 +1,5 @@
 import {validationError} from './errors.js';
+import * as XLSX from 'xlsx';
 import {parse as csvParse} from 'csv-parse/sync';
 import {stringify} from 'csv-stringify/sync';
 import Decimal from 'decimal.js';
@@ -6,6 +7,17 @@ import {validateCoins,previewCoins,publishCoins} from './coin-imports.js';
 import {fingerprint,calculatePrice,activeRates,isFresh,todayIndia} from './pricing.js';
 import {STOCK_HOLDING_STATUSES} from './orders.js';
 import {now,parse,json,preview} from './db.js';
+
+export function ensureCsv(input) {
+  if (!input) return '';
+  if (Buffer.isBuffer(input) || (typeof input === 'string' && (input.startsWith('data:application/vnd') || input.startsWith('UEsDB') || input.startsWith('0M8R4')))) {
+    const buf = Buffer.isBuffer(input) ? input : Buffer.from(input.replace(/^data:[^;]+;base64,/, ''), 'base64');
+    const workbook = XLSX.read(buf, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    if (sheetName) return XLSX.utils.sheet_to_csv(workbook.Sheets[sheetName]);
+  }
+  return String(input);
+}
 export const schemas={gold:['supplier','purity','currency','unit','rate','effective_date','source_timestamp'],products:['supplier','product_code','sku','name','category','description','metal','purity','net_weight_g','size','finish','image','pricing_mode','fixed_price','making_flat','making_percent','stone_charge','other_charge','stock','status','source_timestamp'],coins:['supplier','sku','name','metal','coin_type','purity','weight_g','dimension','making_charge','pricing_mode','fixed_price','stock','description','image','status','image_kind','source_timestamp'],kurtas:['supplier','product_code','sku','name','category','description','fabric','craftsmanship','size','color','finish','image','pricing_mode','fixed_price','stock','status','source_timestamp']};
 const num=v=>/^\d+(\.\d{1,4})?$/.test(v) && Number(v)<=9999999999;
 const timestamp=v=>/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/.test(v)&&!isNaN(Date.parse(v));
@@ -44,6 +56,7 @@ export function validate(kind,text){
 export function normaliseRate(r){return {...r,original_unit:r.unit,original_rate:r.rate,inr_per_gram:new Decimal(r.rate).div(r.unit==='10g'?10:1).toFixed(4)};}
 function productPatch(row,old){const allowed=(process.env.SUPPLIER_OVERWRITE_FIELDS||'stock,fixed_price,net_weight_g,making_flat,stone_charge,other_charge').split(',');const patch={source_timestamp:row.source_timestamp,updated_at:now()};for(const f of allowed)if(schemas.products.includes(f)&&!['sku','supplier','product_code'].includes(f))patch[f]=row[f]===''?null:row[f];return patch;}
 export async function previewImport(k,kind,text,staff=null){
+ text=ensureCsv(text);
  if(kind==='coins')return previewCoins(k,text,schemas.coins,staff);
  if(!schemas[kind])throw validationError('Unknown import type');const checksum=fingerprint(text);const check=validate(kind,text);const supplier=check.rows[0]?.supplier||'unknown';
  if(!preview&&check.rows.some(r=>r.supplier==='Fictional Preview'))check.errors.push({row:1,field:'supplier',value:'Fictional Preview',correction:'Fictional examples are restricted to test/preview databases'});
@@ -70,7 +83,7 @@ export async function publishImport(k,id,staff=null){
  const {rows,errors}=validate(b.kind,b.private_payload);if(errors.length)throw validationError('Batch is no longer valid');
  if(b.kind==='gold' && Date.now()-Date.parse(b.source_timestamp)>Number(process.env.GOLD_MAX_AGE_HOURS||48)*3600000)throw validationError('Rates became stale before publication');
  let created=0,updated=0,unchanged=0;
- for(const r of rows){if(b.kind==='gold'){const norm=normaliseRate(r);if(!isFresh(norm))throw validationError('Rate effective date is stale');await t('rates').insert({supplier:r.supplier,purity:r.purity,currency:r.currency,original_unit:norm.original_unit,original_rate:norm.original_rate,inr_per_gram:norm.inr_per_gram,effective_date:r.effective_date,source_timestamp:r.source_timestamp,published_at:now(),batch_id:b.id});created++;}else if(b.kind==='kurtas'){
+ for(const r of rows){if(b.kind==='gold'){const norm=normaliseRate(r);if(!isFresh(norm))throw validationError('Rate effective date is stale');await t('rates').insert({metal:'Gold',staff_id:staff,source_type:'bulk_import',supplier:r.supplier,purity:r.purity,currency:r.currency,original_unit:norm.original_unit,original_rate:norm.original_rate,inr_per_gram:norm.inr_per_gram,effective_date:r.effective_date,source_timestamp:r.source_timestamp,published_at:now(),batch_id:b.id});created++;}else if(b.kind==='kurtas'){
  const old=await t('products').where({sku:r.sku}).forUpdate().first();if(old && r.source_timestamp<old.source_timestamp)throw validationError('SKU has newer data; preview again');
  let slug=String(r.product_code||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'kurta';
  const skuSuffix=String(r.sku).toLowerCase().replace(/[^a-z0-9]+/g,'-');

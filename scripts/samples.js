@@ -1,9 +1,21 @@
 import fs from 'node:fs';
+import * as XLSX from 'xlsx';
 import { stringify } from 'csv-stringify/sync';
 import { coinArtwork } from '../server/coin-artwork.js';
 import { schemas } from '../server/importer.js';
+import { RATE_COLUMNS } from '../server/rates.js';
 
 export const stamp = new Date().toISOString();
+
+export const metalRates = [
+  ['Veyora Internal', 'Gold', '24K', 'INR', '10g', '100000', stamp.slice(0, 10), stamp],
+  ['Veyora Internal', 'Gold', '22K', 'INR', 'g', '9200', stamp.slice(0, 10), stamp],
+  ['Veyora Internal', 'Gold', '20K', 'INR', 'g', '8350', stamp.slice(0, 10), stamp],
+  ['Veyora Internal', 'Gold', '18K', 'INR', 'g', '7500', stamp.slice(0, 10), stamp],
+  ['Veyora Internal', 'Gold', '14K', 'INR', 'g', '5850', stamp.slice(0, 10), stamp],
+  ['Veyora Internal', 'Silver', '999', 'INR', 'kg', '120000', stamp.slice(0, 10), stamp],
+  ['Veyora Internal', 'Silver', '925', 'INR', 'g', '110', stamp.slice(0, 10), stamp]
+];
 
 export const gold = [
   ['Fictional Preview', '24K', 'INR', '10g', '100000', stamp.slice(0, 10), stamp],
@@ -105,6 +117,24 @@ export function writeSamples() {
   fs.writeFileSync('samples/craftsmanship-example.csv', stringify(craftsmanshipExample, { header: true, columns: craftsmanshipSchema }));
   fs.writeFileSync('samples/collections-template.csv', stringify([], { header: true, columns: collectionsSchema }));
   fs.writeFileSync('samples/collections-example.csv', stringify(collectionsExample, { header: true, columns: collectionsSchema }));
+
+  // Metal Rates (Gold & Silver Unified)
+  fs.writeFileSync('samples/metal-rates-template.csv', stringify([], { header: true, columns: RATE_COLUMNS }));
+  fs.writeFileSync('samples/metal-rates-example.csv', stringify(metalRates, { header: true, columns: RATE_COLUMNS }));
+
+  // Helper to write XLSX files
+  const writeXlsx = (filePath, sheetName, headers, rows) => {
+    const data = [headers, ...rows];
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    XLSX.writeFile(wb, filePath);
+  };
+
+  writeXlsx('samples/metal-rates-template.xlsx', 'Metal Rates', RATE_COLUMNS, []);
+  writeXlsx('samples/metal-rates-example.xlsx', 'Metal Rates', RATE_COLUMNS, metalRates);
+  writeXlsx('samples/gold-rates-template.xlsx', 'Gold Rates', schemas.gold, []);
+  writeXlsx('samples/gold-rates-example.xlsx', 'Gold Rates', schemas.gold, gold);
 
   // Errors sample
   fs.writeFileSync('samples/import-errors-example.csv', stringify([

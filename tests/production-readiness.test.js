@@ -13,7 +13,6 @@ import {createDb,migrate} from '../server/db.js';
 import {checkout} from '../server/orders.js';
 import {pageMetadata,renderMetadata} from '../server/seo.js';
 import {saveUploadedImage} from '../server/thumbnails.js';
-import {fetchLiveGoldRates} from '../server/daily.js';
 const originalAppUrl=process.env.APP_URL;process.env.APP_URL ||= 'http://localhost:3318';
 const env={NODE_ENV:'production',PREVIEW_MODE:'false',SESSION_SECRET:'x'.repeat(48),APP_URL:'https://store.example.com',DB_CLIENT:'mysql2',DB_HOST:'db',DB_NAME:'shop',DB_USER:'shop',DB_PASSWORD:'test-only',PAYMENT_MODE:'disabled'};
 test('production rejects preview, insecure origin, missing database, weak sessions and unsupported gateways',()=>{
@@ -44,7 +43,11 @@ test('gold coins require the exact purity and silver cannot silently use a fallb
  assert.throws(()=>calculateCoinPrice({metal:'Silver',weight_g:1,pricing_mode:'METAL_LINKED'},{},null),/unavailable/);
  assert.equal(isFresh({source_timestamp:'2099-01-01T00:00:00Z',effective_date:'2026-11-10'}),false);
 });
-test('automatic feed refuses unapproved purity conversion',async()=>{const previous=process.env.GOLD_AUTO_CONVERSION_APPROVED;delete process.env.GOLD_AUTO_CONVERSION_APPROVED;try{await assert.rejects(fetchLiveGoldRates(),/approval|APPROVED/)}finally{if(previous!==undefined)process.env.GOLD_AUTO_CONVERSION_APPROVED=previous;}});
+test('external live gold rates API is removed and metal pricing is internal only', async () => {
+  // Verify server/daily.js does not export live API fetchers
+  const dailyModule = await import('../server/daily.js');
+  assert.equal(dailyModule.fetchLiveGoldRates, undefined, 'fetchLiveGoldRates must not exist');
+});
 let k,folder;
 const fixtureReady=(async()=>{folder=await fs.mkdtemp(path.join(os.tmpdir(),'veyora-readiness-'));k=createDb(':memory:');await migrate(k);await k('products').insert({sku:'AUDIT-1',product_code:'audit-ring',slug:'audit-ring',name:'Audit ring',description:'Test <script> text',pricing_mode:'FIXED',fixed_price:199.99,stock:10,status:'published'});})();
 before(async()=>{await fixtureReady;});

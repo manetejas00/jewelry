@@ -164,12 +164,12 @@ export function CommonPDP({
           {/* Dynamic Rate Badge */}
           {p.pricing_mode === 'GOLD_LINKED' && (
             <div style={{ marginTop: '6px' }}>
-              <span className="gold-linked-pill"><Sparkles size={12} /> Live Gold-Linked Rate</span>
+              <span className="gold-linked-pill"><Sparkles size={12} /> Gold-Linked Rate</span>
             </div>
           )}
           {isCoin && p.pricing_mode === 'METAL_LINKED' && (
             <div style={{ marginTop: '6px' }}>
-              <span className="gold-linked-pill"><Sparkles size={12} /> Live Metal-Linked Rate</span>
+              <span className="gold-linked-pill"><Sparkles size={12} /> Metal-Linked Rate</span>
             </div>
           )}
 

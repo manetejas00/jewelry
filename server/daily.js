@@ -2,43 +2,27 @@ import fs from 'node:fs/promises';
 import {loadFeedSettings} from './settings.js';
 import {previewImport,publishImport} from './importer.js';
 import {now,json} from './db.js';
-export async function fetchLiveGoldRates(customUrl='https://api.gold-api.com/price/XAU/INR'){
-  if(process.env.GOLD_AUTO_CONVERSION_APPROVED!=='true')throw Error('Automatic purity conversion requires GOLD_AUTO_CONVERSION_APPROVED=true after supplier approval; use purity-specific CSV rates instead');
-  const target=(customUrl&&customUrl.startsWith('https://'))?customUrl:'https://api.gold-api.com/price/XAU/INR';
-  const res=await fetch(target,{redirect:'error',headers:{'Accept':'application/json'},signal:AbortSignal.timeout(15000)});
-  if(!res.ok)throw Error(`Live Gold API returned HTTP ${res.status}`);
-  const data=await res.json();
-  const price=Number(data.price);
-  if(!Number.isFinite(price)||price<=0)throw Error('Invalid gold price received from provider');
-  if(data.currency!=='INR'||data.unit!=='troy_ounce')throw Error('Provider must explicitly supply currency INR and unit troy_ounce');
-  const providerTime=Date.parse(data.timestamp);
-  if(!Number.isFinite(providerTime)||Date.now()-providerTime>3600000||providerTime>Date.now()+300000)throw Error('Provider timestamp is missing or stale');
-  const gram24k=price/31.1034768;
-  const rate24k_10g=(gram24k*10).toFixed(2);
-  const rate22k_g=(gram24k*(22/24)).toFixed(2);
-  const rate18k_g=(gram24k*(18/24)).toFixed(2);
-  const rate14k_g=(gram24k*(14/24)).toFixed(2);
-  const date=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-  const ts=new Date().toISOString();
-  return [
-    'supplier,purity,currency,unit,rate,effective_date,source_timestamp',
-    `Live Market Rate,24K,INR,10g,${rate24k_10g},${date},${ts}`,
-    `Live Market Rate,22K,INR,g,${rate22k_g},${date},${ts}`,
-    `Live Market Rate,18K,INR,g,${rate18k_g},${date},${ts}`,
-    `Live Market Rate,14K,INR,g,${rate14k_g},${date},${ts}`
-  ].join('\n');
-}
 
 async function readFeed(kind){
-  if(!['gold','products','coins'].includes(kind))throw Error('Unknown feed kind');
-  const prefix=kind==='gold'?'GOLD':kind==='coins'?'COIN':'PRODUCT';
+  if(kind==='gold'){
+    const url=process.env.GOLD_FEED_URL;
+    if(!url)throw Error('Supplier source is not configured');
+    if(url==='auto'||url.includes('api.gold-api.com')){
+      throw Error('External live gold pricing APIs have been removed. Metal rates are managed exclusively in Admin Panel.');
+    }
+    if(!url.startsWith('https://'))throw Error('Supplier feed requires HTTPS');
+    const token=process.env.GOLD_FEED_TOKEN;
+    const res=await fetch(url,{headers:token?{Authorization:`Bearer ${token}`}:{},signal:AbortSignal.timeout(30000),redirect:'error'});
+    if(!res.ok)throw Error(`Supplier returned HTTP ${res.status}`);
+    const chunks=[];let size=0;for await(const chunk of res.body){size+=chunk.length;if(size>5*1024*1024)throw Error('Supplier file exceeds 5 MB');chunks.push(chunk)}
+    return Buffer.concat(chunks).toString('utf8');
+  }
+  if(!['products','coins'].includes(kind))throw Error('Unknown feed kind');
+  const prefix=kind==='coins'?'COIN':'PRODUCT';
   const url=process.env[prefix+'_FEED_URL'];
   if(kind==='coins'&&process.env.COIN_FEED_FILE)return fs.readFile(process.env.COIN_FEED_FILE,'utf8');
   if(kind==='products'&&process.env.PRODUCT_FEED_FILE)return fs.readFile(process.env.PRODUCT_FEED_FILE,'utf8');
   if(!url)throw Error('Supplier source is not configured');
-  if(kind==='gold'&&(url==='auto'||new URL(url).hostname==='api.gold-api.com')){
-    return fetchLiveGoldRates(url);
-  }
   if(!url.startsWith('https://'))throw Error('Supplier feed requires HTTPS');
   const token=process.env[prefix+'_FEED_TOKEN'];
   const res=await fetch(url,{headers:token?{Authorization:`Bearer ${token}`}:{},signal:AbortSignal.timeout(30000),redirect:'error'});

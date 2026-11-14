@@ -123,13 +123,43 @@ export function calculatePrice(p,rate,rule={tax_percent:0,rounding:1,tax_treatme
 }
 
 export const todayIndia=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-export async function activeRates(k){const rows=await k('rates').orderBy('source_timestamp','desc').orderBy('id','desc');const result={};for(const r of rows)if(!result[r.purity] && r.effective_date<=todayIndia())result[r.purity]=r;return result;}
+export async function activeRates(k){
+  const rows=await k('rates').orderBy('source_timestamp','desc').orderBy('id','desc');
+  const result={};
+  for(const r of rows){
+    if(r.effective_date<=todayIndia()){
+      if(!result[r.purity])result[r.purity]=r;
+      const mp=`${r.metal||'Gold'}_${r.purity}`;
+      if(!result[mp])result[mp]=r;
+    }
+  }
+  return result;
+}
 export function isFresh(rate,maxAge=Number(process.env.GOLD_MAX_AGE_HOURS||48),time=Date.now()){return !!rate && time-new Date(rate.source_timestamp).getTime()>=-300000 && time-new Date(rate.source_timestamp).getTime()<=maxAge*3600000 && time-new Date(rate.effective_date+'T00:00:00+05:30').getTime()<=maxAge*3600000;}
 export const fingerprint=x=>crypto.createHash('sha256').update(JSON.stringify(x)).digest('hex');
 
 export async function getSilverRate(k){
  const rows=await k('settings').whereIn('key',['SILVER_RATE_PER_GRAM','SILVER_RATE_UPDATED_AT']);
  const values=Object.fromEntries(rows.map(r=>[r.key,r.value]));
+ if(values.SILVER_RATE_PER_GRAM && values.SILVER_RATE_UPDATED_AT){
+   const rate=Number(values.SILVER_RATE_PER_GRAM),age=Date.now()-Date.parse(values.SILVER_RATE_UPDATED_AT);
+   if(Number.isFinite(rate)&&rate>0&&Number.isFinite(age)&&age>=-300000&&age<=Number(process.env.GOLD_MAX_AGE_HOURS||48)*3600000){
+     return rate;
+   }
+ }
+ try{
+   if(k.schema&&await k.schema.hasTable('rates')){
+     const silverRow=await k('rates')
+       .where(function(){this.where({metal:'Silver'}).orWhereIn('purity',['999','925']);})
+       .andWhere('effective_date','<=',todayIndia())
+       .orderBy('source_timestamp','desc')
+       .orderBy('id','desc')
+       .first();
+     if(silverRow && isFresh(silverRow)){
+       return Number(silverRow.inr_per_gram);
+     }
+   }
+ }catch{}
  if(process.env.NODE_ENV!=='production'&&!values.SILVER_RATE_PER_GRAM)return 98;
  const rate=Number(values.SILVER_RATE_PER_GRAM),age=Date.now()-Date.parse(values.SILVER_RATE_UPDATED_AT);
  return Number.isFinite(rate)&&rate>0&&Number.isFinite(age)&&age>=-300000&&age<=Number(process.env.GOLD_MAX_AGE_HOURS||48)*3600000?rate:null;

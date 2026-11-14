@@ -1,0 +1,8 @@
+supplier,metal,purity,currency,unit,rate,effective_date,source_timestamp
+Veyora Internal,Gold,24K,INR,10g,100000,2026-11-14,2026-11-14T09:44:20.024Z
+Veyora Internal,Gold,22K,INR,g,9200,2026-11-14,2026-11-14T09:44:20.024Z
+Veyora Internal,Gold,20K,INR,g,8350,2026-11-14,2026-11-14T09:44:20.024Z
+Veyora Internal,Gold,18K,INR,g,7500,2026-11-14,2026-11-14T09:44:20.024Z
+Veyora Internal,Gold,14K,INR,g,5850,2026-11-14,2026-11-14T09:44:20.024Z
+Veyora Internal,Silver,999,INR,kg,120000,2026-11-14,2026-11-14T09:44:20.024Z
+Veyora Internal,Silver,925,INR,g,110,2026-11-14,2026-11-14T09:44:20.024Z
