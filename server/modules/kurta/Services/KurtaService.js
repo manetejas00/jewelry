@@ -111,7 +111,7 @@ export class KurtaService {
         sku: parentSku,
         slug: cleanCode,
         name: String(name).trim().slice(0, 200),
-        category: 'Chicken Curry Kurtas',
+        category: 'Kurtas',
         description: description ? String(description).trim().slice(0, 5000) : null,
         fabric: String(fabric).trim().slice(0, 100),
         pattern: String(pattern).trim().slice(0, 100),

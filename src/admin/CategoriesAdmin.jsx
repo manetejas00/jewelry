@@ -181,7 +181,7 @@ export function CategoriesAdmin({ readonly = false, refreshParent = null }) {
               <th>Preview</th>
               <th>Name & Slug</th>
               <th>Description</th>
-              <th>Products</th>
+              <th>Jewelry Pieces</th>
               <th>Order</th>
               <th>Status</th>
               <th>Actions</th>
@@ -278,7 +278,7 @@ export function CategoriesAdmin({ readonly = false, refreshParent = null }) {
                     required
                     value={editingCat.name || ''}
                     onChange={e => setEditingCat({ ...editingCat, name: e.target.value })}
-                    placeholder="e.g. Chicken Curry Kurtas"
+                    placeholder="e.g. Kurtas"
                   />
                 </label>
                 <label>
@@ -286,7 +286,7 @@ export function CategoriesAdmin({ readonly = false, refreshParent = null }) {
                   <input
                     value={editingCat.slug || ''}
                     onChange={e => setEditingCat({ ...editingCat, slug: e.target.value })}
-                    placeholder="e.g. chicken-curry-kurtas"
+                    placeholder="e.g. kurtas"
                   />
                 </label>
               </div>
@@ -351,7 +351,7 @@ export function CategoriesAdmin({ readonly = false, refreshParent = null }) {
                     <input
                       value={editingCat.seo_title || ''}
                       onChange={e => setEditingCat({ ...editingCat, seo_title: e.target.value })}
-                      placeholder="e.g. Chicken Curry Kurtas for Women | Veyora Jewels"
+                      placeholder="e.g. Kurtas for Women | Veyora Jewels"
                     />
                   </label>
                   <label>
@@ -390,7 +390,7 @@ export function CategoriesAdmin({ readonly = false, refreshParent = null }) {
               </button>
             </div>
             <p style={{ margin: '14px 0' }}>
-              Are you sure you want to delete this category? Products currently assigned to this category will not be deleted, but may lose this category tag.
+              Are you sure you want to delete this category? Jewelry pieces currently assigned to this category will not be deleted, but may lose this category tag.
             </p>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
               <button type="button" className="text-button" onClick={() => setDeleteId(null)}>

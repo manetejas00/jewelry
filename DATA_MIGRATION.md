@@ -100,7 +100,7 @@ Default category taxonomies were verified and inserted:
    - `silver-coins` ("Silver Coins")
    - `bullion-bars` ("Bullion Bars")
 3. **Kurta Categories**:
-   - `chicken-curry-kurtas` ("Chicken Curry Kurtas")
+   - `kurtas` ("Kurtas")
    - `cotton-chikankari` ("Cotton Chikankari")
    - `georgette-kurtas` ("Georgette Kurtas")
    - `chanderi-silk-kurtas` ("Chanderi Silk Kurtas")
@@ -176,7 +176,7 @@ Following migration execution on database `private/store.sqlite`, exact record c
 | `coin_variants` | **20** | 1:1 variant mapping with zero discrepancies |
 | `coin_images` | **56** | High-resolution assets mapped |
 | `coin_inventory` | **20** | Opening balances match current stock |
-| `kurta_categories` | **4** | Chicken Curry, Cotton, Georgette, Chanderi |
+| `kurta_categories` | **4** | Kurtas, Cotton, Georgette, Chanderi |
 | `kurtas` | **50** | Distinct parent designs & silhouettes |
 | `kurta_variants` | **2,026** | Complete size matrix (XS to XXXL across all colors) |
 | `kurta_images` | **3,000** | Multi-angle studio photography mapped |

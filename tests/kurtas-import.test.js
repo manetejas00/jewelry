@@ -11,7 +11,7 @@ const sampleKurta = {
   product_code: 'CCK-TEST-NOOR',
   sku: 'CCK-TEST-NOOR-M',
   name: 'Noor Lucknowi Chikankari Kurta',
-  category: 'Chicken Curry Kurtas',
+  category: 'Kurtas',
   description: 'Handcrafted pure mulmul cotton kurta with delicate floral Chikankari embroidery.',
   fabric: 'Pure Mulmul Cotton',
   craftsmanship: 'Handcrafted Lucknowi Chikankari',
@@ -93,7 +93,7 @@ test('kurta import preview and publication pipeline writes is_kurta products saf
     const inserted = await k('products').where({ sku: sampleKurta.sku }).first();
     assert.ok(inserted, 'Product must be inserted into products table');
     assert.equal(Boolean(inserted.is_kurta), true, 'is_kurta flag must be true');
-    assert.equal(inserted.category, 'Chicken Curry Kurtas');
+    assert.equal(inserted.category, 'Kurtas');
     assert.equal(inserted.pricing_mode, 'FIXED');
     assert.equal(Number(inserted.fixed_price), 3499);
     assert.equal(inserted.stock, 25);

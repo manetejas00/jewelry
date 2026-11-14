@@ -405,7 +405,7 @@ export async function up(k) {
   }
 
   const defaultKurtaCategories = [
-    { slug: 'chicken-curry-kurtas', name: 'Chicken Curry Kurtas', description: 'Authentic handcrafted Lucknowi Chikankari needlework kurtas.', sort_order: 1 },
+    { slug: 'kurtas', name: 'Kurtas', description: 'Authentic handcrafted Lucknowi Chikankari needlework kurtas.', sort_order: 1 },
     { slug: 'cotton-chikankari', name: 'Cotton Chikankari', description: 'Breathable mulmul cotton embroidered in classic shadow work.', sort_order: 2 },
     { slug: 'georgette-kurtas', name: 'Georgette Kurtas', description: 'Fluid viscose georgette draped with intricate tonal embroidery.', sort_order: 3 },
     { slug: 'chanderi-silk-kurtas', name: 'Chanderi Silk Kurtas', description: 'Handloom Chanderi silk with delicate zari and Chikankari accents.', sort_order: 4 }
@@ -596,7 +596,7 @@ export async function up(k) {
           slug,
           name: rep.name,
           category_id: categoryId,
-          category: rep.category || 'Chicken Curry Kurtas',
+          category: rep.category && rep.category !== 'Chicken Curry Kurtas' ? rep.category : 'Kurtas',
           description: rep.description,
           fabric: rep.metal || 'Pure Mulmul Cotton',
           pattern: 'Handcrafted Lucknowi Chikankari',

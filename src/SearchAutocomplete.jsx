@@ -280,8 +280,8 @@ export function SearchAutocomplete({ onClose, initialQuery = '' }) {
             aria-autocomplete="list"
             aria-controls="search-autocomplete-listbox"
             aria-activedescendant={activeDescendantId}
-            aria-label="Search jewellery and coins"
-            placeholder="Find rings, earrings, coins, pearls, bracelets…"
+            aria-label="Search jewelry, coins, and kurtas"
+            placeholder="Search jewelry, coins, kurtas, rings, earrings…"
             value={query}
             onChange={e => {
               setQuery(e.target.value);
@@ -462,16 +462,19 @@ export function SearchAutocomplete({ onClose, initialQuery = '' }) {
                   {data.products && data.products.length > 0 && (
                     <div className="search-section" style={{ marginTop: data.suggestions?.length ? '18px' : '0' }}>
                       <span className="search-section-title">
-                        Products ({data.products.length})
+                        Matching Pieces ({data.products.length})
                       </span>
                       <div className="search-products-list">
                         {data.products.map(p => {
                           const idx = selectableItems.findIndex(i => i.type === 'product' && i.product?.sku === p.sku);
                           const isSelected = activeIndex === idx;
                           const thumbUrl = listingThumbnail(p);
-                          const isCoin = p.is_coin;
+                          const isCoin = p.is_coin || p.kind === 'coin';
+                          const isKurta = p.is_kurta || p.kind === 'kurta' || p.category?.includes('Kurta');
                           const specs = isCoin
                             ? `${p.weight_g}g · ${p.purity} ${p.metal} Coin`
+                            : isKurta
+                            ? `${p.metal || 'Mulmul Cotton'} · ${p.size || 'XS–XXXL'}`
                             : `${p.metal} ${p.purity} · ${p.category}`;
 
                           return (

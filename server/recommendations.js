@@ -235,7 +235,7 @@ export async function getProductRecommendations(k = db, targetSlugOrCode, option
   else if (currentCategory === 'Rings') complementaryCategories = ['Bracelets', 'Earrings', 'Necklaces'];
   else if (currentCategory === 'Bracelets' || currentCategory === 'Bangles and Kada') complementaryCategories = ['Necklaces', 'Rings', 'Earrings'];
   else if (currentCategory === 'Jewellery Sets') complementaryCategories = ['Rings', 'Bangles and Kada', 'Anklets and Payal'];
-  else if (product.is_kurta) complementaryCategories = ['Chicken Curry Kurtas'];
+  else if (product.is_kurta) complementaryCategories = ['Kurtas', 'Kurta', 'Chicken Curry Kurtas'];
   else complementaryCategories = ['Earrings', 'Necklaces', 'Rings', 'Bracelets'];
 
   const completeLookPool = uniqueItems.filter(p => {

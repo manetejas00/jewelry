@@ -90,7 +90,7 @@ export function KurtasAdmin({ readonly, ProductAngleManager, ImportPanel }) {
       setKurtas(data || []);
       setError('');
     } catch (err) {
-      setError(err.message || 'Could not fetch Chicken Curry Kurtas');
+      setError(err.message || 'Could not fetch Kurtas');
     } finally {
       setLoading(false);
     }
@@ -171,7 +171,7 @@ export function KurtasAdmin({ readonly, ProductAngleManager, ImportPanel }) {
     try {
       if (isCreating) {
         await api('/admin/kurtas', formData);
-        setSuccess(`Chicken Curry Kurta "${formData.name}" created successfully with all 7 sizes (XS–XXXL).`);
+        setSuccess(`Kurta "${formData.name}" created successfully with all 7 sizes (XS–XXXL).`);
       } else {
         await api(`/admin/kurtas/${encodeURIComponent(editingKurta.product_code)}`, formData);
         setSuccess(`Kurta "${formData.name}" updated successfully.`);
@@ -218,10 +218,10 @@ export function KurtasAdmin({ readonly, ProductAngleManager, ImportPanel }) {
       <div className="panel-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px', marginBottom: '20px' }}>
         <div>
           <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Sparkles size={18} color="var(--gold)" /> Chicken Curry Kurtas ({kurtas.length} styles)
+            <Sparkles size={18} color="var(--gold)" /> Kurtas ({kurtas.length} styles)
           </h3>
           <span className="small muted">
-            Independent Ethnic Wear Module · Reusing Core Product UI & XS–XXXL Sizing
+            Independent Ethnic Wear Module · Dedicated Kurta Studio & XS–XXXL Sizing
           </span>
         </div>
 
@@ -426,7 +426,7 @@ export function KurtasAdmin({ readonly, ProductAngleManager, ImportPanel }) {
               <tr>
                 <td colSpan="7" style={{ textAlign: 'center', padding: '36px' }}>
                   <p style={{ margin: 0, color: 'var(--muted)' }}>
-                    No Chicken Curry Kurtas found matching your filter criteria.
+                    No Kurtas found matching your filter criteria.
                   </p>
                 </td>
               </tr>
@@ -440,7 +440,7 @@ export function KurtasAdmin({ readonly, ProductAngleManager, ImportPanel }) {
       {/* Modal: Create or Edit */}
       {(isCreating || editingKurta) && (
         <KurtaAdminModal
-          title={isCreating ? 'Create New Chicken Curry Kurta' : `Edit: ${editingKurta.name}`}
+          title={isCreating ? 'Create New Kurta' : `Edit: ${editingKurta.name}`}
           onClose={() => { setIsCreating(false); setEditingKurta(null); }}
         >
           <form onSubmit={handleSubmit}>
@@ -456,7 +456,7 @@ export function KurtasAdmin({ readonly, ProductAngleManager, ImportPanel }) {
               </label>
 
               <label>
-                Product Code / Identifier *
+                Kurta Code / Identifier *
                 <input
                   required
                   disabled={!isCreating}

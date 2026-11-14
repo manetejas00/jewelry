@@ -255,7 +255,7 @@ Fetches a single bullion coin with assay specifications, live metal pricing, tam
 Lists handcrafted Lucknowi Chikankari kurtas with apparel filter attributes.
 
 - **Query Parameters**:
-  - `category` *(optional)*: `chicken-curry-kurtas`, `cotton-chikankari`, `georgette-kurtas`, `chanderi-silk-kurtas`.
+  - `category` *(optional)*: `kurtas`, `cotton-chikankari`, `georgette-kurtas`, `chanderi-silk-kurtas`.
   - `fabric` *(optional)*: `Mulmul Cotton`, `Viscose Georgette`, `Chanderi Silk`.
   - `color` *(optional)*: Color name (e.g., `Ivory White`, `Pastel Peach`, `Powder Blue`, `Emerald Green`).
   - `size` *(optional)*: `XS (34)`, `S (36)`, `M (38)`, `L (40)`, `XL (42)`, `XXL (44)`, `XXXL (46)`.
@@ -270,7 +270,7 @@ Lists handcrafted Lucknowi Chikankari kurtas with apparel filter attributes.
       "product_code": "CK-001",
       "slug": "heritage-mulmul-chikankari-kurta",
       "name": "Heritage Mulmul Chikankari Kurta",
-      "category": "Chicken Curry Kurtas",
+      "category": "Kurtas",
       "fabric": "Pure Mulmul Cotton",
       "pattern": "Handcrafted Lucknowi Chikankari",
       "fit": "Straight Fit",

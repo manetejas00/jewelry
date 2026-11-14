@@ -406,7 +406,7 @@ export function ReviewsAdmin({ readonly = false, refreshParent = null }) {
                 <span className="sr-only">Select</span>
               </th>
               <th>Customer</th>
-              <th>Product</th>
+              <th>Item / Piece</th>
               <th>Rating</th>
               <th>Review Headline & Comment</th>
               <th>Date</th>
@@ -856,7 +856,7 @@ export function ReviewsAdmin({ readonly = false, refreshParent = null }) {
             <div className="modal-body">
               <p>
                 Are you sure you want to permanently delete review <strong>#{deleteId}</strong>?
-                This action cannot be undone and will recalculate product rating statistics immediately.
+                This action cannot be undone and will recalculate rating statistics immediately.
               </p>
             </div>
             <div className="modal-footer">

@@ -117,7 +117,7 @@ export function CommonPLP({
           <label>
             Sort by{' '}
             <select
-              aria-label="Sort products"
+              aria-label={`Sort ${itemLabel || 'pieces'}`}
               value={sortBy}
               onChange={e => onSortChange && onSortChange(e.target.value)}
             >

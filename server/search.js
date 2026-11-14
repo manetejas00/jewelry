@@ -126,7 +126,7 @@ function expandTokens(rawQuery) {
 }
 
 const CATEGORY_MAP = [
-  { name: 'Chicken Curry Kurtas', url: '/kurtas', keywords: ['kurta', 'kurtas', 'kurti', 'chikankari', 'chickencurry', 'chicken curry', 'lucknowi', 'mulmul', 'georgette', 'chanderi', 'ethnic'] },
+  { name: 'Kurtas', url: '/kurtas', keywords: ['kurta', 'kurtas', 'kurti', 'chikankari', 'chickencurry', 'chicken curry', 'lucknowi', 'mulmul', 'georgette', 'chanderi', 'ethnic'] },
   { name: 'The Pearl Edit', url: '/collections/pearls', keywords: ['pearl', 'pearls'] },
   { name: 'All Jewellery', url: '/collections/all', keywords: ['jewellery', 'jewelry'] },
   { name: 'Gold & Silver Coins', url: '/coins', keywords: ['coin', 'coins', 'bullion'] },
@@ -139,7 +139,7 @@ const CATEGORY_MAP = [
 ];
 
 const POPULAR_SEARCHES = [
-  'Chicken Curry Kurtas',
+  'Kurtas',
   'Chikankari Kurta',
   'Noor-e-Awadh Ivory Kurta',
   'Pearl Ring',

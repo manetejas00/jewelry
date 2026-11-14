@@ -28,7 +28,7 @@ export class KurtaEntity {
     this.slug = data.slug;
     this.name = data.name;
     this.category_id = data.category_id || null;
-    this.category = data.category || 'Chicken Curry Kurtas';
+    this.category = data.category || 'Kurtas';
     this.description = data.description || '';
     this.fabric = data.fabric || 'Pure Mulmul Cotton';
     this.pattern = data.pattern || 'Chikankari Hand Embroidery';

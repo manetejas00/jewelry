@@ -58,7 +58,7 @@ CREATE TABLE kurtas (
   slug VARCHAR(150) NOT NULL UNIQUE,
   name VARCHAR(255) NOT NULL,
   category_id INTEGER REFERENCES kurta_categories(id) ON DELETE SET NULL,
-  category VARCHAR(100) DEFAULT 'Chicken Curry Kurtas',
+  category VARCHAR(100) DEFAULT 'Kurtas',
   description TEXT,
   fabric VARCHAR(100),
   pattern VARCHAR(100),

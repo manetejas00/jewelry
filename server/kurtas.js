@@ -14,6 +14,8 @@ export async function listKurtas(k, options = {}) {
   const [products, rates, rules, images, offers, ratings] = await Promise.all([
     k('products').where(function() {
       this.where({ is_kurta: true })
+        .orWhere({ category: 'Kurtas' })
+        .orWhere({ category: 'Kurta' })
         .orWhere({ category: 'Chicken Curry Kurtas' })
         .orWhere('category', 'like', '%Kurta%');
     }).where({ status: 'published' }).orderBy('id', 'asc'),
@@ -219,6 +221,8 @@ export async function kurtaBySlug(k, slug, options = {}) {
 export async function adminListKurtas(k) {
   const products = await k('products').where(function() {
     this.where({ is_kurta: true })
+      .orWhere({ category: 'Kurtas' })
+      .orWhere({ category: 'Kurta' })
       .orWhere({ category: 'Chicken Curry Kurtas' })
       .orWhere('category', 'like', '%Kurta%');
   }).orderBy('product_code').orderBy('id');
@@ -332,7 +336,7 @@ export async function createKurta(k, payload) {
         sku: sizeSku,
         slug: sizeSlug,
         name: String(name).trim(),
-        category: 'Chicken Curry Kurtas',
+        category: 'Kurtas',
         is_kurta: true,
         description: description ? String(description).trim() : null,
         metal: String(fabric).trim(),

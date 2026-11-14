@@ -9,7 +9,16 @@ fs.mkdirSync('private', {recursive:true, mode:0o700});
 export const preview = process.env.PREVIEW_MODE === 'true' || (process.env.PREVIEW_MODE !== 'false' && process.env.NODE_ENV !== 'production');
 export function createDb(filename) {
  const mysql = !filename && process.env.DB_CLIENT === 'mysql2';
- const enableForeignKeys = (conn, done) => { try { conn.pragma('foreign_keys = ON'); done(); } catch (error) { done(error); } };
+ const enableForeignKeys = (conn, done) => {
+   try {
+     conn.pragma('foreign_keys = ON');
+     conn.pragma('busy_timeout = 5000');
+     conn.pragma('journal_mode = WAL');
+     done();
+   } catch (error) {
+     done(error);
+   }
+ };
  return knex(mysql ? {client:'mysql2', connection:{host:process.env.DB_HOST,port:Number(process.env.DB_PORT||3306),user:process.env.DB_USER,password:process.env.DB_PASSWORD,database:process.env.DB_NAME,timezone:'Z'},pool:{min:0,max:10}} : {client:'better-sqlite3',connection:{filename:filename || process.env.DB_FILENAME || 'private/store.sqlite'},useNullAsDefault:true,pool:{min:1,max:1,afterCreate:enableForeignKeys}});
 }
 export const db = createDb();

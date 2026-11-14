@@ -100,7 +100,11 @@ export function CommonPDP({
           <p className="caption">
             {images.length > 1
               ? 'MULTI-ANGLE PHOTOGRAPHY · PREVIEW CATALOGUE'
-              : 'PRODUCT PHOTOGRAPHY · PREVIEW CATALOGUE'}
+              : isCoin
+              ? 'MINT BULLION PHOTOGRAPHY · AUTHENTIC SPECIMEN'
+              : isKurta
+              ? 'LUCKNOWI CHIKANKARI PHOTOGRAPHY · AUTHENTIC SPECIMEN'
+              : 'FINE JEWELRY PHOTOGRAPHY · AUTHENTIC SPECIMEN'}
           </p>
         </ProductMagicZoom>
 
@@ -108,7 +112,7 @@ export function CommonPDP({
         <div className="detail-copy">
           <span className="eyebrow">
             {isKurta
-              ? 'CHICKEN CURRY KURTAS · HERITAGE NEEDLECRAFT'
+              ? 'KURTAS · HERITAGE NEEDLECRAFT'
               : isCoin
               ? 'THE COIN COLLECTION · PURE BULLION'
               : 'THE VEYORA COLLECTION'}
@@ -270,7 +274,7 @@ export function CommonPDP({
               <select
                 id="coin-weight"
                 value={p.sku}
-                onChange={e => navigate('/coins/product/' + encodeURIComponent(e.target.value))}
+                onChange={e => navigate('/coin/' + encodeURIComponent(e.target.value))}
               >
                 {variants.map(c => (
                   <option key={c.sku} value={c.sku}>

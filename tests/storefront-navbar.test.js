@@ -9,7 +9,7 @@ test('STORE_NAV_ITEMS defines all 8 shopping navigation menu items with proper U
   assert.match(mainJsx, /export const STORE_NAV_ITEMS\s*=\s*\[/, 'main.jsx must export STORE_NAV_ITEMS');
 
   const expectedNav = [
-    { label: 'Chicken Curry Kurtas', href: '/kurtas' },
+    { label: 'Kurtas', href: '/kurtas' },
     { label: 'All jewellery', href: '/collections/all' },
     { label: 'The Pearl Edit', href: '/collections/pearls' },
     { label: 'Coins', href: '/coins' },
@@ -52,7 +52,7 @@ test('isStoreNavActive accurately resolves active state across all routes and ch
     { slug: 'atelier-pearl-collar', product_code: 'atelier-collar', category: 'Necklaces' },
     { slug: 'eclipse-pearl-ring', product_code: 'eclipse-ring', category: 'Rings' },
     { slug: 'nocturne-cuff', product_code: 'nocturne-cuff', category: 'Bracelets' },
-    { slug: 'royal-heritage-kurta', product_code: 'CCK-01', category: 'Chicken Curry Kurtas', is_kurta: true },
+    { slug: 'royal-heritage-kurta', product_code: 'CCK-01', category: 'Kurtas', is_kurta: true },
     { sku: 'COIN-AU-1G', is_coin: true, category: 'Coins' }
   ];
 
@@ -85,10 +85,10 @@ test('isStoreNavActive accurately resolves active state across all routes and ch
 
   // 3. Kurtas and nested kurta detail pages
   const kurtasRoot = getActiveItem('/kurtas');
-  assert.equal(kurtasRoot?.label, 'Chicken Curry Kurtas');
+  assert.equal(kurtasRoot?.label, 'Kurtas');
 
   const kurtaDetail = getActiveItem('/kurtas/lucknowi-ivory-chikankari-kurta');
-  assert.equal(kurtaDetail?.label, 'Chicken Curry Kurtas');
+  assert.equal(kurtaDetail?.label, 'Kurtas');
 
   // 4. Coins and subcategories / product pages
   const coinsRoot = getActiveItem('/coins');

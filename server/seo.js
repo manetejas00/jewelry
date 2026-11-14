@@ -5,11 +5,11 @@ const origin=()=>new URL(process.env.APP_URL||'http://localhost:3000').origin;
 
 export async function pageMetadata(k,pathname){
  const brand=process.env.BRAND_NAME||'Veyora Jewels';
- let title=brand+' — Objects of quiet beauty',description='Discover fine jewellery and handcrafted Lucknowi Chicken Curry kurtas from '+brand+'.',status=200,indexable=true,image,product;
+ let title=brand+' — Objects of quiet beauty',description='Discover fine jewellery and handcrafted Lucknowi kurtas from '+brand+'.',status=200,indexable=true,image,product;
  if(pathname.startsWith('/products/'))product=await pricedProductBySlug(k,decodeURIComponent(pathname.slice(10)));
  else if(pathname.startsWith('/kurtas/'))product=await pricedProductBySlug(k,decodeURIComponent(pathname.slice(8)));
  else if(pathname.startsWith('/coins/product/'))product=await pricedCoinBySku(k,decodeURIComponent(pathname.slice(15)));
- const labels={'/':'','/collections/all':'All jewellery','/collections/pearls':'The Pearl Edit','/collections/rings':'Rings','/collections/earrings':'Earrings','/collections/necklaces':'Necklaces','/collections/bracelets':'Bracelets','/kurtas':'Chicken Curry Kurtas for Women','/coins':'Gold & silver coins','/coins/gold':'Gold coins','/coins/silver':'Silver coins','/information/shipping':'Shipping information','/information/care':'Jewellery care','/information/returns':'Returns information','/information/contact':'Contact','/information/about':'About Veyora','/information/privacy':'Privacy policy','/information/terms':'Terms and conditions'};
+ const labels={'/':'','/collections/all':'All jewellery','/collections/pearls':'The Pearl Edit','/collections/rings':'Rings','/collections/earrings':'Earrings','/collections/necklaces':'Necklaces','/collections/bracelets':'Bracelets','/kurtas':'Kurtas for Women','/coins':'Gold & silver coins','/coins/gold':'Gold coins','/coins/silver':'Silver coins','/information/shipping':'Shipping information','/information/care':'Jewellery care','/information/returns':'Returns information','/information/contact':'Contact','/information/about':'About Veyora','/information/privacy':'Privacy policy','/information/terms':'Terms and conditions'};
  if(product){title=product.seo_title||product.name+' | '+brand;description=product.meta_description||String(product.description||product.name).slice(0,160);image=product.image||product.thumbnail;}
  else if(pathname==='/collections/saved'){title='Your saved pieces | '+brand;indexable=false;}
  else if(pathname in labels){if(labels[pathname])title=labels[pathname]+' | '+brand;}
@@ -63,7 +63,7 @@ export function registerSeo(app,k,{preview,route}){
    const products=await k('products').where({status:'published'}).select('slug','updated_at','is_kurta','category');
    const coins=await k.schema.hasTable('coins')?await k('coins').where({status:'published'}).select('sku','updated_at'):[];
    const cats=await k.schema.hasTable('categories')?await k('categories').where({status:'active'}).select('slug','updated_at'):[];
-   const kurtas=products.filter(p=>p.is_kurta||p.category==='Chicken Curry Kurtas');
+   const kurtas=products.filter(p=>p.is_kurta||p.category==='Kurtas'||p.category==='Kurta'||p.category==='Chicken Curry Kurtas');
    const dated=[
      ['/',''],
      ['/collections/all',''],

@@ -11,8 +11,8 @@ test('adminRoutes defines dedicated routes for all 15 sidebar menu items', () =>
   const expectedRoutes = [
     { label: 'Dashboard', path: '/admin/dashboard' },
     { label: 'Categories', path: '/admin/categories' },
-    { label: 'Products', path: '/admin/products' },
-    { label: 'Chicken Curry Kurtas', path: '/admin/chicken-curry-kurtas' },
+    { label: 'Jewelry', path: '/admin/jewelry' },
+    { label: 'Kurtas', path: '/admin/kurtas' },
     { label: 'Coins', path: '/admin/coins' },
     { label: 'Offers', path: '/admin/offers' },
     { label: 'Reviews', path: '/admin/reviews' },
@@ -71,8 +71,8 @@ test('matchAdminRoute resolves exact, nested, and default admin routes correctly
   // 2. Exact matches
   assert.equal(matchAdminRoute('/admin/dashboard').key, 'dashboard');
   assert.equal(matchAdminRoute('/admin/categories').key, 'categories');
-  assert.equal(matchAdminRoute('/admin/products').key, 'products');
-  assert.equal(matchAdminRoute('/admin/chicken-curry-kurtas').key, 'kurtas');
+  assert.equal(matchAdminRoute('/admin/jewelry').key, 'jewelry');
+  assert.equal(matchAdminRoute('/admin/kurtas').key, 'kurtas');
   assert.equal(matchAdminRoute('/admin/coins').key, 'coins');
   assert.equal(matchAdminRoute('/admin/offers').key, 'offers');
   assert.equal(matchAdminRoute('/admin/reviews').key, 'reviews');
@@ -86,14 +86,18 @@ test('matchAdminRoute resolves exact, nested, and default admin routes correctly
   assert.equal(matchAdminRoute('/admin/settings').key, 'settings');
 
   // 3. Nested routes keep parent menu active
-  assert.equal(matchAdminRoute('/admin/products/123/edit').key, 'products');
+  assert.equal(matchAdminRoute('/admin/jewelry/123/edit').key, 'jewelry');
   assert.equal(matchAdminRoute('/admin/orders/ORD-98765').key, 'orders');
-  assert.equal(matchAdminRoute('/admin/chicken-curry-kurtas/cck-001').key, 'kurtas');
+  assert.equal(matchAdminRoute('/admin/kurtas/cck-001').key, 'kurtas');
   assert.equal(matchAdminRoute('/admin/categories/5/subcategories').key, 'categories');
 
   // 4. Aliases
-  assert.equal(matchAdminRoute('/admin/kurtas').key, 'kurtas');
-  assert.equal(matchAdminRoute('/admin/kurtas/cck-001').key, 'kurtas');
+  assert.equal(matchAdminRoute('/admin/products').key, 'jewelry');
+  assert.equal(matchAdminRoute('/admin/products/123/edit').key, 'jewelry');
+  assert.equal(matchAdminRoute('/admin/chicken-curry-kurtas').key, 'kurtas');
+  assert.equal(matchAdminRoute('/admin/chicken-curry-kurtas/cck-001').key, 'kurtas');
+  assert.equal(matchAdminRoute('/admin/kurta').key, 'kurtas');
+  assert.equal(matchAdminRoute('/admin/coin').key, 'coins');
   assert.equal(matchAdminRoute('/admin/chatbot').key, 'ai-chatbot');
 });
 

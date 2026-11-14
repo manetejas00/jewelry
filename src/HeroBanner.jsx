@@ -74,13 +74,13 @@ const slides = [
   {
     type: 'image',
     src: '/assets/banners/hero-kurta-1.webp',
-    eyebrow: 'CHICKEN CURRY KURTAS · CHAPTER 05',
+    eyebrow: 'LUCKNOWI KURTAS · CHAPTER 05',
     title: 'Handcrafted grace.',
     lead: 'Timeless ',
     emphasis: 'heritage.',
     copy: <>Authentic Lucknowi Chikankari on pure mulmul cotton.<br />Delicate shadow-work and tonal floral jaal.</>,
     to: '/kurtas',
-    cta: 'Shop Chicken Curry Kurtas',
+    cta: 'Shop Kurtas',
     alt: 'Lucknowi Ivory Chikankari Cotton Kurta',
     mobilePosition: 'center top'
   },

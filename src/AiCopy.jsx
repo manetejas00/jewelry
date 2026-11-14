@@ -186,7 +186,7 @@ export default function AiCopy({products, readonly, onPublished}) {
           {skills.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
         </select>
       </label>
-      <label>Product
+      <label>Item / Piece
         <select value={sku} onChange={e => setSku(e.target.value)} disabled={busy || !products.length}>
           {products.map(item => <option key={item.sku} value={item.sku}>{item.name} · {item.sku}{item.slug ? ` · ${item.slug}` : ''}</option>)}
         </select>
@@ -252,7 +252,7 @@ export default function AiCopy({products, readonly, onPublished}) {
       </div>}
     </div>
     <div className="table-wrap"><table>
-      <thead><tr><th>Select</th><th>Draft</th><th>Product</th><th>Slug</th><th>Skill</th><th>Status</th></tr></thead>
+      <thead><tr><th>Select</th><th>Draft</th><th>Item / Piece</th><th>Slug</th><th>Skill</th><th>Status</th></tr></thead>
       <tbody>{drafts.map(draft => {
         const pending = draft.status === 'pending';
         const slug = products.find(item => item.sku === draft.sku)?.slug || '';

@@ -2,11 +2,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { db, now } from '../server/db.js';
 import { KURTA_SIZES } from '../src/kurta-constants.js';
-import { KURTA_STYLES } from '../scripts/seed-expanded-kurtas.js';
+import { MSK_KURTA_STYLES as KURTA_STYLES } from '../scripts/msk-kurtas-data.js';
 import { KurtaCategorySeeder } from './KurtaCategorySeeder.js';
 import { KurtaVariantSeeder } from './KurtaVariantSeeder.js';
 
-export const kurtaSupplier = 'Lucknow Heritage Maison';
+export const kurtaSupplier = 'MSK Heritage Wholesale';
 
 export async function KurtaSeeder(k = db) {
   if (!await k.schema.hasTable('kurtas')) {
@@ -50,15 +50,9 @@ export async function KurtaSeeder(k = db) {
       const colorsList = style.colors.map(c => ({ name: c.name, code: c.code, hex: c.hex }));
 
       // Sku generation logic matching system
-      const skuPrefix = code.replace(/[^a-z0-9]/gi, '').toUpperCase().slice(0, 8);
-      let repSku;
-      if (code === 'lucknowi-ivory-chikankari-cotton-kurta') repSku = 'CCK-IVORY-XS';
-      else if (code === 'rose-blush-georgette-chikankari-kurta') repSku = 'CCK-BLUSH-XS';
-      else if (code === 'sage-green-chanderi-chikankari-kurta') repSku = 'CCK-SAGE-XS';
-      else if (code === 'sky-blue-mulmul-chikankari-kurta') repSku = 'CCK-SKY-XS';
-      else repSku = `CCK-${skuPrefix}-XS`;
+      let repSku = style.sku ? `CCK-${style.sku}-XS` : `CCK-${code.replace(/[^a-z0-9]/gi, '').toUpperCase().slice(0, 8)}-XS`;
 
-      const priceNum = Number(style.price || 3299);
+      const priceNum = Number(style.price || 1299);
 
       const kurtaPayload = {
         sku: repSku,
@@ -66,14 +60,14 @@ export async function KurtaSeeder(k = db) {
         slug: code,
         name: style.name,
         category_id: catId,
-        category: 'Chicken Curry Kurtas',
+        category: style.category || 'Chicken Curry Kurtas',
         description: style.description,
         fabric: style.fabric,
-        pattern: 'Handcrafted Lucknowi Chikankari',
-        fit: 'Straight Fit',
-        sleeve_type: 'Full Sleeves',
-        neck_type: 'Mandarin Collar with Keyhole Placket',
-        occasion: 'Festive, Formal & Daily Casual',
+        pattern: style.craftsmanship || 'Handcrafted Lucknowi Chikankari',
+        fit: style.fit || 'Straight Fit',
+        sleeve_type: style.sleeve_type || 'Three-Quarter Sleeves',
+        neck_type: style.neck_type || 'Mandarin / Round Notch',
+        occasion: style.occasion || 'Festive / Traditional',
         gender: 'Women',
         available_sizes: JSON.stringify(sizesList),
         available_colors: JSON.stringify(colorsList),
@@ -81,7 +75,7 @@ export async function KurtaSeeder(k = db) {
         price: priceNum,
         sale_price: priceNum,
         fixed_price: priceNum,
-        stock: 350,
+        stock: 140,
         status: 'published',
         supplier: kurtaSupplier,
         image: repHero,
@@ -135,52 +129,9 @@ export async function KurtaSeeder(k = db) {
         const skuColorCode = col.code.replace(/[^a-z0-9]/gi, '').toUpperCase().slice(0, 3) || 'CLR';
 
         for (const sizeInfo of KURTA_SIZES) {
-          let variantSku;
-          let variantSlug;
-
-          if (code === 'lucknowi-ivory-chikankari-cotton-kurta') {
-            if (isDefaultColor) {
-              variantSku = `CCK-IVORY-${sizeInfo.code}`;
-              variantSlug = sizeInfo.code === 'XS' ? code : `${code}-${sizeInfo.code.toLowerCase()}`;
-            } else {
-              variantSku = `CCK-IVORY-${skuColorCode}-${sizeInfo.code}`;
-              variantSlug = `${code}-${col.code}-${sizeInfo.code.toLowerCase()}`;
-            }
-          } else if (code === 'rose-blush-georgette-chikankari-kurta') {
-            if (isDefaultColor) {
-              variantSku = `CCK-BLUSH-${sizeInfo.code}`;
-              variantSlug = sizeInfo.code === 'XS' ? code : `${code}-${sizeInfo.code.toLowerCase()}`;
-            } else {
-              variantSku = `CCK-BLUSH-${skuColorCode}-${sizeInfo.code}`;
-              variantSlug = `${code}-${col.code}-${sizeInfo.code.toLowerCase()}`;
-            }
-          } else if (code === 'sage-green-chanderi-chikankari-kurta') {
-            if (isDefaultColor) {
-              variantSku = `CCK-SAGE-${sizeInfo.code}`;
-              variantSlug = sizeInfo.code === 'XS' ? code : `${code}-${sizeInfo.code.toLowerCase()}`;
-            } else {
-              variantSku = `CCK-SAGE-${skuColorCode}-${sizeInfo.code}`;
-              variantSlug = `${code}-${col.code}-${sizeInfo.code.toLowerCase()}`;
-            }
-          } else if (code === 'sky-blue-mulmul-chikankari-kurta') {
-            if (isDefaultColor) {
-              variantSku = `CCK-SKY-${sizeInfo.code}`;
-              variantSlug = sizeInfo.code === 'XS' ? code : `${code}-${sizeInfo.code.toLowerCase()}`;
-            } else {
-              variantSku = `CCK-SKY-${skuColorCode}-${sizeInfo.code}`;
-              variantSlug = `${code}-${col.code}-${sizeInfo.code.toLowerCase()}`;
-            }
-          } else {
-            if (isDefaultColor) {
-              variantSku = `CCK-${skuPrefix}-${sizeInfo.code}`;
-              variantSlug = sizeInfo.code === 'XS' ? code : `${code}-${sizeInfo.code.toLowerCase()}`;
-            } else {
-              variantSku = `CCK-${skuPrefix}-${skuColorCode}-${sizeInfo.code}`;
-              variantSlug = `${code}-${col.code}-${sizeInfo.code.toLowerCase()}`;
-            }
-          }
-
-          const baseStock = 8 + ((sIdx * 3 + cIdx * 7 + sizeInfo.code.charCodeAt(0)) % 14);
+          const variantSku = style.sku ? `CCK-${style.sku}-${sizeInfo.code}` : `CCK-${code.replace(/[^a-z0-9]/gi, '').toUpperCase().slice(0, 8)}-${sizeInfo.code}`;
+          const variantSlug = sizeInfo.code === 'XS' ? code : `${code}-${sizeInfo.code.toLowerCase()}`;
+          const baseStock = 20;
 
           styleVariants.push({
             product_code: code,
@@ -197,6 +148,42 @@ export async function KurtaSeeder(k = db) {
             image: colorHeroUrl,
             status: 'published'
           });
+
+          // Sync with storefront products table
+          const existingProd = await t('products').where({ sku: variantSku }).first();
+          const prodData = {
+            supplier: kurtaSupplier,
+            product_code: code,
+            sku: variantSku,
+            slug: variantSlug,
+            name: style.name,
+            category: 'Chicken Curry Kurtas',
+            is_kurta: 1,
+            description: style.description,
+            metal: style.fabric,
+            purity: style.craftsmanship || 'Handcrafted Lucknowi Chikankari',
+            size: sizeInfo.label,
+            finish: 'Hand Embroidered',
+            color: col.name,
+            color_code: col.code,
+            hex_color: col.hex,
+            image: colorHeroUrl,
+            pricing_mode: 'FIXED',
+            fixed_price: String(priceNum.toFixed(2)),
+            making_flat: '0.00',
+            making_percent: '0.00',
+            stone_charge: '0.00',
+            other_charge: '0.00',
+            stock: baseStock,
+            status: 'published',
+            source_timestamp: timestamp,
+            updated_at: timestamp
+          };
+          if (existingProd) {
+            await t('products').where({ id: existingProd.id }).update(prodData);
+          } else {
+            await t('products').insert(prodData);
+          }
         }
 
         // 12 Angle Images per color variant
@@ -225,7 +212,7 @@ export async function KurtaSeeder(k = db) {
       await KurtaVariantSeeder(t, kurtaId, styleVariants);
       totalVariants += styleVariants.length;
 
-      // Seed images
+      // Seed images in kurta_images and product_images
       if (await t.schema.hasTable('kurta_images')) {
         for (const img of imageRows) {
           const existingImg = await t('kurta_images').where({
@@ -234,6 +221,28 @@ export async function KurtaSeeder(k = db) {
           }).first();
           if (!existingImg) {
             await t('kurta_images').insert(img);
+          }
+        }
+      }
+
+      if (await t.schema.hasTable('product_images')) {
+        for (const img of imageRows) {
+          const existingPImg = await t('product_images').where({
+            product_code: code,
+            url: img.url
+          }).first();
+          if (!existingPImg) {
+            await t('product_images').insert({
+              product_code: code,
+              sku: null,
+              role: img.role,
+              url: img.url,
+              alt_text: img.alt_text,
+              sort_order: img.sort_order,
+              color: img.color,
+              created_at: timestamp,
+              updated_at: timestamp
+            });
           }
         }
       }

@@ -223,7 +223,7 @@ export async function seedExpandedKurtas() {
           sku: variantSku,
           slug: variantSlug,
           name: variantName,
-          category: 'Chicken Curry Kurtas',
+          category: 'Kurtas',
           is_kurta: 1,
           description: style.description,
           metal: style.fabric,

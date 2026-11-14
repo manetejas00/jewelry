@@ -52,7 +52,7 @@ export function KurtaSizeChartModal({ onClose }) {
   const [unit, setUnit] = useState('inches');
 
   return (
-    <KurtaModal title="Chicken Curry Kurta Sizing Chart" onClose={onClose}>
+    <KurtaModal title="Kurta Sizing Chart" onClose={onClose}>
       <p style={{ margin: '0 0 12px', color: 'var(--muted)', fontSize: '14px', lineHeight: 1.6 }}>
         Our authentic Lucknowi Chikankari kurtas feature a traditional straight cut with side slits, tailored from pre-washed breathable mulmul cotton, fluid georgette, and handloom Chanderi silk.
       </p>
@@ -174,7 +174,7 @@ export function KurtasPage({ Layout, ProductCard }) {
   const [visible, setVisible] = useState(24);
 
   useEffect(() => {
-    document.title = 'Chicken Curry Kurtas | Authentic Lucknowi Chikankari | Veyora';
+    document.title = 'Kurtas | Authentic Lucknowi Chikankari | Veyora';
     let active = true;
     setLoading(true);
     api('/kurtas')
@@ -186,7 +186,7 @@ export function KurtasPage({ Layout, ProductCard }) {
       })
       .catch(() => {
         if (active) {
-          const fallback = products.filter(p => p.is_kurta || p.category === 'Chicken Curry Kurtas');
+          const fallback = products.filter(p => p.is_kurta || p.category === 'Kurtas' || p.category === 'Kurta' || p.category === 'Chicken Curry Kurtas');
           setKurtas(fallback);
           setLoading(false);
         }
@@ -255,7 +255,7 @@ export function KurtasPage({ Layout, ProductCard }) {
   };
 
   const tabs = [
-    { label: 'Chicken Curry Kurtas', href: '/kurtas', active: true },
+    { label: 'Kurtas', href: '/kurtas', active: true },
     { label: 'All jewellery', href: '/collections/all', active: false },
     { label: 'The Pearl Edit', href: '/collections/pearls', active: false },
     { label: 'Earrings', href: '/collections/earrings', active: false },
@@ -299,7 +299,7 @@ export function KurtasPage({ Layout, ProductCard }) {
     <Layout>
       <CommonPLP
         eyebrow="THE VEYORA COLLECTIONS"
-        title="Chicken Curry Kurtas"
+        title="Kurtas"
         description="Exquisite hand-embroidered Lucknowi Chikankari needlecraft in pure mulmul cotton, fluid georgette, and shimmering Chanderi silk."
         tabs={tabs}
         priceBrackets={kurtaPriceBrackets}
@@ -395,7 +395,7 @@ export function KurtaDetailPage({ Layout, StructuredProduct, ProductCard }) {
   if (loading && !kurtaData) {
     return (
       <Layout>
-        <div className="empty">Finding your Chicken Curry Kurta…</div>
+        <div className="empty">Finding your Kurta…</div>
       </Layout>
     );
   }
@@ -406,7 +406,7 @@ export function KurtaDetailPage({ Layout, StructuredProduct, ProductCard }) {
         <div className="empty">
           <h1>Kurta not found</h1>
           <p>The piece you are looking for is unavailable.</p>
-          <Link to="/kurtas" className="button dark">Explore Chicken Curry Kurtas</Link>
+          <Link to="/kurtas" className="button dark">Explore Kurtas</Link>
         </div>
       </Layout>
     );
@@ -423,12 +423,12 @@ export function KurtaDetailPage({ Layout, StructuredProduct, ProductCard }) {
   ]);
 
   const relatedKurtas = products.filter(item =>
-    item.product_code !== p.product_code && (item.is_kurta || item.category === 'Chicken Curry Kurtas')
+    item.product_code !== p.product_code && (item.is_kurta || item.category === 'Kurtas' || item.category === 'Kurta' || item.category === 'Chicken Curry Kurtas')
   ).slice(0, 4);
 
   const breadcrumbs = [
     { label: 'Home', href: '/' },
-    { label: 'Chicken Curry Kurtas', href: '/kurtas' },
+    { label: 'Kurtas', href: '/kurtas' },
     { label: p.name }
   ];
 
