@@ -21,3 +21,6 @@ public/assets/products/*
 !public/assets/products/*kurta*/
 artifacts/
 scratch/
+
+# Raw supplier PDFs are retained locally and must not enter Git history.
+catalogue/Jewelry/
