@@ -1,5 +1,6 @@
 node_modules/
-dist/assets/products/
+dist/assets/products/*
+!dist/assets/products/*kurta*/
 dist/assets/products-100/
 dist/assets/coins/
 dist/assets/coin-art/
@@ -16,6 +17,7 @@ private/
 # Runtime-generated thumbnail cache
 public/uploads/thumbs/
 public/assets/coins/
-public/assets/products/
+public/assets/products/*
+!public/assets/products/*kurta*/
 artifacts/
 scratch/
