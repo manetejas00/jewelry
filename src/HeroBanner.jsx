@@ -166,7 +166,14 @@ export default function HeroBanner({ heroRef }) {
         gsap.fromTo(
           copyRef.current.children,
           { y: 14, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.7, stagger: 0.08, ease: 'power2.out' }
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.7,
+            stagger: 0.08,
+            ease: 'power2.out',
+            clearProps: 'opacity,transform'
+          }
         );
       }
     }, heroContainerRef);
@@ -333,7 +340,12 @@ export default function HeroBanner({ heroRef }) {
           <em>{currentSlide.emphasis}</em>
         </h1>
         <p>{currentSlide.copy}</p>
-        <Link className="button light" to={currentSlide.to}>
+        <Link
+          className="button light hero-cta-button"
+          to={currentSlide.to}
+          aria-label={`${currentSlide.cta} - ${currentSlide.title}`}
+          data-testid="hero-cta-button"
+        >
           {currentSlide.cta} <ArrowUpRight size={18} />
         </Link>
         <span className="hero-bottom">THE EXTRAORDINARY, IN THE EVERYDAY</span>

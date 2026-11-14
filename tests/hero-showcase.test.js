@@ -52,3 +52,24 @@ test('hero showcase: all 3 referenced kurta hero images exist on disk with valid
     assert.ok(stat.size > 1000, `Banner ${bannerPath} must have non-zero size`);
   }
 });
+
+test('hero showcase: video slide has visible CTA button, clearProps on animation, and no parent GSAP collision', async () => {
+  const heroContent = await fs.readFile(path.resolve('src/HeroBanner.jsx'), 'utf8');
+  const mainContent = await fs.readFile(path.resolve('src/main.jsx'), 'utf8');
+  const cssContent = await fs.readFile(path.resolve('src/style.css'), 'utf8');
+
+  // Verify slide 0 (video slide) defines a CTA button
+  assert.match(heroContent, /cta:\s*['"]Shop the collection['"]/, 'Slide 0 must define CTA text');
+  assert.match(heroContent, /to:\s*['"]\/collections\/pearls['"]/, 'Slide 0 must define destination route');
+
+  // Verify button markup
+  assert.ok(heroContent.includes('hero-cta-button'), 'HeroBanner must render CTA with .hero-cta-button class');
+  assert.ok(heroContent.includes("clearProps: 'opacity,transform'"), 'HeroBanner must clear opacity/transform after GSAP tween');
+
+  // Verify no duplicate GSAP animation on .hero-copy in Home component
+  assert.ok(!mainContent.includes("gsap.from('.hero-copy"), 'main.jsx must not collide with HeroBanner animations');
+
+  // Verify CSS ensures visibility and stacking order
+  assert.match(cssContent, /\.hero-cta-button/, 'CSS must declare .hero-cta-button');
+  assert.match(cssContent, /\.hero-copy\s*\{[^}]*z-index:\s*10/, 'CSS .hero-copy must have z-index: 10');
+});
