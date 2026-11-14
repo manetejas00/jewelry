@@ -9,7 +9,7 @@ export async function pageMetadata(k,pathname){
  if(pathname.startsWith('/products/'))product=await pricedProductBySlug(k,decodeURIComponent(pathname.slice(10)));
  else if(pathname.startsWith('/kurtas/'))product=await pricedProductBySlug(k,decodeURIComponent(pathname.slice(8)));
  else if(pathname.startsWith('/coins/product/'))product=await pricedCoinBySku(k,decodeURIComponent(pathname.slice(15)));
- const labels={'/':'','/collections/all':'All jewellery','/collections/pearls':'The Pearl Edit','/collections/rings':'Rings','/collections/earrings':'Earrings','/collections/necklaces':'Necklaces','/collections/bracelets':'Bracelets','/kurtas':'Chicken Curry Kurtas for Women','/coins':'Gold & silver coins','/coins/gold':'Gold coins','/coins/silver':'Silver coins','/information/shipping':'Shipping information','/information/care':'Jewellery care','/information/returns':'Returns information','/information/contact':'Contact','/information/about':'About Veyora','/information/privacy':'Privacy policy','/information/terms':'Terms and conditions'};
+ const labels={'/':'','/create-your-own':'Create Your Own — Bespoke AI Jewellery Atelier','/collections/all':'All jewellery','/collections/pearls':'The Pearl Edit','/collections/rings':'Rings','/collections/earrings':'Earrings','/collections/necklaces':'Necklaces','/collections/bracelets':'Bracelets','/kurtas':'Chicken Curry Kurtas for Women','/coins':'Gold & silver coins','/coins/gold':'Gold coins','/coins/silver':'Silver coins','/information/shipping':'Shipping information','/information/care':'Jewellery care','/information/returns':'Returns information','/information/contact':'Contact','/information/about':'About Veyora','/information/privacy':'Privacy policy','/information/terms':'Terms and conditions'};
  if(product){title=product.seo_title||product.name+' | '+brand;description=product.meta_description||String(product.description||product.name).slice(0,160);image=product.image||product.thumbnail;}
  else if(pathname==='/collections/saved'){title='Your saved pieces | '+brand;indexable=false;}
  else if(pathname in labels){if(labels[pathname])title=labels[pathname]+' | '+brand;}
@@ -66,6 +66,7 @@ export function registerSeo(app,k,{preview,route}){
    const kurtas=products.filter(p=>p.is_kurta||p.category==='Chicken Curry Kurtas');
    const dated=[
      ['/',''],
+     ['/create-your-own',''],
      ['/collections/all',''],
      ['/kurtas',''],
      ['/coins',''],
