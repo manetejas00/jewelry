@@ -194,7 +194,7 @@ app.get('/api/admin/dashboard',auth(),route(async(req,res)=>{
  });
 }));
 app.get('/api/admin/products',auth(),route(async(req,res)=>{
- const products=await db('products').orderBy('product_code');
+ const products=await db('products').where(function(){this.where('is_kurta',0).orWhere('is_kurta',false).orWhereNull('is_kurta');}).orderBy('product_code');
  const hasImages=await db.schema.hasTable('product_images').catch(()=>false);
  const images=hasImages?await db('product_images').orderBy('sort_order','asc').orderBy('id','asc'):[];
  const imagesByProduct={};
