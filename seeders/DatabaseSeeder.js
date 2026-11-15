@@ -12,6 +12,7 @@ import { CraftsmanshipSeeder } from './CraftsmanshipSeeder.js';
 import { FinishSeeder } from './FinishSeeder.js';
 import { CollectionSeeder } from './CollectionSeeder.js';
 import { ReviewSeeder } from './ReviewSeeder.js';
+import { KurtaReviewSeeder } from './KurtaReviewSeeder.js';
 
 export async function DatabaseSeeder(k = db) {
   return {
@@ -32,8 +33,8 @@ export async function DatabaseSeeder(k = db) {
     kurtaCategories: await KurtaCategorySeeder(k),
     kurtas: await KurtaSeeder(k),
 
-    // Reviews
-    reviews: await ReviewSeeder(k)
+    // Reviews (Kurta Reviews)
+    reviews: await KurtaReviewSeeder(k, { clean: true }).catch(() => ReviewSeeder(k))
   };
 }
 

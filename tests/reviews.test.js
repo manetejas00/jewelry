@@ -25,6 +25,7 @@ import {
   adminDeleteReview
 } from '../server/reviews.js';
 import { seedReviews } from '../seeders/ReviewSeeder.js';
+import { KurtaReviewSeeder } from '../seeders/KurtaReviewSeeder.js';
 
 let k;
 let customerA, customerB, customerC;
@@ -538,4 +539,23 @@ test('Kurta and Jewelry products resolve and support reviews seamlessly', async 
     assert.equal(prodReviews.reviews.length, 1);
     assert.equal(prodReviews.reviews[0].title, 'Beautiful embroidery');
   }
+});
+
+test('KurtaReviewSeeder cleans existing reviews and seeds authentic reviews exclusively for Kurtas', async () => {
+  const result = await KurtaReviewSeeder(k, { clean: true });
+  assert.ok(result.reviewsInserted > 0, 'Must insert reviews');
+  assert.ok(result.kurtasReviewed > 0, 'Must review kurtas');
+
+  // Verify all reviews in the database have subject_type = 'kurta' and non-null kurta_id
+  const nonKurta = await k('reviews').where(function () {
+    this.whereNull('kurta_id').orWhereNot('subject_type', 'kurta');
+  });
+  assert.equal(nonKurta.length, 0, 'There must be zero non-kurta reviews in the database');
+
+  const totalKurtaReviews = await k('reviews').whereNotNull('kurta_id');
+  assert.ok(totalKurtaReviews.length >= result.reviewsInserted, 'Reviews count must match');
+
+  // Verify all reviews have status = approved
+  const approved = await k('reviews').where({ status: 'approved' });
+  assert.equal(approved.length, totalKurtaReviews.length, 'All seeded reviews must be approved');
 });
