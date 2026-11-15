@@ -311,7 +311,17 @@ export async function catalogue(k, options={}){
   const [products,rates,rules,images,offers,ratings]=await Promise.all([
     // Kurtas have their own catalogue endpoint and must never leak into the
     // jewellery collection, even if a legacy record has a jewellery-like name.
-    k('products').where({status:'published'}).where(function(){ this.whereNull('is_kurta').orWhere('is_kurta', false); }),
+    k('products').where({status:'published'}).where(function(){ 
+      this.whereNull('is_kurta').orWhere('is_kurta', false); 
+    }).where(function(){
+      this.whereNull('category')
+        .orWhere(function(){
+          this.whereNot('category','like','%Kurta%')
+            .whereNot('category','like','%Chikankari%')
+            .whereNot('category','like','%Saree%')
+            .whereNot('category','like','%Bottom%');
+        });
+    }),
     activeRates(k),
     k('pricing_rules').orderBy('id','desc').first(),
     hasImages?k('product_images')

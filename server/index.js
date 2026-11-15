@@ -194,7 +194,17 @@ app.get('/api/admin/dashboard',auth(),route(async(req,res)=>{
  });
 }));
 app.get('/api/admin/products',auth(),route(async(req,res)=>{
- const products=await db('products').where(function(){this.where('is_kurta',0).orWhere('is_kurta',false).orWhereNull('is_kurta');}).orderBy('product_code');
+ const products=await db('products').where(function(){
+   this.where('is_kurta',0).orWhere('is_kurta',false).orWhereNull('is_kurta');
+ }).where(function(){
+   this.whereNull('category')
+     .orWhere(function(){
+       this.whereNot('category','like','%Kurta%')
+         .whereNot('category','like','%Chikankari%')
+         .whereNot('category','like','%Saree%')
+         .whereNot('category','like','%Bottom%');
+     });
+ }).orderBy('product_code');
  const hasImages=await db.schema.hasTable('product_images').catch(()=>false);
  const images=hasImages?await db('product_images').orderBy('sort_order','asc').orderBy('id','asc'):[];
  const imagesByProduct={};

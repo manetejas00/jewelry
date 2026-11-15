@@ -162,8 +162,9 @@ function matchKurtaPrice(price, bracket) {
 
 export function KurtasPage({ Layout, ProductCard }) {
   const { products, error } = useStore();
-  const [urlParams] = useSearchParams();
+  const [urlParams, setUrlParams] = useSearchParams();
   const gender = urlParams.get('gender');
+  const categoryParam = urlParams.get('category') || '';
   const [kurtas, setKurtas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fabricFilter, setFabricFilter] = useState('');
@@ -202,6 +203,35 @@ export function KurtasPage({ Layout, ProductCard }) {
     if (gender && ['Men', 'Women', 'Unisex'].includes(gender)) {
       // Unisex belongs in both gender-led paths; unclassified products stay in All Kurtas.
       list = list.filter(k => k.gender === gender || (gender !== 'Unisex' && k.gender === 'Unisex'));
+    }
+
+    if (categoryParam) {
+      const cleanParam = categoryParam.toLowerCase().replace(/[^a-z0-9]+/g, '');
+      list = list.filter(k => {
+        const cat = (k.category || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+        if (cleanParam === 'kurta' || cleanParam === 'kurtas') {
+          return cat === 'kurta' || cat === 'kurtas';
+        }
+        if (cleanParam === 'chanderisilk' || cleanParam === 'chanderisilkkurtas') {
+          return cat.includes('chanderi');
+        }
+        if (cleanParam === 'georgette' || cleanParam === 'georgettekurtas') {
+          return cat.includes('georgette');
+        }
+        if (cleanParam === 'cottonchikankari') {
+          return cat.includes('cotton') || (cat.includes('chikankari') && !cat.includes('modal') && !cat.includes('saree'));
+        }
+        if (cleanParam === 'modalchikankari') {
+          return cat.includes('modal');
+        }
+        if (cleanParam === 'chikankarisarees' || cleanParam === 'sarees') {
+          return cat.includes('saree');
+        }
+        if (cleanParam === 'ethnicbottoms') {
+          return cat.includes('bottom');
+        }
+        return cat.includes(cleanParam) || cleanParam.includes(cat);
+      });
     }
 
     if (searchQuery.trim()) {
@@ -249,7 +279,7 @@ export function KurtasPage({ Layout, ProductCard }) {
     }
 
     return list;
-  }, [kurtas, gender, searchQuery, fabricFilter, sizeFilter, colorFilter, priceBracket, inStockOnly, sortBy]);
+  }, [kurtas, gender, categoryParam, searchQuery, fabricFilter, sizeFilter, colorFilter, priceBracket, inStockOnly, sortBy]);
 
   const clearFilters = () => {
     setFabricFilter('');
@@ -259,16 +289,22 @@ export function KurtasPage({ Layout, ProductCard }) {
     setInStockOnly(false);
     setSearchQuery('');
     setSortBy('featured');
+    if (categoryParam) {
+      const next = new URLSearchParams(urlParams);
+      next.delete('category');
+      setUrlParams(next, { replace: true });
+    }
   };
 
   const tabs = [
-    { label: 'Kurta', href: '/kurtas', active: true },
-    { label: 'All jewellery', href: '/collections/all', active: false },
-    { label: 'Earrings', href: '/collections/earrings', active: false },
-    { label: 'Necklaces', href: '/collections/necklaces', active: false },
-    { label: 'Rings', href: '/collections/rings', active: false },
-    { label: 'Bracelets', href: '/collections/bracelets', active: false },
-    { label: 'Coins', href: '/coins', active: false }
+    { label: 'All Kurta', href: '/kurtas', active: !categoryParam },
+    { label: 'Kurta', href: '/kurtas?category=kurta', active: categoryParam === 'kurta' || categoryParam === 'kurtas' },
+    { label: 'Cotton Chikankari', href: '/kurtas?category=cotton-chikankari', active: categoryParam === 'cotton-chikankari' },
+    { label: 'Chanderi Silk', href: '/kurtas?category=chanderi-silk-kurtas', active: categoryParam === 'chanderi-silk' || categoryParam === 'chanderi-silk-kurtas' },
+    { label: 'Georgette', href: '/kurtas?category=georgette-kurtas', active: categoryParam === 'georgette' || categoryParam === 'georgette-kurtas' },
+    { label: 'Modal Chikankari', href: '/kurtas?category=modal-chikankari', active: categoryParam === 'modal-chikankari' },
+    { label: 'Sarees', href: '/kurtas?category=chikankari-sarees', active: categoryParam === 'chikankari-sarees' || categoryParam === 'sarees' },
+    { label: 'Ethnic Bottoms', href: '/kurtas?category=ethnic-bottoms', active: categoryParam === 'ethnic-bottoms' }
   ];
 
   const facets = [
