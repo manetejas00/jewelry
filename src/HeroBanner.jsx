@@ -169,13 +169,16 @@ export default function HeroBanner({ heroRef }) {
     }
     const ctx = gsap.context(() => {
       // Subtle photo scale & crossfade
-      gsap.fromTo(
-        '.hero-photo img.is-active',
-        { opacity: 0, scale: 1.04 },
-        { opacity: 1, scale: 1, duration: 0.85, ease: 'power2.out' }
-      );
+      const activeEl = heroContainerRef.current?.querySelector('.hero-photo img.is-active, .hero-photo .is-active');
+      if (activeEl) {
+        gsap.fromTo(
+          activeEl,
+          { opacity: 0, scale: 1.04 },
+          { opacity: 1, scale: 1, duration: 0.85, ease: 'power2.out' }
+        );
+      }
       // Soft text stagger
-      if (copyRef.current) {
+      if (copyRef.current && copyRef.current.children && copyRef.current.children.length > 0) {
         gsap.fromTo(
           copyRef.current.children,
           { y: 14, opacity: 0 },

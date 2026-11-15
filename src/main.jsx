@@ -492,7 +492,7 @@ function Collection(){
   const q=params.get('q')||'';
   useEffect(()=>{
     document.title=`${q?`Search: “${q}”`:category==='all'?'All jewellery':category} | Veyora Jewels`;
-    if(!matchMedia('(prefers-reduced-motion: reduce)').matches)gsap.fromTo(listRef.current,{opacity:0,y:10},{opacity:1,y:0,duration:.5});
+    if(listRef.current && !matchMedia('(prefers-reduced-motion: reduce)').matches)gsap.fromTo(listRef.current,{opacity:0,y:10},{opacity:1,y:0,duration:.5});
     const key='scroll:'+location.pathname+location.search;
     requestAnimationFrame(()=>window.scrollTo(0,Number(sessionStorage.getItem(key)||0)));
     const save=()=>sessionStorage.setItem(key,String(window.scrollY));
