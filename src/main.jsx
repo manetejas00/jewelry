@@ -304,41 +304,56 @@ function Header() {
       </button>
       <Brand />
       <nav ref={menuRef} id="store-navigation" className={menu ? 'nav open' : 'nav'} aria-label="Main store navigation">
+        <div className="mobile-nav-header">
+          <span className="mobile-nav-brand">Maison Menu</span>
+          <button
+            type="button"
+            className="mobile-nav-close"
+            aria-label="Close menu"
+            onClick={() => setMenu(false)}
+          >
+            <X size={20} />
+          </button>
+        </div>
         {STORE_NAV_ITEMS.map(item => {
           const isActive = isStoreNavActive(item, location.pathname, products);
           const key = item.categoryKey || item.key;
           const mega = NAV_MEGA_DATA[key];
           const hasChildren = Boolean(mega);
+          const isExpanded = openMega === key;
 
           return (
             <div
               key={item.href}
-              className={'nav-parent ' + (openMega === key ? 'open' : '')}
-              onMouseEnter={() => hasChildren && setOpenMega(key)}
-              onMouseLeave={() => setOpenMega(null)}
+              className={'nav-parent ' + (isExpanded ? 'open' : '')}
+              onMouseEnter={() => hasChildren && typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches && setOpenMega(key)}
+              onMouseLeave={() => typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches && setOpenMega(null)}
             >
-              <Link
-                onClick={() => setMenu(false)}
-                to={item.href}
-                className={isActive ? 'active' : ''}
-                aria-current={isActive ? 'page' : undefined}
-              >
-                {item.label}
-              </Link>
-              {hasChildren && (
-                <button
-                  type="button"
-                  className="nav-disclosure"
-                  aria-label={`Browse ${item.label}`}
-                  aria-expanded={openMega === key}
-                  onClick={e => {
-                    e.preventDefault();
-                    setOpenMega(openMega === key ? null : key);
-                  }}
+              <div className="nav-item-row">
+                <Link
+                  onClick={() => setMenu(false)}
+                  to={item.href}
+                  className={isActive ? 'active' : ''}
+                  aria-current={isActive ? 'page' : undefined}
                 >
-                  <ChevronDown size={13} />
-                </button>
-              )}
+                  {item.label}
+                </Link>
+                {hasChildren && (
+                  <button
+                    type="button"
+                    className={`nav-disclosure ${isExpanded ? 'expanded' : ''}`}
+                    aria-label={`Browse ${item.label}`}
+                    aria-expanded={isExpanded}
+                    onClick={e => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setOpenMega(isExpanded ? null : key);
+                    }}
+                  >
+                    <ChevronDown size={15} />
+                  </button>
+                )}
+              </div>
               {hasChildren && (
                 <div className="mega-menu" role="group" aria-label={`${item.label} categories`}>
                   <div className="mega-menu-content">
@@ -430,6 +445,7 @@ function Header() {
           )}
         </div>}
       </nav>
+      {menu && <div className="nav-backdrop" onClick={() => setMenu(false)} aria-hidden="true" />}
       <div className="header-tools">
         <div
           className="account-menu-container"
