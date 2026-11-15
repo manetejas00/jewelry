@@ -60,5 +60,17 @@ export async function brandedImageFile(source,{publicDir,uploadsDir,cacheDir,pub
  queue=job.catch(()=>{});pending.set(key,job);try{return await job}finally{pending.delete(key)}
 }
 export function registerBrandImages(app,{publicDir,uploadsDir,cacheDir}){
- app.get('/api/brand-image',async(req,res)=>{try{const file=await brandedImageFile(req.query.source,{publicDir,uploadsDir,cacheDir});res.set('Cache-Control','public, max-age=86400').type('webp').sendFile(file)}catch{res.set('Cache-Control','no-store').type('webp').sendFile(path.join(publicDir,'assets/brand/fallback.webp'))}});
+ app.get('/api/brand-image',async(req,res)=>{
+  try{
+   const file=await brandedImageFile(req.query.source,{publicDir,uploadsDir,cacheDir});
+   res.set('Cache-Control','public, max-age=86400').type('webp').sendFile(file);
+  }catch{
+   const fallbackFile=path.join(publicDir,'assets/brand/fallback.webp');
+   if(await fs.stat(fallbackFile).catch(()=>false)){
+    res.set('Cache-Control','no-store').type('webp').sendFile(fallbackFile);
+   }else{
+    res.set('Cache-Control','no-store').type('image/svg+xml').sendFile(path.join(publicDir,'assets/product-placeholder.svg'));
+   }
+  }
+ });
 }

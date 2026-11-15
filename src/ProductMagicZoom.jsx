@@ -32,7 +32,7 @@ export default function ProductMagicZoom({images, title, children}) {
 
   useEffect(() => {
     const stage = stageRef.current;
-    if (!stage || !photo || narrow) return undefined;
+    if (!stage || !photo || narrow || !photo.url || photo.url.startsWith('data:')) return undefined;
     const rect = stage.getBoundingClientRect();
     const zoom = createZoomImageHover(stage, {
         zoomImageSource: brandedImageSource(photo.url),
