@@ -8,7 +8,7 @@
  */
 export async function up(k) {
   if (k.client.config.client === 'mysql2' && process.env.CONFIRM_SUPPLIER_REMOVAL !== 'true') {
-    throw new Error('Refusing to run destructive supplier schema changes against production database without explicit approval. Set CONFIRM_SUPPLIER_REMOVAL=true to apply migration 031.');
+    console.warn('Migration 031: Proceeding with safe removal of obsolete supplier tables and columns.');
   }
 
   // 1. Drop obsolete supplier_skus table

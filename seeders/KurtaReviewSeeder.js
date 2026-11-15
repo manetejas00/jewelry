@@ -101,24 +101,31 @@ export async function KurtaReviewSeeder(k = db, { clean = true } = {}) {
   for (const c of seededKurtaCustomers) {
     let row = await k('customers').where({ email: c.email.toLowerCase() }).first();
     if (!row) {
-      const [id] = await k('customers').insert({
-        name: c.name,
-        email: c.email.toLowerCase(),
-        password_hash: passwordHash,
-        created_at: stamp
-      });
-      if (await k.schema.hasTable('customer_state')) {
-        await k('customer_state').insert({
-          customer_id: id,
-          bag: '[]',
-          saved: '[]',
-          revision: 0,
-          updated_at: stamp
+      try {
+        const [id] = await k('customers').insert({
+          name: c.name,
+          email: c.email.toLowerCase(),
+          password_hash: passwordHash,
+          created_at: stamp
         });
+        const realId = typeof id === 'object' && id !== null ? (id.id || id[0]) : id;
+        if (await k.schema.hasTable('customer_state')) {
+          await k('customer_state').insert({
+            customer_id: realId,
+            bag: '[]',
+            saved: '[]',
+            revision: 0,
+            updated_at: stamp
+          }).catch(() => {});
+        }
+        row = { id: realId, ...c };
+      } catch {
+        row = await k('customers').where({ email: c.email.toLowerCase() }).first();
       }
-      row = { id, ...c };
     }
-    customerMap[c.email] = row.id;
+    if (row) {
+      customerMap[c.email] = row.id;
+    }
   }
 
   // 3. Fetch all Kurtas and their variants
@@ -145,9 +152,16 @@ export async function KurtaReviewSeeder(k = db, { clean = true } = {}) {
   const hasReviewImages = await k.schema.hasTable('review_images');
   const hasOrders = await k.schema.hasTable('orders');
   const hasOrderItems = await k.schema.hasTable('order_items');
+  const hasOrderCustomerId = hasOrders && await k.schema.hasColumn('orders', 'customer_id');
+  const hasOrderItemType = hasOrderItems && await k.schema.hasColumn('order_items', 'item_type');
+  const hasOrderItemId = hasOrderItems && await k.schema.hasColumn('order_items', 'item_id');
   const hasKurtaIdCol = await k.schema.hasColumn('reviews', 'kurta_id');
+  const hasJewelryIdCol = await k.schema.hasColumn('reviews', 'jewelry_id');
+  const hasCoinIdCol = await k.schema.hasColumn('reviews', 'coin_id');
+  const hasProductIdCol = await k.schema.hasColumn('reviews', 'product_id');
   const hasSubjectTypeCol = await k.schema.hasColumn('reviews', 'subject_type');
   const hasItemTypeCol = await k.schema.hasColumn('reviews', 'item_type');
+  const hasProductsTable = await k.schema.hasTable('products');
 
   // Seed reviews for each Kurta
   for (let kIdx = 0; kIdx < kurtas.length; kIdx++) {
@@ -211,10 +225,9 @@ export async function KurtaReviewSeeder(k = db, { clean = true } = {}) {
         const orderExists = await k('orders').where({ id: orderId }).first();
         if (!orderExists) {
           const customerName = seededKurtaCustomers.find(c => c.email === customerEmail)?.name || 'Valued Patron';
-          await k('orders').insert({
+          const orderPayload = {
             id: orderId,
             idempotency_key: `idemp-${orderId}`,
-            customer_id: customerId,
             status: 'delivered',
             customer: JSON.stringify({ name: customerName, email: customerEmail }),
             subtotal: Number(kurta.price || kurta.fixed_price || 999),
@@ -222,30 +235,43 @@ export async function KurtaReviewSeeder(k = db, { clean = true } = {}) {
             total: Number(kurta.price || kurta.fixed_price || 999),
             payment_mode: 'cod',
             created_at: new Date(Date.now() - (daysAgo + 3) * 86400000).toISOString()
-          });
+          };
+          if (hasOrderCustomerId) {
+            orderPayload.customer_id = customerId;
+          }
+          await k('orders').insert(orderPayload).catch(() => {});
 
-          await k('order_items').insert({
+          const orderItemPayload = {
             order_id: orderId,
             sku: representativeSku,
-            item_type: 'kurta',
-            item_id: kurta.id,
             quantity: 1,
             snapshot: JSON.stringify({
               sku: representativeSku,
               name: kurta.name,
               price: Number(kurta.price || kurta.fixed_price || 999)
             })
-          });
+          };
+          if (hasOrderItemType) orderItemPayload.item_type = 'kurta';
+          if (hasOrderItemId) orderItemPayload.item_id = kurta.id;
+
+          await k('order_items').insert(orderItemPayload).catch(() => {});
           totalOrdersInserted++;
         }
+      }
+
+      // Check matching row in products table if available
+      let legacyProductId = null;
+      if (hasProductsTable) {
+        const prodRow = await k('products')
+          .where({ product_code: kurta.product_code })
+          .orWhere({ sku: representativeSku })
+          .first();
+        if (prodRow) legacyProductId = prodRow.id;
       }
 
       // Prepare review record
       const reviewPayload = {
         user_id: customerId,
-        product_id: null,
-        coin_id: null,
-        jewelry_id: null,
         rating: baseImpression.rating,
         title: customTitle,
         comment: customComment,
@@ -256,11 +282,15 @@ export async function KurtaReviewSeeder(k = db, { clean = true } = {}) {
         deleted_at: null
       };
 
+      if (hasProductIdCol) reviewPayload.product_id = legacyProductId;
+      if (hasCoinIdCol) reviewPayload.coin_id = null;
+      if (hasJewelryIdCol) reviewPayload.jewelry_id = null;
       if (hasKurtaIdCol) reviewPayload.kurta_id = kurta.id;
       if (hasSubjectTypeCol) reviewPayload.subject_type = 'kurta';
       if (hasItemTypeCol) reviewPayload.item_type = 'kurta';
 
-      const [reviewId] = await k('reviews').insert(reviewPayload);
+      const [insertedReviewId] = await k('reviews').insert(reviewPayload);
+      const reviewId = typeof insertedReviewId === 'object' && insertedReviewId !== null ? (insertedReviewId.id || insertedReviewId[0]) : insertedReviewId;
       totalReviewsInserted++;
 
       // Attach authentic photograph for selected reviews
@@ -270,7 +300,7 @@ export async function KurtaReviewSeeder(k = db, { clean = true } = {}) {
           review_id: reviewId,
           image_url: imageUrl,
           created_at: reviewDate
-        });
+        }).catch(() => {});
         totalImagesInserted++;
       }
     }

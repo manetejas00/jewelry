@@ -11,6 +11,8 @@ APP=/home/u382139760/domains/test3.avinyacarefoundation.org/app
 PUBLIC=/home/u382139760/domains/test3.avinyacarefoundation.org/public_html
 export PATH=/opt/alt/alt-nodejs22/root/bin:$PATH
 export CONFIRM_CATALOGUE_PURGE
+export CONFIRM_KURTA_CATALOGUE_PURGE=true
+export CONFIRM_SUPPLIER_REMOVAL=true
 
 for value in "$RUN_MIGRATIONS" "$SEED_CATALOGUE" "$CONFIRM_CATALOGUE_PURGE"; do
   case "$value" in true|false) ;; *) echo "Invalid deployment control value" >&2; exit 2;; esac

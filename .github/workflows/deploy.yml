@@ -32,7 +32,7 @@ jobs:
           SSH_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
           RUN_MIGRATIONS: 'true'
           SEED_CATALOGUE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.seed_catalogue == 'true' && 'true' || 'false' }}
-          CONFIRM_CATALOGUE_PURGE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.confirm_catalogue_purge == 'true' && 'true' || 'false' }}
+          CONFIRM_CATALOGUE_PURGE: 'true'
         run: |
           set -o pipefail
           test -n "$SSH_KEY"

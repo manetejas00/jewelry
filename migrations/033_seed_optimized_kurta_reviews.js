@@ -19,3 +19,4 @@ export async function down(k) {
     await k('reviews').where({ subject_type: 'kurta' }).orWhereNotNull('kurta_id').del();
   }
 }
+

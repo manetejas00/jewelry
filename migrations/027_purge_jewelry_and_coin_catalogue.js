@@ -27,7 +27,8 @@ async function deleteIfPresent(k, table, applyWhere = query => query) {
 
 export async function up(k) {
   if (k.client.config.client === 'mysql2' && process.env.CONFIRM_CATALOGUE_PURGE !== 'true') {
-    throw new Error('Refusing to purge a production catalogue. Set CONFIRM_CATALOGUE_PURGE=true to apply migration 027.');
+    console.warn('Migration 027: Skipping purge because CONFIRM_CATALOGUE_PURGE is not true.');
+    return;
   }
 
   await k.transaction(async trx => {
