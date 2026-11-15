@@ -332,7 +332,7 @@ function Header(){
     {syncError&&<div className="account-sync-banner" role="alert">{syncError} <button className="underlink" onClick={()=>refreshAccount().catch(()=>{})}>Reload account</button></div>}
   </>;
 }
-function Footer(){const {config}=useStore();return <footer><div className="footer-top"><div><Brand/><p>For the moments that become memories.</p></div><div><h4>EXPLORE</h4><Link to="/kurtas">Kurtas</Link><Link to="/collections/all">All jewellery</Link><Link to="/coins">Gold & Silver Coins</Link><Link to="/collections/saved">Your saved pieces</Link><Link to="/bag">Shopping bag</Link><Link to="/account">My account</Link></div><div><h4>HERE TO HELP</h4><Link to="/information/shipping">Delivery & returns</Link><Link to="/information/care">Jewellery care</Link><Link to="/information/contact">Contact us</Link></div><div><h4>A NOTE FROM THE MAISON</h4><p>Beautiful things take time.<br/>Discover a collection made for yours.</p><Link to="/collections/all" className="footer-cta">Find your piece <ArrowUpRight size={17}/></Link></div></div><div className="footer-bottom"><span>© {new Date().getFullYear()} Veyora Jewels</span><span>India · INR ₹</span><Link to="/admin">Merchant studio ↗</Link></div>{config.preview&&<p className="preview-note">Design preview · Fictional catalogue and prices · Reference imagery from the Maison Perle design brief</p>}</footer>}
+function Footer(){const {config}=useStore();return <footer><div className="footer-top"><div><Brand/><p>For the moments that become memories.</p></div><div><h4>EXPLORE</h4><Link to="/kurtas">Kurta</Link><Link to="/collections/all">All jewellery</Link><Link to="/coins">Gold & Silver Coins</Link><Link to="/collections/saved">Your saved pieces</Link><Link to="/bag">Shopping bag</Link><Link to="/account">My account</Link></div><div><h4>HERE TO HELP</h4><Link to="/information/shipping">Delivery & returns</Link><Link to="/information/care">Jewellery care</Link><Link to="/information/contact">Contact us</Link></div><div><h4>A NOTE FROM THE MAISON</h4><p>Beautiful things take time.<br/>Discover a collection made for yours.</p><Link to="/collections/all" className="footer-cta">Find your piece <ArrowUpRight size={17}/></Link></div></div><div className="footer-bottom"><span>© {new Date().getFullYear()} Veyora Jewels</span><span>India · INR ₹</span><Link to="/admin">Merchant studio ↗</Link></div>{config.preview&&<p className="preview-note">Design preview · Fictional catalogue and prices · Reference imagery from the Maison Perle design brief</p>}</footer>}
 function Layout({children}){return <><Header/><main>{children}</main><Footer/><BagDrawer/><InstallApp/><ChatWidget/></>}
 function HomeKurtaShowcase(){
   const [kurtas,setKurtas]=useState([]);
@@ -482,6 +482,7 @@ function ProductCard({p}){
 }
 function Collection(){
   const {category='all',gender:routeGender,jewelryCategory}=useParams();
+  if(category==='kurtas'||category==='kurta')return <Navigate to="/kurtas" replace/>;
   const {products,coins=[],saved,offers=[],error,accountReady,refreshCatalogue}=useStore();
   const [params,setParams]=useSearchParams();
   const [filters,setFilters]=useState(false);
@@ -577,7 +578,7 @@ function Collection(){
   const gridOffer=offers.find(o=>o.show_in_grid)||offers[0];
 
   const tabs=[
-    {label:'Kurtas',href:'/kurtas',active:false},
+    {label:'Kurta',href:'/kurtas',active:false},
     {label:'All jewellery',href:'/collections/all',active:category==='all'},
     {label:'Earrings',href:'/collections/earrings',active:category==='earrings'},
     {label:'Necklaces',href:'/collections/necklaces',active:category==='necklaces'},
@@ -2445,7 +2446,7 @@ function MaterialPage(){
       title={meta?.name||slug.replace(/-/g,' ')}
       description={meta?.description||'Explore handcrafted pieces showcasing this distinguished precious material.'}
       tabs={[
-        {label:'Kurtas',href:'/kurtas',active:false},
+        {label:'Kurta',href:'/kurtas',active:false},
         {label:'All jewellery',href:'/collections/all',active:false},
         {label:'Gold',href:'/collections/gold',active:false},
         {label:'Silver',href:'/collections/silver',active:false},
@@ -2522,7 +2523,7 @@ function CraftsmanshipPage(){
       title={meta?.name||slug.replace(/-/g,' ')}
       description={meta?.description||'Handcrafted Indian craftsmanship passed down across generations of master artisans.'}
       tabs={[
-        {label:'Kurtas',href:'/kurtas',active:false},
+        {label:'Kurta',href:'/kurtas',active:false},
         {label:'All jewellery',href:'/collections/all',active:false},
         {label:'Gold',href:'/collections/gold',active:false},
         {label:'Silver',href:'/collections/silver',active:false},
@@ -2544,4 +2545,4 @@ function CraftsmanshipPage(){
 }
 
 function NotFound(){return <Layout><section className="empty"><span className="eyebrow">A SMALL DETOUR</span><h1>This page is yet to be discovered.</h1><p>The link you followed may have changed, or the piece may have moved.</p><div style={{display:'flex',gap:'14px',justifyContent:'center',flexWrap:'wrap',marginTop:'20px'}}><Link className="button dark" to="/collections/all">Explore all jewellery</Link><Link className="underlink" to="/">Return to home</Link></div></section></Layout>}
-createRoot(document.getElementById('root')).render(<ErrorBoundary><BrowserRouter><Provider><Scroll/><Routes><Route path="/" element={<Home/>}/><Route path="/jewelry" element={<Collection/>}/><Route path="/jewelry/:slug" element={<Product/>}/><Route path="/coin" element={<CoinsPage/>}/><Route path="/coin/:slug" element={<CoinProduct/>}/><Route path="/kurta" element={<KurtasPage Layout={Layout} ProductCard={ProductCard}/>}/><Route path="/kurta/:slug" element={<KurtaDetailPage Layout={Layout} StructuredProduct={StructuredProduct} ProductCard={ProductCard}/>}/><Route path="/kurtas" element={<KurtasPage Layout={Layout} ProductCard={ProductCard}/>}/><Route path="/kurtas/:slug" element={<KurtaDetailPage Layout={Layout} StructuredProduct={StructuredProduct} ProductCard={ProductCard}/>}/><Route path="/collections/pearls" element={<Navigate to="/collections/all" replace/>}/><Route path="/collections/:category" element={<Collection/>}/><Route path="/materials/:slug" element={<MaterialPage/>}/><Route path="/craftsmanship/:slug" element={<CraftsmanshipPage/>}/><Route path="/products/:slug" element={<Product/>}/><Route path="/coins/product/:sku" element={<CoinProduct/>}/><Route path="/coins" element={<CoinsPage/>}/> <Route path="/coins/:category" element={<CoinsPage/>}/><Route path="/account" element={<Account Layout={Layout} BagLines={BagLines} ProductCard={ProductCard} grouped={grouped}/>}/><Route path="/bag" element={<Bag/>}/><Route path="/checkout" element={<Checkout/>}/><Route path="/order/:id" element={<Order/>}/><Route path="/information/:page" element={<Information/>}/><Route path="/admin/*" element={<Admin/>}/><Route path="*" element={<NotFound/>}/></Routes></Provider></BrowserRouter></ErrorBoundary>);
+createRoot(document.getElementById('root')).render(<ErrorBoundary><BrowserRouter><Provider><Scroll/><Routes><Route path="/" element={<Home/>}/><Route path="/jewelry" element={<Collection/>}/><Route path="/jewelry/:slug" element={<Product/>}/><Route path="/coin" element={<CoinsPage/>}/><Route path="/coin/:slug" element={<CoinProduct/>}/><Route path="/kurta" element={<KurtasPage Layout={Layout} ProductCard={ProductCard}/>}/><Route path="/kurta/:slug" element={<KurtaDetailPage Layout={Layout} StructuredProduct={StructuredProduct} ProductCard={ProductCard}/>}/><Route path="/kurtas" element={<KurtasPage Layout={Layout} ProductCard={ProductCard}/>}/><Route path="/kurtas/:slug" element={<KurtaDetailPage Layout={Layout} StructuredProduct={StructuredProduct} ProductCard={ProductCard}/>}/><Route path="/collections/pearls" element={<Navigate to="/collections/all" replace/>}/><Route path="/collections/kurtas" element={<Navigate to="/kurtas" replace/>}/><Route path="/collections/kurta" element={<Navigate to="/kurtas" replace/>}/><Route path="/collections/:category" element={<Collection/>}/><Route path="/materials/:slug" element={<MaterialPage/>}/><Route path="/craftsmanship/:slug" element={<CraftsmanshipPage/>}/><Route path="/products/:slug" element={<Product/>}/><Route path="/coins/product/:sku" element={<CoinProduct/>}/><Route path="/coins" element={<CoinsPage/>}/> <Route path="/coins/:category" element={<CoinsPage/>}/><Route path="/account" element={<Account Layout={Layout} BagLines={BagLines} ProductCard={ProductCard} grouped={grouped}/>}/><Route path="/bag" element={<Bag/>}/><Route path="/checkout" element={<Checkout/>}/><Route path="/order/:id" element={<Order/>}/><Route path="/information/:page" element={<Information/>}/><Route path="/admin/*" element={<Admin/>}/><Route path="*" element={<NotFound/>}/></Routes></Provider></BrowserRouter></ErrorBoundary>);

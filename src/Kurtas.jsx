@@ -262,7 +262,7 @@ export function KurtasPage({ Layout, ProductCard }) {
   };
 
   const tabs = [
-    { label: 'Kurtas', href: '/kurtas', active: true },
+    { label: 'Kurta', href: '/kurtas', active: true },
     { label: 'All jewellery', href: '/collections/all', active: false },
     { label: 'Earrings', href: '/collections/earrings', active: false },
     { label: 'Necklaces', href: '/collections/necklaces', active: false },
@@ -305,7 +305,7 @@ export function KurtasPage({ Layout, ProductCard }) {
     <Layout>
       <CommonPLP
         eyebrow="THE VEYORA COLLECTIONS"
-        title="Kurtas"
+        title="Kurta"
         description="Exquisite hand-embroidered Lucknowi Chikankari needlecraft in pure mulmul cotton, fluid georgette, and shimmering Chanderi silk."
         tabs={tabs}
         priceBrackets={kurtaPriceBrackets}
@@ -434,7 +434,7 @@ export function KurtaDetailPage({ Layout, StructuredProduct, ProductCard }) {
 
   const breadcrumbs = [
     { label: 'Home', href: '/' },
-    { label: 'Kurtas', href: '/kurtas' },
+    { label: 'Kurta', href: '/kurtas' },
     { label: p.name }
   ];
 
