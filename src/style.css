@@ -38,8 +38,202 @@
 .price-bracket-pill.active{background:var(--ink);color:var(--ivory);border-color:var(--ink)}
 @media(max-width:768px){.price-bracket-bar{gap:8px;padding:0 2%}.price-bracket-pill{font-size:10px;padding:5px 10px}}
 
-/* Database-driven parent navigation */
-.nav-parent{position:relative;display:flex;align-items:center}.nav-disclosure{display:none;background:none;padding:4px;color:inherit}.mega-menu{display:none;position:absolute;z-index:80;top:calc(100% + 18px);left:50%;transform:translateX(-25%);width:min(560px,88vw);grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;padding:22px 24px;background:var(--ivory);border:1px solid var(--line);box-shadow:0 16px 35px #1425231c}.nav-parent.open .mega-menu{display:grid}.mega-menu>div{display:flex;flex-direction:column;align-items:flex-start;gap:8px}.mega-menu strong{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:3px}.mega-menu a{font-size:11px;white-space:nowrap}.mega-menu a:after{display:none}@media(max-width:800px){.nav-parent{display:block;width:100%;border-bottom:1px solid var(--line)}.nav-parent>a{display:inline-flex!important}.nav-disclosure{display:inline-flex;position:absolute;right:0;top:8px}.mega-menu{position:static;transform:none;width:100%;box-shadow:none;border:0;border-top:1px solid var(--line);grid-template-columns:1fr 1fr;padding:12px 0 16px;gap:16px}.nav-parent.open .mega-menu{display:grid}.mega-menu>div:last-child{grid-column:1/-1}.mega-menu a{font-size:11px!important;padding:3px 0!important}.mega-menu strong{font-size:8px}}
+/* Luxury Maison Store Navigation & Mega Menu */
+.nav-parent {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.nav-disclosure {
+  display: none;
+  background: none;
+  padding: 4px;
+  color: inherit;
+  border: 0;
+  cursor: pointer;
+}
+/* Mega Menu Box */
+.mega-menu {
+  display: none;
+  position: absolute;
+  z-index: 100;
+  top: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  width: min(1040px, 94vw);
+  background: rgba(248, 246, 240, 0.98);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(220, 220, 209, 0.85);
+  border-radius: 8px;
+  box-shadow: 0 28px 56px -12px rgba(24, 44, 44, 0.16), 0 4px 16px rgba(0, 0, 0, 0.04);
+  padding: 32px 36px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.26s cubic-bezier(0.16, 1, 0.3, 1), transform 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+}
+/* Invisible hover bridge to maintain mouse continuity */
+.nav-parent:after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: -12px;
+  right: -12px;
+  height: 24px;
+}
+.nav-parent.open .mega-menu,
+.nav-parent:hover .mega-menu {
+  display: block;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+.mega-menu-content {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) 270px;
+  gap: 32px;
+  align-items: start;
+}
+.mega-menu-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+.mega-menu-col strong {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(220, 220, 209, 0.65);
+  width: 100%;
+  display: block;
+}
+.mega-menu-col a {
+  font-size: 12.5px;
+  color: #38423f;
+  padding: 5px 0;
+  white-space: nowrap;
+  transition: color 0.2s ease, transform 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+}
+.mega-menu-col a:after {
+  display: none !important;
+}
+.mega-menu-col a:hover {
+  color: var(--ink);
+  transform: translateX(4px);
+  font-weight: 500;
+}
+.mega-menu-card {
+  background: #f1ede3;
+  border: 1px solid rgba(220, 220, 209, 0.8);
+  border-radius: 6px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  text-decoration: none;
+}
+.mega-menu-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(24, 44, 44, 0.1);
+}
+.mega-menu-card img {
+  width: 100%;
+  aspect-ratio: 16/10;
+  object-fit: cover;
+  border-radius: 4px;
+}
+.mega-card-tag {
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-top: 2px;
+}
+.mega-card-title {
+  font-family: var(--serif);
+  font-size: 19px;
+  line-height: 1.2;
+  color: var(--ink);
+  margin: 0;
+}
+.mega-card-desc {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--muted);
+  margin: 0;
+}
+.mega-card-link {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 800px) {
+  .nav-parent {
+    display: block;
+    width: 100%;
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-parent > a {
+    display: inline-flex !important;
+    padding: 14px 0 !important;
+    font-size: 14px !important;
+  }
+  .nav-disclosure {
+    display: inline-flex;
+    position: absolute;
+    right: 0;
+    top: 12px;
+  }
+  .mega-menu {
+    position: static;
+    transform: none;
+    width: 100%;
+    box-shadow: none;
+    border: 0;
+    border-top: 1px solid var(--line);
+    padding: 12px 0 18px;
+    opacity: 1;
+    pointer-events: auto;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .nav-parent.open .mega-menu {
+    display: block;
+  }
+  .mega-menu-content {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .mega-menu-card {
+    display: none;
+  }
+  .mega-menu-col strong {
+    font-size: 9px;
+    padding-bottom: 4px;
+    margin-bottom: 6px;
+  }
+  .mega-menu-col a {
+    font-size: 12px !important;
+    padding: 5px 0 !important;
+  }
+}
 
 /* Coins & Bullion Styling */
 .coins-market-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;background:var(--paper);border:1px solid var(--line);padding:16px 22px;margin-bottom:24px}

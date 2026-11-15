@@ -52,6 +52,141 @@ const matchPrice = (price, bracket) => { if (!bracket) return true; if (price ==
 function Scroll() { const loc = useLocation(); useEffect(() => { if (!loc.pathname.startsWith('/collections')) window.scrollTo(0, 0); }, [loc.pathname]); return null }
 function Brand() { return <Link className="brand" to="/" aria-label="Veyora Jewels home"><img className="brand-logo" src="/assets/brand/logo.webp" alt="Veyora Jewels" width="150" height="100" /></Link> }
 
+export const NAV_MEGA_DATA = {
+  jewelry: {
+    title: 'Fine Jewelry',
+    columns: [
+      {
+        heading: 'Categories',
+        links: [
+          { label: 'All jewellery', href: '/collections/all' },
+          { label: 'Rings', href: '/collections/rings' },
+          { label: 'Necklaces', href: '/collections/necklaces' },
+          { label: 'Earrings', href: '/collections/earrings' },
+          { label: 'Bracelets', href: '/collections/bracelets' },
+          { label: 'Pearls Collection', href: '/collections/pearls' }
+        ]
+      },
+      {
+        heading: 'Precious Metals',
+        links: [
+          { label: '22K Solid Gold', href: '/collections/gold' },
+          { label: '18K Yellow Gold', href: '/collections/gold' },
+          { label: '925 Sterling Silver', href: '/collections/silver' },
+          { label: 'Diamond Accents', href: '/collections/all?q=diamond' },
+          { label: 'Cultured Pearls', href: '/collections/all?q=pearl' }
+        ]
+      },
+      {
+        heading: 'Curated Edits',
+        links: [
+          { label: 'Modern Heirlooms', href: '/collections/all?sort=featured' },
+          { label: 'Bridal Trousseau', href: '/collections/all?q=bridal' },
+          { label: 'Under ₹25,000', href: '/collections/all?price=0-25000' },
+          { label: 'Saved Pieces', href: '/collections/saved' }
+        ]
+      }
+    ],
+    card: {
+      image: '/assets/banners/hero-jewelry-mobile.webp',
+      badge: 'SIGNATURE EDIT',
+      title: 'Objects of Quiet Beauty',
+      copy: 'Hallmarked gold & hand-picked pearls crafted for everyday elegance.',
+      to: '/collections/all',
+      cta: 'Explore Jewellery'
+    }
+  },
+  kurtas: {
+    title: 'Ethnic Kurta Atelier',
+    columns: [
+      {
+        heading: 'Collections',
+        links: [
+          { label: 'Kurtas', href: '/kurtas' },
+          { label: 'All Kurta Styles', href: '/kurtas' },
+          { label: 'New Arrivals', href: '/kurtas?sort=featured' },
+          { label: 'Festive Chikankari', href: '/kurtas?category=cotton-chikankari' },
+          { label: 'Chikankari Sarees', href: '/kurtas?category=chikankari-sarees' },
+          { label: 'Ethnic Bottoms', href: '/kurtas?category=ethnic-bottoms' }
+        ]
+      },
+      {
+        heading: 'Fabrics & Weaves',
+        links: [
+          { label: 'Pure Mulmul Cotton', href: '/kurtas?category=cotton-chikankari' },
+          { label: 'Royal Chanderi Silk', href: '/kurtas?category=chanderi-silk-kurtas' },
+          { label: 'Flowing Georgette', href: '/kurtas?category=georgette-kurtas' },
+          { label: 'Modal Chikankari', href: '/kurtas?category=modal-chikankari' },
+          { label: 'Kota Doria Cotton', href: '/kurtas?fabric=kota' }
+        ]
+      },
+      {
+        heading: 'Silhouettes & Fit',
+        links: [
+          { label: 'Flared Anarkalis', href: '/kurtas?q=anarkali' },
+          { label: 'Straight Fit Kurtas', href: '/kurtas?q=straight' },
+          { label: 'Angrakha Styles', href: '/kurtas?q=angrakha' },
+          { label: 'Women’s Collection', href: '/kurtas?gender=Women' },
+          { label: 'Men’s Heritage Wear', href: '/kurtas?gender=Men' }
+        ]
+      }
+    ],
+    card: {
+      image: '/assets/banners/hero-kurta-mobile.webp',
+      badge: 'ATELIER HIGHLIGHT',
+      title: 'Awadhi Needlecraft',
+      copy: 'Exquisite Lucknowi shadow-work in sheer georgette and pure mulmul.',
+      to: '/kurtas',
+      cta: 'Explore Kurtas'
+    }
+  },
+  coins: {
+    title: 'Bullion & Heirlooms',
+    columns: [
+      {
+        heading: '24K Gold Coins (999)',
+        links: [
+          { label: 'Coins', href: '/coins' },
+          { label: 'All Gold Coins', href: '/coins/gold' },
+          { label: '1 Gram Gold Coin', href: '/coins?weight=1g' },
+          { label: '2 Gram Gold Coin', href: '/coins?weight=2g' },
+          { label: '5 Gram Gold Coin', href: '/coins?weight=5g' },
+          { label: '10 Gram Gold Coin', href: '/coins?weight=10g' },
+          { label: '50 Gram Gold Bar', href: '/coins?weight=50g' }
+        ]
+      },
+      {
+        heading: '999 Fine Silver Coins',
+        links: [
+          { label: 'All Silver Coins', href: '/coins/silver' },
+          { label: '10 Gram Silver Coin', href: '/coins?weight=10g' },
+          { label: '20 Gram Silver Coin', href: '/coins?weight=20g' },
+          { label: '50 Gram Silver Coin', href: '/coins?weight=50g' },
+          { label: '100 Gram Silver Bar', href: '/coins?weight=100g' },
+          { label: '250 Gram Silver Bar', href: '/coins?weight=250g' }
+        ]
+      },
+      {
+        heading: 'Gifting & Assurance',
+        links: [
+          { label: 'Festive & Shagun Bullion', href: '/coins?occasion=festive' },
+          { label: 'Lakshmi & Ganesh Coins', href: '/coins?q=lakshmi' },
+          { label: 'Tamper-Evident Assay Packs', href: '/coins' },
+          { label: 'Live Metal Pricing', href: '/admin/gold-rates' }
+        ]
+      }
+    ],
+    card: {
+      image: '/assets/banners/hero-coins-mobile.webp',
+      badge: 'CERTIFIED PURITY',
+      title: 'Pure Bullion Heirlooms',
+      copy: 'Certified 24K 999 gold and 999 silver with tamper-evident assay packaging.',
+      to: '/coins',
+      cta: 'Explore Bullion'
+    }
+  }
+};
+
 export const STORE_NAV_ITEMS = [
   { label: 'Jewelry', href: '/jewelry', matchPrefixes: ['/jewelry', '/collections'], categoryKey: 'jewelry' },
   { label: 'Kurta', href: '/kurtas', matchPrefixes: ['/kurtas', '/kurta'], categoryKey: 'kurtas' },
@@ -169,19 +304,82 @@ function Header() {
       </button>
       <Brand />
       <nav ref={menuRef} id="store-navigation" className={menu ? 'nav open' : 'nav'} aria-label="Main store navigation">
-        {(navigation.length ? navigation : STORE_NAV_ITEMS).map(item => {
+        {STORE_NAV_ITEMS.map(item => {
           const isActive = isStoreNavActive(item, location.pathname, products);
-          const key = item.key || item.categoryKey;
-          const hasChildren = (item.categories?.length || 0) + (item.genders?.length || 0) + (item.metals?.length || 0) > 0;
+          const key = item.categoryKey || item.key;
+          const mega = NAV_MEGA_DATA[key];
+          const hasChildren = Boolean(mega);
+
           return (
-            <div key={item.href} className={'nav-parent ' + (openMega === key ? 'open' : '')} onMouseEnter={() => hasChildren && setOpenMega(key)} onMouseLeave={() => setOpenMega(null)}>
-              <Link onClick={() => setMenu(false)} to={item.href} className={isActive ? 'active' : ''} aria-current={isActive ? 'page' : undefined}>{item.label}</Link>
-              {hasChildren && <button type="button" className="nav-disclosure" aria-label={`Browse ${item.label}`} aria-expanded={openMega === key} onClick={e => { e.preventDefault(); setOpenMega(openMega === key ? null : key) }}><ChevronDown size={13} /></button>}
-              {hasChildren && <div className="mega-menu" role="group" aria-label={`${item.label} categories`}>
-                <div><strong>Shop all</strong><Link to={item.href} onClick={() => { setMenu(false); setOpenMega(null) }}>All {item.label}</Link></div>
-                {item.genders?.length > 0 && <div><strong>Shop by gender</strong>{item.genders.map(g => <Link key={g} to={`${item.href}?gender=${encodeURIComponent(g)}`} onClick={() => { setMenu(false); setOpenMega(null) }}>{g}</Link>)}</div>}
-                {(item.metals?.length > 0 || item.categories?.length > 0) && <div><strong>{item.key === 'coins' ? 'Shop by metal' : 'Shop by type'}</strong>{(item.metals || item.categories || []).slice(0, 8).map(c => { const base = item.key === 'coins' ? `/coins/${c.slug}` : `${item.href}/browse/${c.slug}`; return <Link key={c.slug} to={base} onClick={() => { setMenu(false); setOpenMega(null) }}>{c.name}</Link> })}</div>}
-              </div>}
+            <div
+              key={item.href}
+              className={'nav-parent ' + (openMega === key ? 'open' : '')}
+              onMouseEnter={() => hasChildren && setOpenMega(key)}
+              onMouseLeave={() => setOpenMega(null)}
+            >
+              <Link
+                onClick={() => setMenu(false)}
+                to={item.href}
+                className={isActive ? 'active' : ''}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                {item.label}
+              </Link>
+              {hasChildren && (
+                <button
+                  type="button"
+                  className="nav-disclosure"
+                  aria-label={`Browse ${item.label}`}
+                  aria-expanded={openMega === key}
+                  onClick={e => {
+                    e.preventDefault();
+                    setOpenMega(openMega === key ? null : key);
+                  }}
+                >
+                  <ChevronDown size={13} />
+                </button>
+              )}
+              {hasChildren && (
+                <div className="mega-menu" role="group" aria-label={`${item.label} categories`}>
+                  <div className="mega-menu-content">
+                    {mega.columns.map(col => (
+                      <div key={col.heading} className="mega-menu-col">
+                        <strong>{col.heading}</strong>
+                        {col.links.map(l => (
+                          <Link
+                            key={l.label + l.href}
+                            to={l.href}
+                            onClick={() => {
+                              setMenu(false);
+                              setOpenMega(null);
+                            }}
+                          >
+                            {l.label}
+                          </Link>
+                        ))}
+                      </div>
+                    ))}
+                    {mega.card && (
+                      <Link
+                        to={mega.card.to}
+                        className="mega-menu-card"
+                        onClick={() => {
+                          setMenu(false);
+                          setOpenMega(null);
+                        }}
+                      >
+                        <img src={mega.card.image} alt={mega.card.title} loading="lazy" />
+                        <span className="mega-card-tag">{mega.card.badge}</span>
+                        <h4 className="mega-card-title">{mega.card.title}</h4>
+                        <p className="mega-card-desc">{mega.card.copy}</p>
+                        <span className="mega-card-link">
+                          {mega.card.cta} <ArrowRight size={13} />
+                        </span>
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}
