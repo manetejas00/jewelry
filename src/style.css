@@ -2600,6 +2600,46 @@
 .hero-copy > *{position:relative;z-index:10}
 .hero-cta-button, .hero-copy .button{position:relative;z-index:12;display:inline-flex !important;visibility:visible !important;opacity:1 !important;pointer-events:auto !important;cursor:pointer;background:#f6f3e9 !important;color:#18302e !important}
 .hero-cta-button:hover, .hero-copy .button:hover{background:#d9c9a6 !important}
+.hero-play-indicator {
+  position: absolute;
+  top: 24px;
+  right: 28px;
+  z-index: 15;
+  background: rgba(16, 39, 42, 0.72);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #ede7d5;
+  border: 1px solid rgba(221, 210, 185, 0.35);
+  border-radius: 40px;
+  padding: 8px 16px;
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  animation: hero-play-pulse 2.2s infinite ease-in-out;
+}
+.hero-play-indicator:hover {
+  background: rgba(16, 39, 42, 0.95);
+  border-color: rgba(221, 210, 185, 0.8);
+  transform: scale(1.04);
+}
+@keyframes hero-play-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.92; }
+  50% { transform: scale(1.03); opacity: 1; border-color: rgba(221, 210, 185, 0.65); }
+}
+@media (max-width: 768px) {
+  .hero-play-indicator {
+    top: 16px;
+    right: 18px;
+    padding: 7px 13px;
+    font-size: 9px;
+  }
+}
 
 /* ==========================================================================
    Full-Screen Responsive Hero Banner (Desktop, Tablet & Mobile)

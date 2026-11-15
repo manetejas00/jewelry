@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUpRight, ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowUpRight, ArrowLeft, ArrowRight, Play } from 'lucide-react';
 import gsap from 'gsap';
 import { brandedImageSource } from './brand-media.js';
 
@@ -75,6 +75,7 @@ export default function HeroBanner({ heroRef }) {
   const [index, setIndex] = useState(0);
   const [previous, setPrevious] = useState(0);
   const [incoming, setIncoming] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [reduce] = useState(() => (typeof window !== 'undefined' ? window.matchMedia('(prefers-reduced-motion: reduce)').matches : false));
 
   const indexRef = useRef(0);
@@ -154,7 +155,7 @@ export default function HeroBanner({ heroRef }) {
     return () => ctx.revert();
   }, [index, reduce]);
 
-  // Sequence scheduling logic
+  // Sequence scheduling logic & robust mobile video playback
   useEffect(() => {
     clearTimer();
     const vid = videoRef.current;
@@ -165,12 +166,17 @@ export default function HeroBanner({ heroRef }) {
       if (document.hidden) {
         if (vid && isVideoSlide) {
           vid.pause();
+          setIsPlaying(false);
         }
         clearTimer();
       } else {
         // Resumed
         if (indexRef.current === 0 && isVideoSlide && vid) {
-          vid.play().catch(() => {});
+          vid.muted = true;
+          vid.defaultMuted = true;
+          vid.play()
+            .then(() => setIsPlaying(true))
+            .catch(() => setIsPlaying(false));
         } else if (indexRef.current > 0) {
           // Restart 3s timer for current image
           timerRef.current = setTimeout(() => {
@@ -187,10 +193,21 @@ export default function HeroBanner({ heroRef }) {
 
     // Slide 0: Video logic
     if (isVideoSlide && vid) {
+      // Explicit DOM attributes for mobile WebKit / Safari policy
       vid.muted = true;
-      vid.currentTime = 0;
+      vid.defaultMuted = true;
+      vid.setAttribute('muted', '');
+      vid.setAttribute('playsinline', '');
+      vid.setAttribute('webkit-playsinline', 'true');
+      vid.setAttribute('x5-playsinline', 'true');
+      vid.playsInline = true;
+
+      if (vid.currentTime > 0) {
+        try { vid.currentTime = 0; } catch {}
+      }
 
       const handleVideoEnded = () => {
+        setIsPlaying(false);
         // Wait exactly 3 seconds after video completes, then transition to slide 1
         clearTimer();
         timerRef.current = setTimeout(() => {
@@ -200,33 +217,72 @@ export default function HeroBanner({ heroRef }) {
         }, 3000);
       };
 
-      const handleVideoError = () => {
-        // Fallback if video fails: wait 3 seconds and go to slide 1
-        clearTimer();
-        timerRef.current = setTimeout(() => {
-          if (isTabVisibleRef.current) {
-            goToSlide(1);
-          }
-        }, 3000);
-      };
+      const handlePlaying = () => setIsPlaying(true);
+      const handlePause = () => setIsPlaying(false);
 
       vid.addEventListener('ended', handleVideoEnded);
-      vid.addEventListener('error', handleVideoError);
+      vid.addEventListener('playing', handlePlaying);
+      vid.addEventListener('pause', handlePause);
 
-      if (isTabVisibleRef.current) {
+      const attemptPlay = () => {
+        if (!vid || indexRef.current !== 0 || !isTabVisibleRef.current) return;
+        vid.muted = true;
+        vid.defaultMuted = true;
         const playPromise = vid.play();
         if (playPromise !== undefined) {
-          playPromise.catch(() => {
-            // If autoplay policy blocks, proceed after 3s
-            handleVideoError();
-          });
+          playPromise
+            .then(() => {
+              setIsPlaying(true);
+            })
+            .catch(err => {
+              // Policy restricted autoplay until first touch/scroll
+              console.warn('Hero video autoplay waiting for user interaction:', err);
+              setIsPlaying(false);
+            });
         }
+      };
+
+      vid.addEventListener('canplay', attemptPlay);
+      vid.addEventListener('loadeddata', attemptPlay);
+
+      // Force mobile buffer start
+      if (vid.readyState === 0) {
+        try { vid.load(); } catch {}
       }
+
+      if (isTabVisibleRef.current) {
+        attemptPlay();
+      }
+
+      // One-time user gesture unlocker for mobile browsers with low-power or strict autoplay
+      const onUserGesture = () => {
+        if (indexRef.current === 0 && vid && vid.paused) {
+          vid.muted = true;
+          vid.defaultMuted = true;
+          vid.play()
+            .then(() => setIsPlaying(true))
+            .catch(() => {});
+        }
+      };
+
+      window.addEventListener('touchstart', onUserGesture, { passive: true, once: true });
+      window.addEventListener('touchend', onUserGesture, { passive: true, once: true });
+      window.addEventListener('pointerdown', onUserGesture, { passive: true, once: true });
+      window.addEventListener('click', onUserGesture, { passive: true, once: true });
+      window.addEventListener('scroll', onUserGesture, { passive: true, once: true });
 
       return () => {
         document.removeEventListener('visibilitychange', handleVisibilityChange);
         vid.removeEventListener('ended', handleVideoEnded);
-        vid.removeEventListener('error', handleVideoError);
+        vid.removeEventListener('playing', handlePlaying);
+        vid.removeEventListener('pause', handlePause);
+        vid.removeEventListener('canplay', attemptPlay);
+        vid.removeEventListener('loadeddata', attemptPlay);
+        window.removeEventListener('touchstart', onUserGesture);
+        window.removeEventListener('touchend', onUserGesture);
+        window.removeEventListener('pointerdown', onUserGesture);
+        window.removeEventListener('click', onUserGesture);
+        window.removeEventListener('scroll', onUserGesture);
         clearTimer();
       };
     }
@@ -247,6 +303,17 @@ export default function HeroBanner({ heroRef }) {
     };
   }, [index, isVideoSlide, clearTimer, goToSlide]);
 
+  const handleHeroClick = () => {
+    if (isVideoSlide && videoRef.current) {
+      const vid = videoRef.current;
+      vid.muted = true;
+      vid.defaultMuted = true;
+      if (vid.paused) {
+        vid.play().then(() => setIsPlaying(true)).catch(() => {});
+      }
+    }
+  };
+
   return (
     <section
       className="hero"
@@ -255,6 +322,7 @@ export default function HeroBanner({ heroRef }) {
         if (typeof heroRef === 'function') heroRef(el);
         else if (heroRef) heroRef.current = el;
       }}
+      onClick={handleHeroClick}
       aria-roledescription="carousel"
       aria-label="Homepage banners"
     >
@@ -290,18 +358,37 @@ export default function HeroBanner({ heroRef }) {
             ref={videoRef}
             className={`${isVideoSlide ? 'is-active' : ''} slide-pos-jewelry`}
             style={{ '--slide-mobile-pos': slides[0].mobilePosition || '65% 20%' }}
-            src={videoSrc}
             poster={brandedImageSource(slides[0].poster)}
             autoPlay
             muted
+            defaultMuted
             playsInline
+            webkit-playsinline="true"
+            x5-playsinline="true"
             preload="auto"
             aria-label={slides[0].alt}
             aria-hidden={isVideoSlide ? undefined : true}
-          />
+          >
+            <source src={videoSrc} type="video/mp4" />
+          </video>
         )}
         <div className="image-grain" />
       </div>
+
+      {isVideoSlide && !isPlaying && (
+        <button
+          type="button"
+          className="hero-play-indicator"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleHeroClick();
+          }}
+          aria-label="Play hero video"
+        >
+          <Play size={14} fill="currentColor" />
+          <span>Play Video</span>
+        </button>
+      )}
 
       <div className="hero-copy" ref={copyRef}>
         <div className="eyebrow">
@@ -336,10 +423,10 @@ export default function HeroBanner({ heroRef }) {
             {String(index + 1).padStart(2, '0')} <span>/ {total}</span>
           </div>
           <div className="hero-arrows">
-            <button type="button" aria-label="Previous banner" onClick={() => go(-1)}>
+            <button type="button" aria-label="Previous banner" onClick={(e) => { e.stopPropagation(); go(-1); }}>
               <ArrowLeft size={18} />
             </button>
-            <button type="button" aria-label="Next banner" onClick={() => go(1)}>
+            <button type="button" aria-label="Next banner" onClick={(e) => { e.stopPropagation(); go(1); }}>
               <ArrowRight size={18} />
             </button>
           </div>
