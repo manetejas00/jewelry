@@ -7,9 +7,12 @@ export async function pageMetadata(k,pathname){
  const brand=process.env.BRAND_NAME||'Veyora Jewels';
  let title=brand+' — Objects of quiet beauty',description='Discover fine jewellery and handcrafted Lucknowi kurtas from '+brand+'.',status=200,indexable=true,image,product;
  if(pathname.startsWith('/products/'))product=await pricedProductBySlug(k,decodeURIComponent(pathname.slice(10)));
+ else if(pathname.startsWith('/jewelry/'))product=await pricedProductBySlug(k,decodeURIComponent(pathname.slice(9)));
  else if(pathname.startsWith('/kurtas/'))product=await pricedProductBySlug(k,decodeURIComponent(pathname.slice(8)));
+ else if(pathname.startsWith('/kurta/'))product=await pricedProductBySlug(k,decodeURIComponent(pathname.slice(7)));
  else if(pathname.startsWith('/coins/product/'))product=await pricedCoinBySku(k,decodeURIComponent(pathname.slice(15)));
- const labels={'/':'','/collections/all':'All jewellery','/collections/rings':'Rings','/collections/earrings':'Earrings','/collections/necklaces':'Necklaces','/collections/bracelets':'Bracelets','/kurtas':'Kurtas for Women','/coins':'Gold & silver coins','/coins/gold':'Gold coins','/coins/silver':'Silver coins','/information/shipping':'Shipping information','/information/care':'Jewellery care','/information/returns':'Returns information','/information/contact':'Contact','/information/about':'About Veyora','/information/privacy':'Privacy policy','/information/terms':'Terms and conditions'};
+ else if(pathname.startsWith('/coin/'))product=await pricedCoinBySku(k,decodeURIComponent(pathname.slice(6)));
+ const labels={'/':'','/jewelry':'All jewellery','/kurta':'Kurtas for Women','/coin':'Gold & silver coins','/collections/all':'All jewellery','/collections/rings':'Rings','/collections/earrings':'Earrings','/collections/necklaces':'Necklaces','/collections/bracelets':'Bracelets','/kurtas':'Kurtas for Women','/coins':'Gold & silver coins','/coins/gold':'Gold coins','/coins/silver':'Silver coins','/information/shipping':'Shipping information','/information/care':'Jewellery care','/information/returns':'Returns information','/information/contact':'Contact','/information/about':'About Veyora','/information/privacy':'Privacy policy','/information/terms':'Terms and conditions'};
  if(product){title=product.seo_title||product.name+' | '+brand;description=product.meta_description||String(product.description||product.name).slice(0,160);image=product.image||product.thumbnail;}
  else if(pathname==='/collections/saved'){title='Your saved pieces | '+brand;indexable=false;}
  else if(pathname in labels){if(labels[pathname])title=labels[pathname]+' | '+brand;}
