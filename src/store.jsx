@@ -6,7 +6,7 @@ export const useStore = () => useContext(Store);
 const readList = key => {try {const value = JSON.parse(localStorage.getItem(key) || '[]'); return Array.isArray(value) ? value : [];} catch {return [];}};
 const compact = model => ({bag: model.bag.map(({sku, quantity}) => ({sku, quantity})), saved: [...model.saved]});
 export function Provider({children}) {
-  const [products,setProducts] = useState([]), [coins,setCoins] = useState([]), [offers,setOffers] = useState([]), [config,setConfig] = useState({brand:'Veyora Jewels',preview:true});
+  const [products,setProducts] = useState([]), [coins,setCoins] = useState([]), [categories,setCategories] = useState([]), [offers,setOffers] = useState([]), [config,setConfig] = useState({brand:'Veyora Jewels',preview:true});
   const [catalogueRevision,setCatalogueRevision] = useState(0);
   const [error,setError] = useState(''), [bag,rawBag] = useState(() => readList('veyora-bag'));
   const [saved,rawSaved] = useState(() => readList('veyora-saved')), [bagOpen,setBagOpen] = useState(false);
@@ -31,11 +31,11 @@ export function Provider({children}) {
   useEffect(() => {
     let cancelled = false;
     const requestId = ++catalogueRequest.current;
-    Promise.all([api('/products'),api('/coins').catch(()=>[]),api('/config'),api('/account/session'),api('/offers').catch(()=>[])]).then(([p,cns,c,account,o]) => {
+    Promise.all([api('/products'),api('/coins').catch(()=>[]),api('/categories').catch(()=>[]),api('/config'),api('/account/session'),api('/offers').catch(()=>[])]).then(([p,cns,cats,c,account,o]) => {
       if (cancelled) return;
       setConfig(c);adopt(account);
       if (requestId !== catalogueRequest.current) return;
-      setProducts(p);setCoins(cns||[]);setOffers(o||[]);
+      setProducts(p);setCoins(cns||[]);setCategories(cats||[]);setOffers(o||[]);
     }).catch(e => {if (!cancelled) setError(e.message);}).finally(() => {if (!cancelled) setAccountReady(true);});
     return () => {cancelled = true;};
   }, []);
@@ -122,7 +122,7 @@ export function Provider({children}) {
     });
     setBagOpen(true);
   }
-  return <Store.Provider value={{products,coins,offers,catalogueRevision,refreshCatalogue,config,error,bag,setBag,add,bagOpen,setBagOpen,saved,toggleSave,setToast,customer,accountReady,authenticate,logoutCustomer,flushAccount,refreshAccount,afterCheckout,syncStatus,syncError}}>
+  return <Store.Provider value={{products,coins,categories,offers,catalogueRevision,refreshCatalogue,config,error,bag,setBag,add,bagOpen,setBagOpen,saved,toggleSave,setToast,customer,accountReady,authenticate,logoutCustomer,flushAccount,refreshAccount,afterCheckout,syncStatus,syncError}}>
     {children}
     {toast && <div className="toast" role="status"><Check size={17}/>{toast}</div>}
   </Store.Provider>;

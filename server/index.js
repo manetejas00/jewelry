@@ -25,7 +25,6 @@ import {exportCsv,validate} from './importer.js';
 import {presentOrders,updateOrderStatus} from './orders.js';
 import {staffIsActive,setStaffAccess,createStaff} from './staff-access.js';
 import {validatePricingRule} from './pricing-rules.js';
-import {loadFeedSettings as readFeedSettings} from './settings.js';
 import {coinArtwork} from '../shared/coin-artwork.js';
 import {seed} from '../scripts/seed.js';
 import {saveUploadedImage,ensureThumbnail,thumbnailUrl,isSafeMediaUrl} from './thumbnails.js';
@@ -45,6 +44,7 @@ import {registerRateRoutes} from './rates.js';
 import { createJewelryRouter } from './modules/jewelry/Routes/jewelryRoutes.js';
 import { createCoinRouter } from './modules/coin/Routes/coinRoutes.js';
 import { createKurtaRouter } from './modules/kurta/Routes/kurtaRoutes.js';
+import { storefrontNavigation } from './navigation.js';
 
 const route=f=>(req,res,next)=>Promise.resolve(f(req,res,next)).catch(next);
 const app=express();const production=process.env.NODE_ENV==='production';
@@ -53,8 +53,6 @@ if(production&&(!process.env.SESSION_SECRET||process.env.SESSION_SECRET.length<3
 // run pending migrations or reseed itself on every Passenger restart; releases
 // apply migrations explicitly through the deployment workflow instead.
 if(preview){if(!production){await migrate();await seed();}}else if(await db('products').whereIn('supplier',['Fictional Preview','Veyora Preview Collection 100']).first()||await db('staff').where({email:'preview@veyora.local'}).first())throw validationError('Production cannot use the fictional preview database. Configure a clean production database.');
-const loadFeedSettings=()=>readFeedSettings(db);
-await loadFeedSettings();
 app.disable('x-powered-by');
 app.set('trust proxy',Number(process.env.TRUST_PROXY||0));
 app.use(helmet({contentSecurityPolicy:production?{directives:{defaultSrc:["'self'"],scriptSrc:["'self'"],scriptSrcAttr:["'none'"],styleSrc:["'self'","'unsafe-inline'",'https://fonts.googleapis.com'],fontSrc:["'self'",'https://fonts.gstatic.com'],imgSrc:["'self'",'data:','blob:','https:'],connectSrc:["'self'"],objectSrc:["'none'"],frameAncestors:["'none'"]}}:false}));
@@ -72,8 +70,6 @@ class DbStore extends session.Store {get(sid,cb){db('sessions').where({sid}).fir
 const cookieSecure = process.env.COOKIE_SECURE === 'true' || (production && Boolean(process.env.APP_URL?.startsWith('https:')));
 app.use(session({secret:process.env.SESSION_SECRET||crypto.randomBytes(32).toString('hex'),resave:false,saveUninitialized:false,store:new DbStore(),cookie:{httpOnly:true,sameSite:'strict',secure:cookieSecure,maxAge:8*3600000}}));
 app.use('/api',route(async(req,res,next)=>{if(req.session.customer){const row=await db('customers').where({id:req.session.customer.id}).select('session_version','deleted_at').first();if(!row||row.deleted_at||(row.session_version||0)!==(req.session.customer.session_version||0)){delete req.session.customer;delete req.session.customerCsrf;}}next();}));
-app.use('/api',routeSettings);
-function routeSettings(req,res,next){loadFeedSettings().then(()=>next()).catch(next)}
 app.use('/api',(req,res,next)=>{res.set('Cache-Control','no-store');if(['POST','PUT','DELETE','PATCH'].includes(req.method)){const origin=req.get('origin');const allowedOrigins=[process.env.APP_URL?new URL(process.env.APP_URL).origin:null,...(!production?['http://localhost:3000','http://127.0.0.1:3000']:[])].filter(Boolean);if(origin && !allowedOrigins.includes(origin))return res.status(403).json({error:'Origin not allowed'});if(req.get('sec-fetch-site')==='cross-site')return res.status(403).json({error:'Origin not allowed'});if(req.path!=='/admin/login'&&req.path.startsWith('/admin')&&req.get('x-csrf-token')!==req.session.csrf)return res.status(403).json({error:'Please reload the admin panel'});}next();});
 
 const otpGateway=createOtpGateway(process.env);
@@ -90,6 +86,7 @@ app.get('/api/products',route(async(req,res)=>res.json(await catalogue(db))));
 app.get('/api/coins',route(async(req,res)=>res.json(await coinCatalogue(db))));
 app.get('/api/categories',route(async(req,res)=>res.json(await listActiveCategories(db))));
 app.get('/api/categories/:slug',route(async(req,res)=>{const c=await categoryBySlug(db,req.params.slug);if(!c)return res.status(404).json({error:'Category not found'});res.json(c);}));
+app.get('/api/navigation',route(async(req,res)=>res.json(await storefrontNavigation(db))));
 app.get('/api/kurtas',route(async(req,res)=>res.json(await listKurtas(db))));
 app.get('/api/kurtas/:slug',route(async(req,res)=>{const k=await kurtaBySlug(db,req.params.slug);if(!k)return res.status(404).json({error:'Kurta not found'});res.json(k);}));
 app.get('/api/search',route(async(req,res)=>{const q=String(req.query.q||'').slice(0,100);res.json(await searchCatalogue(db,q));}));
@@ -180,7 +177,22 @@ registerPublicReviewRoutes(app, { db, route, uploadsDir });
 app.post('/api/admin/login',rateLimit({windowMs:15*60000,limit:10}),route(async(req,res)=>{const staff=await db('staff').where({email:String(req.body.email).toLowerCase()}).first();if(!staff||staff.disabled_at||!await bcrypt.compare(String(req.body.password),staff.password_hash))return res.status(401).json({error:'Email or password is incorrect'});const customer=req.session.customer,customerCsrf=req.session.customerCsrf,orderIds=req.session.orderIds;await new Promise((resolve,reject)=>req.session.regenerate(e=>e?reject(e):resolve()));if(customer){req.session.customer=customer;req.session.customerCsrf=customerCsrf;}req.session.orderIds=orderIds;req.session.staff={id:staff.id,email:staff.email,role:staff.role};req.session.csrf=crypto.randomBytes(24).toString('hex');res.json({staff:req.session.staff,csrf:req.session.csrf});}));
 app.get('/api/admin/session',auth(),(req,res)=>res.json({staff:req.session.staff,csrf:req.session.csrf}));
 app.post('/api/admin/logout',auth(),route(async(req,res)=>{const customer=req.session.customer,customerCsrf=req.session.customerCsrf,orderIds=req.session.orderIds;await new Promise((resolve,reject)=>req.session.regenerate(e=>e?reject(e):resolve()));if(customer){req.session.customer=customer;req.session.customerCsrf=customerCsrf;}req.session.orderIds=orderIds;res.json({ok:true});}));
-app.get('/api/admin/dashboard',auth(),route(async(req,res)=>{const [rates,batches,runs,orders,rule,audits,suppliers,rateHistory]=await Promise.all([activeRates(db),db('import_batches').select('id','kind','supplier','source_timestamp','status','summary','created_at').orderBy('id','desc').limit(30),db('daily_runs').orderBy('id','desc').limit(10),db('orders').orderBy('created_at','desc').limit(100),db('pricing_rules').orderBy('id','desc').first(),db('audit').orderBy('id','desc').limit(20),db('import_batches').where({status:'published'}).select('supplier','kind').max('source_timestamp as last_update').groupBy('supplier','kind'),db('rates').orderBy('id','desc').limit(100)]);const scheduleMissed=!runs.some(r=>r.trigger==='scheduled'&&r.finished_at&&Date.now()-Date.parse(r.finished_at)<36*3600000);const todayBatches=batches.filter(b=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(b.created_at))===todayIndia());res.json({rateHistory,scheduleMissed,todayImports:{total:todayBatches.length,failed:todayBatches.filter(b=>b.status==='failed').length,published:todayBatches.filter(b=>b.status==='published').length},rates:Object.values(rates).map(r=>({...r,fresh:isFresh(r)})),batches:batches.map(b=>({...b,summary:parse(b.summary)})),runs:runs.map(r=>({...r,result:parse(r.result)})),orders:presentOrders(orders,req.session.staff.role),rule,audits,suppliers,maxAgeHours:Number(process.env.GOLD_MAX_AGE_HOURS||48),feedSettings:{goldConfigured:!!process.env.GOLD_FEED_URL,productsConfigured:!!(process.env.PRODUCT_FEED_URL||process.env.PRODUCT_FEED_FILE),inventoryMode:process.env.INVENTORY_MODE||'incremental',overwriteFields:process.env.SUPPLIER_OVERWRITE_FIELDS||'stock,fixed_price,net_weight_g,making_flat,stone_charge,other_charge',feedStatus:process.env.FEED_STATUS||'active',goldFeedEnabled:process.env.GOLD_FEED_ENABLED!=='false',productFeedEnabled:process.env.PRODUCT_FEED_ENABLED!=='false',goldUrl:process.env.GOLD_FEED_URL||'',productUrl:process.env.PRODUCT_FEED_URL||''},preview});}));
+app.get('/api/admin/dashboard',auth(),route(async(req,res)=>{
+ const [rates,batches,orders,rule,audits,products,coins,kurtas]=await Promise.all([
+  activeRates(db), db('import_batches').select('id','kind','status','summary','created_at','published_at').orderBy('id','desc').limit(30),
+  db('orders').orderBy('created_at','desc').limit(100), db('pricing_rules').orderBy('id','desc').first(),
+  db('audit').orderBy('id','desc').limit(20), db('products'), db('coins').catch(()=>[]), db('kurtas').catch(()=>[])
+ ]);
+ const todayBatches=batches.filter(b=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(b.created_at))===todayIndia());
+ const jewelry=products.filter(p=>!p.is_kurta);
+ const incomplete=[...products,...coins,...kurtas].filter(p=>!p.name||!p.sku||!p.image||p.stock==null).length;
+ res.json({
+  todayImports:{total:todayBatches.length,failed:todayBatches.filter(b=>b.status==='failed').length,published:todayBatches.filter(b=>b.status==='published').length},
+  rates:Object.values(rates).map(r=>({...r,fresh:isFresh(r)})), batches:batches.map(b=>({...b,summary:parse(b.summary)})),
+  orders:presentOrders(orders,req.session.staff.role), rule, audits, preview,
+  productCounts:{total:jewelry.length+coins.length+kurtas.length,jewelry:jewelry.length,coins:coins.length,kurtas:kurtas.length,active:[...jewelry,...coins,...kurtas].filter(p=>p.status==='published'||p.status==='active').length,inactive:[...jewelry,...coins,...kurtas].filter(p=>!['published','active'].includes(p.status)).length,incomplete}
+ });
+}));
 app.get('/api/admin/products',auth(),route(async(req,res)=>{
  const products=await db('products').orderBy('product_code');
  const hasImages=await db.schema.hasTable('product_images').catch(()=>false);
@@ -528,7 +540,7 @@ app.post('/api/admin/orders/:id/status',auth(['owner','manager']),route(async(re
 app.get('/api/admin/staff',auth(['owner']),route(async(req,res)=>res.json(await db('staff').select('id','email','role','disabled_at').orderBy('id'))));
 app.post('/api/admin/staff',auth(['owner']),route(async(req,res)=>{const created=await createStaff(db,req.body);await audit(req,'staff_created',{id:created.id,email:created.email,role:created.role});res.status(201).json(created);}));
 app.post('/api/admin/staff/:id/access',auth(['owner']),route(async(req,res)=>{const result=await setStaffAccess(db,req.session.staff.id,req.params.id,req.body.disabled===true);await audit(req,'staff_access',result);res.json(result);}));
-registerImportRoutes(app, { db, route, auth, audit, loadFeedSettings });
+registerImportRoutes(app, { db, route, auth, audit });
 app.post('/api/admin/rules/preview',auth(['owner']),route(async(req,res)=>{
  const rule=validatePricingRule(req.body);
  const [rates,silver,products,coins,current,offers]=await Promise.all([activeRates(db),getSilverRate(db),db('products'),db('coins'),db('pricing_rules').orderBy('id','desc').first(),activeOffers(db)]);

@@ -45,7 +45,7 @@ let catalogueEpoch = 0;
 const pendingCatalogue = new Map();
 export function bumpCatalogueReads() {catalogueEpoch += 1;}
 export function api(url, body, method) {
-  if (body || (method && method !== 'GET') || !['/coins','/products','/offers'].includes(url)) return request(url,body,method);
+  if (body || (method && method !== 'GET') || !['/coins','/products','/offers','/categories'].includes(url)) return request(url,body,method);
   const epoch = catalogueEpoch;
   const current = pendingCatalogue.get(url);
   if (current?.epoch === epoch) return current.promise;

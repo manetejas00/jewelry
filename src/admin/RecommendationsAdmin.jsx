@@ -96,7 +96,7 @@ export function RecommendationsAdmin({ readonly }) {
             <Sparkles size={20} color="var(--gold-dark)" />
             <h3 style={{ margin: 0, fontSize: '16px' }}>Configured Shelves</h3>
           </div>
-          <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '13px', color: 'var(--charcoal)', lineHeight: 1.8 }}>
+          <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '13px', color: 'var(--ink)', lineHeight: 1.8 }}>
             <li><strong>Similar Products:</strong> Same category, matching purity & gemstone accents.</li>
             <li><strong>You May Also Like:</strong> Same collection or complementary motif styles.</li>
             <li><strong>Complete the Look:</strong> Cross-category pairing (e.g. Necklace + Matching Earrings).</li>

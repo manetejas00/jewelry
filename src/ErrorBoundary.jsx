@@ -34,7 +34,7 @@ export class ErrorBoundary extends React.Component {
 
       return (
         <div className="empty" style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--paper)', display: 'grid', placeItems: 'center', marginBottom: '20px', color: 'var(--charcoal)' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--paper)', display: 'grid', placeItems: 'center', marginBottom: '20px', color: 'var(--ink)' }}>
             <AlertCircle size={24} />
           </div>
           <span className="eyebrow" style={{ letterSpacing: '2px', color: 'var(--muted)', marginBottom: '8px' }}>

@@ -23,4 +23,4 @@ artifacts/
 scratch/
 
 # Raw supplier PDFs are retained locally and must not enter Git history.
-catalogue/Jewelry/
+catalogue/

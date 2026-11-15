@@ -98,7 +98,9 @@ export function CategoriesAdmin({ readonly = false, refreshParent = null }) {
       status: 'active',
       sort_order: categories.length + 1,
       seo_title: '',
-      meta_description: ''
+      meta_description: '',
+      parent_id: null,
+      route_path: ''
     });
   }
 
@@ -108,7 +110,7 @@ export function CategoriesAdmin({ readonly = false, refreshParent = null }) {
         <button
           type="button"
           className="button small-button"
-          style={{ background: activeTab === 'categories' ? 'var(--charcoal)' : 'var(--paper)', color: activeTab === 'categories' ? 'var(--paper)' : 'var(--charcoal)', border: '1px solid var(--line)' }}
+          style={{ background: activeTab === 'categories' ? 'var(--ink)' : 'var(--paper)', color: activeTab === 'categories' ? 'var(--ivory)' : 'var(--ink)', border: '1px solid var(--line)' }}
           onClick={() => setActiveTab('categories')}
         >
           <FolderTree size={14} /> Categories ({categories.length})
@@ -116,7 +118,7 @@ export function CategoriesAdmin({ readonly = false, refreshParent = null }) {
         <button
           type="button"
           className="button small-button"
-          style={{ background: activeTab === 'collections' ? 'var(--charcoal)' : 'var(--paper)', color: activeTab === 'collections' ? 'var(--paper)' : 'var(--charcoal)', border: '1px solid var(--line)' }}
+          style={{ background: activeTab === 'collections' ? 'var(--ink)' : 'var(--paper)', color: activeTab === 'collections' ? 'var(--ivory)' : 'var(--ink)', border: '1px solid var(--line)' }}
           onClick={() => setActiveTab('collections')}
         >
           <Gem size={14} /> Collections
@@ -124,7 +126,7 @@ export function CategoriesAdmin({ readonly = false, refreshParent = null }) {
         <button
           type="button"
           className="button small-button"
-          style={{ background: activeTab === 'materials' ? 'var(--charcoal)' : 'var(--paper)', color: activeTab === 'materials' ? 'var(--paper)' : 'var(--charcoal)', border: '1px solid var(--line)' }}
+          style={{ background: activeTab === 'materials' ? 'var(--ink)' : 'var(--paper)', color: activeTab === 'materials' ? 'var(--ivory)' : 'var(--ink)', border: '1px solid var(--line)' }}
           onClick={() => setActiveTab('materials')}
         >
           <Layers size={14} /> Materials
@@ -132,7 +134,7 @@ export function CategoriesAdmin({ readonly = false, refreshParent = null }) {
         <button
           type="button"
           className="button small-button"
-          style={{ background: activeTab === 'craftsmanship' ? 'var(--charcoal)' : 'var(--paper)', color: activeTab === 'craftsmanship' ? 'var(--paper)' : 'var(--charcoal)', border: '1px solid var(--line)' }}
+          style={{ background: activeTab === 'craftsmanship' ? 'var(--ink)' : 'var(--paper)', color: activeTab === 'craftsmanship' ? 'var(--ivory)' : 'var(--ink)', border: '1px solid var(--line)' }}
           onClick={() => setActiveTab('craftsmanship')}
         >
           <Sparkles size={14} /> Craftsmanship
@@ -288,6 +290,18 @@ export function CategoriesAdmin({ readonly = false, refreshParent = null }) {
                     onChange={e => setEditingCat({ ...editingCat, slug: e.target.value })}
                     placeholder="e.g. kurtas"
                   />
+                </label>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <label>Parent Category
+                  <select value={editingCat.parent_id || ''} onChange={e => setEditingCat({ ...editingCat, parent_id: e.target.value ? Number(e.target.value) : null })}>
+                    <option value="">None (top-level category)</option>
+                    {categories.filter(cat => cat.id !== editingCat.id).map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+                  </select>
+                </label>
+                <label>Store URL
+                  <input value={editingCat.route_path || ''} onChange={e => setEditingCat({ ...editingCat, route_path: e.target.value })} placeholder="/collections/category-slug" />
                 </label>
               </div>
 

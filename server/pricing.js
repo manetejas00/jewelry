@@ -309,7 +309,9 @@ export async function catalogue(k, options={}){
   const hasImages=await k.schema.hasTable('product_images').catch(()=>false);
   const hasReviews=await k.schema.hasTable('reviews').catch(()=>false);
   const [products,rates,rules,images,offers,ratings]=await Promise.all([
-    k('products').where({status:'published'}),
+    // Kurtas have their own catalogue endpoint and must never leak into the
+    // jewellery collection, even if a legacy record has a jewellery-like name.
+    k('products').where({status:'published'}).where(function(){ this.whereNull('is_kurta').orWhere('is_kurta', false); }),
     activeRates(k),
     k('pricing_rules').orderBy('id','desc').first(),
     hasImages?k('product_images')

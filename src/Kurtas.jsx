@@ -162,6 +162,8 @@ function matchKurtaPrice(price, bracket) {
 
 export function KurtasPage({ Layout, ProductCard }) {
   const { products, error } = useStore();
+  const [urlParams] = useSearchParams();
+  const gender = urlParams.get('gender');
   const [kurtas, setKurtas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fabricFilter, setFabricFilter] = useState('');
@@ -196,6 +198,11 @@ export function KurtasPage({ Layout, ProductCard }) {
 
   const filteredKurtas = useMemo(() => {
     let list = [...kurtas];
+
+    if (gender && ['Men', 'Women', 'Unisex'].includes(gender)) {
+      // Unisex belongs in both gender-led paths; unclassified products stay in All Kurtas.
+      list = list.filter(k => k.gender === gender || (gender !== 'Unisex' && k.gender === 'Unisex'));
+    }
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -242,7 +249,7 @@ export function KurtasPage({ Layout, ProductCard }) {
     }
 
     return list;
-  }, [kurtas, searchQuery, fabricFilter, sizeFilter, colorFilter, priceBracket, inStockOnly, sortBy]);
+  }, [kurtas, gender, searchQuery, fabricFilter, sizeFilter, colorFilter, priceBracket, inStockOnly, sortBy]);
 
   const clearFilters = () => {
     setFabricFilter('');

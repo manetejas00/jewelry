@@ -10,7 +10,6 @@
     "test": "node --test tests/*.test.js",
     "migrate": "node scripts/migrate.js",
     "seed:preview": "node scripts/seed.js",
-    "import:daily": "node scripts/daily.js",
     "samples": "node scripts/samples.js",
     "seed:products": "node seeders/ProductSeeder.js",
     "seed:reviews": "node seeders/ReviewSeeder.js",

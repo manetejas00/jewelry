@@ -104,6 +104,7 @@ export class JewelryService {
       sku: cleanSku,
       name: String(body.name).trim().slice(0, 200),
       category: String(body.category || 'Rings').trim().slice(0, 100),
+      gender: ['Men', 'Women', 'Unisex', 'Not Specified'].includes(body.gender) ? body.gender : 'Not Specified',
       description: body.description ? String(body.description).trim().slice(0, 5000) : null,
       metal: String(body.metal || 'Gold').trim().slice(0, 50),
       purity: String(body.purity || '18K').trim().slice(0, 50),
@@ -197,6 +198,10 @@ export class JewelryService {
     if (body.description !== undefined) patch.description = String(body.description || '').trim().slice(0, 5000);
     if (body.status !== undefined) patch.status = body.status;
     if (body.category !== undefined) patch.category = String(body.category).trim().slice(0, 100);
+    if (body.gender !== undefined) {
+      if (!['Men', 'Women', 'Unisex', 'Not Specified'].includes(body.gender)) throw validationError('Gender must be Men, Women, Unisex, or Not Specified');
+      patch.gender = body.gender;
+    }
     if (body.image !== undefined) patch.image = String(body.image || '').trim().slice(0, 2000);
     if (body.metal !== undefined) patch.metal = body.metal;
     if (body.purity !== undefined) patch.purity = body.purity;

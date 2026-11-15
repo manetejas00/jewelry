@@ -38,6 +38,9 @@
 .price-bracket-pill.active{background:var(--ink);color:var(--ivory);border-color:var(--ink)}
 @media(max-width:768px){.price-bracket-bar{gap:8px;padding:0 2%}.price-bracket-pill{font-size:10px;padding:5px 10px}}
 
+/* Database-driven parent navigation */
+.nav-parent{position:relative;display:flex;align-items:center}.nav-disclosure{display:none;background:none;padding:4px;color:inherit}.mega-menu{display:none;position:absolute;z-index:80;top:calc(100% + 18px);left:50%;transform:translateX(-25%);width:min(560px,88vw);grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;padding:22px 24px;background:var(--ivory);border:1px solid var(--line);box-shadow:0 16px 35px #1425231c}.nav-parent.open .mega-menu{display:grid}.mega-menu>div{display:flex;flex-direction:column;align-items:flex-start;gap:8px}.mega-menu strong{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:3px}.mega-menu a{font-size:11px;white-space:nowrap}.mega-menu a:after{display:none}@media(max-width:800px){.nav-parent{display:block;width:100%;border-bottom:1px solid var(--line)}.nav-parent>a{display:inline-flex!important}.nav-disclosure{display:inline-flex;position:absolute;right:0;top:8px}.mega-menu{position:static;transform:none;width:100%;box-shadow:none;border:0;border-top:1px solid var(--line);grid-template-columns:1fr 1fr;padding:12px 0 16px;gap:16px}.nav-parent.open .mega-menu{display:grid}.mega-menu>div:last-child{grid-column:1/-1}.mega-menu a{font-size:11px!important;padding:3px 0!important}.mega-menu strong{font-size:8px}}
+
 /* Coins & Bullion Styling */
 .coins-market-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;background:var(--paper);border:1px solid var(--line);padding:16px 22px;margin-bottom:24px}
 .coins-market-rates{display:flex;align-items:center;gap:24px;flex-wrap:wrap}
