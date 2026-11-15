@@ -8,6 +8,15 @@ import { KURTA_SIZES } from '../shared/kurta-sizes.js';
 export { KURTA_SIZES };
 
 export async function listKurtas(k, options = {}) {
+  if (await k.schema.hasTable('kurtas').catch(() => false)) {
+    const kCount = await k('kurtas').count('* as c').first();
+    const countVal = Number(kCount?.c ?? kCount?.['count(*)'] ?? 0);
+    if (countVal > 0) {
+      const { KurtaService } = await import('./modules/kurta/Services/KurtaService.js');
+      const ks = new KurtaService(k);
+      return await ks.getPublishedCatalogue(options);
+    }
+  }
   const hasImages = await k.schema.hasTable('product_images').catch(() => false);
   const hasReviews = await k.schema.hasTable('reviews').catch(() => false);
 
@@ -141,6 +150,12 @@ export async function listKurtas(k, options = {}) {
 
 export async function kurtaBySlug(k, slug, options = {}) {
   const cleanSlug = String(slug || '').trim();
+  if (await k.schema.hasTable('kurtas').catch(() => false)) {
+    const { KurtaService } = await import('./modules/kurta/Services/KurtaService.js');
+    const ks = new KurtaService(k);
+    const item = await ks.getPublishedBySlug(cleanSlug, options);
+    if (item) return item;
+  }
   const baseProduct = await k('products')
     .where({ slug: cleanSlug })
     .orWhere({ product_code: cleanSlug })
@@ -219,6 +234,15 @@ export async function kurtaBySlug(k, slug, options = {}) {
 }
 
 export async function adminListKurtas(k) {
+  if (await k.schema.hasTable('kurtas').catch(() => false)) {
+    const kCount = await k('kurtas').count('* as c').first();
+    const countVal = Number(kCount?.c ?? kCount?.['count(*)'] ?? 0);
+    if (countVal > 0) {
+      const { KurtaService } = await import('./modules/kurta/Services/KurtaService.js');
+      const ks = new KurtaService(k);
+      return await ks.getAdminList();
+    }
+  }
   const products = await k('products').where(function() {
     this.where({ is_kurta: true })
       .orWhere({ category: 'Kurtas' })
@@ -331,7 +355,6 @@ export async function createKurta(k, payload) {
       const sizeStock = Math.max(0, parseInt(sizes[sizeInfo.label] ?? sizes[sizeInfo.code] ?? 10, 10));
 
       const row = {
-        supplier: 'Lucknow Heritage Maison',
         product_code: cleanCode,
         sku: sizeSku,
         slug: sizeSlug,

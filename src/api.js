@@ -39,17 +39,30 @@ export async function request(url, body, method, timeoutMs = 30000) {
   }
 }
 
-// Share overlapping catalogue reads from the same epoch. Completed requests are never cached.
-// bumpCatalogueReads() starts a new epoch so a refresh after checkout cannot reuse a response that began before stock changed.
+// Share overlapping reads across the application to prevent duplicate concurrent network calls.
+// Completed requests for catalogue items stay bounded by catalogueEpoch.
 let catalogueEpoch = 0;
-const pendingCatalogue = new Map();
-export function bumpCatalogueReads() {catalogueEpoch += 1;}
+const inFlightRequests = new Map();
+export function bumpCatalogueReads() {
+  catalogueEpoch += 1;
+}
+
 export function api(url, body, method) {
-  if (body || (method && method !== 'GET') || !['/coins','/products','/offers','/categories'].includes(url)) return request(url,body,method);
-  const epoch = catalogueEpoch;
-  const current = pendingCatalogue.get(url);
-  if (current?.epoch === epoch) return current.promise;
-  const promise = request(url,body,method).finally(()=>{const latest=pendingCatalogue.get(url);if(latest?.promise===promise)pendingCatalogue.delete(url);});
-  pendingCatalogue.set(url,{epoch,promise});
+  if (body || (method && method !== 'GET')) {
+    return request(url, body, method);
+  }
+
+  const isCatalogue = ['/coins', '/products', '/offers', '/categories'].includes(url);
+  const cacheKey = isCatalogue ? `${url}?epoch=${catalogueEpoch}` : url;
+
+  if (inFlightRequests.has(cacheKey)) {
+    return inFlightRequests.get(cacheKey);
+  }
+
+  const promise = request(url, body, method).finally(() => {
+    inFlightRequests.delete(cacheKey);
+  });
+
+  inFlightRequests.set(cacheKey, promise);
   return promise;
 }

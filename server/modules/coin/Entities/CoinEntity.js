@@ -11,7 +11,7 @@ export class CoinEntity {
     this.weight_g = data.weight_g != null ? Number(data.weight_g) : 1;
     this.dimension = data.dimension || null;
     this.denomination = data.denomination || `${this.weight_g} Gram${this.weight_g > 1 ? 's' : ''}`;
-    this.mint = data.mint || data.supplier || 'Veyora Bullion Refinery';
+    this.mint = data.mint || 'Veyora Bullion Refinery';
     this.collection = data.collection || null;
     this.edition = data.edition || null;
     this.year_of_issue = data.year_of_issue || null;
@@ -24,7 +24,6 @@ export class CoinEntity {
     this.image = data.image || '';
     this.image_kind = data.image_kind || 'illustration';
     this.status = data.status || 'published';
-    this.supplier = data.supplier || 'Merchant';
     this.seo_title = data.seo_title || `${this.name} | Veyora Bullion`;
     this.meta_description = data.meta_description || this.description;
     this.source_timestamp = data.source_timestamp || null;

@@ -25,9 +25,10 @@ async function run() {
   const startTime = Date.now();
 
   // --- STEP 1: Identify all old jewelry IDs ---
-  const oldJewelries = await db('jewelries')
-    .whereIn('supplier', OLD_SUPPLIERS)
-    .select('id', 'sku', 'product_code', 'name', 'supplier', 'image');
+  const hasSupplierCol = await db.schema.hasColumn('jewelries', 'supplier');
+  const oldJewelries = hasSupplierCol
+    ? await db('jewelries').whereIn('supplier', OLD_SUPPLIERS).select('id', 'sku', 'product_code', 'name', 'supplier', 'image')
+    : [];
 
   console.log(`Found ${oldJewelries.length} old jewelry products to remove`);
 

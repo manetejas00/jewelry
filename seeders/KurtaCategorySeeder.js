@@ -2,8 +2,8 @@ import { db, now } from '../server/db.js';
 
 export const KURTA_CATEGORIES = [
   {
-    slug: 'chicken-curry-kurtas',
-    name: 'Chicken Curry Kurtas',
+    slug: 'kurta',
+    name: 'Kurta',
     description: 'Authentic handcrafted Lucknowi Chikankari needlework kurtas with delicate floral motifs and shadow embroidery.',
     sort_order: 1
   },

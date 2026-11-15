@@ -6,8 +6,6 @@ import { MSK_KURTA_STYLES as KURTA_STYLES } from '../scripts/msk-kurtas-data.js'
 import { KurtaCategorySeeder } from './KurtaCategorySeeder.js';
 import { KurtaVariantSeeder } from './KurtaVariantSeeder.js';
 
-export const kurtaSupplier = 'MSK Heritage Wholesale';
-
 export async function KurtaSeeder(k = db) {
   if (!await k.schema.hasTable('kurtas')) {
     throw Error('Table kurtas does not exist. Run migrations before running KurtaSeeder.');
@@ -60,7 +58,7 @@ export async function KurtaSeeder(k = db) {
         slug: code,
         name: style.name,
         category_id: catId,
-        category: style.category || 'Chicken Curry Kurtas',
+        category: style.category || 'Kurta',
         description: style.description,
         fabric: style.fabric,
         pattern: style.craftsmanship || 'Handcrafted Lucknowi Chikankari',
@@ -77,7 +75,6 @@ export async function KurtaSeeder(k = db) {
         fixed_price: priceNum,
         stock: 140,
         status: 'published',
-        supplier: kurtaSupplier,
         image: repHero,
         seo_title: `${style.name} | Lucknowi Chikankari Kurta`,
         meta_description: style.description,
@@ -152,12 +149,11 @@ export async function KurtaSeeder(k = db) {
           // Sync with storefront products table
           const existingProd = await t('products').where({ sku: variantSku }).first();
           const prodData = {
-            supplier: kurtaSupplier,
             product_code: code,
             sku: variantSku,
             slug: variantSlug,
             name: style.name,
-            category: 'Chicken Curry Kurtas',
+            category: 'Kurta',
             is_kurta: 1,
             description: style.description,
             metal: style.fabric,

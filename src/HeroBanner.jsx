@@ -3,13 +3,12 @@ import { Link } from 'react-router-dom';
 import { ArrowUpRight, ArrowLeft, ArrowRight } from 'lucide-react';
 import gsap from 'gsap';
 import { brandedImageSource } from './brand-media.js';
-import BrandedImage from './BrandedImage.jsx';
 
 const asset = name => 'https://cdnstatic.tencentcs.com/edgeone/pages/product-activities/jewelry/' + encodeURIComponent(name) + '.png';
 const videoSrc = 'https://cdnstatic.tencentcs.com/edgeone/pages/product-activities/jewelry/hero.mp4';
 
-const slides = [
-  // 1. Existing hero video
+export const slides = [
+  // 1. Existing hero video — Always first, preserved
   {
     type: 'video',
     video: true,
@@ -25,91 +24,49 @@ const slides = [
     alt: 'Pearl jewellery campaign',
     mobilePosition: '65% 20%'
   },
-  // 2. Jewellery image 1
+  // 2. Kurta Collection — Slide 2
   {
-    type: 'image',
-    image: 'Pearls Collection',
-    src: asset('Pearls Collection'),
-    eyebrow: 'OBJECTS OF QUIET BEAUTY · CHAPTER 02',
-    title: 'Luminous light.',
-    lead: 'Natural ',
-    emphasis: 'elegance.',
-    copy: <>Cultured pearls handset in recycled gold.<br />Modern classics crafted to cherish every day.</>,
-    to: '/collections/all',
-    cta: 'Explore pearls',
-    alt: 'Pearl jewellery collection',
-    mobilePosition: '65% 20%'
-  },
-  // 3. Jewellery image 2
-  {
-    type: 'image',
-    image: 'Fine Jewelry Collection',
-    src: asset('Fine Jewelry Collection'),
-    eyebrow: 'THE EVERYDAY EDIT · CHAPTER 03',
-    title: 'Little details.',
-    lead: 'Extraordinary ',
-    emphasis: 'days.',
-    copy: <>Find a piece that becomes part of your story.<br />Considered jewellery for every chapter.</>,
-    to: '/collections/all',
-    cta: 'Explore all jewellery',
-    alt: 'Fine jewellery collection',
-    mobilePosition: '65% 20%'
-  },
-  // 4. Jewellery image 3
-  {
-    type: 'image',
-    image: 'Lune Pearl Drop',
-    src: asset('Lune Pearl Drop'),
-    eyebrow: 'SOMETHING TO TREASURE · CHAPTER 04',
-    title: 'A little light.',
-    lead: 'A lasting ',
-    emphasis: 'connection.',
-    copy: <>For someone you love. Including yourself.<br />Discover your next favourite piece.</>,
-    to: '/collections/all',
-    cta: 'Discover the collection',
-    alt: 'Pearl drop earring',
-    mobilePosition: '65% 20%'
-  },
-  // 5. Kurta image 1
-  {
-    type: 'image',
-    src: '/assets/banners/hero-kurta-1.webp',
-    eyebrow: 'LUCKNOWI KURTAS · CHAPTER 05',
-    title: 'Handcrafted grace.',
-    lead: 'Timeless ',
-    emphasis: 'heritage.',
-    copy: <>Authentic Lucknowi Chikankari on pure mulmul cotton.<br />Delicate shadow-work and tonal floral jaal.</>,
+    type: 'picture',
+    desktopSrc: '/assets/banners/hero-kurta-desktop.webp',
+    mobileSrc: '/assets/banners/hero-kurta-mobile.webp',
+    eyebrow: 'MODERN INDIAN HERITAGE · CHAPTER 02',
+    title: 'Tradition, Tailored for Today.',
+    lead: 'Tradition, ',
+    emphasis: 'Tailored for Today.',
+    copy: <>Exquisite hand-embroidered Lucknowi Chikankari needlecraft in pure mulmul cotton, fluid georgette, and shimmering Chanderi silk.</>,
     to: '/kurtas',
-    cta: 'Shop Kurtas',
-    alt: 'Lucknowi Ivory Chikankari Cotton Kurta',
+    cta: 'Explore Kurtas',
+    alt: 'Modern Indian Heritage Kurta Collection',
     mobilePosition: 'center top'
   },
-  // 6. Kurta image 2
+  // 3. Jewelry Collection — Slide 3
   {
-    type: 'image',
-    src: '/assets/banners/hero-kurta-2.webp',
-    eyebrow: 'FESTIVE ETHNIC EDIT · CHAPTER 06',
-    title: 'Fluid elegance.',
-    lead: 'Ethereal ',
-    emphasis: 'poetry.',
-    copy: <>Rose blush sheer georgette with artisan needlecraft.<br />A celebration of feminine drape and craftsmanship.</>,
-    to: '/kurtas',
-    cta: 'Discover Rose Blush',
-    alt: 'Rose Blush Georgette Chikankari Kurta',
-    mobilePosition: 'center top'
+    type: 'picture',
+    desktopSrc: '/assets/banners/hero-jewelry-desktop.webp',
+    mobileSrc: '/assets/banners/hero-jewelry-mobile.webp',
+    eyebrow: 'TIMELESS ELEGANCE · CHAPTER 03',
+    title: 'Elegance That Lasts Forever.',
+    lead: 'Elegance ',
+    emphasis: 'That Lasts Forever.',
+    copy: <>Hallmarked 18K and 22K yellow gold fine jewellery crafted with timeless heritage and contemporary precision.</>,
+    to: '/jewelry',
+    cta: 'Explore Jewelry',
+    alt: 'Luxury Fine Jewelry Collection',
+    mobilePosition: '65% 20%'
   },
-  // 7. Kurta image 3
+  // 4. Coins Collection — Slide 4
   {
-    type: 'image',
-    src: '/assets/banners/hero-kurta-3.webp',
-    eyebrow: 'ROYAL WEAVES · CHAPTER 07',
-    title: 'Royal sheen.',
-    lead: 'Chanderi ',
-    emphasis: 'grandeur.',
-    copy: <>Regal sage green Chanderi with intricate bakhiya embroidery.<br />Handcrafted Awadhi needlecraft for timeless celebrations.</>,
-    to: '/kurtas',
-    cta: 'Explore All Kurtas',
-    alt: 'Sage Green Chanderi Chikankari Kurta',
+    type: 'picture',
+    desktopSrc: '/assets/banners/hero-coins-desktop.webp',
+    mobileSrc: '/assets/banners/hero-coins-mobile.webp',
+    eyebrow: 'PRECIOUS HERITAGE · CHAPTER 04',
+    title: 'Precious by Nature. Timeless by Choice.',
+    lead: 'Precious by Nature. ',
+    emphasis: 'Timeless by Choice.',
+    copy: <>Certified 24K 999 pure gold and 999 fine silver bullion coins minted with tamper-evident assay packaging.</>,
+    to: '/coins',
+    cta: 'Explore Coins',
+    alt: 'Pure Gold and Silver Bullion Coins',
     mobilePosition: 'center top'
   }
 ];
@@ -127,7 +84,7 @@ export default function HeroBanner({ heroRef }) {
   const copyRef = useRef(null);
   const isTabVisibleRef = useRef(true);
 
-  const currentSlide = slides[index];
+  const currentSlide = slides[index] || slides[0];
   const isVideoSlide = index === 0 && !reduce;
   const total = String(slides.length).padStart(2, '0');
 
@@ -169,11 +126,11 @@ export default function HeroBanner({ heroRef }) {
     }
     const ctx = gsap.context(() => {
       // Subtle photo scale & crossfade
-      const activeEl = heroContainerRef.current?.querySelector('.hero-photo img.is-active, .hero-photo .is-active');
+      const activeEl = heroContainerRef.current?.querySelector('.hero-photo picture.is-active, .hero-photo video.is-active, .hero-photo .is-active');
       if (activeEl) {
         gsap.fromTo(
           activeEl,
-          { opacity: 0, scale: 1.04 },
+          { opacity: 0, scale: 1.03 },
           { opacity: 1, scale: 1, duration: 0.85, ease: 'power2.out' }
         );
       }
@@ -274,7 +231,7 @@ export default function HeroBanner({ heroRef }) {
       };
     }
 
-    // Slides 1-6: Image slides (exactly 3 seconds each)
+    // Slides 1-3: Image slides (exactly 3 seconds each)
     if (isTabVisibleRef.current) {
       timerRef.current = setTimeout(() => {
         if (isTabVisibleRef.current) {
@@ -303,29 +260,28 @@ export default function HeroBanner({ heroRef }) {
     >
       <div className="hero-photo">
         {slides.map((slide, i) => {
+          if (slide.video) return null; // Video rendered below
+
           const active = i === index;
           const classes = [
+            'hero-slide-picture',
             active ? 'is-active' : '',
             active && incoming ? 'is-incoming' : '',
             !active && i === previous ? 'is-prev' : ''
           ].filter(Boolean).join(' ');
 
-          if (slide.video) {
-            return null; // Video rendered below
-          }
-
-          const posClass = slide.mobilePosition === '65% 20%' ? 'slide-pos-jewelry' : 'slide-pos-top';
           return (
-            <BrandedImage
-              key={slide.src}
-              className={`${classes} ${posClass}`}
-              style={{ '--slide-mobile-pos': slide.mobilePosition || 'center top' }}
-              src={slide.src}
-              alt={active ? slide.alt : ''}
-              aria-hidden={active ? undefined : true}
-              fetchPriority={i <= 1 ? 'high' : 'low'}
-              decoding="async"
-            />
+            <picture key={slide.desktopSrc} className={classes}>
+              <source media="(max-width: 768px)" srcSet={slide.mobileSrc} />
+              <img
+                src={slide.desktopSrc}
+                alt={active ? slide.alt : ''}
+                aria-hidden={active ? undefined : true}
+                fetchPriority={i <= 1 ? 'high' : 'low'}
+                loading={i <= 1 ? 'eager' : 'lazy'}
+                decoding="async"
+              />
+            </picture>
           );
         })}
 

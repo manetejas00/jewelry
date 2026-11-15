@@ -71,7 +71,6 @@ export class KurtaResource {
       totalStock,
       stock: totalStock,
       status: kurta.status,
-      supplier: kurta.supplier,
       image: kurta.image,
       thumbnail: listingThumbnail({ image: kurta.image, name: kurta.name }),
       images,

@@ -26,7 +26,6 @@ export class JewelryEntity {
     this.other_charge = data.other_charge != null ? Number(data.other_charge) : 0;
     this.stock = data.stock != null ? Number(data.stock) : 0;
     this.status = data.status || 'published';
-    this.supplier = data.supplier || 'Merchant';
     this.image = data.image || '';
     this.seo_title = data.seo_title || null;
     this.meta_description = data.meta_description || null;

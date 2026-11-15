@@ -124,7 +124,7 @@ export function calculatePrice(p,rate,rule={tax_percent:0,rounding:1,tax_treatme
 
 export const todayIndia=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 export async function activeRates(k){
-  const rows=await k('rates').orderBy('source_timestamp','desc').orderBy('id','desc');
+  const rows=await k('rates').where('effective_date','<=',todayIndia()).orderBy('source_timestamp','desc').orderBy('id','desc').limit(100);
   const result={};
   for(const r of rows){
     if(r.effective_date<=todayIndia()){
@@ -305,9 +305,30 @@ export async function coinCatalogue(k, options={}){
   });
 }
 
+let tableCache = new Map();
+async function safeHasTable(k, table) {
+  if (k.client?.config?.client === 'mysql2') {
+    if (tableCache.has(table)) return tableCache.get(table);
+    const has = await k.schema.hasTable(table).catch(() => false);
+    tableCache.set(table, has);
+    return has;
+  }
+  return k.schema.hasTable(table).catch(() => false);
+}
+
 export async function catalogue(k, options={}){
-  const hasImages=await k.schema.hasTable('product_images').catch(()=>false);
-  const hasReviews=await k.schema.hasTable('reviews').catch(()=>false);
+  let jewelryItems = [];
+  if (await safeHasTable(k, 'jewelries')) {
+    const jCount = await k('jewelries').count('* as c').first();
+    const countVal = Number(jCount?.c ?? jCount?.['count(*)'] ?? 0);
+    if (countVal > 0) {
+      const { JewelryService } = await import('./modules/jewelry/Services/JewelryService.js');
+      const js = new JewelryService(k);
+      jewelryItems = await js.getPublishedCatalogue(options);
+    }
+  }
+  const hasImages=await safeHasTable(k, 'product_images');
+  const hasReviews=await safeHasTable(k, 'reviews');
   const [products,rates,rules,images,offers,ratings]=await Promise.all([
     // Kurtas have their own catalogue endpoint and must never leak into the
     // jewellery collection, even if a legacy record has a jewellery-like name.
@@ -340,7 +361,7 @@ export async function catalogue(k, options={}){
       imagesByProduct[key].push(img);
     }
   }
-  return products.map(p=>{
+  const legacyMapped = products.map(p=>{
     const offer=matchOffer(p,offers,options.code);
     let price=null;
     try{price=calculatePrice(p,rates[p.purity],rules,offer)}catch{}
@@ -363,6 +384,12 @@ export async function catalogue(k, options={}){
       rating: { average: rating_average, count: rating_count }
     };
   });
+  if (jewelryItems.length > 0) {
+    const jSkus = new Set(jewelryItems.map(j => j.sku));
+    const extra = legacyMapped.filter(p => !jSkus.has(p.sku));
+    return [...jewelryItems, ...extra];
+  }
+  return legacyMapped;
 }
 
 export async function quote(k,items,options={}){

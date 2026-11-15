@@ -44,7 +44,7 @@ test('isStoreNavActive accurately resolves active state across all routes and ch
   `);
   const { STORE_NAV_ITEMS, isStoreNavActive } = fnModule();
 
-  assert.equal(STORE_NAV_ITEMS.length, 7, 'There must be exactly 7 store navigation items');
+  assert.equal(STORE_NAV_ITEMS.length, 3, 'There must be exactly 3 store navigation items');
 
   const mockProducts = [
     { slug: 'lune-pearl-drops', product_code: 'lune-drops', category: 'Earrings' },
@@ -59,36 +59,27 @@ test('isStoreNavActive accurately resolves active state across all routes and ch
     return STORE_NAV_ITEMS.find(item => isStoreNavActive(item, pathname, mockProducts));
   }
 
-  // 1. Exact match for All Jewellery on /collections/all
+  // 1. Jewelry matches /jewelry and /collections
+  const jewelryRoot = getActiveItem('/jewelry');
+  assert.ok(jewelryRoot, 'Must match /jewelry');
+  assert.equal(jewelryRoot.label, 'Jewelry');
+
   const allJewellery = getActiveItem('/collections/all');
   assert.ok(allJewellery, 'Must match /collections/all');
-  assert.equal(allJewellery.label, 'All jewellery');
+  assert.equal(allJewellery.label, 'Jewelry');
 
-  // 2. Specific categories must NOT falsely trigger All jewellery
   const earrings = getActiveItem('/collections/earrings');
   assert.ok(earrings, 'Must match /collections/earrings');
-  assert.equal(earrings.label, 'Earrings');
-  assert.notEqual(earrings.label, 'All jewellery', 'Earrings must not activate All jewellery');
+  assert.equal(earrings.label, 'Jewelry');
 
-  const necklaces = getActiveItem('/collections/necklaces');
-  assert.equal(necklaces?.label, 'Necklaces');
-
-  const rings = getActiveItem('/collections/rings');
-  assert.equal(rings?.label, 'Rings');
-
-  const bracelets = getActiveItem('/collections/bracelets');
-  assert.equal(bracelets?.label, 'Bracelets');
-
-  assert.equal(getActiveItem('/collections/pearls'), undefined, 'Removed collection must not activate navigation');
-
-  // 3. Kurtas and nested kurta detail pages
+  // 2. Kurtas and nested kurta detail pages
   const kurtasRoot = getActiveItem('/kurtas');
-  assert.equal(kurtasRoot?.label, 'Kurtas');
+  assert.equal(kurtasRoot?.label, 'Kurta');
 
   const kurtaDetail = getActiveItem('/kurtas/lucknowi-ivory-chikankari-kurta');
-  assert.equal(kurtaDetail?.label, 'Kurtas');
+  assert.equal(kurtaDetail?.label, 'Kurta');
 
-  // 4. Coins and subcategories / product pages
+  // 3. Coins and subcategories / product pages
   const coinsRoot = getActiveItem('/coins');
   assert.equal(coinsRoot?.label, 'Coins');
 
@@ -98,14 +89,7 @@ test('isStoreNavActive accurately resolves active state across all routes and ch
   const coinProduct = getActiveItem('/coins/product/COIN-AU-1G');
   assert.equal(coinProduct?.label, 'Coins');
 
-  // 5. Product Detail Page category resolution
-  const prodEarring = getActiveItem('/products/lune-pearl-drops');
-  assert.equal(prodEarring?.label, 'Earrings');
-
-  const prodCollar = getActiveItem('/products/atelier-pearl-collar');
-  assert.equal(prodCollar?.label, 'Necklaces');
-
-  // 6. Non-shopping pages should have NO navigation active state
+  // 4. Non-shopping pages should have NO navigation active state
   assert.equal(getActiveItem('/'), undefined, 'Home page should not highlight category items');
   assert.equal(getActiveItem('/account'), undefined, 'Account page should not highlight category items');
   assert.equal(getActiveItem('/bag'), undefined, 'Bag page should not highlight category items');
@@ -116,8 +100,8 @@ test('isStoreNavActive accurately resolves active state across all routes and ch
 test('Header renders store navigation with dynamic active class and accessibility attributes', () => {
   const mainJsx = fs.readFileSync('src/main.jsx', 'utf8');
 
-  // Renders STORE_NAV_ITEMS mapping with active class and aria-current
-  assert.match(mainJsx, /STORE_NAV_ITEMS\.map\(\s*item\s*=>/, 'Header must map STORE_NAV_ITEMS in nav');
+  // Renders navigation mapping with active class and aria-current
+  assert.match(mainJsx, /STORE_NAV_ITEMS.*\.map\(\s*item\s*=>/, 'Header must map STORE_NAV_ITEMS in nav');
   assert.match(mainJsx, /className=\{isActive\s*\?\s*'active'\s*:\s*''\}/, 'Navbar links must receive active class when active');
   assert.match(mainJsx, /aria-current=\{isActive\s*\?\s*'page'\s*:\s*undefined\}/, 'Active link must set aria-current="page"');
 });

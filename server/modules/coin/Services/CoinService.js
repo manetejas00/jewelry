@@ -97,7 +97,6 @@ export class CoinService {
     const mode = body.pricing_mode === 'FIXED' ? 'FIXED' : 'METAL_LINKED';
 
     const insertData = {
-      supplier: body.supplier || 'Merchant',
       sku: cleanSku,
       slug,
       name: String(body.name).trim().slice(0, 200),

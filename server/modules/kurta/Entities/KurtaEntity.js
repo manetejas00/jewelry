@@ -45,7 +45,6 @@ export class KurtaEntity {
     this.fixed_price = data.fixed_price != null ? Number(data.fixed_price) : null;
     this.stock = Number(data.stock || 0);
     this.status = data.status || 'published';
-    this.supplier = data.supplier || 'Lucknow Heritage Maison';
     this.image = data.image || '';
     this.seo_title = data.seo_title || null;
     this.meta_description = data.meta_description || null;

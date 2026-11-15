@@ -3,7 +3,6 @@ import { KURTA_CSV_SCHEMA } from '../Constants/KurtaConstants.js';
 export class KurtaMapper {
   static fromCsvRow(row, sourceTimestamp) {
     return {
-      supplier: row.supplier || 'Lucknow Heritage Maison',
       product_code: row.product_code,
       sku: row.sku,
       name: row.name,
@@ -27,7 +26,6 @@ export class KurtaMapper {
 
   static toCsvRow(kurta) {
     return {
-      supplier: kurta.supplier || 'Lucknow Heritage Maison',
       product_code: kurta.product_code,
       sku: kurta.sku,
       name: kurta.name,

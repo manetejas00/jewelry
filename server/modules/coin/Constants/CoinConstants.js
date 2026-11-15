@@ -13,7 +13,6 @@ export const COIN_IMAGE_KINDS = ['illustration', 'photo'];
 export const COIN_IMAGE_ROLES = ['hero', 'front', 'left', 'right', 'back', 'detail', 'modal', 'model'];
 
 export const COIN_CSV_SCHEMA = [
-  'supplier',
   'sku',
   'name',
   'metal',

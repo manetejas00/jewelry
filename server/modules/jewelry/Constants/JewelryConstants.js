@@ -20,7 +20,6 @@ export const JEWELRY_IMAGE_ROLES = [
 export const DEFAULT_JEWELRY_CATEGORY = 'Rings';
 
 export const JEWELRY_CSV_SCHEMA = [
-  'supplier',
   'product_code',
   'sku',
   'name',

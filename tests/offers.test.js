@@ -12,7 +12,6 @@ before(async () => {
   await seedOffers(k);
   // Insert test rate
   await k('rates').insert({
-    supplier: 'Test Supplier',
     purity: '18K',
     currency: 'INR',
     original_unit: '1g',
@@ -24,7 +23,6 @@ before(async () => {
   });
   // Insert test product
   await k('products').insert({
-    supplier: 'Test Supplier',
     product_code: 'offer-ring',
     slug: 'offer-ring',
     sku: 'OFFER-R-12',

@@ -729,7 +729,7 @@ export function GoldRatesAdmin({ readonly, staff, refreshParent }) {
             <Search size={14} />
             <input
               type="search"
-              placeholder="Search admin, supplier, notes…"
+              placeholder="Search admin, notes…"
               value={historyQuery}
               onChange={(e) => setHistoryQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && fetchRates()}

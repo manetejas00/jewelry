@@ -9,7 +9,7 @@ import {activeRates,isFresh,todayIndia,fingerprint} from './pricing.js';
 export const GOLD_PURITIES = ['24K', '22K', '20K', '18K', '14K'];
 export const SILVER_PURITIES = ['999', '925'];
 export const ALL_PURITIES = [...GOLD_PURITIES, ...SILVER_PURITIES];
-export const RATE_COLUMNS = ['supplier', 'metal', 'purity', 'currency', 'unit', 'rate', 'effective_date', 'source_timestamp'];
+export const RATE_COLUMNS = ['metal', 'purity', 'currency', 'unit', 'rate', 'effective_date', 'source_timestamp'];
 
 const num = v => /^\d+(\.\d{1,4})?$/.test(String(v).trim()) && Number(v) <= 9999999999;
 const timestamp = v => /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/.test(String(v).trim()) && !isNaN(Date.parse(v));
@@ -65,9 +65,9 @@ export function validateRatesCsv(text) {
     rows = csvParse(text, {
       columns: headers => {
         const joined = headers.map(h => h.trim().toLowerCase()).join(',');
-        const schema8 = RATE_COLUMNS.join(',');
-        const schema7 = 'supplier,purity,currency,unit,rate,effective_date,source_timestamp';
-        if (joined !== schema8 && joined !== schema7) {
+        const schema7 = RATE_COLUMNS.join(',');
+        const schema6 = 'purity,currency,unit,rate,effective_date,source_timestamp';
+        if (joined !== schema7 && joined !== schema6) {
           throw validationError('CSV headers must match the template: ' + RATE_COLUMNS.join(', '));
         }
         return headers.map(h => h.trim().toLowerCase());
@@ -92,7 +92,7 @@ export function validateRatesCsv(text) {
     const metal = detectMetal(r.purity, r.metal);
     r.metal = metal;
 
-    for (const f of ['supplier', 'purity', 'currency', 'unit', 'rate', 'effective_date', 'source_timestamp']) {
+    for (const f of ['purity', 'currency', 'unit', 'rate', 'effective_date', 'source_timestamp']) {
       if (!r[f]) error(rowNum, f, r[f], `Supply a value for ${f}`);
     }
 
@@ -131,7 +131,7 @@ export function validateRatesCsv(text) {
       error(rowNum, 'source_timestamp', r.source_timestamp, 'Use an ISO UTC timestamp no later than now');
     }
 
-    const key = `${r.supplier}:${metal}:${cleanP}`;
+    const key = `${metal}:${cleanP}`;
     if (seen.has(key)) {
       error(rowNum, 'purity', key, `Remove duplicate entry for ${metal} ${cleanP}`);
     }
@@ -166,7 +166,7 @@ export function registerRateRoutes(app, { db, route, auth, audit }) {
         effective_date: r.effective_date,
         source_timestamp: r.source_timestamp,
         published_at: r.published_at,
-        staff_name: r.staff_name || r.supplier || 'Admin',
+        staff_name: r.staff_name || 'Admin',
         source_type: r.source_type || 'manual',
         notes: r.notes || null,
         is_fresh: isFresh(r)
@@ -185,7 +185,7 @@ export function registerRateRoutes(app, { db, route, auth, audit }) {
         effective_date: r.effective_date,
         source_timestamp: r.source_timestamp,
         published_at: r.published_at,
-        staff_name: r.staff_name || r.supplier || 'Admin',
+        staff_name: r.staff_name || 'Admin',
         source_type: r.source_type || 'manual',
         notes: r.notes || null,
         is_fresh: isFresh(r)
@@ -220,7 +220,6 @@ export function registerRateRoutes(app, { db, route, auth, audit }) {
       const filterClause = function () {
         this.where('staff_name', 'like', search)
           .orWhere('notes', 'like', search)
-          .orWhere('supplier', 'like', search)
           .orWhere('purity', 'like', search);
       };
       query = query.where(filterClause);
@@ -309,7 +308,6 @@ export function registerRateRoutes(app, { db, route, auth, audit }) {
 
       normalized.push({
         metal,
-        supplier: 'Veyora Internal',
         purity,
         currency: 'INR',
         original_unit: r.unit,
@@ -354,13 +352,8 @@ export function registerRateRoutes(app, { db, route, auth, audit }) {
 
     const checksum = fingerprint(csvText);
     const check = validateRatesCsv(csvText);
-    const supplier = check.rows[0]?.supplier || 'Veyora Internal';
 
-    if (!preview && check.rows.some(r => r.supplier === 'Fictional Preview')) {
-      check.errors.push({ row: 1, field: 'supplier', value: 'Fictional Preview', correction: 'Fictional rates are restricted to preview/test environments' });
-    }
-
-    const existing = await db('import_batches').where({ kind: 'rates', supplier, checksum }).first();
+    const existing = await db('import_batches').where({ kind: 'rates', checksum }).first();
     if (existing) {
       return res.json({
         ...existing,
@@ -396,7 +389,6 @@ export function registerRateRoutes(app, { db, route, auth, audit }) {
 
     const batchData = {
       kind: 'rates',
-      supplier,
       checksum,
       source_timestamp: check.rows[0]?.source_timestamp || now(),
       status: check.errors.length ? 'failed' : 'staged',
@@ -442,7 +434,6 @@ export function registerRateRoutes(app, { db, route, auth, audit }) {
         const norm = normaliseMetalRate(r);
         await t('rates').insert({
           metal: norm.metal,
-          supplier: r.supplier,
           purity: r.purity,
           currency: r.currency,
           original_unit: norm.original_unit,

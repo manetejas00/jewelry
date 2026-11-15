@@ -7,7 +7,6 @@ import {stringify} from 'csv-stringify/sync';
 
 const stamp = new Date(Date.now() - 1000).toISOString();
 const sampleKurta = {
-  supplier: 'Lucknow Heritage Maison',
   product_code: 'CCK-TEST-NOOR',
   sku: 'CCK-TEST-NOOR-M',
   name: 'Noor Lucknowi Chikankari Kurta',

@@ -23,12 +23,22 @@ async function moduleCategories(db, table, productTable, genders = false) {
     if (hasStatus) query.where({ status: 'published' });
 
     const rows = await query.select(...selectCols).catch(() => []);
-    const categories = [...new Map(rows.filter(r => r.category).map(r => [slugify(r.category), { slug: slugify(r.category), name: r.category }])).values()];
+    const categories = [...new Map(rows.filter(r => r.category).map(r => {
+      const catName = r.category === 'Chicken Curry Kurtas' ? 'Kurta' : r.category;
+      const catSlug = slugify(catName);
+      return [catSlug, { slug: catSlug, name: catName }];
+    })).values()];
     const genderValues = hasGender ? [...new Set(rows.map(r => r.gender || 'Not Specified').filter(g => ['Men', 'Women', 'Unisex'].includes(g)))] : [];
 
     if (categories.length === 0 && table && (await db.schema.hasTable(table).catch(() => false))) {
       const catRows = await db(table).select('slug', 'name').catch(() => []);
-      return { categories: catRows.map(r => ({ slug: r.slug, name: r.name })), genders: genderValues };
+      return {
+        categories: catRows.map(r => ({
+          slug: r.slug === 'chicken-curry-kurtas' ? 'kurta' : r.slug,
+          name: r.name === 'Chicken Curry Kurtas' ? 'Kurta' : r.name
+        })),
+        genders: genderValues
+      };
     }
 
     return { categories, genders: genderValues };

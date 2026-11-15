@@ -403,7 +403,6 @@ async function insertProduct(db, product, sku, categoryId, productName, slug, ba
     other_charge: 0,
     stock: 10,
     status: 'published',
-    supplier: 'PDF Import',
     image: '',
     seo_title: `${productName} | Veyora Jewels`,
     meta_description: `Buy ${productName} - ${purityStr} Gold ${product.category}. Premium quality jewellery.`,

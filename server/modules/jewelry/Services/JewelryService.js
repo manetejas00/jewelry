@@ -98,7 +98,6 @@ export class JewelryService {
     const mode = body.pricing_mode === 'FIXED' ? 'FIXED' : 'GOLD_LINKED';
 
     const insertData = {
-      supplier: body.supplier || 'Merchant',
       product_code: cleanCode,
       slug,
       sku: cleanSku,

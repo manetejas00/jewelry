@@ -3,7 +3,6 @@ import { JEWELRY_CSV_SCHEMA } from '../Constants/JewelryConstants.js';
 export class JewelryMapper {
   static fromCsvRow(row, sourceTimestamp) {
     return {
-      supplier: row.supplier || 'Merchant',
       product_code: row.product_code,
       sku: row.sku,
       name: row.name,
@@ -28,7 +27,6 @@ export class JewelryMapper {
 
   static toCsvRow(jewelry) {
     return {
-      supplier: jewelry.supplier || 'Merchant',
       product_code: jewelry.product_code,
       sku: jewelry.sku,
       name: jewelry.name,

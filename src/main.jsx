@@ -1,12 +1,12 @@
 import OffersAdmin from './admin/OffersAdmin.jsx';
 import Modal from './components/Modal.jsx';
-import {money} from './format.js';
+import { money } from './format.js';
 import BrandedImage from './BrandedImage.jsx';
 import useScrollLock from './useScrollLock.js';
-import React,{useEffect,useState,useRef,useMemo} from 'react';
-import {createRoot} from 'react-dom/client';
-import {BrowserRouter,Routes,Route,Link,Navigate,useLocation,useNavigate,useParams,useSearchParams} from 'react-router-dom';
-import {Search,ShoppingBag,UserRound,Menu,X,ArrowRight,ArrowUpRight,Plus,Minus,Heart,ChevronDown,Check,ArrowLeft,ShieldCheck,Package,Truck,SlidersHorizontal,LogOut,LayoutDashboard,Gem,ChartNoAxesCombined,Upload,Settings,Download,RefreshCw,AlertCircle,CheckCircle2,Eye,Coins as CoinsIcon,CircleDollarSign,Trash2,Sparkles,Play,Pause,Image as ImageIcon,Copy,Layers,Tag,Maximize2,Star,RotateCcw,MessageCircle,Shirt} from 'lucide-react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter, Routes, Route, Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Search, ShoppingBag, UserRound, Menu, X, ArrowRight, ArrowUpRight, Plus, Minus, Heart, ChevronDown, Check, ArrowLeft, ShieldCheck, Package, Truck, SlidersHorizontal, LogOut, LayoutDashboard, Gem, ChartNoAxesCombined, Upload, Settings, Download, RefreshCw, AlertCircle, CheckCircle2, Eye, Coins as CoinsIcon, CircleDollarSign, Trash2, Sparkles, Play, Pause, Image as ImageIcon, Copy, Layers, Tag, Maximize2, Star, RotateCcw, MessageCircle, Shirt } from 'lucide-react';
 import gsap from 'gsap';
 import './style.css';
 import ErrorBoundary from './ErrorBoundary.jsx';
@@ -15,11 +15,11 @@ import CommonStatusBadge from './admin/components/CommonStatusBadge.jsx';
 import CommonEmptyState from './admin/components/CommonEmptyState.jsx';
 import CommonModal from './admin/components/CommonModal.jsx';
 import PhotoPicker from './PhotoPicker.jsx';
-import Pagination, {usePagination} from './Pagination.jsx';
+import Pagination, { usePagination } from './Pagination.jsx';
 import ImageViewer from './ImageViewer.jsx';
 import HeroBanner from './HeroBanner.jsx';
-import {RatingBadge} from './Reviews.jsx';
-import {ReviewsAdmin} from './ReviewsAdmin.jsx';
+import { RatingBadge } from './Reviews.jsx';
+import { ReviewsAdmin } from './ReviewsAdmin.jsx';
 import AiCopy from './AiCopy.jsx';
 import ChatWidget from './ChatWidget.jsx';
 import ChatbotAdmin from './ChatbotAdmin.jsx';
@@ -35,22 +35,22 @@ import { RecommendationsAdmin } from './admin/RecommendationsAdmin.jsx';
 import { GoldRatesAdmin } from './admin/GoldRatesAdmin.jsx';
 import CommonPLP from './components/CommonPLP.jsx';
 import CommonPDP from './components/CommonPDP.jsx';
-const date=v=>v?new Date(v).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',dateStyle:'medium',timeStyle:'short'}):'—';
-const media=name=>'https://cdnstatic.tencentcs.com/edgeone/pages/product-activities/jewelry/'+encodeURIComponent(name)+'.png';
-import {api} from './api.js';
-import {Provider,useStore} from './store.jsx';
+const date = v => v ? new Date(v).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' }) : '—';
+const media = name => 'https://cdnstatic.tencentcs.com/edgeone/pages/product-activities/jewelry/' + encodeURIComponent(name) + '.png';
+import { api } from './api.js';
+import { Provider, useStore } from './store.jsx';
 import Account from './Account.jsx';
-import {grouped} from './catalogue.js';
-import {coinImage} from './media.js';
+import { grouped } from './catalogue.js';
+import { coinImage } from './media.js';
 import ListingImage from './ListingImage.jsx';
-import {galleryPhotos} from './image-zoom.js';
-import {SearchAutocomplete} from './SearchAutocomplete.jsx';
+import { galleryPhotos } from './image-zoom.js';
+import { SearchAutocomplete } from './SearchAutocomplete.jsx';
 import InstallApp from './InstallApp.jsx';
 import StaffAccess from './StaffAccess.jsx';
-const priceBrackets=[{label:'All prices',value:''},{label:'Under ₹20,000',value:'0-20000'},{label:'₹20,000 – ₹30,000',value:'20000-30000'},{label:'₹30,000 – ₹50,000',value:'30000-50000'},{label:'Above ₹50,000',value:'50000-'}];
-const matchPrice=(price,bracket)=>{if(!bracket)return true;if(price===null||price===undefined)return false;if(bracket.includes('-')){const [minStr,maxStr]=bracket.split('-');if(minStr&&price<Number(minStr))return false;if(maxStr&&price>Number(maxStr))return false;return true;}return price<=Number(bracket);};
-function Scroll(){const loc=useLocation();useEffect(()=>{if(!loc.pathname.startsWith('/collections'))window.scrollTo(0,0);},[loc.pathname]);return null}
-function Brand(){return <Link className="brand" to="/" aria-label="Veyora Jewels home"><img className="brand-logo" src="/assets/brand/logo.webp" alt="Veyora Jewels" width="150" height="100"/></Link>}
+const priceBrackets = [{ label: 'All prices', value: '' }, { label: 'Under ₹20,000', value: '0-20000' }, { label: '₹20,000 – ₹30,000', value: '20000-30000' }, { label: '₹30,000 – ₹50,000', value: '30000-50000' }, { label: 'Above ₹50,000', value: '50000-' }];
+const matchPrice = (price, bracket) => { if (!bracket) return true; if (price === null || price === undefined) return false; if (bracket.includes('-')) { const [minStr, maxStr] = bracket.split('-'); if (minStr && price < Number(minStr)) return false; if (maxStr && price > Number(maxStr)) return false; return true; } return price <= Number(bracket); };
+function Scroll() { const loc = useLocation(); useEffect(() => { if (!loc.pathname.startsWith('/collections')) window.scrollTo(0, 0); }, [loc.pathname]); return null }
+function Brand() { return <Link className="brand" to="/" aria-label="Veyora Jewels home"><img className="brand-logo" src="/assets/brand/logo.webp" alt="Veyora Jewels" width="150" height="100" /></Link> }
 
 export const STORE_NAV_ITEMS = [
   { label: 'Jewelry', href: '/jewelry', matchPrefixes: ['/jewelry', '/collections'], categoryKey: 'jewelry' },
@@ -94,139 +94,139 @@ export function isStoreNavActive(item, pathname, products = []) {
   return false;
 }
 
-function Header(){
-  const {bag,setBagOpen,saved,customer,logoutCustomer,syncError,refreshAccount,offers=[],products=[]}=useStore();
-  const [menu,setMenu]=useState(false),[search,setSearch]=useState(false),[q,setQ]=useState('');
-  const [accountOpen,setAccountOpen]=useState(false);
-  const [navigation,setNavigation]=useState([]);
-  const [openMega,setOpenMega]=useState(null);
-  const accountRef=useRef(null);
-  const menuRef=useRef(null);
-  useScrollLock(menu,menuRef,{onEscape:()=>setMenu(false)});
-  useScrollLock(accountOpen,accountRef,{onEscape:()=>setAccountOpen(false)});
-  const hoverTimer=useRef(null);
-  const nav=useNavigate();
-  const location=useLocation();
-  const searchInputRef=useRef(null);
+function Header() {
+  const { bag, setBagOpen, saved, customer, logoutCustomer, syncError, refreshAccount, offers = [], products = [] } = useStore();
+  const [menu, setMenu] = useState(false), [search, setSearch] = useState(false), [q, setQ] = useState('');
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [navigation, setNavigation] = useState([]);
+  const [openMega, setOpenMega] = useState(null);
+  const accountRef = useRef(null);
+  const menuRef = useRef(null);
+  useScrollLock(menu, menuRef, { onEscape: () => setMenu(false) });
+  useScrollLock(accountOpen, accountRef, { onEscape: () => setAccountOpen(false) });
+  const hoverTimer = useRef(null);
+  const nav = useNavigate();
+  const location = useLocation();
+  const searchInputRef = useRef(null);
 
-  useEffect(()=>{setMenu(false);setSearch(false);setAccountOpen(false);},[location.pathname,location.search]);
-  useEffect(()=>{let mounted=true;api('/navigation').then(data=>{if(mounted)setNavigation(Array.isArray(data)?data:[])}).catch(()=>{});return()=>{mounted=false};},[]);
-  useEffect(()=>{const media=window.matchMedia('(max-width:800px)');const closeWide=()=>{if(!media.matches)setMenu(false)};media.addEventListener('change',closeWide);return()=>media.removeEventListener('change',closeWide)},[]);
+  useEffect(() => { setMenu(false); setSearch(false); setAccountOpen(false); }, [location.pathname, location.search]);
+  useEffect(() => { let mounted = true; api('/navigation').then(data => { if (mounted) setNavigation(Array.isArray(data) ? data : []) }).catch(() => { }); return () => { mounted = false }; }, []);
+  useEffect(() => { const media = window.matchMedia('(max-width:800px)'); const closeWide = () => { if (!media.matches) setMenu(false) }; media.addEventListener('change', closeWide); return () => media.removeEventListener('change', closeWide) }, []);
 
-  useEffect(()=>{
-    if(!accountOpen)return;
-    const onOutside=e=>{
-      if(accountRef.current&&!accountRef.current.contains(e.target)){
+  useEffect(() => {
+    if (!accountOpen) return;
+    const onOutside = e => {
+      if (accountRef.current && !accountRef.current.contains(e.target)) {
         setAccountOpen(false);
       }
     };
-    document.addEventListener('mousedown',onOutside);
-    document.addEventListener('touchstart',onOutside);
-    return()=>{
-      document.removeEventListener('mousedown',onOutside);
-      document.removeEventListener('touchstart',onOutside);
+    document.addEventListener('mousedown', onOutside);
+    document.addEventListener('touchstart', onOutside);
+    return () => {
+      document.removeEventListener('mousedown', onOutside);
+      document.removeEventListener('touchstart', onOutside);
     };
-  },[accountOpen]);
+  }, [accountOpen]);
 
-  const handleAccountEnter=()=>{
-    if(typeof window!=='undefined'&&window.matchMedia('(hover: hover)').matches){
+  const handleAccountEnter = () => {
+    if (typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches) {
       clearTimeout(hoverTimer.current);
       setAccountOpen(true);
     }
   };
 
-  const handleAccountLeave=()=>{
-    if(typeof window!=='undefined'&&window.matchMedia('(hover: hover)').matches){
-      hoverTimer.current=setTimeout(()=>{
+  const handleAccountLeave = () => {
+    if (typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches) {
+      hoverTimer.current = setTimeout(() => {
         setAccountOpen(false);
-      },200);
+      }, 200);
     }
   };
 
-  const handleLogout=async()=>{
+  const handleLogout = async () => {
     setAccountOpen(false);
     setMenu(false);
-    try{
+    try {
       await logoutCustomer();
-      if(location.pathname==='/account'){
+      if (location.pathname === '/account') {
         nav('/account');
       }
-    }catch(e){
-      console.error('Logout error:',e);
+    } catch (e) {
+      console.error('Logout error:', e);
     }
   };
 
-  const bannerOffer=offers.find(o=>o.show_in_banner&&o.banner_headline)||offers[0];
-  const bannerTarget=bannerOffer?(bannerOffer.applies_to==='silver'?'/coins/silver':bannerOffer.applies_to==='coins'?'/coins':'/collections/all'):'/collections/all';
+  const bannerOffer = offers.find(o => o.show_in_banner && o.banner_headline) || offers[0];
+  const bannerTarget = bannerOffer ? (bannerOffer.applies_to === 'silver' ? '/coins/silver' : bannerOffer.applies_to === 'coins' ? '/coins' : '/collections/all') : '/collections/all';
 
   return <>
     <Link to={bannerTarget} className="announcement" aria-label="Announcement banner">
-      {bannerOffer?<><Sparkles size={11} color="#f9ca24"/> {bannerOffer.banner_headline} {bannerOffer.code?<span>Code: {bannerOffer.code} <ArrowRight size={12}/></span>:<span>Offer auto-applied <ArrowRight size={12}/></span>}</>:<>A little wonder. An everyday heirloom. <span>Discover the collection <ArrowRight size={12}/></span></>}
+      {bannerOffer ? <><Sparkles size={11} color="#f9ca24" /> {bannerOffer.banner_headline} {bannerOffer.code ? <span>Code: {bannerOffer.code} <ArrowRight size={12} /></span> : <span>Offer auto-applied <ArrowRight size={12} /></span>}</> : <>A little wonder. An everyday heirloom. <span>Discover the collection <ArrowRight size={12} /></span></>}
     </Link>
     <header className="header">
-      <button className="icon mobile-menu" aria-label={menu?'Close navigation menu':'Open navigation menu'} aria-expanded={menu} aria-controls="store-navigation" onClick={()=>setMenu(!menu)}>
-        {menu?<X size={22}/>:<Menu size={22}/>}
+      <button className="icon mobile-menu" aria-label={menu ? 'Close navigation menu' : 'Open navigation menu'} aria-expanded={menu} aria-controls="store-navigation" onClick={() => setMenu(!menu)}>
+        {menu ? <X size={22} /> : <Menu size={22} />}
       </button>
-      <Brand/>
-      <nav ref={menuRef} id="store-navigation" className={menu?'nav open':'nav'} aria-label="Main store navigation">
+      <Brand />
+      <nav ref={menuRef} id="store-navigation" className={menu ? 'nav open' : 'nav'} aria-label="Main store navigation">
         {(navigation.length ? navigation : STORE_NAV_ITEMS).map(item => {
           const isActive = isStoreNavActive(item, location.pathname, products);
-          const key=item.key||item.categoryKey;
-          const hasChildren=(item.categories?.length||0)+(item.genders?.length||0)+(item.metals?.length||0)>0;
+          const key = item.key || item.categoryKey;
+          const hasChildren = (item.categories?.length || 0) + (item.genders?.length || 0) + (item.metals?.length || 0) > 0;
           return (
-            <div key={item.href} className={'nav-parent '+(openMega===key?'open':'')} onMouseEnter={()=>hasChildren&&setOpenMega(key)} onMouseLeave={()=>setOpenMega(null)}>
-              <Link onClick={()=>setMenu(false)} to={item.href} className={isActive ? 'active' : ''} aria-current={isActive ? 'page' : undefined}>{item.label}</Link>
-              {hasChildren&&<button type="button" className="nav-disclosure" aria-label={`Browse ${item.label}`} aria-expanded={openMega===key} onClick={e=>{e.preventDefault();setOpenMega(openMega===key?null:key)}}><ChevronDown size={13}/></button>}
-              {hasChildren&&<div className="mega-menu" role="group" aria-label={`${item.label} categories`}>
-                <div><strong>Shop all</strong><Link to={item.href} onClick={()=>{setMenu(false);setOpenMega(null)}}>All {item.label}</Link></div>
-                {item.genders?.length>0&&<div><strong>Shop by gender</strong>{item.genders.map(g=><Link key={g} to={`${item.href}?gender=${encodeURIComponent(g)}`} onClick={()=>{setMenu(false);setOpenMega(null)}}>{g}</Link>)}</div>}
-                {(item.metals?.length>0||item.categories?.length>0)&&<div><strong>{item.key==='coins'?'Shop by metal':'Shop by type'}</strong>{(item.metals||item.categories||[]).slice(0,8).map(c=>{const base=item.key==='coins'?`/coins/${c.slug}`:`${item.href}/browse/${c.slug}`;return <Link key={c.slug} to={base} onClick={()=>{setMenu(false);setOpenMega(null)}}>{c.name}</Link>})}</div>}
+            <div key={item.href} className={'nav-parent ' + (openMega === key ? 'open' : '')} onMouseEnter={() => hasChildren && setOpenMega(key)} onMouseLeave={() => setOpenMega(null)}>
+              <Link onClick={() => setMenu(false)} to={item.href} className={isActive ? 'active' : ''} aria-current={isActive ? 'page' : undefined}>{item.label}</Link>
+              {hasChildren && <button type="button" className="nav-disclosure" aria-label={`Browse ${item.label}`} aria-expanded={openMega === key} onClick={e => { e.preventDefault(); setOpenMega(openMega === key ? null : key) }}><ChevronDown size={13} /></button>}
+              {hasChildren && <div className="mega-menu" role="group" aria-label={`${item.label} categories`}>
+                <div><strong>Shop all</strong><Link to={item.href} onClick={() => { setMenu(false); setOpenMega(null) }}>All {item.label}</Link></div>
+                {item.genders?.length > 0 && <div><strong>Shop by gender</strong>{item.genders.map(g => <Link key={g} to={`${item.href}?gender=${encodeURIComponent(g)}`} onClick={() => { setMenu(false); setOpenMega(null) }}>{g}</Link>)}</div>}
+                {(item.metals?.length > 0 || item.categories?.length > 0) && <div><strong>{item.key === 'coins' ? 'Shop by metal' : 'Shop by type'}</strong>{(item.metals || item.categories || []).slice(0, 8).map(c => { const base = item.key === 'coins' ? `/coins/${c.slug}` : `${item.href}/browse/${c.slug}`; return <Link key={c.slug} to={base} onClick={() => { setMenu(false); setOpenMega(null) }}>{c.name}</Link> })}</div>}
               </div>}
             </div>
           );
         })}
-        {menu&&<div className="mobile-nav-footer">
-          {customer?(
+        {menu && <div className="mobile-nav-footer">
+          {customer ? (
             <>
               <div className="mobile-user-card">
                 <span className="account-icon-wrapper">
-                  <UserRound size={18}/>
-                  <span className="auth-indicator" title="Logged in" aria-label="Logged in"/>
+                  <UserRound size={18} />
+                  <span className="auth-indicator" title="Logged in" aria-label="Logged in" />
                 </span>
                 <div>
                   <strong>{customer.name}</strong>
                   <small>{customer.email}</small>
                 </div>
               </div>
-              <Link onClick={()=>setMenu(false)} to="/account?tab=overview" className="mobile-nav-link">
-                <UserRound size={16}/> My Profile
+              <Link onClick={() => setMenu(false)} to="/account?tab=overview" className="mobile-nav-link">
+                <UserRound size={16} /> My Profile
               </Link>
-              <Link onClick={()=>setMenu(false)} to="/account?tab=orders" className="mobile-nav-link">
-                <Package size={16}/> My Orders
+              <Link onClick={() => setMenu(false)} to="/account?tab=orders" className="mobile-nav-link">
+                <Package size={16} /> My Orders
               </Link>
-              <Link onClick={()=>setMenu(false)} to="/collections/saved" className="mobile-nav-link">
-                <Heart size={16}/> Saved pieces {saved.length>0&&<span>({saved.length})</span>}
+              <Link onClick={() => setMenu(false)} to="/collections/saved" className="mobile-nav-link">
+                <Heart size={16} /> Saved pieces {saved.length > 0 && <span>({saved.length})</span>}
               </Link>
-              <Link onClick={()=>setMenu(false)} to="/information/shipping" className="mobile-nav-link">
-                <Truck size={16}/> Delivery & returns
+              <Link onClick={() => setMenu(false)} to="/information/shipping" className="mobile-nav-link">
+                <Truck size={16} /> Delivery & returns
               </Link>
               <button onClick={handleLogout} className="mobile-nav-link mobile-nav-logout">
-                <LogOut size={16}/> Logout
+                <LogOut size={16} /> Logout
               </button>
             </>
-          ):(
+          ) : (
             <>
-              <Link onClick={()=>setMenu(false)} to="/account?mode=login" className="mobile-nav-link">
-                <UserRound size={16}/> Sign In
+              <Link onClick={() => setMenu(false)} to="/account?mode=login" className="mobile-nav-link">
+                <UserRound size={16} /> Sign In
               </Link>
-              <Link onClick={()=>setMenu(false)} to="/account?mode=register" className="mobile-nav-link">
-                <Sparkles size={16}/> Register
+              <Link onClick={() => setMenu(false)} to="/account?mode=register" className="mobile-nav-link">
+                <Sparkles size={16} /> Register
               </Link>
-              <Link onClick={()=>setMenu(false)} to="/collections/saved" className="mobile-nav-link">
-                <Heart size={16}/> Saved pieces {saved.length>0&&<span>({saved.length})</span>}
+              <Link onClick={() => setMenu(false)} to="/collections/saved" className="mobile-nav-link">
+                <Heart size={16} /> Saved pieces {saved.length > 0 && <span>({saved.length})</span>}
               </Link>
-              <Link onClick={()=>setMenu(false)} to="/information/shipping" className="mobile-nav-link">
-                <Truck size={16}/> Delivery & returns
+              <Link onClick={() => setMenu(false)} to="/information/shipping" className="mobile-nav-link">
+                <Truck size={16} /> Delivery & returns
               </Link>
             </>
           )}
@@ -242,80 +242,80 @@ function Header(){
           <button
             type="button"
             className={`icon account-nav ${customer ? 'logged-in' : ''}`}
-            onClick={()=>setAccountOpen(prev=>!prev)}
+            onClick={() => setAccountOpen(prev => !prev)}
             aria-expanded={accountOpen}
             aria-haspopup="true"
             aria-label={customer ? `Account menu for ${customer.name}` : "Account: Sign in or register"}
           >
             <span className="account-icon-wrapper">
-              <UserRound size={20}/>
-              {customer&&<span className="auth-indicator" title="Logged in" aria-label="Logged in"/>}
+              <UserRound size={20} />
+              {customer && <span className="auth-indicator" title="Logged in" aria-label="Logged in" />}
             </span>
-            {customer&&<span className="account-name-label">{customer.name.split(' ')[0]}</span>}
-            <ChevronDown size={13} className={`account-chevron ${accountOpen?'open':''}`} aria-hidden="true"/>
+            {customer && <span className="account-name-label">{customer.name.split(' ')[0]}</span>}
+            <ChevronDown size={13} className={`account-chevron ${accountOpen ? 'open' : ''}`} aria-hidden="true" />
           </button>
-          {accountOpen&&(
+          {accountOpen && (
             <div className="account-dropdown" role="menu">
-              {customer?(
+              {customer ? (
                 <>
                   <div className="account-dropdown-header">
-                    <span className="account-dropdown-status"><span className="auth-indicator inline"/> Signed in</span>
+                    <span className="account-dropdown-status"><span className="auth-indicator inline" /> Signed in</span>
                     <strong className="account-dropdown-name">{customer.name}</strong>
                     <small className="account-dropdown-email">{customer.email}</small>
                   </div>
-                  <div className="account-dropdown-divider"/>
+                  <div className="account-dropdown-divider" />
                   <Link
                     to="/account?tab=overview"
                     className="account-dropdown-item"
                     role="menuitem"
-                    onClick={()=>setAccountOpen(false)}
+                    onClick={() => setAccountOpen(false)}
                   >
-                    <UserRound size={15}/>
+                    <UserRound size={15} />
                     <span>My Profile</span>
                   </Link>
                   <Link
                     to="/account?tab=orders"
                     className="account-dropdown-item"
                     role="menuitem"
-                    onClick={()=>setAccountOpen(false)}
+                    onClick={() => setAccountOpen(false)}
                   >
-                    <Package size={15}/>
+                    <Package size={15} />
                     <span>My Orders</span>
                   </Link>
-                  <div className="account-dropdown-divider"/>
+                  <div className="account-dropdown-divider" />
                   <button
                     type="button"
                     className="account-dropdown-item account-dropdown-logout"
                     role="menuitem"
                     onClick={handleLogout}
                   >
-                    <LogOut size={15}/>
+                    <LogOut size={15} />
                     <span>Logout</span>
                   </button>
                 </>
-              ):(
+              ) : (
                 <>
                   <div className="account-dropdown-header">
                     <strong className="account-dropdown-title">Account</strong>
                     <small className="account-dropdown-subtitle">Access your orders & wishlist</small>
                   </div>
-                  <div className="account-dropdown-divider"/>
+                  <div className="account-dropdown-divider" />
                   <Link
                     to="/account?mode=login"
                     className="account-dropdown-item"
                     role="menuitem"
-                    onClick={()=>setAccountOpen(false)}
+                    onClick={() => setAccountOpen(false)}
                   >
-                    <UserRound size={15}/>
+                    <UserRound size={15} />
                     <span>Sign In</span>
                   </Link>
                   <Link
                     to="/account?mode=register"
                     className="account-dropdown-item"
                     role="menuitem"
-                    onClick={()=>setAccountOpen(false)}
+                    onClick={() => setAccountOpen(false)}
                   >
-                    <Sparkles size={15}/>
+                    <Sparkles size={15} />
                     <span>Register</span>
                   </Link>
                 </>
@@ -323,46 +323,46 @@ function Header(){
             </div>
           )}
         </div>
-        <button className="icon" aria-label="Search jewellery" onClick={()=>setSearch(!search)}><Search size={20}/></button>
-        <Link className="icon save-nav" to="/collections/saved" aria-label="Saved pieces"><Heart size={20}/>{saved.length>0&&<i>{saved.length}</i>}</Link>
-        <button className="icon bag-icon" aria-label="Open shopping bag" onClick={()=>setBagOpen(true)}><ShoppingBag size={20}/><span>{bag.reduce((n,p)=>n+p.quantity,0)}</span></button>
+        <button className="icon" aria-label="Search jewellery" onClick={() => setSearch(!search)}><Search size={20} /></button>
+        <Link className="icon save-nav" to="/collections/saved" aria-label="Saved pieces"><Heart size={20} />{saved.length > 0 && <i>{saved.length}</i>}</Link>
+        <button className="icon bag-icon" aria-label="Open shopping bag" onClick={() => setBagOpen(true)}><ShoppingBag size={20} /><span>{bag.reduce((n, p) => n + p.quantity, 0)}</span></button>
       </div>
     </header>
-    {search&&<SearchAutocomplete onClose={()=>setSearch(false)} initialQuery={q} />}
-    {syncError&&<div className="account-sync-banner" role="alert">{syncError} <button className="underlink" onClick={()=>refreshAccount().catch(()=>{})}>Reload account</button></div>}
+    {search && <SearchAutocomplete onClose={() => setSearch(false)} initialQuery={q} />}
+    {syncError && <div className="account-sync-banner" role="alert">{syncError} <button className="underlink" onClick={() => refreshAccount().catch(() => { })}>Reload account</button></div>}
   </>;
 }
-function Footer(){const {config}=useStore();return <footer><div className="footer-top"><div><Brand/><p>For the moments that become memories.</p></div><div><h4>EXPLORE</h4><Link to="/kurtas">Kurta</Link><Link to="/collections/all">All jewellery</Link><Link to="/coins">Gold & Silver Coins</Link><Link to="/collections/saved">Your saved pieces</Link><Link to="/bag">Shopping bag</Link><Link to="/account">My account</Link></div><div><h4>HERE TO HELP</h4><Link to="/information/shipping">Delivery & returns</Link><Link to="/information/care">Jewellery care</Link><Link to="/information/contact">Contact us</Link></div><div><h4>A NOTE FROM THE MAISON</h4><p>Beautiful things take time.<br/>Discover a collection made for yours.</p><Link to="/collections/all" className="footer-cta">Find your piece <ArrowUpRight size={17}/></Link></div></div><div className="footer-bottom"><span>© {new Date().getFullYear()} Veyora Jewels</span><span>India · INR ₹</span><Link to="/admin">Merchant studio ↗</Link></div>{config.preview&&<p className="preview-note">Design preview · Fictional catalogue and prices · Reference imagery from the Maison Perle design brief</p>}</footer>}
-function Layout({children}){return <><Header/><main>{children}</main><Footer/><BagDrawer/><InstallApp/><ChatWidget/></>}
-function HomeKurtaShowcase(){
-  const [kurtas,setKurtas]=useState([]);
-  useEffect(()=>{
-    api('/kurtas').then(setKurtas).catch(()=>{});
-  },[]);
-  if(!kurtas.length)return null;
+function Footer() { const { config } = useStore(); return <footer><div className="footer-top"><div><Brand /><p>For the moments that become memories.</p></div><div><h4>EXPLORE</h4><Link to="/kurtas">Kurta</Link><Link to="/collections/all">All jewellery</Link><Link to="/coins">Gold & Silver Coins</Link><Link to="/collections/saved">Your saved pieces</Link><Link to="/bag">Shopping bag</Link><Link to="/account">My account</Link></div><div><h4>HERE TO HELP</h4><Link to="/information/shipping">Delivery & returns</Link><Link to="/information/care">Jewellery care</Link><Link to="/information/contact">Contact us</Link></div><div><h4>A NOTE FROM THE MAISON</h4><p>Beautiful things take time.<br />Discover a collection made for yours.</p><Link to="/collections/all" className="footer-cta">Find your piece <ArrowUpRight size={17} /></Link></div></div><div className="footer-bottom"><span>© {new Date().getFullYear()} Veyora Jewels</span><span>India · INR ₹</span><Link to="/admin">Merchant studio ↗</Link></div>{config.preview && <p className="preview-note">Design preview · Fictional catalogue and prices · Reference imagery from the Maison Perle design brief</p>}</footer> }
+function Layout({ children }) { return <><Header /><main>{children}</main><Footer /><BagDrawer /><InstallApp /><ChatWidget /></> }
+function HomeKurtaShowcase() {
+  const [kurtas, setKurtas] = useState([]);
+  useEffect(() => {
+    api('/kurtas').then(setKurtas).catch(() => { });
+  }, []);
+  if (!kurtas.length) return null;
   return <section className="featured section kurta-home-showcase">
     <div className="section-heading">
       <div>
         <span className="eyebrow">AWADH HERITAGE ATELIER</span>
         <h2>Kurta <em>Collection for Women.</em></h2>
       </div>
-      <Link className="underlink" to="/kurtas">View all 4 styles <ArrowUpRight size={17}/></Link>
+      <Link className="underlink" to="/kurtas">View all 4 styles <ArrowUpRight size={17} /></Link>
     </div>
     <div className="product-grid home-products">
-      {kurtas.slice(0,4).map(k=><article className="product-card" key={k.product_code||k.sku}>
+      {kurtas.slice(0, 4).map(k => <article className="product-card" key={k.product_code || k.sku}>
         <div className="product-photo">
-          <Link className="product-card-link" to={`/kurtas/${k.slug||k.product_code}`} aria-label={`View ${k.name}`}>
-            <img src={k.thumbnail||k.image} alt={k.name} loading="lazy" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+          <Link className="product-card-link" to={`/kurtas/${k.slug || k.product_code}`} aria-label={`View ${k.name}`}>
+            <img src={k.thumbnail || k.image} alt={k.name} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </Link>
           <span className="product-label">HANDCRAFTED CHIKANKARI</span>
         </div>
         <div className="product-info">
-          <Link className="product-card-title" to={`/kurtas/${k.slug||k.product_code}`}><h3>{k.name}</h3></Link>
+          <Link className="product-card-title" to={`/kurtas/${k.slug || k.product_code}`}><h3>{k.name}</h3></Link>
           <div className="product-card-specifications"><span>{k.metal} · {k.finish}</span></div>
-          <div className="product-card-price"><p>{k.minPrice&&k.maxPrice&&k.minPrice!==k.maxPrice?`${money(k.minPrice)} – ${money(k.maxPrice)}`:money(k.price)}</p></div>
+          <div className="product-card-price"><p>{k.minPrice && k.maxPrice && k.minPrice !== k.maxPrice ? `${money(k.minPrice)} – ${money(k.maxPrice)}` : money(k.price)}</p></div>
           <div className="product-card-actions">
-            <Link className="button dark product-card-cart" to={`/kurtas/${k.slug||k.product_code}`}>
-              Choose size (XS–XXXL) <ArrowRight size={16}/>
+            <Link className="button dark product-card-cart" to={`/kurtas/${k.slug || k.product_code}`}>
+              Choose size (XS–XXXL) <ArrowRight size={16} />
             </Link>
           </div>
         </div>
@@ -370,49 +370,49 @@ function HomeKurtaShowcase(){
     </div>
   </section>;
 }
- function Home(){const location=useLocation();const {products,categories,error}=useStore();const [editorialZoom,setEditorialZoom]=useState(false);const unique=grouped(products);return <Layout><HeroBanner key={location.key}/><div className="value-strip"><span><Gem size={17}/>Considered details</span><span><Heart size={17}/>Pieces to make your own</span><span><Package size={17}/>A moment worth unwrapping</span></div><section id="collections" className="section collection-section"><div className="section-heading"><div><span className="eyebrow">A WORLD OF VEYORA</span><h2>Find your <em>kind of beautiful.</em></h2></div><Link className="underlink" to="/collections/all">Explore all collections <ArrowUpRight size={17}/></Link></div>{categories.length?<div className="category-grid">{categories.map((category,i)=><Link className="category-card" to={category.href} key={category.id}><div className="category-photo"><BrandedImage loading="lazy" src={category.thumbnail_url||'/assets/product-placeholder.svg'} alt={`${category.name} collection`}/><span className="category-no">{String(i+1).padStart(2,'0')}</span><span className="round-arrow"><ArrowUpRight size={21}/></span></div><h3>{category.name}</h3><p>{category.description||'Discover the collection.'}</p></Link>)}</div>:<p className="empty">Collections are being prepared. Please check back soon.</p>}</section><HomeKurtaShowcase/><section className="featured section"><div className="section-heading"><div><span className="eyebrow">THE PIECES YOU COME BACK TO</span><h2>Destined to be <em>your favourite.</em></h2></div><Link className="underlink" to="/collections/all">Discover the edit <ArrowUpRight size={17}/></Link></div>{error?<p className="error">{error}</p>:<div className="product-grid home-products">{unique.slice(0,4).map(p=><ProductCard key={p.sku} p={p}/>)}</div>}</section><section className="editorial"><button type="button" className="editorial-image editorial-zoom" aria-label="Zoom editorial jewellery image" onClick={()=>setEditorialZoom(true)}><BrandedImage loading="lazy" src={media('Fine Jewelry Collection')} alt="Fine jewellery reference study in light and texture"/></button><div className="editorial-copy"><span className="eyebrow">LESS, BUT MORE MEANINGFUL</span><h2>Never just<br/><em>an accessory.</em></h2><p>A first chapter. An everyday ritual. A moment you want to keep close. Find the piece that becomes part of your story.</p><Link className="underlink" to="/collections/all">Meet your next heirloom <ArrowUpRight size={18}/></Link><span className="editorial-flower">✳</span></div></section><section className="closing"><span className="eyebrow">SOMETHING TO TREASURE</span><h2>Good things come in <em>little boxes.</em></h2><p>For someone you love. Including yourself.</p><Link className="button dark" to="/collections/all">Find a little wonder <ArrowUpRight size={17}/></Link></section>{editorialZoom&&<ImageViewer images={[{url:media('Fine Jewelry Collection'),alt_text:'Fine jewellery reference study in light and texture'}]} title="Veyora jewellery study" onClose={()=>setEditorialZoom(false)}/>}</Layout>}
-function FestiveGridBanner({offer}){
-  if(!offer)return null;
-  const isSilverMakingOffer=offer.applies_to==='silver'&&offer.discount_type==='making_percent'&&Number(offer.discount_value)===100;
-  if(isSilverMakingOffer)return <article className="festive-grid-banner festive-grid-banner-artwork">
+function Home() { const location = useLocation(); const { products, categories, error } = useStore(); const [editorialZoom, setEditorialZoom] = useState(false); const unique = grouped(products); return <Layout><HeroBanner key={location.key} /><div className="value-strip"><span><Gem size={17} />Considered details</span><span><Heart size={17} />Pieces to make your own</span><span><Package size={17} />A moment worth unwrapping</span></div><section id="collections" className="section collection-section"><div className="section-heading"><div><span className="eyebrow">A WORLD OF VEYORA</span><h2>Find your <em>kind of beautiful.</em></h2></div><Link className="underlink" to="/collections/all">Explore all collections <ArrowUpRight size={17} /></Link></div>{categories.length ? <div className="category-grid">{categories.map((category, i) => <Link className="category-card" to={category.href} key={category.id}><div className="category-photo"><BrandedImage loading="lazy" src={category.thumbnail_url || '/assets/product-placeholder.svg'} alt={`${category.name} collection`} /><span className="category-no">{String(i + 1).padStart(2, '0')}</span><span className="round-arrow"><ArrowUpRight size={21} /></span></div><h3>{category.name}</h3><p>{category.description || 'Discover the collection.'}</p></Link>)}</div> : <p className="empty">Collections are being prepared. Please check back soon.</p>}</section><HomeKurtaShowcase /><section className="featured section"><div className="section-heading"><div><span className="eyebrow">THE PIECES YOU COME BACK TO</span><h2>Destined to be <em>your favourite.</em></h2></div><Link className="underlink" to="/collections/all">Discover the edit <ArrowUpRight size={17} /></Link></div>{error ? <p className="error">{error}</p> : <div className="product-grid home-products">{unique.slice(0, 4).map(p => <ProductCard key={p.sku} p={p} />)}</div>}</section><section className="editorial"><button type="button" className="editorial-image editorial-zoom" aria-label="Zoom editorial jewellery image" onClick={() => setEditorialZoom(true)}><BrandedImage loading="lazy" src={media('Fine Jewelry Collection')} alt="Fine jewellery reference study in light and texture" /></button><div className="editorial-copy"><span className="eyebrow">LESS, BUT MORE MEANINGFUL</span><h2>Never just<br /><em>an accessory.</em></h2><p>A first chapter. An everyday ritual. A moment you want to keep close. Find the piece that becomes part of your story.</p><Link className="underlink" to="/collections/all">Meet your next heirloom <ArrowUpRight size={18} /></Link><span className="editorial-flower">✳</span></div></section><section className="closing"><span className="eyebrow">SOMETHING TO TREASURE</span><h2>Good things come in <em>little boxes.</em></h2><p>For someone you love. Including yourself.</p><Link className="button dark" to="/collections/all">Find a little wonder <ArrowUpRight size={17} /></Link></section>{editorialZoom && <ImageViewer images={[{ url: media('Fine Jewelry Collection'), alt_text: 'Fine jewellery reference study in light and texture' }]} title="Veyora jewellery study" onClose={() => setEditorialZoom(false)} />}</Layout> }
+function FestiveGridBanner({ offer }) {
+  if (!offer) return null;
+  const isSilverMakingOffer = offer.applies_to === 'silver' && offer.discount_type === 'making_percent' && Number(offer.discount_value) === 100;
+  if (isSilverMakingOffer) return <article className="festive-grid-banner festive-grid-banner-artwork">
     <Link to="/coins/silver" aria-label="Shop festive offers on 999 fine silver coins: zero making charges, 100% off on MC">
-      <BrandedImage src="/assets/banners/festive-silver-coins.webp" width="1024" height="1536" loading="lazy" decoding="async" alt="Festive celebration. 999 Fine Silver Coins. Zero making charges. 100% off on MC. Pure silver. Transparent metal rates. Shop festive offers."/>
+      <BrandedImage src="/assets/banners/festive-silver-coins.webp" width="1024" height="1536" loading="lazy" decoding="async" alt="Festive celebration. 999 Fine Silver Coins. Zero making charges. 100% off on MC. Pure silver. Transparent metal rates. Shop festive offers." />
     </Link>
   </article>;
   return <article className="festive-grid-banner">
     <div>
-      <span className="festive-banner-badge"><Sparkles size={12}/> FESTIVE CELEBRATION</span>
-      <h3 className="festive-banner-title">{offer.banner_headline||offer.name}</h3>
+      <span className="festive-banner-badge"><Sparkles size={12} /> FESTIVE CELEBRATION</span>
+      <h3 className="festive-banner-title">{offer.banner_headline || offer.name}</h3>
       <div className="festive-banner-discount">{offer.badge_text}</div>
-      <p className="festive-banner-subtext">{offer.banner_subtext||'Special festive discounts auto-applied to eligible jewellery and coins'}</p>
+      <p className="festive-banner-subtext">{offer.banner_subtext || 'Special festive discounts auto-applied to eligible jewellery and coins'}</p>
     </div>
-    <Link to={offer.applies_to==='silver'?'/coins/silver':offer.applies_to==='coins'?'/coins':'/collections/all'} className="festive-banner-btn">Shop Festive Offers <ArrowRight size={14}/></Link>
+    <Link to={offer.applies_to === 'silver' ? '/coins/silver' : offer.applies_to === 'coins' ? '/coins' : '/collections/all'} className="festive-banner-btn">Shop Festive Offers <ArrowRight size={14} /></Link>
   </article>;
 }
 // One information layout for jewellery, bullion and future catalogue categories.
-function CardInfo({product:p,href,specifications,price,note,action,swatches}){
+function CardInfo({ product: p, href, specifications, price, note, action, swatches }) {
   return <div className="product-info">
     <Link className="product-card-title" to={href} title={p.name}><h3>{p.name}</h3></Link>
     <div className="product-card-rating">
       <RatingBadge rating={p.rating_average} count={p.rating_count} showEmpty={true} size="sm" />
     </div>
-    <div className="product-card-specifications"><span>{specifications}</span>{p.image_kind==='illustration'&&<small className="illustration-note">Illustrative image</small>}</div>
+    <div className="product-card-specifications"><span>{specifications}</span>{p.image_kind === 'illustration' && <small className="illustration-note">Illustrative image</small>}</div>
     {swatches}
-    <div className="product-card-price">{p.original_price&&p.original_price>p.price?<div className="price-row"><span className="discounted-price">{money(p.price)}</span><del className="original-price-del">{money(p.original_price)}</del>{p.discount_amount>0&&<span className="offer-save-tag">SAVE {money(p.discount_amount)}</span>}</div>:<p>{price}</p>}</div>
+    <div className="product-card-price">{p.original_price && p.original_price > p.price ? <div className="price-row"><span className="discounted-price">{money(p.price)}</span><del className="original-price-del">{money(p.original_price)}</del>{p.discount_amount > 0 && <span className="offer-save-tag">SAVE {money(p.discount_amount)}</span>}</div> : <p>{price}</p>}</div>
     <div className="product-card-note">{note}</div>
     <div className="product-card-actions">{action}</div>
   </div>;
 }
-function ProductCard({p}){
-  const {products,add,saved,toggleSave}=useStore();
-  const isCoin=p.is_coin||!!p.coin_type||p.sku?.startsWith('COIN-');
-  const isKurta=p.is_kurta||p.category==='Kurtas'||p.category==='Kurta'||p.category==='Chicken Curry Kurtas'||p.category==='Chicken Curry Kurtas for Women';
-  const defaultHref=isCoin?'/coin/'+(p.slug||encodeURIComponent(p.sku)):isKurta?'/kurta/'+(p.slug||p.product_code):'/jewelry/'+(p.slug||p.sku);
-  const hasVariants=!isCoin&&products.filter(product=>product.product_code===p.product_code).length>1;
-  const hasRange=!isCoin&&p.minPrice&&p.maxPrice&&p.minPrice!==p.maxPrice;
-  const isGoldLinked=p.pricing_mode==='GOLD_LINKED'||(isCoin&&p.pricing_mode==='METAL_LINKED');
+function ProductCard({ p }) {
+  const { products, add, saved, toggleSave } = useStore();
+  const isCoin = p.is_coin || !!p.coin_type || p.sku?.startsWith('COIN-');
+  const isKurta = p.is_kurta || p.category === 'Kurtas' || p.category === 'Kurta' || p.category === 'Chicken Curry Kurtas' || p.category === 'Chicken Curry Kurtas for Women';
+  const defaultHref = isCoin ? '/coin/' + (p.slug || encodeURIComponent(p.sku)) : isKurta ? '/kurta/' + (p.slug || p.product_code) : '/jewelry/' + (p.slug || p.sku);
+  const hasVariants = !isCoin && products.filter(product => product.product_code === p.product_code).length > 1;
+  const hasRange = !isCoin && p.minPrice && p.maxPrice && p.minPrice !== p.maxPrice;
+  const isGoldLinked = p.pricing_mode === 'GOLD_LINKED' || (isCoin && p.pricing_mode === 'METAL_LINKED');
 
-  const colors = p.colors || (p.variants && [...new Map(p.variants.filter(v=>v.color).map(v=>[v.color, {name: v.color, code: v.color_code, hex: v.hex_color || '#d4af37', image: v.image}])).values()]) || [];
+  const colors = p.colors || (p.variants && [...new Map(p.variants.filter(v => v.color).map(v => [v.color, { name: v.color, code: v.color_code, hex: v.hex_color || '#d4af37', image: v.image }])).values()]) || [];
   const [activeColor, setActiveColor] = useState(p.color || (colors.length ? colors[0].name : ''));
 
   const activeImage = useMemo(() => {
@@ -460,62 +460,62 @@ function ProductCard({p}){
   return <article className="product-card">
     <div className="product-photo">
       <Link className="product-card-link" to={activeHref} aria-label={`View ${p.name}`}>
-        <ListingImage product={displayProduct} alt={`${p.name}, ${p.metal} ${p.purity}`}/>
+        <ListingImage product={displayProduct} alt={`${p.name}, ${p.metal} ${p.purity}`} />
       </Link>
       {p.offer?.badge_text && (
         <span className="offer-ribbon-badge" title={p.offer.name}>
-          <Sparkles size={10}/> {p.offer.badge_text}
+          <Sparkles size={10} /> {p.offer.badge_text}
         </span>
       )}
-      {isGoldLinked&&!p.offer?.badge_text&&<span className="gold-linked-badge" title="Dynamic price linked to official metal rates"><Sparkles size={10}/> {isCoin?'DAILY METAL RATE':'GOLD-LINKED RATE'}</span>}
-      {!isCoin&&<button className={'save-piece icon '+(saved.includes(p.product_code)?'selected':'')} aria-label={`Save ${p.name}`} aria-pressed={saved.includes(p.product_code)} onClick={()=>toggleSave(p.product_code)}><Heart size={18}/></button>}
-      <span className="product-label">{p.stock===0?'CURRENTLY UNAVAILABLE':isCoin?`${p.purity} ${p.metal.toUpperCase()}`:isKurta?'KURTAS':p.category==='Rings'?'YOUR EVERYDAY SIGNATURE':'SIGNATURE PIECE'}</span>
+      {isGoldLinked && !p.offer?.badge_text && <span className="gold-linked-badge" title="Dynamic price linked to official metal rates"><Sparkles size={10} /> {isCoin ? 'DAILY METAL RATE' : 'GOLD-LINKED RATE'}</span>}
+      {!isCoin && <button className={'save-piece icon ' + (saved.includes(p.product_code) ? 'selected' : '')} aria-label={`Save ${p.name}`} aria-pressed={saved.includes(p.product_code)} onClick={() => toggleSave(p.product_code)}><Heart size={18} /></button>}
+      <span className="product-label">{p.stock === 0 ? 'CURRENTLY UNAVAILABLE' : isCoin ? `${p.purity} ${p.metal.toUpperCase()}` : isKurta ? 'KURTAS' : p.category === 'Rings' ? 'YOUR EVERYDAY SIGNATURE' : 'SIGNATURE PIECE'}</span>
     </div>
     <CardInfo product={p} href={activeHref}
-      specifications={isCoin?`${p.weight_g}g · ${p.purity} ${p.metal}${p.dimension?` · ${p.dimension}`:''}`:isKurta?`${p.metal} · ${p.purity}`:`${p.metal} · ${p.purity} · ${p.category}`}
-      price={p.price===null?'Price awaiting rate':(hasRange?`${money(p.minPrice)} – ${money(p.maxPrice)}`:`${money(p.price)}${p.category==='Rings'?' onwards':''}`)}
-      note={isGoldLinked&&<span className="gold-linked-subtext">✦ {isCoin?'Metal':'Gold'}-Linked Pricing</span>}
+      specifications={isCoin ? `${p.weight_g}g · ${p.purity} ${p.metal}${p.dimension ? ` · ${p.dimension}` : ''}` : isKurta ? `${p.metal} · ${p.purity}` : `${p.metal} · ${p.purity} · ${p.category}`}
+      price={p.price === null ? 'Price awaiting rate' : (hasRange ? `${money(p.minPrice)} – ${money(p.maxPrice)}` : `${money(p.price)}${p.category === 'Rings' ? ' onwards' : ''}`)}
+      note={isGoldLinked && <span className="gold-linked-subtext">✦ {isCoin ? 'Metal' : 'Gold'}-Linked Pricing</span>}
       swatches={swatches}
-      action={isKurta?<Link className="button dark product-card-cart" to={activeHref}>Choose size (XS–XXXL) <ArrowRight size={16}/></Link>:hasVariants?<Link className="button dark product-card-cart" to={activeHref}>Choose options <ArrowRight size={16}/></Link>:<button type="button" className="button dark product-card-cart" disabled={!p.checkout_available} onClick={()=>add(isCoin?{sku:p.sku,name:p.name,image:p.image,price:p.price,stock:p.stock,size:`${p.weight_g}g (${p.purity})`,slug:'coins'}:p)}>{p.checkout_available?'Add to cart':p.stock===0?'Out of stock':'Currently unavailable'}<ShoppingBag size={16}/></button>}/>
+      action={isKurta ? <Link className="button dark product-card-cart" to={activeHref}>Choose size (XS–XXXL) <ArrowRight size={16} /></Link> : hasVariants ? <Link className="button dark product-card-cart" to={activeHref}>Choose options <ArrowRight size={16} /></Link> : <button type="button" className="button dark product-card-cart" disabled={!p.checkout_available} onClick={() => add(isCoin ? { sku: p.sku, name: p.name, image: p.image, price: p.price, stock: p.stock, size: `${p.weight_g}g (${p.purity})`, slug: 'coins' } : p)}>{p.checkout_available ? 'Add to cart' : p.stock === 0 ? 'Out of stock' : 'Currently unavailable'}<ShoppingBag size={16} /></button>} />
 
   </article>;
 }
-function Collection(){
-  const {category='all',gender:routeGender,jewelryCategory}=useParams();
-  if(category==='kurtas'||category==='kurta')return <Navigate to="/kurtas" replace/>;
-  const {products,coins=[],saved,offers=[],error,accountReady,refreshCatalogue}=useStore();
-  const [params,setParams]=useSearchParams();
-  const [filters,setFilters]=useState(false);
-  const [visible,setVisible]=useState(24);
-  useEffect(()=>setVisible(24),[category,params.toString()]);
-  const listRef=useRef();
-  const q=params.get('q')||'';
-  useEffect(()=>{
-    document.title=`${q?`Search: “${q}”`:category==='all'?'All jewellery':category} | Veyora Jewels`;
-    if(listRef.current && !matchMedia('(prefers-reduced-motion: reduce)').matches)gsap.fromTo(listRef.current,{opacity:0,y:10},{opacity:1,y:0,duration:.5});
-    const key='scroll:'+location.pathname+location.search;
-    requestAnimationFrame(()=>window.scrollTo(0,Number(sessionStorage.getItem(key)||0)));
-    const save=()=>sessionStorage.setItem(key,String(window.scrollY));
-    window.addEventListener('scroll',save);
-    return()=>window.removeEventListener('scroll',save);
-  },[category,params.toString()]);
+function Collection() {
+  const { category = 'all', gender: routeGender, jewelryCategory } = useParams();
+  if (category === 'kurtas' || category === 'kurta') return <Navigate to="/kurtas" replace />;
+  const { products, coins = [], saved, offers = [], error, accountReady, refreshCatalogue } = useStore();
+  const [params, setParams] = useSearchParams();
+  const [filters, setFilters] = useState(false);
+  const [visible, setVisible] = useState(24);
+  useEffect(() => setVisible(24), [category, params.toString()]);
+  const listRef = useRef();
+  const q = params.get('q') || '';
+  useEffect(() => {
+    document.title = `${q ? `Search: “${q}”` : category === 'all' ? 'All jewellery' : category} | Veyora Jewels`;
+    if (listRef.current && !matchMedia('(prefers-reduced-motion: reduce)').matches) gsap.fromTo(listRef.current, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: .5 });
+    const key = 'scroll:' + location.pathname + location.search;
+    requestAnimationFrame(() => window.scrollTo(0, Number(sessionStorage.getItem(key) || 0)));
+    const save = () => sessionStorage.setItem(key, String(window.scrollY));
+    window.addEventListener('scroll', save);
+    return () => window.removeEventListener('scroll', save);
+  }, [category, params.toString()]);
 
-  const update=(k,v)=>{const next=new URLSearchParams(params);v?next.set(k,v):next.delete(k);setParams(next,{replace:true})};
-  const cleanQ=q.trim().toLowerCase();
-  const qTokens=cleanQ.split(/\s+/).filter(Boolean);
+  const update = (k, v) => { const next = new URLSearchParams(params); v ? next.set(k, v) : next.delete(k); setParams(next, { replace: true }) };
+  const cleanQ = q.trim().toLowerCase();
+  const qTokens = cleanQ.split(/\s+/).filter(Boolean);
 
   function matchesSearch(item, isCoin) {
-    if(!cleanQ)return true;
-    const name=(item.name||'').toLowerCase();
-    const cat=(item.category||item.coin_type||'').toLowerCase();
-    const sku=(item.sku||'').toLowerCase();
-    const metal=(item.metal||'').toLowerCase();
-    const purity=(item.purity||'').toLowerCase();
-    const desc=(item.description||'').toLowerCase();
-    const weight=isCoin?`${item.weight_g}g ${item.weight_g} gram ${item.weight_g} grams`:(item.net_weight_g?`${item.net_weight_g}g`:'');
-    const fullText=`${name} ${cat} ${sku} ${metal} ${purity} ${weight} ${desc}`;
+    if (!cleanQ) return true;
+    const name = (item.name || '').toLowerCase();
+    const cat = (item.category || item.coin_type || '').toLowerCase();
+    const sku = (item.sku || '').toLowerCase();
+    const metal = (item.metal || '').toLowerCase();
+    const purity = (item.purity || '').toLowerCase();
+    const desc = (item.description || '').toLowerCase();
+    const weight = isCoin ? `${item.weight_g}g ${item.weight_g} gram ${item.weight_g} grams` : (item.net_weight_g ? `${item.net_weight_g}g` : '');
+    const fullText = `${name} ${cat} ${sku} ${metal} ${purity} ${weight} ${desc}`;
 
-    return qTokens.every(t=>{
+    return qTokens.every(t => {
       const mapped = {
         peral: 'pearl', perals: 'pearl', perl: 'pearl',
         neclace: 'necklace', neckless: 'necklace',
@@ -528,139 +528,139 @@ function Collection(){
     });
   }
 
-  const [categoryMeta,setCategoryMeta]=useState(null);
-  useEffect(()=>{
-    if(!['all','saved'].includes(category)){
-      api('/categories/'+encodeURIComponent(category)).then(setCategoryMeta).catch(()=>setCategoryMeta(null));
-    }else{
+  const [categoryMeta, setCategoryMeta] = useState(null);
+  useEffect(() => {
+    if (!['all', 'saved'].includes(category)) {
+      api('/categories/' + encodeURIComponent(category)).then(setCategoryMeta).catch(() => setCategoryMeta(null));
+    } else {
       setCategoryMeta(null);
     }
-  },[category]);
+  }, [category]);
 
-  const selectedJewelryCategory=jewelryCategory||category;
-  const selectedGender=routeGender ? routeGender[0].toUpperCase()+routeGender.slice(1) : params.get('gender');
-  const jewelleryItems=grouped(products.filter(p=>{
+  const selectedJewelryCategory = jewelryCategory || category;
+  const selectedGender = routeGender ? routeGender[0].toUpperCase() + routeGender.slice(1) : params.get('gender');
+  const jewelleryItems = grouped(products.filter(p => {
     // Keep the storefront boundary intact if a stale API response contains a
     // legacy Kurta record. Kurtas are rendered only by /kurtas.
-    const legacyKurtaCategory=['kurtas','kurta','chicken curry kurtas'];
-    if(Boolean(p.is_kurta)||legacyKurtaCategory.includes(String(p.category||'').toLowerCase()))return false;
+    const legacyKurtaCategory = ['kurtas', 'kurta', 'chicken curry kurtas'];
+    if (Boolean(p.is_kurta) || legacyKurtaCategory.includes(String(p.category || '').toLowerCase())) return false;
     // Unisex is deliberately included in Men's and Women's browsing; products
     // with no classification remain available only in the all-products view.
-    if(selectedGender && selectedGender!=='All' && p.gender!==selectedGender && !(selectedGender!=='Unisex'&&p.gender==='Unisex'))return false;
-    if(selectedJewelryCategory==='all')return true;
-    if(category==='gold')return (p.metal||'').toLowerCase()==='gold'||(p.collections||[]).includes('gold');
-    if(category==='silver')return (p.metal||'').toLowerCase()==='silver'||(p.collections||[]).includes('silver');
-    if(category==='saved')return saved.includes(p.product_code);
-    const pCatLower=(p.category||'').toLowerCase();
-    const pCatSlug=pCatLower.replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
-    return pCatLower===selectedJewelryCategory||pCatSlug===selectedJewelryCategory||pCatLower===selectedJewelryCategory.replace(/-/g,' ');
+    if (selectedGender && selectedGender !== 'All' && p.gender !== selectedGender && !(selectedGender !== 'Unisex' && p.gender === 'Unisex')) return false;
+    if (selectedJewelryCategory === 'all') return true;
+    if (category === 'gold') return (p.metal || '').toLowerCase() === 'gold' || (p.collections || []).includes('gold');
+    if (category === 'silver') return (p.metal || '').toLowerCase() === 'silver' || (p.collections || []).includes('silver');
+    if (category === 'saved') return saved.includes(p.product_code);
+    const pCatLower = (p.category || '').toLowerCase();
+    const pCatSlug = pCatLower.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    return pCatLower === selectedJewelryCategory || pCatSlug === selectedJewelryCategory || pCatLower === selectedJewelryCategory.replace(/-/g, ' ');
   }));
-  const coinItems=(coins||[]).map(c=>({...c,is_coin:true}));
+  const coinItems = (coins || []).map(c => ({ ...c, is_coin: true }));
 
-  const baseList=q
-    ?(category==='all'?[...jewelleryItems,...coinItems]:jewelleryItems)
-    :jewelleryItems;
+  const baseList = q
+    ? (category === 'all' ? [...jewelleryItems, ...coinItems] : jewelleryItems)
+    : jewelleryItems;
 
-  let items=baseList.filter(p=>matchesSearch(p,p.is_coin)&&(!params.get('purity')||p.purity===params.get('purity'))&&(!params.get('stock')||p.stock>0)&&matchPrice(p.price,params.get('price')));
-  if(params.get('sort')==='price-asc')items.sort((a,b)=>a.price-b.price);
-  if(params.get('sort')==='price-desc')items.sort((a,b)=>b.price-a.price);
-  const title=q?`Search results for “${q}”`:categoryMeta?.name||({
-    all:'The jewellery collection',
-    gold:'The Gold Collection',
-    silver:'The Silver Collection',
-    saved:'Your saved pieces'
-  }[category]||category.replace(/-/g,' '));
-  const categoryDescription=q?`Showing items matching “${q}”.`:categoryMeta?.description||({
-    all:'Considered pieces. Quiet statements. Endlessly you.',
-    gold:'Hallmarked 18K and 22K yellow gold fine jewellery crafted with timeless heritage and contemporary precision.',
-    silver:'Fine 925 sterling silver artisan jewellery finished with anti-tarnish rhodium and lustrous hand polishing.'
-  }[category]||'Considered pieces. Quiet statements. Endlessly you.');
-  const gridOffer=offers.find(o=>o.show_in_grid)||offers[0];
+  let items = baseList.filter(p => matchesSearch(p, p.is_coin) && (!params.get('purity') || p.purity === params.get('purity')) && (!params.get('stock') || p.stock > 0) && matchPrice(p.price, params.get('price')));
+  if (params.get('sort') === 'price-asc') items.sort((a, b) => a.price - b.price);
+  if (params.get('sort') === 'price-desc') items.sort((a, b) => b.price - a.price);
+  const title = q ? `Search results for “${q}”` : categoryMeta?.name || ({
+    all: 'The jewellery collection',
+    gold: 'The Gold Collection',
+    silver: 'The Silver Collection',
+    saved: 'Your saved pieces'
+  }[category] || category.replace(/-/g, ' '));
+  const categoryDescription = q ? `Showing items matching “${q}”.` : categoryMeta?.description || ({
+    all: 'Considered pieces. Quiet statements. Endlessly you.',
+    gold: 'Hallmarked 18K and 22K yellow gold fine jewellery crafted with timeless heritage and contemporary precision.',
+    silver: 'Fine 925 sterling silver artisan jewellery finished with anti-tarnish rhodium and lustrous hand polishing.'
+  }[category] || 'Considered pieces. Quiet statements. Endlessly you.');
+  const gridOffer = offers.find(o => o.show_in_grid) || offers[0];
 
-  const tabs=[
-    {label:'All jewellery',href:'/collections/all',active:category==='all'},
-    {label:'Earrings',href:'/collections/earrings',active:category==='earrings'},
-    {label:'Necklaces',href:'/collections/necklaces',active:category==='necklaces'},
-    {label:'Rings',href:'/collections/rings',active:category==='rings'},
-    {label:'Bracelets',href:'/collections/bracelets',active:category==='bracelets'},
-    ...(category==='gold'?[{label:'Gold Collection',href:'/collections/gold',active:true}]:[]),
-    ...(category==='silver'?[{label:'Silver Collection',href:'/collections/silver',active:true}]:[]),
-    ...(category==='saved'?[{label:`Saved pieces (${saved.length})`,href:'/collections/saved',active:true}]:[])
+  const tabs = [
+    { label: 'All jewellery', href: '/collections/all', active: category === 'all' },
+    { label: 'Earrings', href: '/collections/earrings', active: category === 'earrings' },
+    { label: 'Necklaces', href: '/collections/necklaces', active: category === 'necklaces' },
+    { label: 'Rings', href: '/collections/rings', active: category === 'rings' },
+    { label: 'Bracelets', href: '/collections/bracelets', active: category === 'bracelets' },
+    ...(category === 'gold' ? [{ label: 'Gold Collection', href: '/collections/gold', active: true }] : []),
+    ...(category === 'silver' ? [{ label: 'Silver Collection', href: '/collections/silver', active: true }] : []),
+    ...(category === 'saved' ? [{ label: `Saved pieces (${saved.length})`, href: '/collections/saved', active: true }] : [])
   ];
 
-  const facets=[
+  const facets = [
     {
-      key:'purity',
-      label:'Purity',
-      allLabel:'All purities',
-      options:[
-        {label:'18K',value:'18K'},
-        {label:'22K',value:'22K'},
-        {label:'925',value:'925'}
+      key: 'purity',
+      label: 'Purity',
+      allLabel: 'All purities',
+      options: [
+        { label: '18K', value: '18K' },
+        { label: '22K', value: '22K' },
+        { label: '925', value: '925' }
       ]
     }
   ];
 
   return <Layout>
     <CommonPLP
-      eyebrow={q?`FOUND ${items.length} MATCHING PIECES`:'THE VEYORA COLLECTIONS'}
+      eyebrow={q ? `FOUND ${items.length} MATCHING PIECES` : 'THE VEYORA COLLECTIONS'}
       title={title}
       description={categoryDescription}
       tabs={tabs}
       priceBrackets={priceBrackets}
-      activePrice={params.get('price')||''}
-      onPriceChange={v=>update('price',v)}
+      activePrice={params.get('price') || ''}
+      onPriceChange={v => update('price', v)}
       items={items}
       loading={!accountReady}
       error={error}
-      sortBy={params.get('sort')||'featured'}
-      onSortChange={v=>update('sort',v)}
+      sortBy={params.get('sort') || 'featured'}
+      onSortChange={v => update('sort', v)}
       searchQuery={q}
-      onSearchChange={v=>update('q',v)}
+      onSearchChange={v => update('q', v)}
       activeFilters={{
-        purity:params.get('purity')||'',
-        stock:params.get('stock')||''
+        purity: params.get('purity') || '',
+        stock: params.get('stock') || ''
       }}
-      onFilterChange={(k,v)=>update(k,v)}
-      onClearFilters={()=>setParams({})}
+      onFilterChange={(k, v) => update(k, v)}
+      onClearFilters={() => setParams({})}
       facets={facets}
-      onRetry={()=>refreshCatalogue().catch(()=>{})}
+      onRetry={() => refreshCatalogue().catch(() => { })}
       ProductCardComponent={ProductCard}
       visible={visible}
-      onLoadMore={()=>setVisible(n=>n+24)}
+      onLoadMore={() => setVisible(n => n + 24)}
       itemLabel="pieces"
     />
   </Layout>;
 }
-function StructuredProduct({p}){if(typeof document!=='undefined'&&document.querySelector('script[type="application/ld+json"]'))return null;const data={"@context":"https://schema.org","@type":"Product",name:p.name,description:p.description,image:p.image,sku:p.sku,material:p.metal,brand:{"@type":"Brand",name:"Veyora Jewels"},offers:{"@type":"Offer",priceCurrency:"INR",price:p.price,availability:"https://schema.org/"+(p.checkout_available?'InStock':'OutOfStock'),url:window.location.href}};return <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(data).replace(/</g,'\\u003c')}}/>}
-function Product(){
-  const {slug}=useParams();
-  const navigate=useNavigate();
-  const {products,add,saved,toggleSave,accountReady,error,refreshCatalogue}=useStore();
-  const listed=products.find(item=>item.slug===slug);
-  const variants=listed?products.filter(item=>item.product_code===listed.product_code):[];
-  const [sku,setSku]=useState(''),[guide,setGuide]=useState(false);
-  const p=variants.find(item=>item.sku===sku)||listed;
-  const isKurta=p?.is_kurta||p?.category==='Kurtas'||p?.category==='Kurta'||p?.category==='Chicken Curry Kurtas for Women'||p?.category==='Chicken Curry Kurtas';
+function StructuredProduct({ p }) { if (typeof document !== 'undefined' && document.querySelector('script[type="application/ld+json"]')) return null; const data = { "@context": "https://schema.org", "@type": "Product", name: p.name, description: p.description, image: p.image, sku: p.sku, material: p.metal, brand: { "@type": "Brand", name: "Veyora Jewels" }, offers: { "@type": "Offer", priceCurrency: "INR", price: p.price, availability: "https://schema.org/" + (p.checkout_available ? 'InStock' : 'OutOfStock'), url: window.location.href } }; return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, '\\u003c') }} /> }
+function Product() {
+  const { slug } = useParams();
+  const navigate = useNavigate();
+  const { products, add, saved, toggleSave, accountReady, error, refreshCatalogue } = useStore();
+  const listed = products.find(item => item.slug === slug);
+  const variants = listed ? products.filter(item => item.product_code === listed.product_code) : [];
+  const [sku, setSku] = useState(''), [guide, setGuide] = useState(false);
+  const p = variants.find(item => item.sku === sku) || listed;
+  const isKurta = p?.is_kurta || p?.category === 'Kurtas' || p?.category === 'Kurta' || p?.category === 'Chicken Curry Kurtas for Women' || p?.category === 'Chicken Curry Kurtas';
 
-  useEffect(()=>{
-    if(p && isKurta){
-      navigate('/kurtas/'+(p.product_code||p.slug),{replace:true});
+  useEffect(() => {
+    if (p && isKurta) {
+      navigate('/kurtas/' + (p.product_code || p.slug), { replace: true });
     }
-  },[p?.slug,p?.product_code,isKurta]);
+  }, [p?.slug, p?.product_code, isKurta]);
 
-  const relatedProducts = useMemo(()=>{
-    if(!p)return [];
-    return products.filter(item=>item.category===p?.category&&item.product_code!==p?.product_code).slice(0,4);
-  },[products,p?.category,p?.product_code]);
+  const relatedProducts = useMemo(() => {
+    if (!p) return [];
+    return products.filter(item => item.category === p?.category && item.product_code !== p?.product_code).slice(0, 4);
+  }, [products, p?.category, p?.product_code]);
 
-  useEffect(()=>{setSku('');},[slug]);
-  useEffect(()=>{if(p)document.title=p.seo_title||p.name+' | Veyora Jewels'},[p?.name,p?.seo_title]);
+  useEffect(() => { setSku(''); }, [slug]);
+  useEffect(() => { if (p) document.title = p.seo_title || p.name + ' | Veyora Jewels' }, [p?.name, p?.seo_title]);
 
-  if(!p)return <Layout><div className="empty"><h1>{!accountReady?'Finding your piece…':error?'Could not load this piece':'Piece not found'}</h1>{error&&<><p className="error" role="alert">{error}</p><button className="underlink" onClick={()=>refreshCatalogue().catch(()=>{})}>Try again</button></>}<Link to="/jewelry">Back to jewelry collection</Link></div></Layout>;
+  if (!p) return <Layout><div className="empty"><h1>{!accountReady ? 'Finding your piece…' : error ? 'Could not load this piece' : 'Piece not found'}</h1>{error && <><p className="error" role="alert">{error}</p><button className="underlink" onClick={() => refreshCatalogue().catch(() => { })}>Try again</button></>}<Link to="/jewelry">Back to jewelry collection</Link></div></Layout>;
 
-  const photos=galleryPhotos(p.images);
-  const angleImages=photos.length?photos:galleryPhotos([{id:'default',role:'hero',url:p.image,alt_text:p.name}]);
+  const photos = galleryPhotos(p.images);
+  const angleImages = photos.length ? photos : galleryPhotos([{ id: 'default', role: 'hero', url: p.image, alt_text: p.name }]);
 
   const specs = [
     [isKurta ? 'Fabric' : 'Metal & purity', isKurta ? p.metal : `${p.metal}, ${p.purity}`],
@@ -786,147 +786,147 @@ function Product(){
     </Layout>
   );
 }
-function BagLines(){const {bag,setBag,setBagOpen}=useStore();const change=(sku,n)=>setBag(b=>b.map(p=>p.sku===sku?{...p,quantity:p.quantity+n}:p).filter(p=>p.quantity>0));return bag.map(p=><div className="bag-line" key={p.sku}><Link onClick={()=>setBagOpen(false)} to={(p.slug==='coins'||p.kind==='coin'||p.sku?.startsWith('COIN-'))?'/coin/'+(p.slug&&p.slug!=='coins'?p.slug:encodeURIComponent(p.sku)):(p.is_kurta||p.kind==='kurta'||p.category?.includes('Kurta'))?'/kurta/'+(p.slug||p.product_code):'/jewelry/'+(p.slug||p.sku)}><BrandedImage src={coinImage(p.image,true)} alt={p.name}/></Link><div><h3>{p.name}</h3><p>{p.size} · {p.sku}</p><strong>{p.price==null?'Price awaiting rate':money(p.price)}</strong>{p.unavailable&&<p className="error">Currently unavailable. Remove this piece to continue.</p>}<div className="quantity"><button aria-label={`Remove one ${p.name}`} onClick={()=>change(p.sku,-1)}><Minus size={13}/></button><span>{p.quantity}</span><button aria-label={`Add one ${p.name}`} onClick={()=>change(p.sku,1)} disabled={p.quantity>=Math.min(20,p.stock??20)||p.unavailable}><Plus size={13}/></button><button className="remove" onClick={()=>setBag(b=>b.filter(x=>x.sku!==p.sku))}>Remove</button></div></div></div>)}
-function BagDrawer(){const {bagOpen,setBagOpen,bag}=useStore();const nav=useNavigate();if(!bagOpen)return null;return <Modal title={`Your bag (${bag.reduce((n,p)=>n+p.quantity,0)})`} onClose={()=>setBagOpen(false)}>{bag.length?<><BagLines/><div className="summary-line"><span>Estimated subtotal</span><strong>{money(bag.reduce((n,p)=>n+p.price*p.quantity,0))}</strong></div><p className="small muted">Current price, availability and delivery charges are checked at checkout.</p><button className="button dark full" onClick={()=>{setBagOpen(false);nav('/checkout')}}>Continue to checkout <ArrowRight size={17}/></button><button className="text-button full" onClick={()=>{setBagOpen(false);nav('/collections/all')}}>Continue discovering</button></>:<div className="empty"><ShoppingBag size={32}/><h3>A little room for wonder.</h3><p>Your bag is waiting for something special.</p><button className="button dark" onClick={()=>{setBagOpen(false);nav('/collections/all')}}>Explore the collection</button></div>}</Modal>}
-function Bag(){
-  const {bag}=useStore();
-  const subtotal=bag.reduce((n,p)=>n+p.price*p.quantity,0);
+function BagLines() { const { bag, setBag, setBagOpen } = useStore(); const change = (sku, n) => setBag(b => b.map(p => p.sku === sku ? { ...p, quantity: p.quantity + n } : p).filter(p => p.quantity > 0)); return bag.map(p => <div className="bag-line" key={p.sku}><Link onClick={() => setBagOpen(false)} to={(p.slug === 'coins' || p.kind === 'coin' || p.sku?.startsWith('COIN-')) ? '/coin/' + (p.slug && p.slug !== 'coins' ? p.slug : encodeURIComponent(p.sku)) : (p.is_kurta || p.kind === 'kurta' || p.category?.includes('Kurta')) ? '/kurta/' + (p.slug || p.product_code) : '/jewelry/' + (p.slug || p.sku)}><BrandedImage src={coinImage(p.image, true)} alt={p.name} /></Link><div><h3>{p.name}</h3><p>{p.size} · {p.sku}</p><strong>{p.price == null ? 'Price awaiting rate' : money(p.price)}</strong>{p.unavailable && <p className="error">Currently unavailable. Remove this piece to continue.</p>}<div className="quantity"><button aria-label={`Remove one ${p.name}`} onClick={() => change(p.sku, -1)}><Minus size={13} /></button><span>{p.quantity}</span><button aria-label={`Add one ${p.name}`} onClick={() => change(p.sku, 1)} disabled={p.quantity >= Math.min(20, p.stock ?? 20) || p.unavailable}><Plus size={13} /></button><button className="remove" onClick={() => setBag(b => b.filter(x => x.sku !== p.sku))}>Remove</button></div></div></div>) }
+function BagDrawer() { const { bagOpen, setBagOpen, bag } = useStore(); const nav = useNavigate(); if (!bagOpen) return null; return <Modal title={`Your bag (${bag.reduce((n, p) => n + p.quantity, 0)})`} onClose={() => setBagOpen(false)}>{bag.length ? <><BagLines /><div className="summary-line"><span>Estimated subtotal</span><strong>{money(bag.reduce((n, p) => n + p.price * p.quantity, 0))}</strong></div><p className="small muted">Current price, availability and delivery charges are checked at checkout.</p><button className="button dark full" onClick={() => { setBagOpen(false); nav('/checkout') }}>Continue to checkout <ArrowRight size={17} /></button><button className="text-button full" onClick={() => { setBagOpen(false); nav('/collections/all') }}>Continue discovering</button></> : <div className="empty"><ShoppingBag size={32} /><h3>A little room for wonder.</h3><p>Your bag is waiting for something special.</p><button className="button dark" onClick={() => { setBagOpen(false); nav('/collections/all') }}>Explore the collection</button></div>}</Modal> }
+function Bag() {
+  const { bag } = useStore();
+  const subtotal = bag.reduce((n, p) => n + p.price * p.quantity, 0);
   return <Layout><section className="section bag-page">
     <span className="eyebrow">YOUR LITTLE TREASURES</span>
     <h1>The shopping bag</h1>
-    {bag.length?<>
-      <BagLines/>
-      <div className="summary-line" style={{marginTop:'25px',paddingTop:'20px',borderTop:'1px solid var(--line)'}}>
+    {bag.length ? <>
+      <BagLines />
+      <div className="summary-line" style={{ marginTop: '25px', paddingTop: '20px', borderTop: '1px solid var(--line)' }}>
         <span>Estimated subtotal</span>
-        <strong style={{fontSize:'18px'}}>{money(subtotal)}</strong>
+        <strong style={{ fontSize: '18px' }}>{money(subtotal)}</strong>
       </div>
       <p className="small muted">Metal rates, final delivery, and item availability are confirmed at checkout.</p>
-      <div style={{display:'flex',gap:'18px',flexWrap:'wrap',marginTop:'24px',alignItems:'center'}}>
-        <Link className="button dark" to="/checkout">Continue to checkout <ArrowRight size={17}/></Link>
-        <Link className="underlink" to="/collections/all">Continue discovering <ArrowUpRight size={15}/></Link>
+      <div style={{ display: 'flex', gap: '18px', flexWrap: 'wrap', marginTop: '24px', alignItems: 'center' }}>
+        <Link className="button dark" to="/checkout">Continue to checkout <ArrowRight size={17} /></Link>
+        <Link className="underlink" to="/collections/all">Continue discovering <ArrowUpRight size={15} /></Link>
       </div>
-    </>:<div className="empty">
-      <ShoppingBag size={38} color="var(--gold)"/>
+    </> : <div className="empty">
+      <ShoppingBag size={38} color="var(--gold)" />
       <h2>Your bag is empty</h2>
       <p>Discover beautiful jewellery and coins to start your collection.</p>
-      <Link className="button dark" to="/collections/all" style={{marginTop:'15px'}}>Explore all jewellery</Link>
+      <Link className="button dark" to="/collections/all" style={{ marginTop: '15px' }}>Explore all jewellery</Link>
     </div>}
   </section></Layout>;
 }
-function Checkout(){
-  const {bag,setBag,config,customer,flushAccount,afterCheckout,refreshCatalogue}=useStore();
-  const [quote,setQuote]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[accepted,setAccepted]=useState(false),[changed,setChanged]=useState(false),[codeNote,setCodeNote]=useState(''),[offerCode,setOfferCode]=useState(''),[appliedOffer,setAppliedOffer]=useState('');
-  const key=useRef(crypto.randomUUID()),formRef=useRef();
-  const nav=useNavigate();
-  const placeholders={name:'e.g. Priya Sharma',email:'e.g. priya@example.com',phone:'10-digit mobile number',pincode:'6-digit PIN code',address:'Flat, house no., building, street',city:'e.g. Mumbai'};
-  useEffect(()=>{
-    let active=true;setAccepted(false);setQuote(null);setError('');
-    if(bag.length)api('/quote',{items:bag.map(({sku,quantity})=>({sku,quantity})),offerCode:appliedOffer||undefined}).then(q=>{if(active)setQuote(q)}).catch(e=>{if(active)setError(e.message)});
-    return()=>{active=false};
-  },[bag,appliedOffer]);
-  async function pay(e){
+function Checkout() {
+  const { bag, setBag, config, customer, flushAccount, afterCheckout, refreshCatalogue } = useStore();
+  const [quote, setQuote] = useState(null), [error, setError] = useState(''), [busy, setBusy] = useState(false), [accepted, setAccepted] = useState(false), [changed, setChanged] = useState(false), [codeNote, setCodeNote] = useState(''), [offerCode, setOfferCode] = useState(''), [appliedOffer, setAppliedOffer] = useState('');
+  const key = useRef(crypto.randomUUID()), formRef = useRef();
+  const nav = useNavigate();
+  const placeholders = { name: 'e.g. Priya Sharma', email: 'e.g. priya@example.com', phone: '10-digit mobile number', pincode: '6-digit PIN code', address: 'Flat, house no., building, street', city: 'e.g. Mumbai' };
+  useEffect(() => {
+    let active = true; setAccepted(false); setQuote(null); setError('');
+    if (bag.length) api('/quote', { items: bag.map(({ sku, quantity }) => ({ sku, quantity })), offerCode: appliedOffer || undefined }).then(q => { if (active) setQuote(q) }).catch(e => { if (active) setError(e.message) });
+    return () => { active = false };
+  }, [bag, appliedOffer]);
+  async function pay(e) {
     e.preventDefault();
-    if(config.checkoutEnabled===false){setError('Checkout is awaiting merchant configuration.');return;}
-    if(!quote){setError('Waiting for current price quote. Please check your bag items.');return;}
-    if(!accepted){setError('Please check the confirmation box above to confirm your Cash on Delivery order.');return;}
-    setBusy(true);setError('');
-    const fields=Object.fromEntries(new FormData(e.target));
-    const otp=fields.otp;
+    if (config.checkoutEnabled === false) { setError('Checkout is awaiting merchant configuration.'); return; }
+    if (!quote) { setError('Waiting for current price quote. Please check your bag items.'); return; }
+    if (!accepted) { setError('Please check the confirmation box above to confirm your Cash on Delivery order.'); return; }
+    setBusy(true); setError('');
+    const fields = Object.fromEntries(new FormData(e.target));
+    const otp = fields.otp;
     delete fields.otp;
-    try{
+    try {
       await flushAccount();
-      const r=await api('/checkout',{items:bag.map(({sku,quantity})=>({sku,quantity})),token:quote.token,customer:fields,otp,offerCode:appliedOffer||undefined,paymentMode:'cod',idempotencyKey:key.current});
+      const r = await api('/checkout', { items: bag.map(({ sku, quantity }) => ({ sku, quantity })), token: quote.token, customer: fields, otp, offerCode: appliedOffer || undefined, paymentMode: 'cod', idempotencyKey: key.current });
       await afterCheckout();
-      nav('/order/'+r.id);
-    }catch(e){
+      nav('/order/' + r.id);
+    } catch (e) {
       setError(e.message);
-      if(e.quote){setQuote(e.quote);setChanged(true);setAccepted(false);}
-      if(/stock|unavailable/i.test(e.message||''))refreshCatalogue({notify:true,fresh:true}).catch(()=>{});
-    }finally{setBusy(false);}
+      if (e.quote) { setQuote(e.quote); setChanged(true); setAccepted(false); }
+      if (/stock|unavailable/i.test(e.message || '')) refreshCatalogue({ notify: true, fresh: true }).catch(() => { });
+    } finally { setBusy(false); }
   }
   return <Layout><section className="section checkout-page">
-    <Link className="underlink" to="/bag"><ArrowLeft size={15}/> Back to bag</Link>
-    <div className="section-heading"><div><span className="eyebrow">ONE STEP CLOSER</span><h1>A little wonder, on its way.</h1></div><span className="status-badge" style={{background:'#e8f5e9',color:'#1b5e20',borderColor:'#a5d6a7',fontSize:'10px',fontWeight:700,letterSpacing:'1px'}}>CASH ON DELIVERY (COD)</span></div>
-    {!bag.length?<div className="empty"><p>Your bag is empty.</p><Link to="/collections/all">Explore jewellery</Link></div>:<div className="checkout-grid">
+    <Link className="underlink" to="/bag"><ArrowLeft size={15} /> Back to bag</Link>
+    <div className="section-heading"><div><span className="eyebrow">ONE STEP CLOSER</span><h1>A little wonder, on its way.</h1></div><span className="status-badge" style={{ background: '#e8f5e9', color: '#1b5e20', borderColor: '#a5d6a7', fontSize: '10px', fontWeight: 700, letterSpacing: '1px' }}>CASH ON DELIVERY (COD)</span></div>
+    {!bag.length ? <div className="empty"><p>Your bag is empty.</p><Link to="/collections/all">Explore jewellery</Link></div> : <div className="checkout-grid">
       <form onSubmit={pay} ref={formRef}>
         <h3>Contact & delivery</h3>
-        {customer?<p className="checkout-account-note">Signed in as {customer.email} · This order will appear in your account.</p>:<p className="checkout-account-note"><Link to="/account">Sign in or create an account</Link> to keep your order history. Guest checkout is also available.</p>}
+        {customer ? <p className="checkout-account-note">Signed in as {customer.email} · This order will appear in your account.</p> : <p className="checkout-account-note"><Link to="/account">Sign in or create an account</Link> to keep your order history. Guest checkout is also available.</p>}
         <div className="form-grid">
-          {[['name','Full name','text'],['email','Email address','email'],['phone','Mobile number','tel'],['pincode','PIN code','text'],['address','Address','text'],['city','City','text']].map(([name,label,type])=><label key={name} className={name==='address'?'span-two':''}>{label}<input name={name} type={type} placeholder={placeholders[name]} title={name==='phone'?'10-digit mobile number':name==='pincode'?'6-digit PIN code':undefined} defaultValue={name==='name'?customer?.name:name==='email'?customer?.email:undefined} autoComplete={{name:'name',email:'email',phone:'tel',pincode:'postal-code',address:'street-address',city:'address-level2'}[name]} required maxLength={name==='phone'?10:name==='pincode'?6:200} pattern={name==='phone'?'[0-9]{10}':name==='pincode'?'[0-9]{6}':undefined}/></label>)}
+          {[['name', 'Full name', 'text'], ['email', 'Email address', 'email'], ['phone', 'Mobile number', 'tel'], ['pincode', 'PIN code', 'text'], ['address', 'Address', 'text'], ['city', 'City', 'text']].map(([name, label, type]) => <label key={name} className={name === 'address' ? 'span-two' : ''}>{label}<input name={name} type={type} placeholder={placeholders[name]} title={name === 'phone' ? '10-digit mobile number' : name === 'pincode' ? '6-digit PIN code' : undefined} defaultValue={name === 'name' ? customer?.name : name === 'email' ? customer?.email : undefined} autoComplete={{ name: 'name', email: 'email', phone: 'tel', pincode: 'postal-code', address: 'street-address', city: 'address-level2' }[name]} required maxLength={name === 'phone' ? 10 : name === 'pincode' ? 6 : 200} pattern={name === 'phone' ? '[0-9]{10}' : name === 'pincode' ? '[0-9]{6}' : undefined} /></label>)}
         </div>
         <label>Offer code <span className="muted">(optional)</span>
-          <span style={{display:'flex',gap:'8px'}}><input value={offerCode} onChange={e=>setOfferCode(e.target.value.toUpperCase())} maxLength={50} autoComplete="off" placeholder="Leave blank if the offer applies automatically"/><button type="button" className="button" onClick={()=>{setAppliedOffer(offerCode.trim());setAccepted(false);}}>Apply</button></span>
+          <span style={{ display: 'flex', gap: '8px' }}><input value={offerCode} onChange={e => setOfferCode(e.target.value.toUpperCase())} maxLength={50} autoComplete="off" placeholder="Leave blank if the offer applies automatically" /><button type="button" className="button" onClick={() => { setAppliedOffer(offerCode.trim()); setAccepted(false); }}>Apply</button></span>
         </label>
-        {config.otp?.requireCheckout&&<div className="span-two"><label>Mobile verification code<input name="otp" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" minLength={6} maxLength={6} required/></label><button type="button" className="text-button" disabled={busy} onClick={async()=>{const phone=new FormData(formRef.current).get('phone');const channel=config.otp.channels.includes('sms')?'sms':'whatsapp';setBusy(true);setError('');try{const result=await api('/otp/send',{purpose:'checkout',channel,destination:phone});setCodeNote(result.message);}catch(err){setError(err.message)}finally{setBusy(false)}}}>Send code</button>{codeNote&&<p role="status">{codeNote}</p>}</div>}
-        <div className="payment-method-box" style={{background:'var(--paper)',border:'1px solid var(--line)',padding:'16px 18px',borderRadius:'4px',margin:'22px 0 16px'}}>
-          <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'6px'}}>
-            <span style={{fontSize:'16px'}}>💵</span>
-            <strong style={{fontSize:'12px',letterSpacing:'0.8px',textTransform:'uppercase'}}>Cash on Delivery (COD)</strong>
-            <span className="status-badge" style={{background:'#e8f5e9',color:'#1b5e20',borderColor:'#a5d6a7',fontSize:'9px',marginLeft:'auto'}}>AVAILABLE</span>
+        {config.otp?.requireCheckout && <div className="span-two"><label>Mobile verification code<input name="otp" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" minLength={6} maxLength={6} required /></label><button type="button" className="text-button" disabled={busy} onClick={async () => { const phone = new FormData(formRef.current).get('phone'); const channel = config.otp.channels.includes('sms') ? 'sms' : 'whatsapp'; setBusy(true); setError(''); try { const result = await api('/otp/send', { purpose: 'checkout', channel, destination: phone }); setCodeNote(result.message); } catch (err) { setError(err.message) } finally { setBusy(false) } }}>Send code</button>{codeNote && <p role="status">{codeNote}</p>}</div>}
+        <div className="payment-method-box" style={{ background: 'var(--paper)', border: '1px solid var(--line)', padding: '16px 18px', borderRadius: '4px', margin: '22px 0 16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+            <span style={{ fontSize: '16px' }}>💵</span>
+            <strong style={{ fontSize: '12px', letterSpacing: '0.8px', textTransform: 'uppercase' }}>Cash on Delivery (COD)</strong>
+            <span className="status-badge" style={{ background: '#e8f5e9', color: '#1b5e20', borderColor: '#a5d6a7', fontSize: '9px', marginLeft: 'auto' }}>AVAILABLE</span>
           </div>
-          <p style={{margin:0,fontSize:'11px',color:'var(--muted)',lineHeight:1.6}}>
+          <p style={{ margin: 0, fontSize: '11px', color: 'var(--muted)', lineHeight: 1.6 }}>
             Pay cash upon delivery. No advance online payment is collected by this website.
           </p>
         </div>
-        {config.checkoutEnabled===false&&<p className="notice" role="status">Checkout is awaiting merchant configuration.</p>}{config.preview&&<p className="notice">Preview order only. No payment or delivery will be arranged.</p>}{changed&&<div className="notice">The price changed. Review the updated order summary before accepting.</div>}
-        <label className="checkbox consent"><input type="checkbox" disabled={!quote} checked={accepted} onChange={e=>setAccepted(e.target.checked)} required/>{quote?`I confirm this order with Cash on Delivery and agree to pay ${money(quote.total)} upon arrival.`:'Waiting for a current order total…'}</label>
-        {error&&<p className="error" role="alert">{error}</p>}
-        <button className="button dark full" disabled={busy||!quote||config.checkoutEnabled===false} title={!accepted?'Please check the confirmation box above':undefined}>{busy?'Placing order…':quote?`Place Order with Cash on Delivery · ${money(quote.total)}`:'Checking prices and availability…'}<ArrowRight size={17}/></button>
+        {config.checkoutEnabled === false && <p className="notice" role="status">Checkout is awaiting merchant configuration.</p>}{config.preview && <p className="notice">Preview order only. No payment or delivery will be arranged.</p>}{changed && <div className="notice">The price changed. Review the updated order summary before accepting.</div>}
+        <label className="checkbox consent"><input type="checkbox" disabled={!quote} checked={accepted} onChange={e => setAccepted(e.target.checked)} required />{quote ? `I confirm this order with Cash on Delivery and agree to pay ${money(quote.total)} upon arrival.` : 'Waiting for a current order total…'}</label>
+        {error && <p className="error" role="alert">{error}</p>}
+        <button className="button dark full" disabled={busy || !quote || config.checkoutEnabled === false} title={!accepted ? 'Please check the confirmation box above' : undefined}>{busy ? 'Placing order…' : quote ? `Place Order with Cash on Delivery · ${money(quote.total)}` : 'Checking prices and availability…'}<ArrowRight size={17} /></button>
       </form>
       <aside className="order-summary">
         <h3>Your chosen pieces</h3>
-        {!quote&&<p role="status">{error?'The total is unavailable. Update your bag and try again.':'Checking prices and availability…'}</p>}
-        {quote?.lines.map(p=><div className="summary-product" key={p.sku}><BrandedImage src={coinImage(p.image,true)} alt={p.name}/><div><h4>{p.name}</h4><p>{p.size} · Qty {p.quantity}</p><span>{money(p.unit_price*p.quantity)}</span></div></div>)}
+        {!quote && <p role="status">{error ? 'The total is unavailable. Update your bag and try again.' : 'Checking prices and availability…'}</p>}
+        {quote?.lines.map(p => <div className="summary-product" key={p.sku}><BrandedImage src={coinImage(p.image, true)} alt={p.name} /><div><h4>{p.name}</h4><p>{p.size} · Qty {p.quantity}</p><span>{money(p.unit_price * p.quantity)}</span></div></div>)}
         <div className="summary-line"><span>Subtotal</span>{money(quote?.subtotal)}</div>
-        <div className="summary-line"><span>Delivery</span>{quote?.shipping===0?'Complimentary':money(quote?.shipping)}</div>
+        <div className="summary-line"><span>Delivery</span>{quote?.shipping === 0 ? 'Complimentary' : money(quote?.shipping)}</div>
         <div className="summary-line total"><span>Total payable upon arrival</span>{money(quote?.total)}</div>
         <p className="small">Displayed total includes taxes & doorstep delivery charges. Payable upon arrival.</p>
       </aside>
     </div>}
   </section></Layout>;
 }
-function Order(){
-  const {id}=useParams();
-  const [o,setO]=useState(null),[error,setError]=useState('');
-  useEffect(()=>{setO(null);setError('');api('/orders/'+id).then(setO).catch(e=>setError(e.message))},[id]);
+function Order() {
+  const { id } = useParams();
+  const [o, setO] = useState(null), [error, setError] = useState('');
+  useEffect(() => { setO(null); setError(''); api('/orders/' + id).then(setO).catch(e => setError(e.message)) }, [id]);
   return <Layout><section className="order-confirm section">
-    {o&&<CheckCircle2 size={42}/>}
+    {o && <CheckCircle2 size={42} />}
     <span className="eyebrow">ORDER CONFIRMED</span>
-    <h1>{error?'Order unavailable':o?'A little wonder is on its way.':'Opening your order…'}</h1>
-    {error?<p className="error">{error}</p>:o?<><p>Your order is confirmed with <strong>Cash on Delivery (COD)</strong>. Please have <strong>{money(o.total)}</strong> ready in cash upon delivery.</p><div className="confirmation-card"><div className="summary-line"><span>Order reference</span><strong>{o.id}</strong></div><div className="summary-line"><span>Placed</span>{date(o.created_at)}</div><div className="summary-line"><span>Payment method</span><span>Cash on Delivery (COD)</span></div><div className="summary-line"><span>Status</span><span className="status-badge" style={{background:'#e8f5e9',color:'#1b5e20',borderColor:'#a5d6a7'}}>Confirmed · Pay on delivery</span></div><div className="summary-line total"><span>Total payable upon arrival</span><strong>{money(o.total)}</strong></div>{o.items.map(i=><p key={i.sku}>{i.name} · {i.size} × {i.quantity}</p>)}</div></>:<p>Loading your confirmation…</p>}
-    <Link className="button dark" to="/collections/all">Keep discovering <ArrowRight size={17}/></Link>
+    <h1>{error ? 'Order unavailable' : o ? 'A little wonder is on its way.' : 'Opening your order…'}</h1>
+    {error ? <p className="error">{error}</p> : o ? <><p>Your order is confirmed with <strong>Cash on Delivery (COD)</strong>. Please have <strong>{money(o.total)}</strong> ready in cash upon delivery.</p><div className="confirmation-card"><div className="summary-line"><span>Order reference</span><strong>{o.id}</strong></div><div className="summary-line"><span>Placed</span>{date(o.created_at)}</div><div className="summary-line"><span>Payment method</span><span>Cash on Delivery (COD)</span></div><div className="summary-line"><span>Status</span><span className="status-badge" style={{ background: '#e8f5e9', color: '#1b5e20', borderColor: '#a5d6a7' }}>Confirmed · Pay on delivery</span></div><div className="summary-line total"><span>Total payable upon arrival</span><strong>{money(o.total)}</strong></div>{o.items.map(i => <p key={i.sku}>{i.name} · {i.size} × {i.quantity}</p>)}</div></> : <p>Loading your confirmation…</p>}
+    <Link className="button dark" to="/collections/all">Keep discovering <ArrowRight size={17} /></Link>
   </section></Layout>;
 }
-function Information(){
-  const {page}=useParams();
-  const {config}=useStore();
-  const pages=[
-    {id:'shipping',label:'Delivery & returns'},
-    {id:'care',label:'Jewellery care'},
-    {id:'contact',label:'Contact us'}
+function Information() {
+  const { page } = useParams();
+  const { config } = useStore();
+  const pages = [
+    { id: 'shipping', label: 'Delivery & returns' },
+    { id: 'care', label: 'Jewellery care' },
+    { id: 'contact', label: 'Contact us' }
   ];
   return <Layout><section className="section info-page">
-    <div className="collection-tabs" style={{justifyContent:'flex-start',marginBottom:'30px',marginTop:0}}>
-      {pages.map(p=><Link key={p.id} to={'/information/'+p.id} className={page===p.id?'active':''}>{p.label}</Link>)}
+    <div className="collection-tabs" style={{ justifyContent: 'flex-start', marginBottom: '30px', marginTop: 0 }}>
+      {pages.map(p => <Link key={p.id} to={'/information/' + p.id} className={page === p.id ? 'active' : ''}>{p.label}</Link>)}
     </div>
     <span className="eyebrow">AT YOUR SERVICE</span>
-    <h1>{page==='shipping'?'Delivery & returns':page==='care'?'Care for your jewellery':'Get in touch'}</h1>
-    {page==='shipping'?<>
+    <h1>{page === 'shipping' ? 'Delivery & returns' : page === 'care' ? 'Care for your jewellery' : 'Get in touch'}</h1>
+    {page === 'shipping' ? <>
       <h3>Delivery</h3>
-      <p>{config.shippingPolicy||'The merchant’s delivery areas and timeframes are awaiting confirmation. Preview shipping is ₹250, with complimentary delivery from ₹25,000. The final charge is shown before a test order is placed.'}</p>
+      <p>{config.shippingPolicy || 'The merchant’s delivery areas and timeframes are awaiting confirmation. Preview shipping is ₹250, with complimentary delivery from ₹25,000. The final charge is shown before a test order is placed.'}</p>
       <h3>Returns</h3>
-      <p>{config.returnsPolicy||'The merchant’s actual returns, exchange and cancellation policy has not yet been supplied. This preview does not accept live orders.'}</p>
-    </>:page==='care'?<>
+      <p>{config.returnsPolicy || 'The merchant’s actual returns, exchange and cancellation policy has not yet been supplied. This preview does not accept live orders.'}</p>
+    </> : page === 'care' ? <>
       <p>Store pieces separately in a soft pouch. Avoid perfume, harsh cleaning products and prolonged water exposure. Ask the merchant for material-specific care instructions for your chosen piece.</p>
       <h3>General Care Guidelines</h3>
       <p>Keep your pieces dry and clean them gently with a microfibre cloth. For gold and silver coins, retain the supplied packaging and follow the manufacturer’s handling instructions.</p>
-    </>:<>
-      <p>{config.contact&&!/\.(local|invalid)$/i.test(config.contact)?<a href={'mailto:'+config.contact}>{config.contact}</a>:'The merchant’s contact details will appear here once supplied. This store is currently a design and checkout preview.'}</p>
+    </> : <>
+      <p>{config.contact && !/\.(local|invalid)$/i.test(config.contact) ? <a href={'mailto:' + config.contact}>{config.contact}</a> : 'The merchant’s contact details will appear here once supplied. This store is currently a design and checkout preview.'}</p>
       <h3>Concierge Assistance</h3>
       <p>Our concierge team is available to assist you with inquiries regarding sizing, precious metals, or custom orders.</p>
     </>}
-    <div style={{marginTop:'40px',paddingTop:'25px',borderTop:'1px solid var(--line)'}}>
-      <Link to="/collections/all" className="underlink">Explore all jewellery <ArrowRight size={15}/></Link>
+    <div style={{ marginTop: '40px', paddingTop: '25px', borderTop: '1px solid var(--line)' }}>
+      <Link to="/collections/all" className="underlink">Explore all jewellery <ArrowRight size={15} /></Link>
     </div>
   </section></Layout>;
 }
@@ -964,13 +964,13 @@ function matchAdminRoute(pathname) {
       const match = adminRoutes.find(r => r.label.toLowerCase() === searchTab.toLowerCase() || r.key === searchTab.toLowerCase().replace(/\s+/g, '-'));
       if (match) return match;
     }
-  } catch {}
+  } catch { }
   return adminRoutes[0];
 }
 
-function orderCustomer(order){const raw=order?.customer;const customer=typeof raw==='string'?(()=>{try{return JSON.parse(raw)}catch{return {}}})():(raw||{});return {name:customer.name||'',email:customer.email||''}}
-const previewStaffAccounts=[{label:'Owner',email:'preview@veyora.local',password:'preview-veyora-2026'},{label:'Catalogue copy',email:'catalogue@veyora.local',password:'preview-veyora-2026'}];
-function Admin(){
+function orderCustomer(order) { const raw = order?.customer; const customer = typeof raw === 'string' ? (() => { try { return JSON.parse(raw) } catch { return {} } })() : (raw || {}); return { name: customer.name || '', email: customer.email || '' } }
+const previewStaffAccounts = [{ label: 'Owner', email: 'preview@veyora.local', password: 'preview-veyora-2026' }, { label: 'Catalogue copy', email: 'catalogue@veyora.local', password: 'preview-veyora-2026' }];
+function Admin() {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -997,60 +997,105 @@ function Admin(){
     }
   }, [location.pathname, navigate]);
 
-  const [staff,setStaff]=useState(null),
-    [loaded,setLoaded]=useState(false),
-    [error,setError]=useState(''),
-    [data,setData]=useState(null),
-    [products,setProducts]=useState([]),
-    [busy,setBusy]=useState(false),
-    [orderQuery,setOrderQuery]=useState(''),
-    [orderStatusFilter,setOrderStatusFilter]=useState('all'),
-    [orderPayFilter,setOrderPayFilter]=useState('all');
-  const {config}=useStore();const [loginEmail,setLoginEmail]=useState(config.preview?previewStaffAccounts[0].email:''),[loginPassword,setLoginPassword]=useState(config.preview?previewStaffAccounts[0].password:'');async function setOrderStatus(id,status){setBusy(true);setError('');try{await api('/admin/orders/'+encodeURIComponent(id)+'/status',{status});await refresh()}catch(e){setError(e.message)}finally{setBusy(false)}}async function refresh(){const [d,p]=await Promise.all([api('/admin/dashboard'),api('/admin/products')]);setData(d);setProducts(p)}useEffect(()=>{api('/admin/session').then(s=>{sessionStorage.setItem('csrf',s.csrf);setStaff(s.staff);if(s.staff) return refresh();}).catch(err=>{if(err&&err.status&&err.status!==401&&err.status!==403){console.warn('Admin session check:',err);setError(err.message||'Could not connect to merchant studio.');}}).finally(()=>setLoaded(true))},[]);async function login(e){e.preventDefault();setError('');try{const s=await api('/admin/login',Object.fromEntries(new FormData(e.target)));sessionStorage.setItem('csrf',s.csrf);setStaff(s.staff);await refresh()}catch(e){setError(e.message)}}async function run(kind){setBusy(true);setError('');try{const r=await api('/admin/run',{kind});await refresh();if(Object.values(r.result).some(v=>!v.ok))setError(Object.entries(r.result).filter(([,v])=>!v.ok).map(([k,v])=>`${k}: ${v.message}`).join(' · '))}catch(e){setError(e.message)}finally{setBusy(false)}}if(!loaded)return <div className="empty">Opening merchant studio…</div>;if(!staff)return <div className="admin-login"><Link className="underlink" to="/"><ArrowLeft size={16}/>Back to storefront</Link><div className="login-card"><Brand/><span className="eyebrow">THE MERCHANT STUDIO</span><h1>Welcome back.</h1><p>Your collections, thoughtfully managed.</p><form onSubmit={login}>{config.preview&&<label>Sign in as<select aria-label="Preview staff account" value={loginEmail} onChange={e=>{const account=previewStaffAccounts.find(a=>a.email===e.target.value);if(!account)return;setLoginEmail(account.email);setLoginPassword(account.password)}}>{previewStaffAccounts.map(account=><option key={account.email} value={account.email}>{account.label}</option>)}</select></label>}<label>Email<input name="email" type="email" autoComplete="username" value={loginEmail} onChange={e=>setLoginEmail(e.target.value)} required/></label><label>Password<input name="password" type="password" autoComplete="current-password" value={loginPassword} onChange={e=>setLoginPassword(e.target.value)} required/></label>{error&&<p className="error">{error}</p>}<button className="button dark full">Sign in <ArrowRight size={17}/></button></form>{config.preview&&<p className="small muted">Choose Owner or Catalogue copy. Production requires your own staff account.</p>}</div></div>;return <div className="admin-shell">
-  {mobileSidebarOpen && <div className="admin-sidebar-backdrop" onClick={()=>setMobileSidebarOpen(false)} aria-hidden="true"/>}
-  <aside className={'admin-sidebar' + (mobileSidebarOpen ? ' open' : '')}>
-    <div className="admin-sidebar-header">
-      <Brand/>
-      <span className="studio-label">MERCHANT STUDIO</span>
-      <button type="button" className="admin-mobile-close" aria-label="Close sidebar menu" onClick={()=>setMobileSidebarOpen(false)}><X size={18}/></button>
-    </div>
-    <nav aria-label="Admin sidebar navigation">
-      {adminRoutes.map(item => {
-        const Icon = item.icon;
-        const isActive = activeRoute.key === item.key;
-        return (
-          <Link
-            key={item.key}
-            to={item.path}
-            className={isActive ? 'active' : ''}
-            onClick={() => { setError(''); setMobileSidebarOpen(false); }}
-            aria-current={isActive ? 'page' : undefined}
-          >
-            <Icon size={18}/>
-            <span>{item.label}</span>
-          </Link>
-        );
-      })}
-    </nav>
-    <div className="admin-sidebar-bottom">
-      <Link to="/" onClick={()=>setMobileSidebarOpen(false)}>View storefront <ArrowUpRight size={15}/></Link>
-      <small>{staff.email}<br/>{staff.role}</small>
-      <button className="text-button" onClick={async()=>{await api('/admin/logout',{});setStaff(null);sessionStorage.removeItem('csrf')}}><LogOut size={15}/>Sign out</button>
-    </div>
-  </aside>
-  <main className="admin-main">
-    <header className="admin-header">
-      <div style={{display:'flex',alignItems:'center',gap:'14px'}}>
-        <button type="button" className="admin-mobile-toggle" aria-label="Open sidebar menu" onClick={()=>setMobileSidebarOpen(prev => !prev)}><Menu size={20}/></button>
-        <span>VEYORA / STUDIO / {activeRoute.label.toUpperCase()}</span>
+  const [staff, setStaff] = useState(null),
+    [loaded, setLoaded] = useState(false),
+    [error, setError] = useState(''),
+    [data, setData] = useState(null),
+    [products, setProducts] = useState([]),
+    [busy, setBusy] = useState(false),
+    [orderQuery, setOrderQuery] = useState(''),
+    [orderStatusFilter, setOrderStatusFilter] = useState('all'),
+    [orderPayFilter, setOrderPayFilter] = useState('all');
+  const { config } = useStore();
+  const [loginEmail, setLoginEmail] = useState(config.preview ? previewStaffAccounts[0].email : ''), [loginPassword, setLoginPassword] = useState(config.preview ? previewStaffAccounts[0].password : '');
+  
+  const tabsNeedingData = ['Dashboard', 'Gold Rates', 'Imports', 'Pricing Rules', 'Settings'];
+  const tabsNeedingProducts = ['Dashboard', 'Jewelry', 'Products', 'Imports', 'Catalogue copy'];
+
+  async function setOrderStatus(id, status) {
+    setBusy(true); setError('');
+    try {
+      await api('/admin/orders/' + encodeURIComponent(id) + '/status', { status });
+      await refresh();
+    } catch (e) { setError(e.message); } finally { setBusy(false); }
+  }
+
+  async function refresh() {
+    const promises = [];
+    if (tabsNeedingData.includes(tab) || !data) promises.push(api('/admin/dashboard').then(setData));
+    if (tabsNeedingProducts.includes(tab) || products.length === 0) promises.push(api('/admin/products').then(setProducts));
+    await Promise.all(promises);
+  }
+
+  useEffect(() => {
+    api('/admin/session').then(s => {
+      sessionStorage.setItem('csrf', s.csrf);
+      setStaff(s.staff);
+      if (s.staff) {
+        if (tabsNeedingData.includes(tab)) api('/admin/dashboard').then(setData).catch(() => {});
+        if (tabsNeedingProducts.includes(tab)) api('/admin/products').then(setProducts).catch(() => {});
+      }
+    }).catch(err => {
+      if (err && err.status && err.status !== 401 && err.status !== 403) {
+        console.warn('Admin session check:', err);
+        setError(err.message || 'Could not connect to merchant studio.');
+      }
+    }).finally(() => setLoaded(true));
+  }, []);
+
+  useEffect(() => {
+    if (!staff) return;
+    if (tabsNeedingData.includes(tab) && !data) {
+      api('/admin/dashboard').then(setData).catch(e => setError(e.message));
+    }
+    if (tabsNeedingProducts.includes(tab) && (!products || products.length === 0)) {
+      api('/admin/products').then(setProducts).catch(e => setError(e.message));
+    }
+  }, [tab, staff]); async function login(e) { e.preventDefault(); setError(''); try { const s = await api('/admin/login', Object.fromEntries(new FormData(e.target))); sessionStorage.setItem('csrf', s.csrf); setStaff(s.staff); await refresh() } catch (e) { setError(e.message) } } async function run(kind) { setBusy(true); setError(''); try { const r = await api('/admin/run', { kind }); await refresh(); if (Object.values(r.result).some(v => !v.ok)) setError(Object.entries(r.result).filter(([, v]) => !v.ok).map(([k, v]) => `${k}: ${v.message}`).join(' · ')) } catch (e) { setError(e.message) } finally { setBusy(false) } } if (!loaded) return <div className="empty">Opening merchant studio…</div>; if (!staff) return <div className="admin-login"><Link className="underlink" to="/"><ArrowLeft size={16} />Back to storefront</Link><div className="login-card"><Brand /><span className="eyebrow">THE MERCHANT STUDIO</span><h1>Welcome back.</h1><p>Your collections, thoughtfully managed.</p><form onSubmit={login}>{config.preview && <label>Sign in as<select aria-label="Preview staff account" value={loginEmail} onChange={e => { const account = previewStaffAccounts.find(a => a.email === e.target.value); if (!account) return; setLoginEmail(account.email); setLoginPassword(account.password) }}>{previewStaffAccounts.map(account => <option key={account.email} value={account.email}>{account.label}</option>)}</select></label>}<label>Email<input name="email" type="email" autoComplete="username" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} required /></label><label>Password<input name="password" type="password" autoComplete="current-password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} required /></label>{error && <p className="error">{error}</p>}<button className="button dark full">Sign in <ArrowRight size={17} /></button></form>{config.preview && <p className="small muted">Choose Owner or Catalogue copy. Production requires your own staff account.</p>}</div></div>; return <div className="admin-shell">
+    {mobileSidebarOpen && <div className="admin-sidebar-backdrop" onClick={() => setMobileSidebarOpen(false)} aria-hidden="true" />}
+    <aside className={'admin-sidebar' + (mobileSidebarOpen ? ' open' : '')}>
+      <div className="admin-sidebar-header">
+        <Brand />
+        <span className="studio-label">MERCHANT STUDIO</span>
+        <button type="button" className="admin-mobile-close" aria-label="Close sidebar menu" onClick={() => setMobileSidebarOpen(false)}><X size={18} /></button>
       </div>
-      <span className="test-badge">{data?.preview?'PREVIEW ENVIRONMENT':'MERCHANT ENVIRONMENT'}</span>
-    </header><div className="admin-content"><div className="section-heading"><div><span className="eyebrow">YOUR MAISON, AT A GLANCE</span><h1>{tab==='Dashboard'?'A considered overview.':tab}</h1></div><button className="text-button" onClick={()=>refresh().catch(e=>setError(e.message))}><RefreshCw size={15}/>Refresh</button></div>{error&&<div className="error" role="alert">{error}</div>}{!data?<p>Loading studio…</p>:<>{tab==='Dashboard'&&<><div className="admin-stats"><Stat title="ACTIVE GOLD RATES" value={data.rates.length} detail={`${data.rates.filter(r=>r.fresh).length} within freshness limit`}/><Stat title="JEWELRY PIECES" value={products.filter(p=>!p.is_kurta&&!/kurta|chikankari|saree|ethnic|bottom/i.test(String(p.category||''))).length} detail={`${products.filter(p=>!p.is_kurta&&!/kurta|chikankari|saree|ethnic|bottom/i.test(String(p.category||''))&&p.stock===0).length} out of stock`}/><Stat title="TODAY’S IMPORTS" value={data.todayImports?.failed?'Needs review':'All clear'} detail={`${data.todayImports?.published||0} published · ${data.todayImports?.failed||0} failed`}/><Stat title="ORDERS" value={data.orders.length} detail={`${money(data.orders.reduce((s,o)=>s+Number(o.total),0))} total order value`}/></div><div className="admin-two"><div className="admin-panel"><div className="panel-title"><h3>Active gold rates</h3><button className="underlink" onClick={()=>setTab('Gold Rates')}>View rates ↗</button></div><RateTable rates={data.rates}/></div><div className="admin-panel"><h3>Needs your attention</h3>{data.feedSettings?.feedStatus==='stopped'&&<div className="attention" style={{borderLeft:'3px solid #c62828',paddingLeft:'12px'}}><AlertCircle size={19} color="#c62828"/><div><strong style={{color:'#c62828'}}>Feed Automation is STOPPED</strong><p>Background syncs and live rates are paused. <button className="underlink" onClick={()=>setTab('Settings')}>Open Settings to start ↗</button></p></div></div>}<div className="attention"><AlertCircle size={19}/><div><strong>{data.rates.some(r=>!r.fresh)?'Gold rates are stale':'Storefront active with Cash on Delivery'}</strong><p>Cash on Delivery is active. Store policies and catalogue photography can be reviewed anytime.</p></div></div><p className="small">Maximum rate age: {data.maxAgeHours} hours. Stale gold-linked items pause at checkout.</p></div></div><div className="admin-panel"><h3>Supplier freshness</h3><div className="table-wrap"><table><thead><tr><th>Supplier</th><th>Feed</th><th>Last published source</th></tr></thead><tbody>{(data.suppliers||[]).map(s=><tr key={s.supplier+s.kind}><td>{s.supplier}</td><td>{s.kind}</td><td>{date(s.last_update)}</td></tr>)}</tbody></table></div></div><BatchTable batches={data.batches.slice(0,6)}/><div className="admin-panel"><h3>Recent staff activity</h3>{data.audits.slice(0,8).map(a=><p className="audit-line" key={a.id}><span>{a.action} · Staff {a.staff_id||'system'}</span><span>{date(a.created_at)}</span></p>)}</div></>}{tab==='Gold Rates'&&<GoldRatesAdmin readonly={staff.role==='viewer'} staff={staff} data={data} refreshParent={refresh}/>}{tab==='Categories'&&<CategoriesAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{(tab==='Jewelry'||tab==='Products')&&<><div className="notice">Supplier imports preserve merchant names, descriptions and publication status by default. Stock is an absolute snapshot, adjusted for paid orders after its source timestamp.</div><details className="advanced-media"><summary>Manage multiple jewelry photos (optional)</summary><ImageUploader products={products} refreshParent={refresh}/></details><AdminProductList products={products.filter(p=>!p.is_kurta&&!/kurta|chikankari|saree|ethnic|bottom/i.test(String(p.category||'')))} readonly={staff.role==='viewer'} refresh={refresh} onOpenImports={()=>setTab('Imports')}/></>}{(tab==='Kurtas'||tab==='Chicken Curry Kurtas')&&<KurtasAdmin readonly={staff.role==='viewer'} ProductAngleManager={ProductAngleManager} ImportPanel={ImportPanel}/>}{tab==='Coins'&&<CoinsAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Offers'&&<OffersAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Reviews'&&<ReviewsAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Pricing Rules'&&<Rules rule={data.rule} readonly={staff.role!=='owner'} refresh={refresh}/ >}{tab==='Materials'&&<MaterialsAdmin readonly={staff.role==='viewer'}/>}{tab==='Craftsmanship'&&<CraftsmanshipAdmin readonly={staff.role==='viewer'}/>}{tab==='Collections'&&<CollectionsAdmin readonly={staff.role==='viewer'}/>}{tab==='AI Recommendations'&&<RecommendationsAdmin readonly={staff.role==='viewer'}/>}{tab==='Imports'&&<><div className="admin-two"><div className="admin-panel"><span className="eyebrow">FEED SYNCHRONIZATION</span><h3>Rates first. Catalogue second.</h3><p className="small muted">Feed sources are configured on the server. Current inventory mode: {(data.feedSettings||{}).inventoryMode||'manual'}. Synchronize feeds on demand below.</p><button className="button dark" disabled={busy||staff.role==='viewer'} onClick={()=>run(null)}>{busy?'Running…':'Run both feeds now'}<RefreshCw size={16}/></button></div><div className="admin-panel"><h3>Source connections</h3><p>Gold feed: <Status text={data.feedSettings.goldConfigured?'Configured':'Not configured'}/></p><p>Jewelry feed: <Status text={data.feedSettings.productsConfigured?'Configured':'Not configured'}/></p><p className="small muted">Private feed URLs and credentials never appear in this screen. Failed rate feeds retain the last verified rate.</p><button className="underlink" disabled={busy||staff.role==='viewer'} onClick={()=>run('products')}>Run jewelry feed only ↗</button></div></div><div className="admin-two"><ImportPanel kind="gold" refresh={refresh} readonly={staff.role==='viewer'}/><ImportPanel kind="products" refresh={refresh} readonly={staff.role==='viewer'}/><ImportPanel kind="coins" refresh={refresh} readonly={staff.role==='viewer'}/><ImportPanel kind="kurtas" refresh={refresh} readonly={staff.role==='viewer'}/></div><details className="advanced-media"><summary>Manage multiple jewelry photos (optional)</summary><ImageUploader products={products} refreshParent={refresh}/></details><FeedSettings data={data} refresh={refresh} readonly={staff.role!=='owner'}/><BatchTable batches={data.batches} retry={async b=>{try{await api(`/admin/import/${b.id}/publish`,{});await refresh()}catch(e){setError(e.message)}}} readonly={staff.role==='viewer'}/><div className="admin-panel"><h3>Workflow history</h3>{(data.runs||[]).length?(data.runs||[]).map(r=><div key={r.id} className="run-record"><strong>Run #{r.id} · {r.trigger} · {date(r.started_at)}</strong>{Object.entries(r.result).map(([k,v])=><p key={k}>{k}: {v.ok?`Succeeded · Source ${v.source_date} · Created ${v.created} / Updated ${v.updated} / Unchanged ${v.unchanged} / Rejected ${v.rejected}`:v.message}</p>)}</div>):<p className="small muted">No feed sync has been recorded yet.</p>}</div></>}{tab==='Orders'&&(()=>{const q=orderQuery.trim().toLowerCase();const orders=data.orders.filter(o=>{if(orderStatusFilter!=='all'&&o.status!==orderStatusFilter)return false;if(orderPayFilter!=='all'&&o.payment_mode!==orderPayFilter)return false;if(!q)return true;const customer=orderCustomer(o);return [o.id,o.status,o.payment_mode,customer.name,customer.email].join(' ').toLowerCase().includes(q)});const filtering=orderQuery.trim()||orderStatusFilter!=='all'||orderPayFilter!=='all';return <div className="admin-panel"><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'12px',marginBottom:'16px'}}><div><h3 style={{margin:0}}>All Orders ({orders.length}{filtering?` of ${data.orders.length}`:''})</h3><span className="small muted">{filtering?`${orders.length} matching`:`${data.orders.length} total orders recorded`}</span></div>{staff.role!=='viewer'&&<a className="underlink" href="/api/admin/export/orders" download style={{display:'inline-flex',alignItems:'center',gap:'6px'}}>Export orders CSV ({data.orders.length}) ↓</a>}</div><div className="admin-filter-bar"><div className="search-box"><Search size={14}/><input type="search" placeholder="Search order, customer, or email" value={orderQuery} onChange={e=>setOrderQuery(e.target.value)} aria-label="Search orders"/></div><select className="filter-select" value={orderStatusFilter} onChange={e=>setOrderStatusFilter(e.target.value)} aria-label="Filter orders by status"><option value="all">All statuses</option>{['confirmed','packed','shipped','delivered','cancelled'].map(status=><option key={status} value={status}>{status}</option>)}</select><select className="filter-select" value={orderPayFilter} onChange={e=>setOrderPayFilter(e.target.value)} aria-label="Filter orders by payment"><option value="all">All payments</option><option value="cod">Cash on delivery</option></select>{filtering&&<button type="button" className="reset-filter-btn" onClick={()=>{setOrderQuery('');setOrderStatusFilter('all');setOrderPayFilter('all')}}><RotateCcw size={13}/> Reset</button>}</div><div className="table-wrap"><table><thead><tr><th>Order</th><th>Customer</th><th>Placed (India)</th><th>Payment</th><th>Total</th><th>Status</th></tr></thead><tbody>{orders.map(o=>{const customer=orderCustomer(o);return <tr key={o.id}><td><Link to={'/order/'+o.id}>{o.id} ↗</Link></td><td>{customer.email?<>{customer.name}<small>{customer.email}</small></>:customer.name||'Customer'}</td><td>{date(o.created_at)}</td><td>{o.payment_mode}</td><td>{money(o.total)}</td><td>{staff.role==='viewer'?<Status text={o.status}/>:<select aria-label={`Status for ${o.id}`} value={o.status} disabled={busy} onChange={e=>setOrderStatus(o.id,e.target.value)}>{['confirmed','packed','shipped','delivered','cancelled'].map(status=><option key={status} value={status}>{status}</option>)}</select>}</td></tr>})}</tbody></table>{!data.orders.length&&<p className="empty">Orders will appear here after checkout.</p>}{!!data.orders.length&&!orders.length&&<p className="empty">No orders match these filters.</p>}</div></div>})()}{tab==='Customers'&&<CustomersAdmin role={staff.role}/>}{tab==='Catalogue copy'&&<AiCopy products={products} readonly={staff.role==='viewer'} onPublished={refresh}/>}{tab==='AI Chatbot'&&<ChatbotAdmin readonly={staff.role==='viewer'} canConfigure={staff.role==='owner'}/>}{tab==='Settings'&&<SettingsAdmin data={data} refresh={refresh} readonly={staff.role!=='owner'} owner={staff.role==='owner'}/>}</>}</div></main></div>}
-function ManualImports({refresh,readonly,batches=[]}){return <><p className="notice">All catalogue ingestion is manual. Upload a CSV/XLS/XLSX file, validate its preview, then explicitly publish it. No supplier or feed synchronization runs in the background.</p><div className="admin-two"><ImportPanel kind="products" refresh={refresh} readonly={readonly}/><ImportPanel kind="coins" refresh={refresh} readonly={readonly}/><ImportPanel kind="kurtas" refresh={refresh} readonly={readonly}/></div><BatchTable batches={batches} retry={async()=>{await refresh()}} readonly={readonly}/></>}
+      <nav aria-label="Admin sidebar navigation">
+        {adminRoutes.map(item => {
+          const Icon = item.icon;
+          const isActive = activeRoute.key === item.key;
+          return (
+            <Link
+              key={item.key}
+              to={item.path}
+              className={isActive ? 'active' : ''}
+              onClick={() => { setError(''); setMobileSidebarOpen(false); }}
+              aria-current={isActive ? 'page' : undefined}
+            >
+              <Icon size={18} />
+              <span>{item.label}</span>
+            </Link>
+          );
+        })}
+      </nav>
+      <div className="admin-sidebar-bottom">
+        <Link to="/" onClick={() => setMobileSidebarOpen(false)}>View storefront <ArrowUpRight size={15} /></Link>
+        <small>{staff.email}<br />{staff.role}</small>
+        <button className="text-button" onClick={async () => { await api('/admin/logout', {}); setStaff(null); sessionStorage.removeItem('csrf'); }}><LogOut size={15} />Sign out</button>
+      </div>
+    </aside>
+    <main className="admin-main">
+      <header className="admin-header">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <button type="button" className="admin-mobile-toggle" aria-label="Open sidebar menu" onClick={() => setMobileSidebarOpen(prev => !prev)}><Menu size={20} /></button>
+          <span>VEYORA / STUDIO / {activeRoute.label.toUpperCase()}</span>
+        </div>
+        <span className="test-badge">{(data?.preview ?? config.preview) ? 'PREVIEW ENVIRONMENT' : 'MERCHANT ENVIRONMENT'}</span>
+      </header><div className="admin-content"><div className="section-heading"><div><span className="eyebrow">YOUR MAISON, AT A GLANCE</span><h1>{tab==='Dashboard'?'A considered overview.':tab}</h1></div><button className="text-button" onClick={()=>refresh().catch(e=>setError(e.message))}><RefreshCw size={15}/>Refresh</button></div>{error&&<div className="error" role="alert">{error}</div>}{(tabsNeedingData.includes(tab) && !data)?<p>Loading studio…</p>:<>{tab==='Dashboard'&&<><div className="admin-stats"><Stat title="ACTIVE GOLD RATES" value={data.rates.length} detail={`${data.rates.filter(r=>r.fresh).length} within freshness limit`}/><Stat title="JEWELRY PIECES" value={products.filter(p=>!p.is_kurta&&!/kurta|chikankari|saree|ethnic|bottom/i.test(String(p.category||''))).length} detail={`${products.filter(p=>!p.is_kurta&&!/kurta|chikankari|saree|ethnic|bottom/i.test(String(p.category||''))&&p.stock===0).length} out of stock`}/><Stat title="TODAY’S IMPORTS" value={data.todayImports?.failed?'Needs review':'All clear'} detail={`${data.todayImports?.published||0} published · ${data.todayImports?.failed||0} failed`}/><Stat title="ORDERS" value={data.orders.length} detail={`${money(data.orders.reduce((s,o)=>s+Number(o.total),0))} total order value`}/></div><div className="admin-two"><div className="admin-panel"><div className="panel-title"><h3>Active gold rates</h3><button className="underlink" onClick={()=>setTab('Gold Rates')}>View rates ↗</button></div><RateTable rates={data.rates}/></div><div className="admin-panel"><h3>Needs your attention</h3>{data.feedSettings?.feedStatus==='stopped'&&<div className="attention" style={{borderLeft:'3px solid #c62828',paddingLeft:'12px'}}><AlertCircle size={19} color="#c62828"/><div><strong style={{color:'#c62828'}}>Feed Automation is STOPPED</strong><p>Background syncs and live rates are paused. <button className="underlink" onClick={()=>setTab('Settings')}>Open Settings to start ↗</button></p></div></div>}<div className="attention"><AlertCircle size={19}/><div><strong>{data.rates.some(r=>!r.fresh)?'Gold rates are stale':'Storefront active with Cash on Delivery'}</strong><p>Cash on Delivery is active. Store policies and catalogue photography can be reviewed anytime.</p></div></div><p className="small">Maximum rate age: {data.maxAgeHours} hours. Stale gold-linked items pause at checkout.</p></div></div><BatchTable batches={data.batches.slice(0,6)}/><div className="admin-panel"><h3>Recent staff activity</h3>{data.audits.slice(0,8).map(a=><p className="audit-line" key={a.id}><span>{a.action} · Staff {a.staff_id||'system'}</span><span>{date(a.created_at)}</span></p>)}</div></>}{tab==='Gold Rates'&&<GoldRatesAdmin readonly={staff.role==='viewer'} staff={staff} data={data} refreshParent={refresh}/>}{tab==='Categories'&&<CategoriesAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{(tab==='Jewelry'||tab==='Products')&&<><div className="notice">Imports preserve product names, descriptions and publication status by default. Stock is an absolute snapshot, adjusted for paid orders after its source timestamp.</div><details className="advanced-media"><summary>Manage multiple jewelry photos (optional)</summary><ImageUploader products={products} refreshParent={refresh}/></details><AdminProductList products={products.filter(p=>!p.is_kurta&&!/kurta|chikankari|saree|ethnic|bottom/i.test(String(p.category||'')))} readonly={staff.role==='viewer'} refresh={refresh} onOpenImports={()=>setTab('Imports')}/></>}{(tab==='Kurtas'||tab==='Chicken Curry Kurtas')&&<KurtasAdmin readonly={staff.role==='viewer'} ProductAngleManager={ProductAngleManager} ImportPanel={ImportPanel}/>}{tab==='Coins'&&<CoinsAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Offers'&&<OffersAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Reviews'&&<ReviewsAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Pricing Rules'&&<Rules rule={data.rule} readonly={staff.role!=='owner'} refresh={refresh}/ >}{tab==='Materials'&&<MaterialsAdmin readonly={staff.role==='viewer'}/>}{tab==='Craftsmanship'&&<CraftsmanshipAdmin readonly={staff.role==='viewer'}/>}{tab==='Collections'&&<CollectionsAdmin readonly={staff.role==='viewer'}/>}{tab==='AI Recommendations'&&<RecommendationsAdmin readonly={staff.role==='viewer'}/>}{tab==='Imports'&&<><div className="admin-two"><div className="admin-panel"><span className="eyebrow">FEED SYNCHRONIZATION</span><h3>Rates first. Catalogue second.</h3><p className="small muted">Feed sources are configured on the server. Current inventory mode: {(data.feedSettings||{}).inventoryMode||'manual'}. Synchronize feeds on demand below.</p><button className="button dark" disabled={busy||staff.role==='viewer'} onClick={()=>run(null)}>{busy?'Running…':'Run both feeds now'}<RefreshCw size={16}/></button></div><div className="admin-panel"><h3>Source connections</h3><p>Gold feed: <Status text={data.feedSettings.goldConfigured?'Configured':'Not configured'}/></p><p>Jewelry feed: <Status text={data.feedSettings.productsConfigured?'Configured':'Not configured'}/></p><p className="small muted">Private feed URLs and credentials never appear in this screen. Failed rate feeds retain the last verified rate.</p><button className="underlink" disabled={busy||staff.role==='viewer'} onClick={()=>run('products')}>Run jewelry feed only ↗</button></div></div><div className="admin-two"><ImportPanel kind="gold" refresh={refresh} readonly={staff.role==='viewer'}/><ImportPanel kind="products" refresh={refresh} readonly={staff.role==='viewer'}/><ImportPanel kind="coins" refresh={refresh} readonly={staff.role==='viewer'}/><ImportPanel kind="kurtas" refresh={refresh} readonly={staff.role==='viewer'}/></div><details className="advanced-media"><summary>Manage multiple jewelry photos (optional)</summary><ImageUploader products={products} refreshParent={refresh}/></details><FeedSettings data={data} refresh={refresh} readonly={staff.role!=='owner'}/><BatchTable batches={data.batches} retry={async b=>{try{await api(`/admin/import/${b.id}/publish`,{});await refresh()}catch(e){setError(e.message)}}} readonly={staff.role==='viewer'}/><div className="admin-panel"><h3>Workflow history</h3>{(data.runs||[]).length?(data.runs||[]).map(r=><div key={r.id} className="run-record"><strong>Run #{r.id} · {r.trigger} · {date(r.started_at)}</strong>{Object.entries(r.result).map(([k,v])=><p key={k}>{k}: {v.ok?`Succeeded · Source ${v.source_date} · Created ${v.created} / Updated ${v.updated} / Unchanged ${v.unchanged} / Rejected ${v.rejected}`:v.message}</p>)}</div>):<p className="small muted">No feed sync has been recorded yet.</p>}</div></>}{tab==='Orders'&&(()=>{const q=orderQuery.trim().toLowerCase();const orders=(data?.orders||[]).filter(o=>{if(orderStatusFilter!=='all'&&o.status!==orderStatusFilter)return false;if(orderPayFilter!=='all'&&o.payment_mode!==orderPayFilter)return false;if(!q)return true;const customer=orderCustomer(o);return [o.id,o.status,o.payment_mode,customer.name,customer.email].join(' ').toLowerCase().includes(q)});const filtering=orderQuery.trim()||orderStatusFilter!=='all'||orderPayFilter!=='all';return <div className="admin-panel"><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'12px',marginBottom:'16px'}}><div><h3 style={{margin:0}}>All Orders ({orders.length}{filtering?` of ${(data?.orders||[]).length}`:''})</h3><span className="small muted">{filtering?`${orders.length} matching`:`${(data?.orders||[]).length} total orders recorded`}</span></div>{staff.role!=='viewer'&&<a className="underlink" href="/api/admin/export/orders" download style={{display:'inline-flex',alignItems:'center',gap:'6px'}}>Export orders CSV ({(data?.orders||[]).length}) ↓</a>}</div><div className="admin-filter-bar"><div className="search-box"><Search size={14}/><input type="search" placeholder="Search order, customer, or email" value={orderQuery} onChange={e=>setOrderQuery(e.target.value)} aria-label="Search orders"/></div><select className="filter-select" value={orderStatusFilter} onChange={e=>setOrderStatusFilter(e.target.value)} aria-label="Filter orders by status"><option value="all">All statuses</option>{['confirmed','packed','shipped','delivered','cancelled'].map(status=><option key={status} value={status}>{status}</option>)}</select><select className="filter-select" value={orderPayFilter} onChange={e=>setOrderPayFilter(e.target.value)} aria-label="Filter orders by payment"><option value="all">All payments</option><option value="cod">Cash on delivery</option></select>{filtering&&<button type="button" className="reset-filter-btn" onClick={()=>{setOrderQuery('');setOrderStatusFilter('all');setOrderPayFilter('all')}}><RotateCcw size={13}/> Reset</button>}</div><div className="table-wrap"><table><thead><tr><th>Order</th><th>Customer</th><th>Placed (India)</th><th>Payment</th><th>Total</th><th>Status</th></tr></thead><tbody>{orders.map(o=>{const customer=orderCustomer(o);return <tr key={o.id}><td><Link to={'/order/'+o.id}>{o.id} ↗</Link></td><td>{customer.email?<>{customer.name}<small>{customer.email}</small></>:customer.name||'Customer'}</td><td>{date(o.created_at)}</td><td>{o.payment_mode}</td><td>{money(o.total)}</td><td>{staff.role==='viewer'?<Status text={o.status}/>:<select aria-label={`Status for ${o.id}`} value={o.status} disabled={busy} onChange={e=>setOrderStatus(o.id,e.target.value)}>{['confirmed','packed','shipped','delivered','cancelled'].map(status=><option key={status} value={status}>{status}</option>)}</select>}</td></tr>})}</tbody></table>{!(data?.orders||[]).length&&<p className="empty">Orders will appear here after checkout.</p>}{!!(data?.orders||[]).length&&!orders.length&&<p className="empty">No orders match these filters.</p>}</div></div>})()}{tab==='Customers'&&<CustomersAdmin role={staff.role}/>}{tab==='Catalogue copy'&&<AiCopy products={products} readonly={staff.role==='viewer'} onPublished={refresh}/>}{tab==='AI Chatbot'&&<ChatbotAdmin readonly={staff.role==='viewer'} canConfigure={staff.role==='owner'}/>}{tab==='Settings'&&<SettingsAdmin data={data} refresh={refresh} readonly={staff.role!=='owner'} owner={staff.role==='owner'}/>}</>}</div></main></div>}
+function ManualImports({refresh,readonly,batches=[]}){return <><p className="notice">All catalogue ingestion is manual. Upload a CSV/XLS/XLSX file, validate its preview, then explicitly publish it. No feed synchronization runs in the background.</p><div className="admin-two"><ImportPanel kind="products" refresh={refresh} readonly={readonly}/><ImportPanel kind="coins" refresh={refresh} readonly={readonly}/><ImportPanel kind="kurtas" refresh={refresh} readonly={readonly}/></div><BatchTable batches={batches} retry={async()=>{await refresh()}} readonly={readonly}/></>}
 function Stat({title,value,detail}){return <div className="stat"><span className="eyebrow">{title}</span><strong>{value}</strong><small>{detail}</small></div>}
 function Status({text}){return <CommonStatusBadge status={text} label={text}/>}
-function RateTable({rates}){return <div className="table-wrap"><table><thead><tr><th>Purity</th><th>INR / gram</th><th>Source / original</th><th>Effective date</th><th>Status</th></tr></thead><tbody>{rates.map(r=><tr key={r.id}><td><strong>{r.purity}</strong></td><td>{money(r.inr_per_gram)}</td><td>{r.supplier}<small>{money(r.original_rate)} / {r.original_unit}</small></td><td>{r.effective_date}<small>{date(r.source_timestamp)}</small></td><td><Status text={r.fresh?'Verified':'stale — checkout paused'}/></td></tr>)}</tbody></table>{!rates.length&&<p>No approved rates. Import a rate file to begin.</p>}</div>}
-function BatchTable({batches,retry,readonly}){return <div className="admin-panel"><h3>Import history</h3><div className="table-wrap"><table><thead><tr><th>Batch</th><th>Supplier / source</th><th>Status</th><th>Created / Updated / Rejected</th><th>Actions</th></tr></thead><tbody>{batches.map(b=><tr key={b.id}><td>#{b.id} · {b.kind}</td><td>{b.supplier}<small>{date(b.source_timestamp)}</small></td><td><Status text={b.status}/></td><td>{b.summary?.created ?? 0} / {b.summary?.updated ?? 0} / {b.summary?.rejected ?? 0}</td><td>{b.status==='failed'?<a className="underlink" href={`/api/admin/import/${b.id}/errors`}>Errors CSV ↓</a>:b.status==='staged'&&retry&&!readonly?<button className="underlink" onClick={()=>retry(b)}>Publish / retry ↗</button>:'—'}</td></tr>)}</tbody></table></div></div>}
+function RateTable({rates}){return <div className="table-wrap"><table><thead><tr><th>Purity</th><th>INR / gram</th><th>Original rate</th><th>Effective date</th><th>Status</th></tr></thead><tbody>{rates.map(r=><tr key={r.id}><td><strong>{r.purity}</strong></td><td>{money(r.inr_per_gram)}</td><td>{money(r.original_rate)} / {r.original_unit}</td><td>{r.effective_date}<small>{date(r.source_timestamp)}</small></td><td><Status text={r.fresh?'Verified':'stale — checkout paused'}/></td></tr>)}</tbody></table>{!rates.length&&<p>No approved rates. Import a rate file to begin.</p>}</div>}
+function BatchTable({batches,retry,readonly}){return <div className="admin-panel"><h3>Import history</h3><div className="table-wrap"><table><thead><tr><th>Batch</th><th>Source timestamp</th><th>Status</th><th>Created / Updated / Rejected</th><th>Actions</th></tr></thead><tbody>{batches.map(b=><tr key={b.id}><td>#{b.id} · {b.kind}</td><td>{date(b.source_timestamp)}</td><td><Status text={b.status}/></td><td>{b.summary?.created ?? 0} / {b.summary?.updated ?? 0} / {b.summary?.rejected ?? 0}</td><td>{b.status==='failed'?<a className="underlink" href={`/api/admin/import/${b.id}/errors`}>Errors CSV ↓</a>:b.status==='staged'&&retry&&!readonly?<button className="underlink" onClick={()=>retry(b)}>Publish / retry ↗</button>:'—'}</td></tr>)}</tbody></table></div></div>}
 function ImportPanel({kind,refresh,readonly}){const [batch,setBatch]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[success,setSuccess]=useState('');const prefix=kind==='gold'?'gold-rates':kind==='products'||kind==='jewelry'?'jewelry':kind;async function upload(e){const file=e.target.files[0];if(!file)return;setError('');setSuccess('');setBatch(null);setBusy(true);try{if(file.size>5*1024*1024)throw Error('Maximum file size is 5 MB');const payload=/\.csv$/i.test(file.name)?{kind,csv:await file.text()}:{kind,file:await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)})};const b=await api('/admin/import/preview',payload);setBatch(b);await refresh()}catch(e){setError(e.message)}finally{setBusy(false);e.target.value=''}}async function publish(){setBusy(true);try{await api(`/admin/import/${batch.id}/publish`,{});setBatch(null);setSuccess('Import published. Catalogue updated.');await refresh()}catch(e){setError(e.message)}finally{setBusy(false)}}return <div className="admin-panel import-panel"><Upload size={23}/><h3>{kind==='gold'?'Gold rates':kind==='coins'?'Import Coins':kind==='kurtas'?'Import Kurtas':'Import Jewelry'}</h3><p className="small muted">Manual CSV, XLS, or XLSX upload. Validate, review, then confirm—nothing is synchronized automatically.</p><div className="download-links"><a href={`/api/admin/samples/${prefix}-template.csv`}><Download size={14}/>CSV template</a><a href={`/api/admin/samples/${prefix}-example.csv`}><Download size={14}/>Example</a><a href={`/api/admin/export/${kind==='products'?'jewelry':kind}`} download><Download size={14}/>Export current CSV</a></div><label className="upload-zone"><Upload size={22}/><strong>{busy?'Validating…':'Choose a CSV or Excel file'}</strong><span>Manual upload · 5 MB maximum</span><input disabled={busy||readonly} type="file" accept=".csv,.xls,.xlsx,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={upload}/></label>{error&&<p className="error" role="alert">{error}</p>}{success&&<p role="status" className="notice">{success}</p>}{batch&&<div className="import-preview"><Status text={`Batch #${batch.id} · ${batch.status}${batch.duplicate?' · duplicate':''}`}/><p>{batch.summary.created} new · {batch.summary.updated} updates · {batch.summary.rejected} errors</p>{batch.errors?.length>0?<><p className="error">No changes published. Correct the file and upload it again.</p>{batch.errors.slice(0,5).map((e,i)=><p className="small" key={i}>Row {e.row} · {e.field}: {e.value} → {e.correction}</p>)}<a className="underlink" href={`/api/admin/import/${batch.id}/errors`}>Download error report ↓</a></>:<><div className="table-wrap"><table><thead><tr><th>SKU</th><th>Old</th><th>New</th><th>Stock</th></tr></thead><tbody>{batch.summary.changes?.map(c=><tr key={c.sku}><td>{c.sku}</td><td>{c.before===null?'New':money(c.before)}</td><td>{c.after===null?'Awaiting rate':money(c.after)}</td><td>{c.stock}</td></tr>)}</tbody></table></div>{batch.status==='staged'&&<button disabled={busy||readonly} className="button dark full" onClick={publish}>Confirm & publish <Check size={16}/></button>}</>}</div>}</div>}
 function ProductAngleManager({product,readonly,refreshParent}){
   const [busyRole,setBusyRole]=useState(null);
@@ -1059,141 +1104,141 @@ function ProductAngleManager({product,readonly,refreshParent}){
   const [copiedId,setCopiedId]=useState(null);
   const [dragRole,setDragRole]=useState(null);
 
-  const targetCode=product.product_code||product.sku;
-  const isCoin=!!product.metal||!product.product_code;
+  const targetCode = product.product_code || product.sku;
+  const isCoin = !!product.metal || !product.product_code;
 
-  const roles=[
-    {key:'hero',label:isCoin?'Hero Image (Obverse)':'Hero Image',desc:isCoin?'Primary display / obverse mint face':'Primary display / catalog shot',icon:'🌟'},
-    {key:'front',label:'Front Angle',desc:isCoin?'Straight direct view of the coin face':'Straight direct view of the piece',icon:'📷'},
-    {key:'right',label:'Right View',desc:isCoin?'Right side profile / edge angle':'Right side profile and fitting angle',icon:'👉'},
-    {key:'left',label:'Left View',desc:isCoin?'Left side profile / edge angle':'Left side profile and silhouette angle',icon:'👈'},
-    {key:'back',label:isCoin?'Reverse / Back View':'Back Angle View',desc:isCoin?'Reverse coin face / mint hallmark':'Full back view showing embroidery & craftsmanship',icon:'🔙'},
-    {key:'model',label:isCoin?'Model / In-Hand View':'Model Editorial Shot',desc:isCoin?'Hand-held view for scale and thickness':'On-model wearing view and drape',icon:isCoin?'🪙':'💃'},
-    {key:'detail',label:'Detail / Modal View',desc:isCoin?'Assay seal, mint mark, or edge milling detail':'Close-up embroidery, fabric texture, and neckline',icon:'🔍'}
+  const roles = [
+    { key: 'hero', label: isCoin ? 'Hero Image (Obverse)' : 'Hero Image', desc: isCoin ? 'Primary display / obverse mint face' : 'Primary display / catalog shot', icon: '🌟' },
+    { key: 'front', label: 'Front Angle', desc: isCoin ? 'Straight direct view of the coin face' : 'Straight direct view of the piece', icon: '📷' },
+    { key: 'right', label: 'Right View', desc: isCoin ? 'Right side profile / edge angle' : 'Right side profile and fitting angle', icon: '👉' },
+    { key: 'left', label: 'Left View', desc: isCoin ? 'Left side profile / edge angle' : 'Left side profile and silhouette angle', icon: '👈' },
+    { key: 'back', label: isCoin ? 'Reverse / Back View' : 'Back Angle View', desc: isCoin ? 'Reverse coin face / mint hallmark' : 'Full back view showing embroidery & craftsmanship', icon: '🔙' },
+    { key: 'model', label: isCoin ? 'Model / In-Hand View' : 'Model Editorial Shot', desc: isCoin ? 'Hand-held view for scale and thickness' : 'On-model wearing view and drape', icon: isCoin ? '🪙' : '💃' },
+    { key: 'detail', label: 'Detail / Modal View', desc: isCoin ? 'Assay seal, mint mark, or edge milling detail' : 'Close-up embroidery, fabric texture, and neckline', icon: '🔍' }
   ];
 
-  const rawImages=product.images||[];
-  const images=[...rawImages];
-  if(product.image&&!images.some(i=>i.role==='hero'||i.role==='front'||i.url===product.image)){
-    images.unshift({id:'default-hero',role:'hero',url:product.image,alt_text:product.name});
+  const rawImages = product.images || [];
+  const images = [...rawImages];
+  if (product.image && !images.some(i => i.role === 'hero' || i.role === 'front' || i.url === product.image)) {
+    images.unshift({ id: 'default-hero', role: 'hero', url: product.image, alt_text: product.name });
   }
 
-  async function handleSlotUpload(e,role){
-    const file=e.target.files?.[0];
-    if(!file)return;
-    if(file.size>8*1024*1024){setError('Image must be under 8 MB');return;}
-    setError('');setBusyRole(role);
-    try{
-      const reader=new FileReader();
-      reader.onload=async ev=>{
-        try{
-          await api('/admin/upload-image',{
-            name:`${targetCode}-${role}-${file.name}`,
-            data:ev.target.result,
+  async function handleSlotUpload(e, role) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) { setError('Image must be under 8 MB'); return; }
+    setError(''); setBusyRole(role);
+    try {
+      const reader = new FileReader();
+      reader.onload = async ev => {
+        try {
+          await api('/admin/upload-image', {
+            name: `${targetCode}-${role}-${file.name}`,
+            data: ev.target.result,
             role,
-            product_code:targetCode,
-            sku:product.sku||targetCode
+            product_code: targetCode,
+            sku: product.sku || targetCode
           });
-          if(refreshParent)await refreshParent();
-        }catch(err){setError(err.message);}finally{setBusyRole(null);}
+          if (refreshParent) await refreshParent();
+        } catch (err) { setError(err.message); } finally { setBusyRole(null); }
       };
       reader.readAsDataURL(file);
-    }catch(err){setError(err.message);setBusyRole(null);}finally{e.target.value='';}
+    } catch (err) { setError(err.message); setBusyRole(null); } finally { e.target.value = ''; }
   }
 
-  async function handleSetUrl(role){
-    const inputUrl=(urlInputs[role]||'').trim();
-    if(!inputUrl)return;
-    setError('');setBusyRole(role);
-    try{
-      await api('/admin/product-images',{product_code:targetCode,sku:product.sku||targetCode,role,url:inputUrl});
-      setUrlInputs(prev=>({...prev,[role]:''}));
-      if(refreshParent)await refreshParent();
-    }catch(err){setError(err.message);}finally{setBusyRole(null);}
+  async function handleSetUrl(role) {
+    const inputUrl = (urlInputs[role] || '').trim();
+    if (!inputUrl) return;
+    setError(''); setBusyRole(role);
+    try {
+      await api('/admin/product-images', { product_code: targetCode, sku: product.sku || targetCode, role, url: inputUrl });
+      setUrlInputs(prev => ({ ...prev, [role]: '' }));
+      if (refreshParent) await refreshParent();
+    } catch (err) { setError(err.message); } finally { setBusyRole(null); }
   }
 
-  async function handleDelete(imgId,role){
-    if(readonly)return;
-    setError('');setBusyRole(role);
-    try{
-      if(String(imgId).startsWith('default-')){
-        if(isCoin){
-          await api('/admin/coins/'+encodeURIComponent(targetCode),{image:''},'PATCH');
-        }else{
-          await api('/admin/products/'+encodeURIComponent(targetCode),{image:''},'PATCH');
+  async function handleDelete(imgId, role) {
+    if (readonly) return;
+    setError(''); setBusyRole(role);
+    try {
+      if (String(imgId).startsWith('default-')) {
+        if (isCoin) {
+          await api('/admin/coins/' + encodeURIComponent(targetCode), { image: '' }, 'PATCH');
+        } else {
+          await api('/admin/products/' + encodeURIComponent(targetCode), { image: '' }, 'PATCH');
         }
-      }else{
-        await api(`/admin/product-images/${imgId}`,{},'DELETE');
+      } else {
+        await api(`/admin/product-images/${imgId}`, {}, 'DELETE');
       }
-      if(refreshParent)await refreshParent();
-    }catch(err){setError(err.message);}finally{setBusyRole(null);}
+      if (refreshParent) await refreshParent();
+    } catch (err) { setError(err.message); } finally { setBusyRole(null); }
   }
 
-  function copy(url,id){
+  function copy(url, id) {
     navigator.clipboard.writeText(url);
     setCopiedId(id);
-    setTimeout(()=>setCopiedId(null),2000);
+    setTimeout(() => setCopiedId(null), 2000);
   }
 
-  const configuredCount=roles.filter(r=>images.some(i=>i.role===r.key||(r.key==='detail'&&i.role==='modal'))).length;
+  const configuredCount = roles.filter(r => images.some(i => i.role === r.key || (r.key === 'detail' && i.role === 'modal'))).length;
 
   return <div className="product-angles-editor">
     <div className="angles-editor-header">
       <div>
         <h4>Multi-Angle Photography ({product.name})</h4>
-        <p className="small muted" style={{margin:'2px 0 0'}}>
-          Upload specific angles for <strong>{targetCode}</strong>. Customers can interactively switch between {isCoin?'Hero, Front, Left, Right, Reverse, In-Hand, and Detail':'Hero, Front, Left, Right, Back, Model, and Detail'} images on the storefront.
+        <p className="small muted" style={{ margin: '2px 0 0' }}>
+          Upload specific angles for <strong>{targetCode}</strong>. Customers can interactively switch between {isCoin ? 'Hero, Front, Left, Right, Reverse, In-Hand, and Detail' : 'Hero, Front, Left, Right, Back, Model, and Detail'} images on the storefront.
         </p>
       </div>
-      <span className={'status-badge '+(configuredCount===roles.length?'active':'')} style={{fontSize:'9px',padding:'4px 10px'}}>
+      <span className={'status-badge ' + (configuredCount === roles.length ? 'active' : '')} style={{ fontSize: '9px', padding: '4px 10px' }}>
         {configuredCount}/{roles.length} Images Configured
       </span>
     </div>
 
-    {error&&<p className="error" style={{margin:'10px 0'}}>{error}</p>}
+    {error && <p className="error" style={{ margin: '10px 0' }}>{error}</p>}
 
     <div className="angle-slots-grid">
-      {roles.map(r=>{
-        const img=images.find(i=>i.role===r.key||(r.key==='detail'&&i.role==='modal'));
-        const isBusy=busyRole===r.key;
-        return <div key={r.key} className={'angle-slot-card '+(img?'has-image':'')}>
+      {roles.map(r => {
+        const img = images.find(i => i.role === r.key || (r.key === 'detail' && i.role === 'modal'));
+        const isBusy = busyRole === r.key;
+        return <div key={r.key} className={'angle-slot-card ' + (img ? 'has-image' : '')}>
           <div className="angle-slot-header">
-            <span className={'role-badge role-badge--'+r.key}>{r.icon} {r.label}</span>
-            {img?<button
+            <span className={'role-badge role-badge--' + r.key}>{r.icon} {r.label}</span>
+            {img ? <button
               type="button"
               className="angle-slot-delete-btn"
               title="Remove angle"
-              disabled={readonly||isBusy}
-              onClick={()=>handleDelete(img.id,r.key)}
+              disabled={readonly || isBusy}
+              onClick={() => handleDelete(img.id, r.key)}
             >
-              <Trash2 size={13}/>
-            </button>:<span className="angle-slot-status-dot" title="Not configured"></span>}
+              <Trash2 size={13} />
+            </button> : <span className="angle-slot-status-dot" title="Not configured"></span>}
           </div>
 
-          {img?(
+          {img ? (
             <div className="angle-slot-preview-wrap">
               <BrandedImage
-                src={coinImage(img.url,true)}
+                src={coinImage(img.url, true)}
                 alt={`${product.name} ${r.label}`}
                 className="angle-slot-preview"
-                onError={e=>{if(e.currentTarget.getAttribute('src')!=='/assets/product-placeholder.svg')e.currentTarget.src='/assets/product-placeholder.svg'}}
+                onError={e => { if (e.currentTarget.getAttribute('src') !== '/assets/product-placeholder.svg') e.currentTarget.src = '/assets/product-placeholder.svg' }}
               />
               <div className="angle-slot-overlay">
                 <a href={img.url} target="_blank" rel="noopener noreferrer" className="angle-slot-zoom-btn" title="View full photo">
-                  <Maximize2 size={12}/> View
+                  <Maximize2 size={12} /> View
                 </a>
               </div>
             </div>
-          ):(
+          ) : (
             <div
-              className={'angle-slot-placeholder '+(dragRole===r.key?'dragging':'')}
-              onDragOver={e=>{e.preventDefault();setDragRole(r.key);}}
-              onDragLeave={()=>setDragRole(null)}
-              onDrop={e=>{
+              className={'angle-slot-placeholder ' + (dragRole === r.key ? 'dragging' : '')}
+              onDragOver={e => { e.preventDefault(); setDragRole(r.key); }}
+              onDragLeave={() => setDragRole(null)}
+              onDrop={e => {
                 e.preventDefault();
                 setDragRole(null);
-                const file=e.dataTransfer?.files?.[0];
-                if(file)handleSlotUpload({target:{files:[file],value:''}},r.key);
+                const file = e.dataTransfer?.files?.[0];
+                if (file) handleSlotUpload({ target: { files: [file], value: '' } }, r.key);
               }}
             >
               <span className="angle-slot-placeholder-icon">{r.icon}</span>
@@ -1204,34 +1249,34 @@ function ProductAngleManager({product,readonly,refreshParent}){
           )}
 
           <div className="angle-slot-actions">
-            <label className="button dark small-button angle-slot-btn" style={{cursor:readonly||isBusy?'not-allowed':'pointer'}}>
-              {isBusy?'Saving…':img?'Change':'+ Upload'}
-              <input type="file" accept="image/*" style={{display:'none'}} disabled={readonly||isBusy} onChange={e=>handleSlotUpload(e,r.key)}/>
+            <label className="button dark small-button angle-slot-btn" style={{ cursor: readonly || isBusy ? 'not-allowed' : 'pointer' }}>
+              {isBusy ? 'Saving…' : img ? 'Change' : '+ Upload'}
+              <input type="file" accept="image/*" style={{ display: 'none' }} disabled={readonly || isBusy} onChange={e => handleSlotUpload(e, r.key)} />
             </label>
-            {img&&<button
+            {img && <button
               type="button"
               className="button secondary small-button angle-slot-btn"
-              onClick={()=>copy(img.url,img.id)}
+              onClick={() => copy(img.url, img.id)}
               title="Copy URL"
             >
-              {copiedId===img.id?<><Check size={11}/> Copied</>:<><Copy size={11}/> URL</>}
+              {copiedId === img.id ? <><Check size={11} /> Copied</> : <><Copy size={11} /> URL</>}
             </button>}
           </div>
 
-          {!img&&<div className="angle-slot-url-row">
+          {!img && <div className="angle-slot-url-row">
             <input
               type="text"
               placeholder="or paste URL"
-              value={urlInputs[r.key]||''}
-              disabled={readonly||isBusy}
-              onChange={e=>setUrlInputs({...urlInputs,[r.key]:e.target.value})}
-              onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();handleSetUrl(r.key);}}}
+              value={urlInputs[r.key] || ''}
+              disabled={readonly || isBusy}
+              onChange={e => setUrlInputs({ ...urlInputs, [r.key]: e.target.value })}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleSetUrl(r.key); } }}
             />
             <button
               type="button"
               className="button dark small-button"
-              disabled={readonly||isBusy||!urlInputs[r.key]}
-              onClick={()=>handleSetUrl(r.key)}
+              disabled={readonly || isBusy || !urlInputs[r.key]}
+              onClick={() => handleSetUrl(r.key)}
             >
               Set
             </button>
@@ -1242,111 +1287,111 @@ function ProductAngleManager({product,readonly,refreshParent}){
   </div>;
 }
 
-function ImageUploader({products=[],refreshParent}){
-  const [busy,setBusy]=useState(false);
-  const [progress,setProgress]=useState(null);
-  const [error,setError]=useState('');
-  const [uploadedList,setUploadedList]=useState([]);
-  const [copiedUrl,setCopiedUrl]=useState(null);
-  const [selectedProduct,setSelectedProduct]=useState('');
-  const [selectedRole,setSelectedRole]=useState('unassigned');
-  const [mediaLibrary,setMediaLibrary]=useState(null);
-  const [showMedia,setShowMedia]=useState(false);
+function ImageUploader({ products = [], refreshParent }) {
+  const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState(null);
+  const [error, setError] = useState('');
+  const [uploadedList, setUploadedList] = useState([]);
+  const [copiedUrl, setCopiedUrl] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState('');
+  const [selectedRole, setSelectedRole] = useState('unassigned');
+  const [mediaLibrary, setMediaLibrary] = useState(null);
+  const [showMedia, setShowMedia] = useState(false);
 
-  async function handleBulkUpload(e){
-    const files=Array.from(e.target.files||[]);
-    if(!files.length)return;
-    setError('');setBusy(true);
-    setProgress({current:0,total:files.length,percent:0});
+  async function handleBulkUpload(e) {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    setError(''); setBusy(true);
+    setProgress({ current: 0, total: files.length, percent: 0 });
 
-    const newlyUploaded=[];
-    try{
-      for(let i=0;i<files.length;i++){
-        const file=files[i];
-        if(file.size>8*1024*1024)continue;
-        const dataUrl=await new Promise((resolve,reject)=>{
-          const reader=new FileReader();
-          reader.onload=ev=>resolve(ev.target.result);
-          reader.onerror=reject;
+    const newlyUploaded = [];
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (file.size > 8 * 1024 * 1024) continue;
+        const dataUrl = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = ev => resolve(ev.target.result);
+          reader.onerror = reject;
           reader.readAsDataURL(file);
         });
 
-        const res=await api('/admin/upload-image',{
-          name:file.name,
-          data:dataUrl,
-          product_code:selectedProduct||undefined,
-          role:selectedRole!=='unassigned'?selectedRole:undefined
+        const res = await api('/admin/upload-image', {
+          name: file.name,
+          data: dataUrl,
+          product_code: selectedProduct || undefined,
+          role: selectedRole !== 'unassigned' ? selectedRole : undefined
         });
 
         newlyUploaded.unshift({
           ...res,
-          size:file.size,
-          role:selectedRole!=='unassigned'?selectedRole:null,
-          product_code:selectedProduct||null
+          size: file.size,
+          role: selectedRole !== 'unassigned' ? selectedRole : null,
+          product_code: selectedProduct || null
         });
 
         setProgress({
-          current:i+1,
-          total:files.length,
-          percent:Math.round(((i+1)/files.length)*100)
+          current: i + 1,
+          total: files.length,
+          percent: Math.round(((i + 1) / files.length) * 100)
         });
       }
 
-      setUploadedList(prev=>[...newlyUploaded,...prev]);
-      if(refreshParent)await refreshParent();
-    }catch(err){
+      setUploadedList(prev => [...newlyUploaded, ...prev]);
+      if (refreshParent) await refreshParent();
+    } catch (err) {
       setError(err.message);
-    }finally{
+    } finally {
       setBusy(false);
       setProgress(null);
-      e.target.value='';
+      e.target.value = '';
     }
   }
 
-  async function loadMediaLibrary(){
-    try{
-      const list=await api('/admin/media');
+  async function loadMediaLibrary() {
+    try {
+      const list = await api('/admin/media');
       setMediaLibrary(list);
       setShowMedia(true);
-    }catch(err){
+    } catch (err) {
       setError(err.message);
     }
   }
 
-  function copy(url){
+  function copy(url) {
     navigator.clipboard.writeText(url);
     setCopiedUrl(url);
-    setTimeout(()=>setCopiedUrl(null),2000);
+    setTimeout(() => setCopiedUrl(null), 2000);
   }
 
   return <div className="bulk-uploader-card">
     <div className="panel-title">
       <div>
         <h3>Local Bulk Image Uploader & Multi-Angle Asset Manager</h3>
-        <p className="small muted" style={{margin:'2px 0 0'}}>
+        <p className="small muted" style={{ margin: '2px 0 0' }}>
           Select multiple photos from your device to bulk upload. Optionally link them to a product and angle role (Hero, Front, Left, Right, Model) immediately.
         </p>
       </div>
       <button
         type="button"
         className="button secondary small-button"
-        onClick={()=>{if(!showMedia&&!mediaLibrary)loadMediaLibrary();else setShowMedia(!showMedia);}}
+        onClick={() => { if (!showMedia && !mediaLibrary) loadMediaLibrary(); else setShowMedia(!showMedia); }}
       >
-        <ImageIcon size={14}/> {showMedia?'Hide Media Library':'Browse Media Library'}
+        <ImageIcon size={14} /> {showMedia ? 'Hide Media Library' : 'Browse Media Library'}
       </button>
     </div>
 
     <div className="bulk-controls">
       <label>
         Target Product (Optional)
-        <select value={selectedProduct} onChange={e=>setSelectedProduct(e.target.value)} disabled={busy}>
+        <select value={selectedProduct} onChange={e => setSelectedProduct(e.target.value)} disabled={busy}>
           <option value="">General Media Pool (Unassigned)</option>
-          {products.map(p=><option key={`${p.product_code}:${p.sku}`} value={p.product_code}>{p.name} ({p.product_code})</option>)}
+          {products.map(p => <option key={`${p.product_code}:${p.sku}`} value={p.product_code}>{p.name} ({p.product_code})</option>)}
         </select>
       </label>
       <label>
         Angle Role (Optional)
-        <select value={selectedRole} onChange={e=>setSelectedRole(e.target.value)} disabled={busy}>
+        <select value={selectedRole} onChange={e => setSelectedRole(e.target.value)} disabled={busy}>
           <option value="unassigned">General / Unassigned</option>
           <option value="hero">🌟 Hero Image (Main Display)</option>
           <option value="front">📷 Front Angle</option>
@@ -1359,82 +1404,82 @@ function ImageUploader({products=[],refreshParent}){
     </div>
 
     <label className="bulk-dropzone">
-      <Upload size={28} style={{margin:'0 auto 8px',color:'var(--gold)'}}/>
-      <strong style={{fontSize:'13px',display:'block'}}>
-        {busy?'Bulk Uploading Photos…':'Choose Multiple Photos from Computer'}
+      <Upload size={28} style={{ margin: '0 auto 8px', color: 'var(--gold)' }} />
+      <strong style={{ fontSize: '13px', display: 'block' }}>
+        {busy ? 'Bulk Uploading Photos…' : 'Choose Multiple Photos from Computer'}
       </strong>
-      <span style={{fontSize:'10px',color:'var(--muted)',marginTop:'4px',display:'block'}}>
+      <span style={{ fontSize: '10px', color: 'var(--muted)', marginTop: '4px', display: 'block' }}>
         Select multiple JPG, PNG, or WEBP images · High-resolution bulk processing
       </span>
-      <input type="file" multiple accept="image/*" disabled={busy} onChange={handleBulkUpload}/>
+      <input type="file" multiple accept="image/*" disabled={busy} onChange={handleBulkUpload} />
     </label>
 
-    {progress&&<div className="bulk-progress">
-      <div style={{display:'flex',justifyContent:'space-between',fontSize:'11px',fontWeight:600}}>
+    {progress && <div className="bulk-progress">
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 600 }}>
         <span>Uploading photo {progress.current} of {progress.total}…</span>
         <span>{progress.percent}%</span>
       </div>
       <div className="progress-bar-bg">
-        <div className="progress-bar-fill" style={{width:`${progress.percent}%`}}/>
+        <div className="progress-bar-fill" style={{ width: `${progress.percent}%` }} />
       </div>
     </div>}
 
-    {error&&<p className="error" style={{marginTop:'12px'}}>{error}</p>}
+    {error && <p className="error" style={{ marginTop: '12px' }}>{error}</p>}
 
-    {uploadedList.length>0&&<div style={{marginTop:'22px'}}>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px'}}>
-        <strong style={{fontSize:'12px',textTransform:'uppercase',letterSpacing:'1px'}}>
+    {uploadedList.length > 0 && <div style={{ marginTop: '22px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+        <strong style={{ fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>
           Recent Uploads ({uploadedList.length})
         </strong>
-        <button className="text-button" style={{fontSize:'10px'}} onClick={()=>setUploadedList([])}>Clear list</button>
+        <button className="text-button" style={{ fontSize: '10px' }} onClick={() => setUploadedList([])}>Clear list</button>
       </div>
       <div className="media-gallery-grid">
-        {uploadedList.map((item,idx)=><div key={item.filename||idx} className="media-card">
-          <BrandedImage src={item.url} alt={item.filename}/>
+        {uploadedList.map((item, idx) => <div key={item.filename || idx} className="media-card">
+          <BrandedImage src={item.url} alt={item.filename} />
           <div className="media-info">
             <span className="media-filename" title={item.filename}>{item.filename}</span>
             <small className="media-url">{item.url}</small>
-            <div style={{marginTop:'4px',display:'flex',gap:'6px',flexWrap:'wrap'}}>
-              {item.role&&<span className={'role-badge role-badge--'+item.role}>{item.role}</span>}
-              {item.product_code&&<span className="status-badge" style={{fontSize:'7px'}}>{item.product_code}</span>}
+            <div style={{ marginTop: '4px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {item.role && <span className={'role-badge role-badge--' + item.role}>{item.role}</span>}
+              {item.product_code && <span className="status-badge" style={{ fontSize: '7px' }}>{item.product_code}</span>}
             </div>
           </div>
           <div className="media-actions">
             <button
               type="button"
               className="button dark small-button"
-              style={{minHeight:'28px',padding:'0 10px',fontSize:'9px',width:'100%',justifyContent:'center',gap:'6px'}}
-              onClick={()=>copy(item.url)}
+              style={{ minHeight: '28px', padding: '0 10px', fontSize: '9px', width: '100%', justifyContent: 'center', gap: '6px' }}
+              onClick={() => copy(item.url)}
             >
-              {copiedUrl===item.url?<><Check size={12}/> Copied Link</>:<><Copy size={12}/> Copy Link</>}
+              {copiedUrl === item.url ? <><Check size={12} /> Copied Link</> : <><Copy size={12} /> Copy Link</>}
             </button>
           </div>
         </div>)}
       </div>
     </div>}
 
-    {showMedia&&mediaLibrary&&<div style={{marginTop:'25px',paddingTop:'20px',borderTop:'1px solid var(--line)'}}>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px'}}>
-        <strong style={{fontSize:'13px'}}>Uploaded Media Library ({mediaLibrary.length} files)</strong>
-        <button className="text-button" style={{fontSize:'10px'}} onClick={loadMediaLibrary}>
-          <RefreshCw size={12}/> Refresh Library
+    {showMedia && mediaLibrary && <div style={{ marginTop: '25px', paddingTop: '20px', borderTop: '1px solid var(--line)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+        <strong style={{ fontSize: '13px' }}>Uploaded Media Library ({mediaLibrary.length} files)</strong>
+        <button className="text-button" style={{ fontSize: '10px' }} onClick={loadMediaLibrary}>
+          <RefreshCw size={12} /> Refresh Library
         </button>
       </div>
       <div className="media-gallery-grid">
-        {mediaLibrary.map(item=><div key={item.filename} className="media-card">
-          <BrandedImage src={item.url} alt={item.filename} loading="lazy"/>
+        {mediaLibrary.map(item => <div key={item.filename} className="media-card">
+          <BrandedImage src={item.url} alt={item.filename} loading="lazy" />
           <div className="media-info">
             <span className="media-filename" title={item.filename}>{item.filename}</span>
-            <small className="media-url">{(item.size/1024).toFixed(1)} KB</small>
+            <small className="media-url">{(item.size / 1024).toFixed(1)} KB</small>
           </div>
           <div className="media-actions">
             <button
               type="button"
               className="button dark small-button"
-              style={{minHeight:'28px',padding:'0 10px',fontSize:'9px',width:'100%',justifyContent:'center',gap:'6px'}}
-              onClick={()=>copy(item.url)}
+              style={{ minHeight: '28px', padding: '0 10px', fontSize: '9px', width: '100%', justifyContent: 'center', gap: '6px' }}
+              onClick={() => copy(item.url)}
             >
-              {copiedUrl===item.url?<><Check size={12}/> Copied Link</>:<><Copy size={12}/> Copy Link</>}
+              {copiedUrl === item.url ? <><Check size={12} /> Copied Link</> : <><Copy size={12} /> Copy Link</>}
             </button>
           </div>
         </div>)}
@@ -1443,76 +1488,76 @@ function ImageUploader({products=[],refreshParent}){
   </div>;
 }
 
-function AdminProductList({products,readonly,refresh,onOpenImports}){
-  const {refreshCatalogue}=useStore();
-  const [addingProduct,setAddingProduct]=useState(false);
-  const [error,setError]=useState('');
-  const [categoryTab,setCategoryTab]=useState('all');
-  const [search,setSearch]=useState('');
-  const [stockFilter,setStockFilter]=useState('all');
-  const [statusFilter,setStatusFilter]=useState('all');
-  const [pricingFilter,setPricingFilter]=useState('all');
+function AdminProductList({ products, readonly, refresh, onOpenImports }) {
+  const { refreshCatalogue } = useStore();
+  const [addingProduct, setAddingProduct] = useState(false);
+  const [error, setError] = useState('');
+  const [categoryTab, setCategoryTab] = useState('all');
+  const [search, setSearch] = useState('');
+  const [stockFilter, setStockFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [pricingFilter, setPricingFilter] = useState('all');
 
-  async function saveProduct(e){
+  async function saveProduct(e) {
     e.preventDefault();
-    const form=new FormData(e.target);
-    const body=Object.fromEntries(form);
+    const form = new FormData(e.target);
+    const body = Object.fromEntries(form);
     setError('');
-    try{
-      await api('/admin/products',body,'POST');
+    try {
+      await api('/admin/products', body, 'POST');
       setAddingProduct(false);
       await refresh();
-      await refreshCatalogue({notify:true});
-    }catch(err){
+      await refreshCatalogue({ notify: true });
+    } catch (err) {
       setError(err.message);
     }
   }
 
-  async function deleteProduct(sku){
-    if(!window.confirm(`Are you sure you want to delete product SKU ${sku}?`))return;
-    try{
-      await api('/admin/products/'+encodeURIComponent(sku),{},'DELETE');
+  async function deleteProduct(sku) {
+    if (!window.confirm(`Are you sure you want to delete product SKU ${sku}?`)) return;
+    try {
+      await api('/admin/products/' + encodeURIComponent(sku), {}, 'DELETE');
       await refresh();
-      await refreshCatalogue({notify:true});
-    }catch(err){
+      await refreshCatalogue({ notify: true });
+    } catch (err) {
       setError(err.message);
     }
   }
 
-  const categories=useMemo(()=>{
-    const map=new Map();
-    for(const p of products){
-      const cat=p.category||'Other';
-      map.set(cat,(map.get(cat)||0)+1);
+  const categories = useMemo(() => {
+    const map = new Map();
+    for (const p of products) {
+      const cat = p.category || 'Other';
+      map.set(cat, (map.get(cat) || 0) + 1);
     }
-    return Array.from(map.entries()).sort((a,b)=>b[1]-a[1]);
-  },[products]);
+    return Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
+  }, [products]);
 
-  const filteredProducts=useMemo(()=>{
-    return products.filter(p=>{
-      if(categoryTab!=='all'&&(p.category||'').toLowerCase()!==categoryTab.toLowerCase())return false;
-      if(search.trim()){
-        const q=search.toLowerCase().trim();
-        const match=(p.name||'').toLowerCase().includes(q)||
-                    (p.sku||'').toLowerCase().includes(q)||
-                    (p.product_code||'').toLowerCase().includes(q)||
-                    (p.category||'').toLowerCase().includes(q)||
-                    (p.metal||'').toLowerCase().includes(q)||
-                    (p.purity||'').toLowerCase().includes(q)||
-                    (p.description||'').toLowerCase().includes(q);
-        if(!match)return false;
+  const filteredProducts = useMemo(() => {
+    return products.filter(p => {
+      if (categoryTab !== 'all' && (p.category || '').toLowerCase() !== categoryTab.toLowerCase()) return false;
+      if (search.trim()) {
+        const q = search.toLowerCase().trim();
+        const match = (p.name || '').toLowerCase().includes(q) ||
+          (p.sku || '').toLowerCase().includes(q) ||
+          (p.product_code || '').toLowerCase().includes(q) ||
+          (p.category || '').toLowerCase().includes(q) ||
+          (p.metal || '').toLowerCase().includes(q) ||
+          (p.purity || '').toLowerCase().includes(q) ||
+          (p.description || '').toLowerCase().includes(q);
+        if (!match) return false;
       }
-      if(stockFilter==='instock'&&p.stock<=0)return false;
-      if(stockFilter==='outofstock'&&p.stock>0)return false;
-      if(statusFilter!=='all'&&p.status!==statusFilter)return false;
-      if(pricingFilter!=='all'&&p.pricing_mode!==pricingFilter)return false;
+      if (stockFilter === 'instock' && p.stock <= 0) return false;
+      if (stockFilter === 'outofstock' && p.stock > 0) return false;
+      if (statusFilter !== 'all' && p.status !== statusFilter) return false;
+      if (pricingFilter !== 'all' && p.pricing_mode !== pricingFilter) return false;
       return true;
     });
-  },[products,categoryTab,search,stockFilter,statusFilter,pricingFilter]);
+  }, [products, categoryTab, search, stockFilter, statusFilter, pricingFilter]);
 
-  const hasActiveFilters=search.trim()||stockFilter!=='all'||statusFilter!=='all'||pricingFilter!=='all'||categoryTab!=='all';
+  const hasActiveFilters = search.trim() || stockFilter !== 'all' || statusFilter !== 'all' || pricingFilter !== 'all' || categoryTab !== 'all';
 
-  function resetFilters(){
+  function resetFilters() {
     setSearch('');
     setStockFilter('all');
     setStatusFilter('all');
@@ -1522,15 +1567,15 @@ function AdminProductList({products,readonly,refresh,onOpenImports}){
 
   return <div className="products-admin jewelry-admin">
     {/* Submenu Tabs & Actions */}
-    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'12px',marginBottom:'18px'}}>
-      <div className="coins-subtabs" style={{margin:0,border:0,padding:0}}>
-        <button className={'coins-subtab-btn '+(categoryTab==='all'?'active':'')} onClick={()=>setCategoryTab('all')}>All Jewelry Pieces ({products.length})</button>
-        {categories.map(([cat,count])=><button key={cat} className={'coins-subtab-btn '+(categoryTab.toLowerCase()===cat.toLowerCase()?'active':'')} onClick={()=>setCategoryTab(cat)}>{cat} ({count})</button>)}
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '18px' }}>
+      <div className="coins-subtabs" style={{ margin: 0, border: 0, padding: 0 }}>
+        <button className={'coins-subtab-btn ' + (categoryTab === 'all' ? 'active' : '')} onClick={() => setCategoryTab('all')}>All Jewelry Pieces ({products.length})</button>
+        {categories.map(([cat, count]) => <button key={cat} className={'coins-subtab-btn ' + (categoryTab.toLowerCase() === cat.toLowerCase() ? 'active' : '')} onClick={() => setCategoryTab(cat)}>{cat} ({count})</button>)}
       </div>
-      <div style={{display:'flex',gap:'10px',alignItems:'center',flexWrap:'wrap'}}>
-        <button className="button dark small-button" disabled={readonly} onClick={()=>{setError('');setAddingProduct(true)}}><Plus size={14}/> Add Jewelry</button>
-        {onOpenImports&&<button type="button" className="button secondary small-button" onClick={onOpenImports}><Upload size={14}/> Import Jewelry CSV</button>}
-        <a className="underlink" href="/api/admin/export/jewelry" download style={{display:'inline-flex',alignItems:'center',gap:'6px'}}><Download size={14}/>Export Jewelry CSV</a>
+      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+        <button className="button dark small-button" disabled={readonly} onClick={() => { setError(''); setAddingProduct(true) }}><Plus size={14} /> Add Jewelry</button>
+        {onOpenImports && <button type="button" className="button secondary small-button" onClick={onOpenImports}><Upload size={14} /> Import Jewelry CSV</button>}
+        <a className="underlink" href="/api/admin/export/jewelry" download style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Download size={14} />Export Jewelry CSV</a>
       </div>
     </div>
 
@@ -1540,7 +1585,7 @@ function AdminProductList({products,readonly,refresh,onOpenImports}){
       onSearchChange={setSearch}
       searchPlaceholder="Search jewelry by name, SKU, category, purity…"
       hasActiveFilters={hasActiveFilters}
-      activeFilterCount={(search.trim()?1:0) + (stockFilter!=='all'?1:0) + (statusFilter!=='all'?1:0) + (pricingFilter!=='all'?1:0) + (categoryTab!=='all'?1:0)}
+      activeFilterCount={(search.trim() ? 1 : 0) + (stockFilter !== 'all' ? 1 : 0) + (statusFilter !== 'all' ? 1 : 0) + (pricingFilter !== 'all' ? 1 : 0) + (categoryTab !== 'all' ? 1 : 0)}
       onReset={resetFilters}
       filters={[
         {
@@ -1549,9 +1594,9 @@ function AdminProductList({products,readonly,refresh,onOpenImports}){
           ariaLabel: 'Filter jewelry by status',
           onChange: setStatusFilter,
           options: [
-            {value: 'all', label: 'All Statuses'},
-            {value: 'published', label: 'Published'},
-            {value: 'draft', label: 'Draft'}
+            { value: 'all', label: 'All Statuses' },
+            { value: 'published', label: 'Published' },
+            { value: 'draft', label: 'Draft' }
           ]
         },
         {
@@ -1560,9 +1605,9 @@ function AdminProductList({products,readonly,refresh,onOpenImports}){
           ariaLabel: 'Filter jewelry by stock',
           onChange: setStockFilter,
           options: [
-            {value: 'all', label: 'All Stock'},
-            {value: 'instock', label: `In Stock (${products.filter(p=>p.stock>0).length})`},
-            {value: 'outofstock', label: `Out of Stock (${products.filter(p=>p.stock===0).length})`}
+            { value: 'all', label: 'All Stock' },
+            { value: 'instock', label: `In Stock (${products.filter(p => p.stock > 0).length})` },
+            { value: 'outofstock', label: `Out of Stock (${products.filter(p => p.stock === 0).length})` }
           ]
         },
         {
@@ -1571,36 +1616,36 @@ function AdminProductList({products,readonly,refresh,onOpenImports}){
           ariaLabel: 'Filter jewelry by pricing mode',
           onChange: setPricingFilter,
           options: [
-            {value: 'all', label: 'All Pricing'},
-            {value: 'GOLD_LINKED', label: 'Gold Linked'},
-            {value: 'FIXED', label: 'Fixed Price'}
+            { value: 'all', label: 'All Pricing' },
+            { value: 'GOLD_LINKED', label: 'Gold Linked' },
+            { value: 'FIXED', label: 'Fixed Price' }
           ]
         }
       ]}
     />
 
-    {error&&<p className="error" role="alert">{error}</p>}
+    {error && <p className="error" role="alert">{error}</p>}
 
     <AdminCatalogueList
       items={filteredProducts}
       label="Jewelry"
       resetKey={`${categoryTab}-${search}-${stockFilter}-${statusFilter}-${pricingFilter}`}
-      renderRow={p=><ProductRow key={p.id} p={p} readonly={readonly} refresh={refresh} onDelete={()=>deleteProduct(p.sku)}/>}
+      renderRow={p => <ProductRow key={p.id} p={p} readonly={readonly} refresh={refresh} onDelete={() => deleteProduct(p.sku)} />}
     />
 
-    {addingProduct&&<ProductForm modal error={error} onClose={()=>setAddingProduct(false)} onSave={saveProduct}/>}
+    {addingProduct && <ProductForm modal error={error} onClose={() => setAddingProduct(false)} onSave={saveProduct} />}
   </div>;
 }
 
-function ProductForm({product,onClose,onSave,error,modal=false}){
-  const [metal,setMetal]=useState(product?.metal||'Gold');
-  const [pricingMode,setPricingMode]=useState(product?.pricing_mode||'GOLD_LINKED');
-  const form=<CatalogueEditForm item={product} onSave={onSave} onClose={onClose} error={error} creating={!product}>
+function ProductForm({ product, onClose, onSave, error, modal = false }) {
+  const [metal, setMetal] = useState(product?.metal || 'Gold');
+  const [pricingMode, setPricingMode] = useState(product?.pricing_mode || 'GOLD_LINKED');
+  const form = <CatalogueEditForm item={product} onSave={onSave} onClose={onClose} error={error} creating={!product}>
     <label>SKU (Unique identifier)*
-      <input name="sku" defaultValue={product?.sku||''} placeholder="e.g. VEY-RG-01" required disabled={!!product}/>
+      <input name="sku" defaultValue={product?.sku || ''} placeholder="e.g. VEY-RG-01" required disabled={!!product} />
     </label>
     <label>Category*
-      <select name="category" defaultValue={product?.category||'Rings'}>
+      <select name="category" defaultValue={product?.category || 'Rings'}>
         <option value="Rings">Rings</option>
         <option value="Necklaces">Necklaces</option>
         <option value="Earrings">Earrings</option>
@@ -1610,17 +1655,17 @@ function ProductForm({product,onClose,onSave,error,modal=false}){
       </select>
     </label>
     <label>Jewelry Code / Group Slug
-      <input name="product_code" defaultValue={product?.product_code||''} placeholder="e.g. royal-garnet-ring (defaults to SKU)"/>
+      <input name="product_code" defaultValue={product?.product_code || ''} placeholder="e.g. royal-garnet-ring (defaults to SKU)" />
     </label>
     <label>Metal*
-      <select name="metal" value={metal} onChange={e=>setMetal(e.target.value)}>
+      <select name="metal" value={metal} onChange={e => setMetal(e.target.value)}>
         <option value="Gold">Gold</option>
         <option value="Silver">Silver</option>
         <option value="Platinum">Platinum</option>
       </select>
     </label>
     <label>Purity*
-      <select name="purity" defaultValue={product?.purity||(metal==='Silver'?'925':'18K')}>
+      <select name="purity" defaultValue={product?.purity || (metal === 'Silver' ? '925' : '18K')}>
         <option value="18K">18K</option>
         <option value="22K">22K</option>
         <option value="24K">24K</option>
@@ -1628,178 +1673,178 @@ function ProductForm({product,onClose,onSave,error,modal=false}){
       </select>
     </label>
     <label>Pricing Mode*
-      <select name="pricing_mode" value={pricingMode} onChange={e=>setPricingMode(e.target.value)}>
+      <select name="pricing_mode" value={pricingMode} onChange={e => setPricingMode(e.target.value)}>
         <option value="GOLD_LINKED">GOLD_LINKED (Live metal rates)</option>
         <option value="FIXED">FIXED (Static selling price)</option>
       </select>
     </label>
-    {pricingMode==='FIXED'?(
+    {pricingMode === 'FIXED' ? (
       <label>Fixed Selling Price (₹)*
-        <input name="fixed_price" type="number" step="0.01" min="1" defaultValue={product?.fixed_price||''} placeholder="e.g. 24500" required/>
+        <input name="fixed_price" type="number" step="0.01" min="1" defaultValue={product?.fixed_price || ''} placeholder="e.g. 24500" required />
       </label>
-    ):(
+    ) : (
       <>
         <label>Making Charge (₹ flat)
-          <input name="making_flat" type="number" step="0.01" min="0" defaultValue={product?.making_flat||0}/>
+          <input name="making_flat" type="number" step="0.01" min="0" defaultValue={product?.making_flat || 0} />
         </label>
         <label>Making Charge (%)
-          <input name="making_percent" type="number" step="0.01" min="0" defaultValue={product?.making_percent||0}/>
+          <input name="making_percent" type="number" step="0.01" min="0" defaultValue={product?.making_percent || 0} />
         </label>
         <label>Stone Charge (₹)
-          <input name="stone_charge" type="number" step="0.01" min="0" defaultValue={product?.stone_charge||0}/>
+          <input name="stone_charge" type="number" step="0.01" min="0" defaultValue={product?.stone_charge || 0} />
         </label>
         <label>Other Charge (₹)
-          <input name="other_charge" type="number" step="0.01" min="0" defaultValue={product?.other_charge||0}/>
+          <input name="other_charge" type="number" step="0.01" min="0" defaultValue={product?.other_charge || 0} />
         </label>
       </>
     )}
     <label>Net Metal Weight (grams)*
-      <input name="net_weight_g" type="number" step="0.001" min="0.001" defaultValue={product?.net_weight_g||''} placeholder="e.g. 3.500" required={pricingMode==='GOLD_LINKED'}/>
+      <input name="net_weight_g" type="number" step="0.001" min="0.001" defaultValue={product?.net_weight_g || ''} placeholder="e.g. 3.500" required={pricingMode === 'GOLD_LINKED'} />
     </label>
     <label>Size / Dimensions
-      <input name="size" defaultValue={product?.size||''} placeholder="e.g. 14, Medium, 42 cm"/>
+      <input name="size" defaultValue={product?.size || ''} placeholder="e.g. 14, Medium, 42 cm" />
     </label>
     <label>Finish
-      <input name="finish" defaultValue={product?.finish||'Gold'} placeholder="e.g. Gold, High Polish, Matte"/>
+      <input name="finish" defaultValue={product?.finish || 'Gold'} placeholder="e.g. Gold, High Polish, Matte" />
     </label>
     <label>Stock snapshot*
-      <input name="stock" type="number" min="0" defaultValue={product?.stock??10} required/>
+      <input name="stock" type="number" min="0" defaultValue={product?.stock ?? 10} required />
     </label>
   </CatalogueEditForm>;
-  return modal?<Modal title="Add New Jewelry" onClose={onClose}>{form}</Modal>:form;
+  return modal ? <Modal title="Add New Jewelry" onClose={onClose}>{form}</Modal> : form;
 }
 
-function AdminCatalogueList({items,label,resetKey,renderRow}){
-  const pagination=usePagination(items,resetKey);
-  return <div className="admin-panel"><div className="panel-title" style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'12px',marginBottom:'16px'}}><div><h3 style={{margin:0}}>All {label} ({items.length})</h3><span className="small muted">Total {label==='Jewelry'||label==='Products'?'jewelry pieces':label==='Coins'?'coins':label==='Kurtas'?'kurtas':'items'}: {items.length} · In stock: {items.filter(p=>p.stock>0).length} · Out of stock: {items.filter(p=>p.stock===0).length}</span></div><div style={{display:'flex',gap:'10px',alignItems:'center'}}><span className="status-badge">{items.length} Items Listed</span></div></div><div className="table-wrap"><table><thead><tr><th>Piece / SKU</th><th>Pricing</th><th>Weight</th><th>Stock</th><th>Status</th><th></th></tr></thead><tbody>{pagination.items.map(renderRow)}{!items.length&&<tr><td colSpan="6" className="empty" style={{textAlign:'center',padding:'30px'}}><p style={{margin:0}}>No {label.toLowerCase()} matched the current filters.</p></td></tr>}</tbody></table></div><Pagination pagination={pagination} label={label}/></div>;
+function AdminCatalogueList({ items, label, resetKey, renderRow }) {
+  const pagination = usePagination(items, resetKey);
+  return <div className="admin-panel"><div className="panel-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}><div><h3 style={{ margin: 0 }}>All {label} ({items.length})</h3><span className="small muted">Total {label === 'Jewelry' || label === 'Products' ? 'jewelry pieces' : label === 'Coins' ? 'coins' : label === 'Kurtas' ? 'kurtas' : 'items'}: {items.length} · In stock: {items.filter(p => p.stock > 0).length} · Out of stock: {items.filter(p => p.stock === 0).length}</span></div><div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}><span className="status-badge">{items.length} Items Listed</span></div></div><div className="table-wrap"><table><thead><tr><th>Piece / SKU</th><th>Pricing</th><th>Weight</th><th>Stock</th><th>Status</th><th></th></tr></thead><tbody>{pagination.items.map(renderRow)}{!items.length && <tr><td colSpan="6" className="empty" style={{ textAlign: 'center', padding: '30px' }}><p style={{ margin: 0 }}>No {label.toLowerCase()} matched the current filters.</p></td></tr>}</tbody></table></div><Pagination pagination={pagination} label={label} /></div>;
 }
 
-function AdminCatalogueRow({item,details,pricing,weight,actions,children}){
+function AdminCatalogueRow({ item, details, pricing, weight, actions, children }) {
   return <><tr>
-    <td><div style={{display:'flex',alignItems:'center',gap:'10px'}}>
-      <BrandedImage src={coinImage(item.image,true)} alt={item.name} style={{width:'36px',height:'36px',objectFit:'cover',borderRadius:'3px',flexShrink:0}}/>
+    <td><div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+      <BrandedImage src={coinImage(item.image, true)} alt={item.name} style={{ width: '36px', height: '36px', objectFit: 'cover', borderRadius: '3px', flexShrink: 0 }} />
       <div><strong>{item.name}</strong><small>{details}</small></div>
     </div></td>
-    <td>{pricing}</td><td>{weight}</td><td>{item.stock}</td><td><Status text={item.status}/></td><td>{actions}</td>
-  </tr>{children&&<tr><td colSpan="6"><div style={{background:'var(--ivory)',border:'1px solid var(--line)',padding:'20px',borderRadius:'4px',margin:'10px 0'}}>{children}</div></td></tr>}</>;
+    <td>{pricing}</td><td>{weight}</td><td>{item.stock}</td><td><Status text={item.status} /></td><td>{actions}</td>
+  </tr>{children && <tr><td colSpan="6"><div style={{ background: 'var(--ivory)', border: '1px solid var(--line)', padding: '20px', borderRadius: '4px', margin: '10px 0' }}>{children}</div></td></tr>}</>;
 }
 
 // Shared merchant editor for jewellery and coins. Domain fields are supplied as children.
-function CatalogueEditForm({item,onSave,onClose,error,readonly=false,children,creating=false}){
-  const [photo,setPhoto]=useState(item?.image||''),[kind,setKind]=useState(item?.image_kind||'photo');
-  const [photoBusy,setPhotoBusy]=useState(false),[saving,setSaving]=useState(false);
-  async function submit(e){
+function CatalogueEditForm({ item, onSave, onClose, error, readonly = false, children, creating = false }) {
+  const [photo, setPhoto] = useState(item?.image || ''), [kind, setKind] = useState(item?.image_kind || 'photo');
+  const [photoBusy, setPhotoBusy] = useState(false), [saving, setSaving] = useState(false);
+  async function submit(e) {
     e.preventDefault();
-    if(saving||photoBusy||readonly)return;
+    if (saving || photoBusy || readonly) return;
     setSaving(true);
-    try{await onSave(e)}finally{setSaving(false)}
+    try { await onSave(e) } finally { setSaving(false) }
   }
   return <form className="catalogue-edit-form" onSubmit={submit}>
-    <fieldset disabled={readonly||saving}>
+    <fieldset disabled={readonly || saving}>
       <div className="form-grid">
-        <label>Name<input name="name" defaultValue={item?.name||''} required maxLength={200}/></label>
-        <label>Status<select name="status" defaultValue={item?.status||'published'}><option>published</option><option>draft</option></select></label>
+        <label>Name<input name="name" defaultValue={item?.name || ''} required maxLength={200} /></label>
+        <label>Status<select name="status" defaultValue={item?.status || 'published'}><option>published</option><option>draft</option></select></label>
         {children}
-        <PhotoPicker value={photo} onChange={setPhoto} kind={kind} onKindChange={setKind} disabled={readonly||saving} onBusyChange={setPhotoBusy}/>
-        <label className="span-two">Description<textarea name="description" defaultValue={item?.description||''} rows="3" maxLength={5000}/></label>
+        <PhotoPicker value={photo} onChange={setPhoto} kind={kind} onKindChange={setKind} disabled={readonly || saving} onBusyChange={setPhotoBusy} />
+        <label className="span-two">Description<textarea name="description" defaultValue={item?.description || ''} rows="3" maxLength={5000} /></label>
       </div>
-      {error&&<p className="error" role="alert">{error}</p>}
+      {error && <p className="error" role="alert">{error}</p>}
       <div className="catalogue-edit-actions">
-        <button type="submit" className="button dark small-button" disabled={photoBusy||saving}>{saving?'Saving…':creating?'Create item':'Save changes'}</button>
+        <button type="submit" className="button dark small-button" disabled={photoBusy || saving}>{saving ? 'Saving…' : creating ? 'Create item' : 'Save changes'}</button>
         <button type="button" className="text-button" onClick={onClose}>Cancel</button>
       </div>
     </fieldset>
   </form>;
 }
 
-function ProductRow({p,readonly,refresh,onDelete}){
-  const {refreshCatalogue}=useStore();
-  const [editing,setEditing]=useState(false),[error,setError]=useState('');
-  async function save(e){
-    const body=Object.fromEntries(new FormData(e.target));
-    try{
-      await api('/admin/products/'+encodeURIComponent(p.sku),body,'PATCH');
+function ProductRow({ p, readonly, refresh, onDelete }) {
+  const { refreshCatalogue } = useStore();
+  const [editing, setEditing] = useState(false), [error, setError] = useState('');
+  async function save(e) {
+    const body = Object.fromEntries(new FormData(e.target));
+    try {
+      await api('/admin/products/' + encodeURIComponent(p.sku), body, 'PATCH');
       setEditing(false);
       await refresh();
-      await refreshCatalogue({notify:true});
-    }catch(e){setError(e.message)}
+      await refreshCatalogue({ notify: true });
+    } catch (e) { setError(e.message) }
   }
   return <AdminCatalogueRow item={p} details={`${p.sku} · ${p.product_code}`}
-    pricing={<>{p.pricing_mode==='GOLD_LINKED'?<span className="coin-badge gold">GOLD_LINKED</span>:<span className="status-badge">FIXED</span>}<small>{p.pricing_mode==='FIXED'?money(p.fixed_price):`${p.purity} · Live Rate`}</small></>}
+    pricing={<>{p.pricing_mode === 'GOLD_LINKED' ? <span className="coin-badge gold">GOLD_LINKED</span> : <span className="status-badge">FIXED</span>}<small>{p.pricing_mode === 'FIXED' ? money(p.fixed_price) : `${p.purity} · Live Rate`}</small></>}
     weight={<>{p.net_weight_g} g</>}
-    actions={<div style={{display:'flex',gap:'10px',alignItems:'center'}}>
-      <button className="underlink" disabled={readonly} onClick={()=>{setError('');setEditing(!editing)}}>{editing?'Close':'Edit'}</button>
-      {onDelete&&<button className="text-button" disabled={readonly} style={{color:'#a83232',padding:0}} onClick={onDelete} title="Delete jewelry"><Trash2 size={14}/></button>}
+    actions={<div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+      <button className="underlink" disabled={readonly} onClick={() => { setError(''); setEditing(!editing) }}>{editing ? 'Close' : 'Edit'}</button>
+      {onDelete && <button className="text-button" disabled={readonly} style={{ color: '#a83232', padding: 0 }} onClick={onDelete} title="Delete jewelry"><Trash2 size={14} /></button>}
     </div>}
-  >{editing&&<>
-    <CatalogueEditForm item={p} onSave={save} onClose={()=>setEditing(false)} error={error} readonly={readonly}/>
-    <ProductAngleManager product={p} readonly={readonly} refreshParent={refresh}/>
+  >{editing && <>
+    <CatalogueEditForm item={p} onSave={save} onClose={() => setEditing(false)} error={error} readonly={readonly} />
+    <ProductAngleManager product={p} readonly={readonly} refreshParent={refresh} />
   </>}</AdminCatalogueRow>;
 }
-function SettingsAdmin({data,refresh,readonly,owner=false}){
-  const [error,setError]=useState(''),[saved,setSaved]=useState(false),[busy,setBusy]=useState(false);
-  const [silverInput,setSilverInput]=useState('');
-  const [silverSaved,setSilverSaved]=useState(false);
+function SettingsAdmin({ data, refresh, readonly, owner = false }) {
+  const [error, setError] = useState(''), [saved, setSaved] = useState(false), [busy, setBusy] = useState(false);
+  const [silverInput, setSilverInput] = useState('');
+  const [silverSaved, setSilverSaved] = useState(false);
 
-  const feedSettings=data?.feedSettings||{};
-  const isStopped=feedSettings.feedStatus==='stopped';
-  const isGoldOn=feedSettings.goldFeedEnabled!==false;
-  const isProductOn=feedSettings.productFeedEnabled!==false;
+  const feedSettings = data?.feedSettings || {};
+  const isStopped = feedSettings.feedStatus === 'stopped';
+  const isGoldOn = feedSettings.goldFeedEnabled !== false;
+  const isProductOn = feedSettings.productFeedEnabled !== false;
 
-  async function toggleMaster(newStatus){
-    setBusy(true);setError('');setSaved(false);
-    try{
-      await api('/admin/feed-toggle',{status:newStatus});
+  async function toggleMaster(newStatus) {
+    setBusy(true); setError(''); setSaved(false);
+    try {
+      await api('/admin/feed-toggle', { status: newStatus });
       await refresh();
-    }catch(e){setError(e.message)}finally{setBusy(false)}
+    } catch (e) { setError(e.message) } finally { setBusy(false) }
   }
 
-  async function toggleChannel(kind,currentVal){
-    setBusy(true);setError('');setSaved(false);
-    try{
-      await api('/admin/feed-toggle',{kind,enabled:!currentVal});
+  async function toggleChannel(kind, currentVal) {
+    setBusy(true); setError(''); setSaved(false);
+    try {
+      await api('/admin/feed-toggle', { kind, enabled: !currentVal });
       await refresh();
-    }catch(e){setError(e.message)}finally{setBusy(false)}
+    } catch (e) { setError(e.message) } finally { setBusy(false) }
   }
 
-  async function saveSettings(e){
+  async function saveSettings(e) {
     e.preventDefault();
-    setBusy(true);setError('');setSaved(false);
-    try{
-      const formData=Object.fromEntries(new FormData(e.target));
-      await api('/admin/feed-settings',formData);
+    setBusy(true); setError(''); setSaved(false);
+    try {
+      const formData = Object.fromEntries(new FormData(e.target));
+      await api('/admin/feed-settings', formData);
       setSaved(true);
       await refresh();
-    }catch(e){setError(e.message)}finally{setBusy(false)}
+    } catch (e) { setError(e.message) } finally { setBusy(false) }
   }
 
-  async function saveSilver(e){
+  async function saveSilver(e) {
     e.preventDefault();
-    setError('');setSilverSaved(false);
-    try{
-      await api('/admin/coins/silver-rate',{rate:Number(silverInput)});
+    setError(''); setSilverSaved(false);
+    try {
+      await api('/admin/coins/silver-rate', { rate: Number(silverInput) });
       setSilverSaved(true);
       await refresh();
-    }catch(e){setError(e.message)}
+    } catch (e) { setError(e.message) }
   }
 
   return <div className="settings-admin">
     {/* Master Start / Stop Feed Toggle Banner */}
-    <div className={'feed-status-card '+(isStopped?'stopped':'active')}>
+    <div className={'feed-status-card ' + (isStopped ? 'stopped' : 'active')}>
       <div className="feed-toggle-header">
         <div>
-          <span className="eyebrow" style={{letterSpacing:'1.5px',marginBottom:'6px',display:'block',color:isStopped?'#c62828':'#2e7d32'}}>
+          <span className="eyebrow" style={{ letterSpacing: '1.5px', marginBottom: '6px', display: 'block', color: isStopped ? '#c62828' : '#2e7d32' }}>
             FEED AUTOMATION ENGINE
           </span>
-          <div style={{display:'flex',alignItems:'center',gap:'10px',flexWrap:'wrap'}}>
-            <h2 style={{margin:0,fontSize:'28px',color:isStopped?'#c62828':'#1b5e20'}}>
-              {isStopped?'Feeds Are Currently Stopped':'Feeds Are Active & Running'}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <h2 style={{ margin: 0, fontSize: '28px', color: isStopped ? '#c62828' : '#1b5e20' }}>
+              {isStopped ? 'Feeds Are Currently Stopped' : 'Feeds Are Active & Running'}
             </h2>
-            <span className={'status-badge '+(isStopped?'warning':'')} style={{fontSize:'10px',fontWeight:700,padding:'5px 12px',borderRadius:'20px'}}>
-              {isStopped?'🔴 STOPPED':'🟢 RUNNING'}
+            <span className={'status-badge ' + (isStopped ? 'warning' : '')} style={{ fontSize: '10px', fontWeight: 700, padding: '5px 12px', borderRadius: '20px' }}>
+              {isStopped ? '🔴 STOPPED' : '🟢 RUNNING'}
             </span>
           </div>
-          <p style={{margin:'8px 0 0',fontSize:'12px',color:'var(--muted)',maxWidth:'540px',lineHeight:'1.6'}}>
+          <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--muted)', maxWidth: '540px', lineHeight: '1.6' }}>
             {isStopped
               ? 'Feed synchronization and live rate fetches are halted. No external requests or market rate updates will be made until started.'
               : 'Feed synchronization and live gold spot rate updates are active.'}
@@ -1808,19 +1853,19 @@ function SettingsAdmin({data,refresh,readonly,owner=false}){
         <div>
           <button
             type="button"
-            disabled={busy||readonly}
-            className={'feed-toggle-switch '+(isStopped?'start':'stop')}
-            onClick={()=>toggleMaster(isStopped?'active':'stopped')}
-            style={{padding:'12px 24px',fontSize:'13px',gap:'10px'}}
+            disabled={busy || readonly}
+            className={'feed-toggle-switch ' + (isStopped ? 'start' : 'stop')}
+            onClick={() => toggleMaster(isStopped ? 'active' : 'stopped')}
+            style={{ padding: '12px 24px', fontSize: '13px', gap: '10px' }}
           >
-            {isStopped?<><Play size={18}/> Start Feed Automation</>:<><Pause size={18}/> Stop Feed Automation</>}
+            {isStopped ? <><Play size={18} /> Start Feed Automation</> : <><Pause size={18} /> Stop Feed Automation</>}
           </button>
         </div>
       </div>
     </div>
 
-    {error&&<div className="error" role="alert">{error}</div>}
-    {saved&&<div className="notice" style={{background:'#e8f5e9',borderColor:'#a5d6a7',color:'#1b5e20'}}>Settings updated and audited successfully.</div>}
+    {error && <div className="error" role="alert">{error}</div>}
+    {saved && <div className="notice" style={{ background: '#e8f5e9', borderColor: '#a5d6a7', color: '#1b5e20' }}>Settings updated and audited successfully.</div>}
 
     {/* Individual Feed Channel Controls */}
     <div className="feed-channel-grid">
@@ -1828,16 +1873,16 @@ function SettingsAdmin({data,refresh,readonly,owner=false}){
         <div className="feed-channel-card-header">
           <div>
             <h4>Metal Pricing Control</h4>
-            <small style={{color:'var(--muted)'}}>Gold & Silver Internal Management</small>
+            <small style={{ color: 'var(--muted)' }}>Gold & Silver Internal Management</small>
           </div>
-          <span className="channel-toggle-btn on" style={{background:'#e8f5e9',color:'#2e7d32',cursor:'default'}}>
+          <span className="channel-toggle-btn on" style={{ background: '#e8f5e9', color: '#2e7d32', cursor: 'default' }}>
             ● Managed Internally
           </span>
         </div>
-        <p style={{fontSize:'11px',color:'var(--muted)',margin:'0 0 12px'}}>
+        <p style={{ fontSize: '11px', color: 'var(--muted)', margin: '0 0 12px' }}>
           Live external pricing APIs have been completely removed. Metal prices are managed exclusively via manual entry and bulk CSV/Excel import in Gold Rates.
         </p>
-        <div style={{fontSize:'10px',background:'var(--paper)',padding:'8px 12px',borderRadius:'4px',wordBreak:'break-all'}}>
+        <div style={{ fontSize: '10px', background: 'var(--paper)', padding: '8px 12px', borderRadius: '4px', wordBreak: 'break-all' }}>
           <strong>Status: </strong>Official Admin-Approved Benchmarks Active
         </div>
       </div>
@@ -1846,63 +1891,63 @@ function SettingsAdmin({data,refresh,readonly,owner=false}){
         <div className="feed-channel-card-header">
           <div>
             <h4>Product Catalogue & Inventory Feed</h4>
-            <small style={{color:'var(--muted)'}}>Jewellery Stock & Variant Sync</small>
+            <small style={{ color: 'var(--muted)' }}>Jewellery Stock & Variant Sync</small>
           </div>
           <button
             type="button"
-            disabled={busy||readonly}
-            className={'channel-toggle-btn '+(isProductOn?'on':'off')}
-            onClick={()=>toggleChannel('products',isProductOn)}
+            disabled={busy || readonly}
+            className={'channel-toggle-btn ' + (isProductOn ? 'on' : 'off')}
+            onClick={() => toggleChannel('products', isProductOn)}
           >
-            {isProductOn?'● Enabled':'○ Disabled'}
+            {isProductOn ? '● Enabled' : '○ Disabled'}
           </button>
         </div>
-        <p style={{fontSize:'11px',color:'var(--muted)',margin:'0 0 12px'}}>
+        <p style={{ fontSize: '11px', color: 'var(--muted)', margin: '0 0 12px' }}>
           Synchronizes jewellery pieces, making charges, and absolute inventory stock counts.
         </p>
         <div style={{fontSize:'10px',background:'var(--paper)',padding:'8px 12px',borderRadius:'4px',wordBreak:'break-all'}}>
-          <strong>Source: </strong>{feedSettings.productsConfigured?'Supplier HTTPS Feed Configured':'Not configured'}
+          <strong>Source: </strong>{feedSettings.productsConfigured?'Product Feed Configured':'Not configured'}
         </div>
       </div>
     </div>
 
     {/* Detailed Feed Configuration Form */}
     <div className="admin-panel">
-      <h3>Supplier & Inventory Sync Configuration</h3>
+      <h3>Inventory & Freshness Configuration</h3>
       <p className="small muted">
-        Configure rate freshness windows, supplier endpoints, and inventory overwrite permissions. Owner edits are recorded in staff audit logs.
+        Configure rate freshness windows and inventory overwrite permissions. Owner edits are recorded in staff audit logs.
       </p>
       <form onSubmit={saveSettings}>
         <div className="form-grid">
           <label>
             Maximum gold-rate age (hours)
-            <input name="maxAgeHours" type="number" min="1" max="168" defaultValue={data.maxAgeHours||48} disabled={readonly}/>
-            <small className="muted" style={{display:'block',marginTop:'4px'}}>Rates older than this will pause gold-linked checkout.</small>
+            <input name="maxAgeHours" type="number" min="1" max="168" defaultValue={data.maxAgeHours || 48} disabled={readonly} />
+            <small className="muted" style={{ display: 'block', marginTop: '4px' }}>Rates older than this will pause gold-linked checkout.</small>
           </label>
           <label>
             Inventory sync mode
-            <select name="inventoryMode" defaultValue={feedSettings.inventoryMode||'incremental'} disabled={readonly}>
+            <select name="inventoryMode" defaultValue={feedSettings.inventoryMode || 'incremental'} disabled={readonly}>
               <option value="incremental">Incremental — omitted SKUs remain unchanged</option>
-              <option value="full">Full — omitted supplier SKUs set to out of stock</option>
+              <option value="full">Full — omitted SKUs set to out of stock</option>
             </select>
           </label>
           <label className="span-two">
             Metal Pricing Management
-            <p className="small muted" style={{margin:'4px 0 0'}}>
+            <p className="small muted" style={{ margin: '4px 0 0' }}>
               Gold and Silver benchmarks are managed in <Link to="/admin/gold-rates" className="underlink">Gold & Silver Rates</Link> with manual updates and CSV/Excel imports. No external live pricing APIs are called.
             </p>
           </label>
           <label className="span-two">
             Product CSV Feed URL
-            <input name="productUrl" type="url" placeholder="https://supplier.example/products.csv" defaultValue={feedSettings.productUrl||''} disabled={readonly}/>
+            <input name="productUrl" type="url" placeholder="https://example.com/products.csv" defaultValue={feedSettings.productUrl||''} disabled={readonly}/>
           </label>
           <label className="span-two">
-            Supplier fields allowed to overwrite merchant edits
-            <input name="overwriteFields" defaultValue={feedSettings.overwriteFields||'stock,fixed_price,net_weight_g,making_flat,stone_charge,other_charge'} disabled={readonly}/>
+            Allowed overwrite fields on import
+            <input name="overwriteFields" defaultValue={feedSettings.overwriteFields || 'stock,fixed_price,net_weight_g,making_flat,stone_charge,other_charge'} disabled={readonly} />
           </label>
         </div>
-        <button style={{marginTop:20}} className="button dark" disabled={busy||readonly}>
-          Save Feed Settings <Check size={16}/>
+        <button style={{ marginTop: 20 }} className="button dark" disabled={busy || readonly}>
+          Save Feed Settings <Check size={16} />
         </button>
       </form>
     </div>
@@ -1911,148 +1956,148 @@ function SettingsAdmin({data,refresh,readonly,owner=false}){
     <div className="admin-panel">
       <h3>999 Fine Silver Benchmark Rate</h3>
       <p className="small muted">Base spot rate per gram used to calculate prices for 999 fine silver coins and bullion bars.</p>
-      <form onSubmit={saveSilver} style={{display:'flex',gap:'12px',alignItems:'flex-end',maxWidth:'450px',marginTop:'14px'}}>
-        <label style={{flex:1}}>
+      <form onSubmit={saveSilver} style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', maxWidth: '450px', marginTop: '14px' }}>
+        <label style={{ flex: 1 }}>
           Silver rate (₹ / gram)
-          <input type="number" step="0.1" min="1" placeholder="e.g. 98.0" defaultValue={silverInput||98} onChange={e=>setSilverInput(e.target.value)} disabled={readonly}/>
+          <input type="number" step="0.1" min="1" placeholder="e.g. 98.0" defaultValue={silverInput || 98} onChange={e => setSilverInput(e.target.value)} disabled={readonly} />
         </label>
-        <button className="button dark small-button" style={{height:'43px',marginBottom:'0'}} disabled={readonly}>
-          Update Silver Rate <Check size={14}/>
+        <button className="button dark small-button" style={{ height: '43px', marginBottom: '0' }} disabled={readonly}>
+          Update Silver Rate <Check size={14} />
         </button>
       </form>
-      {silverSaved&&<p style={{color:'#2e7d32',fontSize:'11px',marginTop:'8px'}}>Silver benchmark rate updated.</p>}
+      {silverSaved && <p style={{ color: '#2e7d32', fontSize: '11px', marginTop: '8px' }}>Silver benchmark rate updated.</p>}
     </div>
-    <RecommendationsAdmin readonly={readonly}/>
-    {owner&&<StaffAccess/>}
+    <RecommendationsAdmin readonly={readonly} />
+    {owner && <StaffAccess />}
   </div>;
 }
-const FeedSettings=SettingsAdmin;
-function Rules({rule,readonly,refresh}){
- const {refreshCatalogue}=useStore();
- const [value,setValue]=useState({...rule,margin_type:rule.margin_type||'PERCENT',margin_value:rule.margin_value??0});
- const [changes,setChanges]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
- const set=(key,v)=>{setValue(s=>({...s,[key]:v}));setChanges(null);setMessage('');};
- async function preview(e){e.preventDefault();setBusy(true);setError('');setMessage('');try{setChanges(await api('/admin/rules/preview',value));}catch(e){setError(e.message)}finally{setBusy(false)}}
- async function publish(){setBusy(true);setError('');try{await api('/admin/rules',value);await refresh();await refreshCatalogue({notify:true});setChanges(null);setMessage('Pricing rule saved. Storefront prices have been refreshed.');}catch(e){setError(e.message)}finally{setBusy(false)}}
- return <div className="admin-panel rules">
-  <h3>Margin, tax & rounding</h3>
-  <p className="formula">Base subtotal + margin − applicable offers → tax treatment → rounding</p>
-  <p>Choose a fixed rupee amount per piece or a percentage of the base subtotal. Margin applies to jewellery and coins, including fixed-price pieces. Gold-linked base subtotal includes metal, making, stones and other charges. Making-charge offers discount only making charges.</p>
-  <form onSubmit={preview}><div className="form-grid">
-   <label>Margin type<select value={value.margin_type} onChange={e=>set('margin_type',e.target.value)} disabled={readonly||busy}><option value="FIXED">Fixed amount (₹ per piece)</option><option value="PERCENT">Percentage of base subtotal (%)</option></select></label>
-   <label>{value.margin_type==='FIXED'?'Fixed margin (₹ per piece)':'Margin percentage (%)'}<input type="number" step="0.01" min="0" max={value.margin_type==='PERCENT'?1000:999999999.99} value={value.margin_value} onChange={e=>set('margin_value',e.target.value)} disabled={readonly||busy} required/></label>
-   <label>Tax percentage<input type="number" step="0.01" min="0" max="100" value={value.tax_percent} onChange={e=>set('tax_percent',e.target.value)} disabled={readonly||busy} required/></label>
-   <label>Tax treatment<select value={value.tax_treatment} onChange={e=>set('tax_treatment',e.target.value)} disabled={readonly||busy}><option value="exclusive">Add tax to subtotal</option><option value="inclusive">Subtotal includes tax</option></select></label>
-   <label>Round final linked price to<select value={value.rounding} onChange={e=>set('rounding',e.target.value)} disabled={readonly||busy}><option value="0.01">₹0.01</option><option value="1">₹1</option><option value="10">₹10</option><option value="100">₹100</option></select></label>
-  </div><p className="small muted">A ₹10,000 base plus ₹500 fixed margin becomes ₹10,500; a 10% margin becomes ₹11,000 before other applicable adjustments. Fixed-price pieces already have a merchant selling price: margin is added to it without applying tax a second time. Zero margin keeps existing prices unchanged.</p>
-  {error&&<p className="error" role="alert">{error}</p>}{message&&<p className="notice" role="status">{message}</p>}
-  <button className="button dark" disabled={readonly||busy}>{busy?'Please wait…':'Preview price changes'}<Eye size={16}/></button></form>
-  {changes&&<><div className="table-wrap"><table><thead><tr><th>Piece / SKU</th><th>Old price</th><th>Margin</th><th>New price</th></tr></thead><tbody>{changes.map(c=><tr key={c.sku}><td>{c.name}<small>{c.sku} · {c.kind}</small></td><td>{c.before===null?'Awaiting rate':money(c.before)}</td><td>{c.margin===null?'—':money(c.margin)}</td><td>{c.after===null?'Awaiting rate':money(c.after)}</td></tr>)}</tbody></table></div><button className="button dark" disabled={readonly||busy} onClick={publish}>Confirm pricing rule <Check size={16}/></button></>}
- </div>;
+const FeedSettings = SettingsAdmin;
+function Rules({ rule, readonly, refresh }) {
+  const { refreshCatalogue } = useStore();
+  const [value, setValue] = useState({ ...rule, margin_type: rule.margin_type || 'PERCENT', margin_value: rule.margin_value ?? 0 });
+  const [changes, setChanges] = useState(null), [error, setError] = useState(''), [busy, setBusy] = useState(false), [message, setMessage] = useState('');
+  const set = (key, v) => { setValue(s => ({ ...s, [key]: v })); setChanges(null); setMessage(''); };
+  async function preview(e) { e.preventDefault(); setBusy(true); setError(''); setMessage(''); try { setChanges(await api('/admin/rules/preview', value)); } catch (e) { setError(e.message) } finally { setBusy(false) } }
+  async function publish() { setBusy(true); setError(''); try { await api('/admin/rules', value); await refresh(); await refreshCatalogue({ notify: true }); setChanges(null); setMessage('Pricing rule saved. Storefront prices have been refreshed.'); } catch (e) { setError(e.message) } finally { setBusy(false) } }
+  return <div className="admin-panel rules">
+    <h3>Margin, tax & rounding</h3>
+    <p className="formula">Base subtotal + margin − applicable offers → tax treatment → rounding</p>
+    <p>Choose a fixed rupee amount per piece or a percentage of the base subtotal. Margin applies to jewellery and coins, including fixed-price pieces. Gold-linked base subtotal includes metal, making, stones and other charges. Making-charge offers discount only making charges.</p>
+    <form onSubmit={preview}><div className="form-grid">
+      <label>Margin type<select value={value.margin_type} onChange={e => set('margin_type', e.target.value)} disabled={readonly || busy}><option value="FIXED">Fixed amount (₹ per piece)</option><option value="PERCENT">Percentage of base subtotal (%)</option></select></label>
+      <label>{value.margin_type === 'FIXED' ? 'Fixed margin (₹ per piece)' : 'Margin percentage (%)'}<input type="number" step="0.01" min="0" max={value.margin_type === 'PERCENT' ? 1000 : 999999999.99} value={value.margin_value} onChange={e => set('margin_value', e.target.value)} disabled={readonly || busy} required /></label>
+      <label>Tax percentage<input type="number" step="0.01" min="0" max="100" value={value.tax_percent} onChange={e => set('tax_percent', e.target.value)} disabled={readonly || busy} required /></label>
+      <label>Tax treatment<select value={value.tax_treatment} onChange={e => set('tax_treatment', e.target.value)} disabled={readonly || busy}><option value="exclusive">Add tax to subtotal</option><option value="inclusive">Subtotal includes tax</option></select></label>
+      <label>Round final linked price to<select value={value.rounding} onChange={e => set('rounding', e.target.value)} disabled={readonly || busy}><option value="0.01">₹0.01</option><option value="1">₹1</option><option value="10">₹10</option><option value="100">₹100</option></select></label>
+    </div><p className="small muted">A ₹10,000 base plus ₹500 fixed margin becomes ₹10,500; a 10% margin becomes ₹11,000 before other applicable adjustments. Fixed-price pieces already have a merchant selling price: margin is added to it without applying tax a second time. Zero margin keeps existing prices unchanged.</p>
+      {error && <p className="error" role="alert">{error}</p>}{message && <p className="notice" role="status">{message}</p>}
+      <button className="button dark" disabled={readonly || busy}>{busy ? 'Please wait…' : 'Preview price changes'}<Eye size={16} /></button></form>
+    {changes && <><div className="table-wrap"><table><thead><tr><th>Piece / SKU</th><th>Old price</th><th>Margin</th><th>New price</th></tr></thead><tbody>{changes.map(c => <tr key={c.sku}><td>{c.name}<small>{c.sku} · {c.kind}</small></td><td>{c.before === null ? 'Awaiting rate' : money(c.before)}</td><td>{c.margin === null ? '—' : money(c.margin)}</td><td>{c.after === null ? 'Awaiting rate' : money(c.after)}</td></tr>)}</tbody></table></div><button className="button dark" disabled={readonly || busy} onClick={publish}>Confirm pricing rule <Check size={16} /></button></>}
+  </div>;
 }
 
-function CoinsAdmin({readonly,refreshParent}){
-  const {refreshCatalogue}=useStore();
-  const [data,setData]=useState(null),[busy,setBusy]=useState(false),[error,setError]=useState(''),[subTab,setSubTab]=useState('all');
-  const [editingCoin,setEditingCoin]=useState(null),[addingCoin,setAddingCoin]=useState(false);
-  const [silverInput,setSilverInput]=useState(''),[editingSilver,setEditingSilver]=useState(false);
-  const [uploading,setUploading]=useState(false);
-  const [search,setSearch]=useState('');
-  const [stockFilter,setStockFilter]=useState('all');
-  const [statusFilter,setStatusFilter]=useState('all');
-  const [pricingFilter,setPricingFilter]=useState('all');
+function CoinsAdmin({ readonly, refreshParent }) {
+  const { refreshCatalogue } = useStore();
+  const [data, setData] = useState(null), [busy, setBusy] = useState(false), [error, setError] = useState(''), [subTab, setSubTab] = useState('all');
+  const [editingCoin, setEditingCoin] = useState(null), [addingCoin, setAddingCoin] = useState(false);
+  const [silverInput, setSilverInput] = useState(''), [editingSilver, setEditingSilver] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [search, setSearch] = useState('');
+  const [stockFilter, setStockFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [pricingFilter, setPricingFilter] = useState('all');
 
-  async function load(){
-    setBusy(true);setError('');
-    try{
-      const res=await api('/admin/coins');
+  async function load() {
+    setBusy(true); setError('');
+    try {
+      const res = await api('/admin/coins');
       setData(res);
-      setSilverInput(String(res.silverRate||98));
-    }catch(e){setError(e.message)}finally{setBusy(false)}
+      setSilverInput(String(res.silverRate || 98));
+    } catch (e) { setError(e.message) } finally { setBusy(false) }
   }
 
-  useEffect(()=>{load();},[]);
+  useEffect(() => { load(); }, []);
 
-  async function updateSilver(e){
+  async function updateSilver(e) {
     e.preventDefault();
-    try{
-      await api('/admin/coins/silver-rate',{rate:Number(silverInput)});
+    try {
+      await api('/admin/coins/silver-rate', { rate: Number(silverInput) });
       setEditingSilver(false);
       await load();
-      if(refreshParent)await refreshParent();
-    }catch(e){setError(e.message)}
+      if (refreshParent) await refreshParent();
+    } catch (e) { setError(e.message) }
   }
 
-  async function saveCoin(e){
+  async function saveCoin(e) {
     e.preventDefault();
-    const form=new FormData(e.target);
-    const body=Object.fromEntries(form);
+    const form = new FormData(e.target);
+    const body = Object.fromEntries(form);
     setError('');
-    try{
-      if(editingCoin){
-        await api('/admin/coins/'+editingCoin.sku,body,'PATCH');
-      }else{
-        await api('/admin/coins',body,'POST');
+    try {
+      if (editingCoin) {
+        await api('/admin/coins/' + editingCoin.sku, body, 'PATCH');
+      } else {
+        await api('/admin/coins', body, 'POST');
       }
       setEditingCoin(null);
       setAddingCoin(false);
       await load();
-      if(refreshParent)await refreshParent();
-      await refreshCatalogue({notify:true});
-    }catch(e){setError(e.message)}
+      if (refreshParent) await refreshParent();
+      await refreshCatalogue({ notify: true });
+    } catch (e) { setError(e.message) }
   }
 
-  async function deleteCoin(sku){
-    if(!window.confirm(`Are you sure you want to delete coin SKU ${sku}?`))return;
-    try{
-      await api('/admin/coins/'+sku,{},'DELETE');
+  async function deleteCoin(sku) {
+    if (!window.confirm(`Are you sure you want to delete coin SKU ${sku}?`)) return;
+    try {
+      await api('/admin/coins/' + sku, {}, 'DELETE');
       await load();
-      if(refreshParent)await refreshParent();
-      await refreshCatalogue({notify:true});
-    }catch(e){setError(e.message)}
+      if (refreshParent) await refreshParent();
+      await refreshCatalogue({ notify: true });
+    } catch (e) { setError(e.message) }
   }
 
-  async function handleImageUpload(e,setter){
-    const file=e.target.files?.[0];
-    if(!file)return;
+  async function handleImageUpload(e, setter) {
+    const file = e.target.files?.[0];
+    if (!file) return;
     setUploading(true);
-    try{
-      const reader=new FileReader();
-      reader.onload=async(ev)=>{
-        try{
-          const res=await api('/admin/upload-image',{name:file.name,data:ev.target.result});
+    try {
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        try {
+          const res = await api('/admin/upload-image', { name: file.name, data: ev.target.result });
           setter(res.url);
-        }catch(err){setError(err.message)}finally{setUploading(false)}
+        } catch (err) { setError(err.message) } finally { setUploading(false) }
       };
       reader.readAsDataURL(file);
-    }catch(err){setError(err.message);setUploading(false)}
+    } catch (err) { setError(err.message); setUploading(false) }
   }
 
-  const coins=data?.coins||[];
-  const filteredCoins=coins.filter(c=>{
-    if(subTab==='gold'&&(c.metal||'').toLowerCase()!=='gold'&&!(c.coin_type||'').toLowerCase().includes('gold'))return false;
-    if(subTab==='silver'&&(c.metal||'').toLowerCase()!=='silver'&&!(c.coin_type||'').toLowerCase().includes('silver'))return false;
-    if(search.trim()){
-      const q=search.toLowerCase().trim();
-      const match=(c.name||'').toLowerCase().includes(q)||
-                  (c.sku||'').toLowerCase().includes(q)||
-                  (c.coin_type||'').toLowerCase().includes(q)||
-                  (c.purity||'').toLowerCase().includes(q)||
-                  (c.metal||'').toLowerCase().includes(q)||
-                  String(c.weight_g||'').includes(q)||
-                  (c.description||'').toLowerCase().includes(q);
-      if(!match)return false;
+  const coins = data?.coins || [];
+  const filteredCoins = coins.filter(c => {
+    if (subTab === 'gold' && (c.metal || '').toLowerCase() !== 'gold' && !(c.coin_type || '').toLowerCase().includes('gold')) return false;
+    if (subTab === 'silver' && (c.metal || '').toLowerCase() !== 'silver' && !(c.coin_type || '').toLowerCase().includes('silver')) return false;
+    if (search.trim()) {
+      const q = search.toLowerCase().trim();
+      const match = (c.name || '').toLowerCase().includes(q) ||
+        (c.sku || '').toLowerCase().includes(q) ||
+        (c.coin_type || '').toLowerCase().includes(q) ||
+        (c.purity || '').toLowerCase().includes(q) ||
+        (c.metal || '').toLowerCase().includes(q) ||
+        String(c.weight_g || '').includes(q) ||
+        (c.description || '').toLowerCase().includes(q);
+      if (!match) return false;
     }
-    if(stockFilter==='instock'&&c.stock<=0)return false;
-    if(stockFilter==='outofstock'&&c.stock>0)return false;
-    if(statusFilter!=='all'&&c.status!==statusFilter)return false;
-    if(pricingFilter!=='all'&&c.pricing_mode!==pricingFilter)return false;
+    if (stockFilter === 'instock' && c.stock <= 0) return false;
+    if (stockFilter === 'outofstock' && c.stock > 0) return false;
+    if (statusFilter !== 'all' && c.status !== statusFilter) return false;
+    if (pricingFilter !== 'all' && c.pricing_mode !== pricingFilter) return false;
     return true;
   });
 
-  const hasActiveFilters=search.trim()||stockFilter!=='all'||statusFilter!=='all'||pricingFilter!=='all'||subTab!=='all';
+  const hasActiveFilters = search.trim() || stockFilter !== 'all' || statusFilter !== 'all' || pricingFilter !== 'all' || subTab !== 'all';
 
-  function resetFilters(){
+  function resetFilters() {
     setSearch('');
     setStockFilter('all');
     setStatusFilter('all');
@@ -2060,8 +2105,8 @@ function CoinsAdmin({readonly,refreshParent}){
     setSubTab('all');
   }
 
-  const goldCount=coins.filter(c=>(c.metal||'').toLowerCase()==='gold').length;
-  const silverCount=coins.filter(c=>(c.metal||'').toLowerCase()==='silver').length;
+  const goldCount = coins.filter(c => (c.metal || '').toLowerCase() === 'gold').length;
+  const silverCount = coins.filter(c => (c.metal || '').toLowerCase() === 'silver').length;
 
   return <div className="coins-admin">
     <div className="notice">
@@ -2072,30 +2117,30 @@ function CoinsAdmin({readonly,refreshParent}){
     <div className="coins-market-bar">
       <div className="coins-market-rates">
         <span className="coin-rate-tag gold">
-          <CoinsIcon size={16}/> Daily 24K Gold: <strong>{data?.goldRate24k?money(data.goldRate24k)+'/g':'Rate pending'}</strong>
+          <CoinsIcon size={16} /> Daily 24K Gold: <strong>{data?.goldRate24k ? money(data.goldRate24k) + '/g' : 'Rate pending'}</strong>
         </span>
         <span className="coin-rate-tag silver">
-          <CircleDollarSign size={16}/> 999 Fine Silver: <strong>₹{data?.silverRate||98}/g</strong>
-          {!editingSilver&&!readonly&&<button className="underlink" style={{fontSize:'10px',marginLeft:'8px'}} onClick={()=>setEditingSilver(true)}>Edit Rate</button>}
+          <CircleDollarSign size={16} /> 999 Fine Silver: <strong>₹{data?.silverRate || 98}/g</strong>
+          {!editingSilver && !readonly && <button className="underlink" style={{ fontSize: '10px', marginLeft: '8px' }} onClick={() => setEditingSilver(true)}>Edit Rate</button>}
         </span>
       </div>
-      {editingSilver&&<form onSubmit={updateSilver} style={{display:'inline-flex',gap:'8px',alignItems:'center'}}>
-        <label style={{margin:0,fontSize:'11px'}}>New Silver ₹/g: <input type="number" step="0.1" style={{width:'80px',minHeight:'32px',padding:'4px 8px'}} value={silverInput} onChange={e=>setSilverInput(e.target.value)} required/></label>
+      {editingSilver && <form onSubmit={updateSilver} style={{ display: 'inline-flex', gap: '8px', alignItems: 'center' }}>
+        <label style={{ margin: 0, fontSize: '11px' }}>New Silver ₹/g: <input type="number" step="0.1" style={{ width: '80px', minHeight: '32px', padding: '4px 8px' }} value={silverInput} onChange={e => setSilverInput(e.target.value)} required /></label>
         <button className="button dark small-button" type="submit">Save</button>
-        <button className="text-button" type="button" onClick={()=>setEditingSilver(false)}>Cancel</button>
+        <button className="text-button" type="button" onClick={() => setEditingSilver(false)}>Cancel</button>
       </form>}
     </div>
 
     {/* Submenu Tabs & Actions */}
-    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'12px',marginBottom:'18px'}}>
-      <div className="coins-subtabs" style={{margin:0,border:0,padding:0}}>
-        <button className={'coins-subtab-btn '+(subTab==='all'?'active':'')} onClick={()=>setSubTab('all')}>All Coins ({coins.length})</button>
-        <button className={'coins-subtab-btn '+(subTab==='gold'?'active':'')} onClick={()=>setSubTab('gold')}>Gold Coins ({goldCount})</button>
-        <button className={'coins-subtab-btn '+(subTab==='silver'?'active':'')} onClick={()=>setSubTab('silver')}>Silver Coins ({silverCount})</button>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '18px' }}>
+      <div className="coins-subtabs" style={{ margin: 0, border: 0, padding: 0 }}>
+        <button className={'coins-subtab-btn ' + (subTab === 'all' ? 'active' : '')} onClick={() => setSubTab('all')}>All Coins ({coins.length})</button>
+        <button className={'coins-subtab-btn ' + (subTab === 'gold' ? 'active' : '')} onClick={() => setSubTab('gold')}>Gold Coins ({goldCount})</button>
+        <button className={'coins-subtab-btn ' + (subTab === 'silver' ? 'active' : '')} onClick={() => setSubTab('silver')}>Silver Coins ({silverCount})</button>
       </div>
-      <div style={{display:'flex',gap:'10px',alignItems:'center'}}>
-        <button className="button dark small-button" disabled={readonly} onClick={()=>{setEditingCoin(null);setError('');setAddingCoin(true)}}><Plus size={14}/> Add Coin</button>
-        <a className="underlink" href="/api/admin/export/coins" download style={{display:'inline-flex',alignItems:'center',gap:'6px'}}><Download size={14}/>Export Coins CSV</a>
+      <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <button className="button dark small-button" disabled={readonly} onClick={() => { setEditingCoin(null); setError(''); setAddingCoin(true) }}><Plus size={14} /> Add Coin</button>
+        <a className="underlink" href="/api/admin/export/coins" download style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Download size={14} />Export Coins CSV</a>
       </div>
     </div>
 
@@ -2105,7 +2150,7 @@ function CoinsAdmin({readonly,refreshParent}){
       onSearchChange={setSearch}
       searchPlaceholder="Search coins by name, SKU, metal, weight…"
       hasActiveFilters={hasActiveFilters}
-      activeFilterCount={(search.trim()?1:0) + (stockFilter!=='all'?1:0) + (statusFilter!=='all'?1:0) + (pricingFilter!=='all'?1:0) + (subTab!=='all'?1:0)}
+      activeFilterCount={(search.trim() ? 1 : 0) + (stockFilter !== 'all' ? 1 : 0) + (statusFilter !== 'all' ? 1 : 0) + (pricingFilter !== 'all' ? 1 : 0) + (subTab !== 'all' ? 1 : 0)}
       onReset={resetFilters}
       filters={[
         {
@@ -2114,9 +2159,9 @@ function CoinsAdmin({readonly,refreshParent}){
           ariaLabel: 'Filter coins by status',
           onChange: setStatusFilter,
           options: [
-            {value: 'all', label: 'All Statuses'},
-            {value: 'published', label: 'Published'},
-            {value: 'draft', label: 'Draft'}
+            { value: 'all', label: 'All Statuses' },
+            { value: 'published', label: 'Published' },
+            { value: 'draft', label: 'Draft' }
           ]
         },
         {
@@ -2125,9 +2170,9 @@ function CoinsAdmin({readonly,refreshParent}){
           ariaLabel: 'Filter coins by stock',
           onChange: setStockFilter,
           options: [
-            {value: 'all', label: 'All Stock'},
-            {value: 'instock', label: `In Stock (${coins.filter(c=>c.stock>0).length})`},
-            {value: 'outofstock', label: `Out of Stock (${coins.filter(c=>c.stock===0).length})`}
+            { value: 'all', label: 'All Stock' },
+            { value: 'instock', label: `In Stock (${coins.filter(c => c.stock > 0).length})` },
+            { value: 'outofstock', label: `Out of Stock (${coins.filter(c => c.stock === 0).length})` }
           ]
         },
         {
@@ -2136,49 +2181,49 @@ function CoinsAdmin({readonly,refreshParent}){
           ariaLabel: 'Filter coins by pricing mode',
           onChange: setPricingFilter,
           options: [
-            {value: 'all', label: 'All Pricing'},
-            {value: 'METAL_LINKED', label: 'Metal Linked'},
-            {value: 'FIXED', label: 'Fixed Price'}
+            { value: 'all', label: 'All Pricing' },
+            { value: 'METAL_LINKED', label: 'Metal Linked' },
+            { value: 'FIXED', label: 'Fixed Price' }
           ]
         }
       ]}
     />
 
-    {error&&<p className="error">{error}</p>}
+    {error && <p className="error">{error}</p>}
 
-    <details className="advanced-media" style={{marginBottom:'16px'}}>
+    <details className="advanced-media" style={{ marginBottom: '16px' }}>
       <summary>Manage multiple coin photos (optional)</summary>
-      <ImageUploader products={coins.map(c=>({...c,product_code:c.sku}))} refreshParent={async()=>{await load();if(refreshParent)await refreshParent();}}/>
+      <ImageUploader products={coins.map(c => ({ ...c, product_code: c.sku }))} refreshParent={async () => { await load(); if (refreshParent) await refreshParent(); }} />
     </details>
 
-    <AdminCatalogueList items={filteredCoins} label="Coins" resetKey={`${subTab}-${search}-${stockFilter}-${statusFilter}-${pricingFilter}`} renderRow={c=><AdminCatalogueRow key={c.sku} item={c}
+    <AdminCatalogueList items={filteredCoins} label="Coins" resetKey={`${subTab}-${search}-${stockFilter}-${statusFilter}-${pricingFilter}`} renderRow={c => <AdminCatalogueRow key={c.sku} item={c}
       details={<>{c.sku} · {c.coin_type}</>}
-      pricing={<><span className={'coin-badge '+(c.metal==='Silver'?'silver':'gold')}>{c.metal}</span><small>{c.purity} · Live Rate</small><strong>{c.calculated_price!=null?money(c.calculated_price):'Awaiting rate'}</strong>{c.breakdown&&<small>Metal {money(c.breakdown.metal)} + Making {money(c.breakdown.making)}</small>}<small>Making charge: {money(c.making_charge)}</small></>}
-      weight={<>{Number(c.weight_g).toFixed(3)} g<small>{c.dimension||'Standard round'}</small></>}
-      actions={<div style={{display:'flex',gap:'10px',alignItems:'center'}}><button className="underlink" disabled={readonly} onClick={()=>{setError('');setEditingCoin(editingCoin?.sku===c.sku?null:c)}}>{editingCoin?.sku===c.sku?'Close':'Edit'}</button><button className="text-button" disabled={readonly} style={{color:'#a83232',padding:0}} onClick={()=>deleteCoin(c.sku)} title="Delete coin"><Trash2 size={14}/></button></div>}
-    >{editingCoin?.sku===c.sku&&<>
-      <CoinForm key={c.sku} coin={editingCoin} error={error} onClose={()=>setEditingCoin(null)} onSave={saveCoin}/>
+      pricing={<><span className={'coin-badge ' + (c.metal === 'Silver' ? 'silver' : 'gold')}>{c.metal}</span><small>{c.purity} · Live Rate</small><strong>{c.calculated_price != null ? money(c.calculated_price) : 'Awaiting rate'}</strong>{c.breakdown && <small>Metal {money(c.breakdown.metal)} + Making {money(c.breakdown.making)}</small>}<small>Making charge: {money(c.making_charge)}</small></>}
+      weight={<>{Number(c.weight_g).toFixed(3)} g<small>{c.dimension || 'Standard round'}</small></>}
+      actions={<div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}><button className="underlink" disabled={readonly} onClick={() => { setError(''); setEditingCoin(editingCoin?.sku === c.sku ? null : c) }}>{editingCoin?.sku === c.sku ? 'Close' : 'Edit'}</button><button className="text-button" disabled={readonly} style={{ color: '#a83232', padding: 0 }} onClick={() => deleteCoin(c.sku)} title="Delete coin"><Trash2 size={14} /></button></div>}
+    >{editingCoin?.sku === c.sku && <>
+      <CoinForm key={c.sku} coin={editingCoin} error={error} onClose={() => setEditingCoin(null)} onSave={saveCoin} />
       <ProductAngleManager
         product={editingCoin}
         readonly={readonly}
-        refreshParent={async()=>{
-          try{
-            const res=await api('/admin/coins');
+        refreshParent={async () => {
+          try {
+            const res = await api('/admin/coins');
             setData(res);
-            const fresh=(res.coins||[]).find(x=>x.sku===editingCoin.sku);
-            if(fresh)setEditingCoin(fresh);
-            if(refreshParent)await refreshParent();
-          }catch(err){setError(err.message);}
+            const fresh = (res.coins || []).find(x => x.sku === editingCoin.sku);
+            if (fresh) setEditingCoin(fresh);
+            if (refreshParent) await refreshParent();
+          } catch (err) { setError(err.message); }
         }}
       />
-    </>}</AdminCatalogueRow>}/>
+    </>}</AdminCatalogueRow>} />
 
-    <ImportPanel kind="coins" readonly={readonly} refresh={async()=>{await load();await refreshParent?.();await refreshCatalogue({notify:true})}}/>
+    <ImportPanel kind="coins" readonly={readonly} refresh={async () => { await load(); await refreshParent?.(); await refreshCatalogue({ notify: true }) }} />
     {/* New coins use a dialog; existing coins edit beneath their row. */}
-    {addingCoin&&<CoinForm
+    {addingCoin && <CoinForm
       modal
       error={error}
-      onClose={()=>{setAddingCoin(false);setEditingCoin(null);}}
+      onClose={() => { setAddingCoin(false); setEditingCoin(null); }}
       onSave={saveCoin}
       handleImageUpload={handleImageUpload}
       uploading={uploading}
@@ -2186,76 +2231,76 @@ function CoinsAdmin({readonly,refreshParent}){
   </div>;
 }
 
-function CoinForm({coin,onClose,onSave,error,modal=false}){
-  const [metal,setMetal]=useState(coin?.metal||'Gold');
-  const [pricingMode,setPricingMode]=useState(coin?.pricing_mode||'METAL_LINKED');
-  const form=<CatalogueEditForm item={coin} onSave={onSave} onClose={onClose} error={error} creating={!coin}>
-        <label>SKU (Unique identifier)*
-          <input name="sku" defaultValue={coin?.sku||''} placeholder="e.g. COIN-AU-2G" required disabled={!!coin}/>
-        </label>
-        <label>Metal*
-          <select name="metal" value={metal} onChange={e=>setMetal(e.target.value)}>
-            <option value="Gold">Gold</option>
-            <option value="Silver">Silver</option>
-          </select>
-        </label>
-        <label>Coin Category / Type
-          <input name="coin_type" defaultValue={coin?.coin_type||(metal==='Silver'?'Silver Coin':'Gold Coin')} placeholder="Gold Coin / Silver Coin / Bar"/>
-        </label>
-        <label>Purity*
-          <input name="purity" defaultValue={coin?.purity||(metal==='Silver'?'999':'24K')} placeholder="24K, 22K, 999, 925" required/>
-        </label>
-        <label>Weight (in grams)*
-          <input name="weight_g" type="number" step="0.001" min="0.001" defaultValue={coin?.weight_g||''} placeholder="e.g. 5.000" required/>
-        </label>
-        <label>Dimensions / Shape
-          <input name="dimension" defaultValue={coin?.dimension||''} placeholder="e.g. 20 mm Round"/>
-        </label>
-        <label>Making Charge (₹ flat)
-          <input name="making_charge" type="number" step="0.01" min="0" defaultValue={coin?.making_charge||0}/>
-        </label>
-        <label>Pricing Mode
-          <select name="pricing_mode" value={pricingMode} onChange={e=>setPricingMode(e.target.value)}>
-            <option value="METAL_LINKED">METAL_LINKED (Live market rate)</option>
-            <option value="FIXED">FIXED (Static price)</option>
-          </select>
-        </label>
-        {pricingMode==='FIXED'&&<label>Fixed Selling Price (₹)
-          <input name="fixed_price" type="number" step="0.01" min="1" defaultValue={coin?.fixed_price||''} required/>
-        </label>}
-        <label>Stock snapshot*
-          <input name="stock" type="number" min="0" defaultValue={coin?.stock??10} required/>
-        </label>
-    </CatalogueEditForm>;
-  return modal?<Modal title="Add New Coin" onClose={onClose}>{form}</Modal>:form;
+function CoinForm({ coin, onClose, onSave, error, modal = false }) {
+  const [metal, setMetal] = useState(coin?.metal || 'Gold');
+  const [pricingMode, setPricingMode] = useState(coin?.pricing_mode || 'METAL_LINKED');
+  const form = <CatalogueEditForm item={coin} onSave={onSave} onClose={onClose} error={error} creating={!coin}>
+    <label>SKU (Unique identifier)*
+      <input name="sku" defaultValue={coin?.sku || ''} placeholder="e.g. COIN-AU-2G" required disabled={!!coin} />
+    </label>
+    <label>Metal*
+      <select name="metal" value={metal} onChange={e => setMetal(e.target.value)}>
+        <option value="Gold">Gold</option>
+        <option value="Silver">Silver</option>
+      </select>
+    </label>
+    <label>Coin Category / Type
+      <input name="coin_type" defaultValue={coin?.coin_type || (metal === 'Silver' ? 'Silver Coin' : 'Gold Coin')} placeholder="Gold Coin / Silver Coin / Bar" />
+    </label>
+    <label>Purity*
+      <input name="purity" defaultValue={coin?.purity || (metal === 'Silver' ? '999' : '24K')} placeholder="24K, 22K, 999, 925" required />
+    </label>
+    <label>Weight (in grams)*
+      <input name="weight_g" type="number" step="0.001" min="0.001" defaultValue={coin?.weight_g || ''} placeholder="e.g. 5.000" required />
+    </label>
+    <label>Dimensions / Shape
+      <input name="dimension" defaultValue={coin?.dimension || ''} placeholder="e.g. 20 mm Round" />
+    </label>
+    <label>Making Charge (₹ flat)
+      <input name="making_charge" type="number" step="0.01" min="0" defaultValue={coin?.making_charge || 0} />
+    </label>
+    <label>Pricing Mode
+      <select name="pricing_mode" value={pricingMode} onChange={e => setPricingMode(e.target.value)}>
+        <option value="METAL_LINKED">METAL_LINKED (Live market rate)</option>
+        <option value="FIXED">FIXED (Static price)</option>
+      </select>
+    </label>
+    {pricingMode === 'FIXED' && <label>Fixed Selling Price (₹)
+      <input name="fixed_price" type="number" step="0.01" min="1" defaultValue={coin?.fixed_price || ''} required />
+    </label>}
+    <label>Stock snapshot*
+      <input name="stock" type="number" min="0" defaultValue={coin?.stock ?? 10} required />
+    </label>
+  </CatalogueEditForm>;
+  return modal ? <Modal title="Add New Coin" onClose={onClose}>{form}</Modal> : form;
 }
 
-function CoinsPage(){
-  const [coins,setCoins]=useState([]);
-  const [loading,setLoading]=useState(true);
-  const [error,setError]=useState('');
+function CoinsPage() {
+  const [coins, setCoins] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const {category='all'}=useParams();
-  const [params,setParams]=useSearchParams();
-  const {add,catalogueRevision,offers=[]}=useStore();
-  const gridOffer=offers.find(o=>o.show_in_grid)||offers[0];
+  const { category = 'all' } = useParams();
+  const [params, setParams] = useSearchParams();
+  const { add, catalogueRevision, offers = [] } = useStore();
+  const gridOffer = offers.find(o => o.show_in_grid) || offers[0];
 
-  useEffect(()=>{
-    document.title='Gold & Silver Coins | Veyora Jewels';
-    setError('');api('/coins').then(rows=>{setCoins(rows)}).catch(e=>setError(e.message)).finally(()=>setLoading(false));
-  },[catalogueRevision]);
+  useEffect(() => {
+    document.title = 'Gold & Silver Coins | Veyora Jewels';
+    setError(''); api('/coins').then(rows => { setCoins(rows) }).catch(e => setError(e.message)).finally(() => setLoading(false));
+  }, [catalogueRevision]);
 
-  const update=(k,v)=>{const next=new URLSearchParams(params);v?next.set(k,v):next.delete(k);setParams(next,{replace:true});};
+  const update = (k, v) => { const next = new URLSearchParams(params); v ? next.set(k, v) : next.delete(k); setParams(next, { replace: true }); };
 
-  const selectedCategory=category.toLowerCase();
-  let items=coins.filter(c=>{
-    if(selectedCategory==='gold')return (c.metal||'').toLowerCase()==='gold'||(c.coin_type||'').toLowerCase().includes('gold');
-    if(selectedCategory==='silver')return (c.metal||'').toLowerCase()==='silver'||(c.coin_type||'').toLowerCase().includes('silver');
+  const selectedCategory = category.toLowerCase();
+  let items = coins.filter(c => {
+    if (selectedCategory === 'gold') return (c.metal || '').toLowerCase() === 'gold' || (c.coin_type || '').toLowerCase().includes('gold');
+    if (selectedCategory === 'silver') return (c.metal || '').toLowerCase() === 'silver' || (c.coin_type || '').toLowerCase().includes('silver');
     return true;
-  }).filter(c=>matchPrice(c.price,params.get('price')));
+  }).filter(c => matchPrice(c.price, params.get('price')));
 
-  if(params.get('sort')==='price-asc')items.sort((a,b)=>(a.price||0)-(b.price||0));
-  if(params.get('sort')==='price-desc')items.sort((a,b)=>(b.price||0)-(a.price||0));
+  if (params.get('sort') === 'price-asc') items.sort((a, b) => (a.price || 0) - (b.price || 0));
+  if (params.get('sort') === 'price-desc') items.sort((a, b) => (b.price || 0) - (a.price || 0));
 
   const tabs = [
     { label: `All Coins (${coins.length})`, href: '/coins', active: selectedCategory === 'all' },
@@ -2266,24 +2311,24 @@ function CoinsPage(){
   const trustBanner = (
     <div className="coin-trust-banner">
       <div className="coin-trust-item">
-        <ShieldCheck size={24}/>
+        <ShieldCheck size={24} />
         <div>
           <strong>Listed metal & purity</strong>
-          <p className="muted" style={{margin:0,fontSize:'10px'}}>24K 999 Pure Gold & 999 Fine Silver</p>
+          <p className="muted" style={{ margin: 0, fontSize: '10px' }}>24K 999 Pure Gold & 999 Fine Silver</p>
         </div>
       </div>
       <div className="coin-trust-item">
-        <Package size={24}/>
+        <Package size={24} />
         <div>
           <strong>Packaging details</strong>
-          <p className="muted" style={{margin:0,fontSize:'10px'}}>Confirm supplied packaging with the merchant</p>
+          <p className="muted" style={{ margin: 0, fontSize: '10px' }}>Confirm supplied packaging with the merchant</p>
         </div>
       </div>
       <div className="coin-trust-item">
-        <ChartNoAxesCombined size={24}/>
+        <ChartNoAxesCombined size={24} />
         <div>
           <strong>Live Market Pricing</strong>
-          <p className="muted" style={{margin:0,fontSize:'10px'}}>Transparent bullion pricing linked to daily rates</p>
+          <p className="muted" style={{ margin: 0, fontSize: '10px' }}>Transparent bullion pricing linked to daily rates</p>
         </div>
       </div>
     </div>
@@ -2313,27 +2358,27 @@ function CoinsPage(){
   </Layout>;
 }
 
-function CoinProduct(){
-  const {sku, slug}=useParams();
+function CoinProduct() {
+  const { sku, slug } = useParams();
   const identifier = slug || sku;
-  const navigate=useNavigate();
-  const {add,catalogueRevision}=useStore();
-  const [coins,setCoins]=useState([]);
-  const [loading,setLoading]=useState(true),[error,setError]=useState(''),[retry,setRetry]=useState(0);
-  useEffect(()=>{
-    let active=true;
+  const navigate = useNavigate();
+  const { add, catalogueRevision } = useStore();
+  const [coins, setCoins] = useState([]);
+  const [loading, setLoading] = useState(true), [error, setError] = useState(''), [retry, setRetry] = useState(0);
+  useEffect(() => {
+    let active = true;
     setError('');
-    api('/coins').then(rows=>{if(active)setCoins(rows)}).catch(e=>{if(active)setError(e.message)}).finally(()=>{if(active)setLoading(false)});
-    return()=>{active=false};
-  },[catalogueRevision,retry]);
-  const p=coins.find(c=>c.slug===identifier||c.sku===identifier||c.sku?.toLowerCase()===(identifier||'').toLowerCase())||null;
-  const weights=p?coins.filter(c=>c.metal===p.metal&&c.purity===p.purity&&c.coin_type===p.coin_type).sort((a,b)=>Number(a.weight_g)-Number(b.weight_g)):[];
-  useEffect(()=>{document.title=(p?.name||(loading?'Loading coin':error?'Could not load coin':'Coin not found'))+' | Veyora Jewels'},[p,loading,error]);
-  if(loading||error||!p)return <Layout><section className="empty"><h1>{loading?'Finding your coin…':error?'Could not load this coin':'Coin not found'}</h1>{error&&<><p className="error" role="alert">{error}</p><button className="button dark" onClick={()=>setRetry(n=>n+1)}>Try again</button></>}<Link className="underlink" to="/coin">Back to coins</Link></section></Layout>;
-  const photos=galleryPhotos(p.images);
-  const angleImages=(photos.length?photos:galleryPhotos([{id:'default',role:'hero',url:p.image,alt_text:p.name}])).map(img=>({...img,url:coinImage(img.url)||img.url})).filter(img=>img.url);
+    api('/coins').then(rows => { if (active) setCoins(rows) }).catch(e => { if (active) setError(e.message) }).finally(() => { if (active) setLoading(false) });
+    return () => { active = false };
+  }, [catalogueRevision, retry]);
+  const p = coins.find(c => c.slug === identifier || c.sku === identifier || c.sku?.toLowerCase() === (identifier || '').toLowerCase()) || null;
+  const weights = p ? coins.filter(c => c.metal === p.metal && c.purity === p.purity && c.coin_type === p.coin_type).sort((a, b) => Number(a.weight_g) - Number(b.weight_g)) : [];
+  useEffect(() => { document.title = (p?.name || (loading ? 'Loading coin' : error ? 'Could not load coin' : 'Coin not found')) + ' | Veyora Jewels' }, [p, loading, error]);
+  if (loading || error || !p) return <Layout><section className="empty"><h1>{loading ? 'Finding your coin…' : error ? 'Could not load this coin' : 'Coin not found'}</h1>{error && <><p className="error" role="alert">{error}</p><button className="button dark" onClick={() => setRetry(n => n + 1)}>Try again</button></>}<Link className="underlink" to="/coin">Back to coins</Link></section></Layout>;
+  const photos = galleryPhotos(p.images);
+  const angleImages = (photos.length ? photos : galleryPhotos([{ id: 'default', role: 'hero', url: p.image, alt_text: p.name }])).map(img => ({ ...img, url: coinImage(img.url) || img.url })).filter(img => img.url);
 
-  const related = coins.filter(c=>c.metal===p.metal&&c.sku!==p.sku).slice(0,4);
+  const related = coins.filter(c => c.metal === p.metal && c.sku !== p.sku).slice(0, 4);
 
   const specs = [
     ['Metal & purity', `${p.purity} ${p.metal}`],
@@ -2345,20 +2390,20 @@ function CoinProduct(){
 
   const priceDetailsNode = (
     <details>
-      <summary>Price details <Plus size={15}/></summary>
-      {p.breakdown?(
+      <summary>Price details <Plus size={15} /></summary>
+      {p.breakdown ? (
         <div className="breakdown">
           {[
-            ['Metal value',p.breakdown.metal],
-            p.breakdown.original_making!==undefined&&p.breakdown.original_making!==p.breakdown.making?['Original minting & packaging',p.breakdown.original_making]:null,
-            p.breakdown.discount_amount>0?['Festive offer savings',-p.breakdown.discount_amount]:null,
-            ['Minting & packaging',p.breakdown.making],
-            ['Margin',p.breakdown.margin||0],
-            ['Tax',p.breakdown.tax||0],
-            ['Total',p.price]
-          ].filter(Boolean).map(([label,value])=><p key={label} style={value<0?{color:'#2e7d32',fontWeight:600}:{}}><span>{label}</span>{value<0?`-${money(Math.abs(value))}`:money(value)}</p>)}
+            ['Metal value', p.breakdown.metal],
+            p.breakdown.original_making !== undefined && p.breakdown.original_making !== p.breakdown.making ? ['Original minting & packaging', p.breakdown.original_making] : null,
+            p.breakdown.discount_amount > 0 ? ['Festive offer savings', -p.breakdown.discount_amount] : null,
+            ['Minting & packaging', p.breakdown.making],
+            ['Margin', p.breakdown.margin || 0],
+            ['Tax', p.breakdown.tax || 0],
+            ['Total', p.price]
+          ].filter(Boolean).map(([label, value]) => <p key={label} style={value < 0 ? { color: '#2e7d32', fontWeight: 600 } : {}}><span>{label}</span>{value < 0 ? `-${money(Math.abs(value))}` : money(value)}</p>)}
         </div>
-      ):(
+      ) : (
         <p>Pricing is awaiting an approved metal rate.</p>
       )}
     </details>
@@ -2388,155 +2433,155 @@ function CoinProduct(){
   );
 }
 
-function MaterialPage(){
-  const {slug}=useParams();
-  const [params,setParams]=useSearchParams();
-  const {accountReady,error,refreshCatalogue}=useStore();
-  const [meta,setMeta]=useState(null);
-  const [products,setProducts]=useState([]);
-  const [loading,setLoading]=useState(true);
-  const [fetchError,setFetchError]=useState('');
+function MaterialPage() {
+  const { slug } = useParams();
+  const [params, setParams] = useSearchParams();
+  const { accountReady, error, refreshCatalogue } = useStore();
+  const [meta, setMeta] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState('');
 
-  const update=(k,v)=>{
-    const next=new URLSearchParams(params);
-    v?next.set(k,v):next.delete(k);
-    setParams(next,{replace:true});
+  const update = (k, v) => {
+    const next = new URLSearchParams(params);
+    v ? next.set(k, v) : next.delete(k);
+    setParams(next, { replace: true });
   };
 
-  useEffect(()=>{
-    let active=true;
+  useEffect(() => {
+    let active = true;
     setLoading(true);
     setFetchError('');
-    api('/materials/'+encodeURIComponent(slug))
-      .then(res=>{
-        if(!active)return;
-        setMeta(res.material||null);
-        setProducts(res.products||[]);
+    api('/materials/' + encodeURIComponent(slug))
+      .then(res => {
+        if (!active) return;
+        setMeta(res.material || null);
+        setProducts(res.products || []);
         setLoading(false);
       })
-      .catch(err=>{
-        if(!active)return;
-        setFetchError(err.message||'Failed to load material collection');
+      .catch(err => {
+        if (!active) return;
+        setFetchError(err.message || 'Failed to load material collection');
         setLoading(false);
       });
-    return()=>{active=false;};
-  },[slug]);
+    return () => { active = false; };
+  }, [slug]);
 
-  useEffect(()=>{
-    if(meta?.name){
-      document.title=`${meta.seo_title||meta.name} | Veyora Jewels`;
+  useEffect(() => {
+    if (meta?.name) {
+      document.title = `${meta.seo_title || meta.name} | Veyora Jewels`;
     }
-  },[meta]);
+  }, [meta]);
 
-  const items=useMemo(()=>{
-    let list=grouped(products);
-    const priceFilter=params.get('price');
-    if(priceFilter)list=list.filter(p=>matchPrice(p.price,priceFilter));
-    const sort=params.get('sort');
-    if(sort==='price-asc')list.sort((a,b)=>a.price-b.price);
-    if(sort==='price-desc')list.sort((a,b)=>b.price-a.price);
+  const items = useMemo(() => {
+    let list = grouped(products);
+    const priceFilter = params.get('price');
+    if (priceFilter) list = list.filter(p => matchPrice(p.price, priceFilter));
+    const sort = params.get('sort');
+    if (sort === 'price-asc') list.sort((a, b) => a.price - b.price);
+    if (sort === 'price-desc') list.sort((a, b) => b.price - a.price);
     return list;
-  },[products,params.toString()]);
+  }, [products, params.toString()]);
 
   return <Layout>
     <CommonPLP
       eyebrow="MATERIAL CLASSIFICATION"
-      title={meta?.name||slug.replace(/-/g,' ')}
-      description={meta?.description||'Explore handcrafted pieces showcasing this distinguished precious material.'}
+      title={meta?.name || slug.replace(/-/g, ' ')}
+      description={meta?.description || 'Explore handcrafted pieces showcasing this distinguished precious material.'}
       tabs={[
-        {label:'All jewellery',href:'/collections/all',active:false},
-        {label:'Gold',href:'/collections/gold',active:false},
-        {label:'Silver',href:'/collections/silver',active:false}
+        { label: 'All jewellery', href: '/collections/all', active: false },
+        { label: 'Gold', href: '/collections/gold', active: false },
+        { label: 'Silver', href: '/collections/silver', active: false }
       ]}
       priceBrackets={priceBrackets}
-      activePrice={params.get('price')||''}
-      onPriceChange={v=>update('price',v)}
+      activePrice={params.get('price') || ''}
+      onPriceChange={v => update('price', v)}
       items={items}
-      loading={loading||!accountReady}
-      error={fetchError||error}
-      sortBy={params.get('sort')||'featured'}
-      onSortChange={v=>update('sort',v)}
-      onRetry={()=>refreshCatalogue().catch(()=>{})}
+      loading={loading || !accountReady}
+      error={fetchError || error}
+      sortBy={params.get('sort') || 'featured'}
+      onSortChange={v => update('sort', v)}
+      onRetry={() => refreshCatalogue().catch(() => { })}
       ProductCardComponent={ProductCard}
       itemLabel="pieces"
     />
   </Layout>;
 }
 
-function CraftsmanshipPage(){
-  const {slug}=useParams();
-  const [params,setParams]=useSearchParams();
-  const {accountReady,error,refreshCatalogue}=useStore();
-  const [meta,setMeta]=useState(null);
-  const [products,setProducts]=useState([]);
-  const [loading,setLoading]=useState(true);
-  const [fetchError,setFetchError]=useState('');
+function CraftsmanshipPage() {
+  const { slug } = useParams();
+  const [params, setParams] = useSearchParams();
+  const { accountReady, error, refreshCatalogue } = useStore();
+  const [meta, setMeta] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState('');
 
-  const update=(k,v)=>{
-    const next=new URLSearchParams(params);
-    v?next.set(k,v):next.delete(k);
-    setParams(next,{replace:true});
+  const update = (k, v) => {
+    const next = new URLSearchParams(params);
+    v ? next.set(k, v) : next.delete(k);
+    setParams(next, { replace: true });
   };
 
-  useEffect(()=>{
-    let active=true;
+  useEffect(() => {
+    let active = true;
     setLoading(true);
     setFetchError('');
-    api('/craftsmanship/'+encodeURIComponent(slug))
-      .then(res=>{
-        if(!active)return;
-        setMeta(res.craftsmanship||null);
-        setProducts(res.products||[]);
+    api('/craftsmanship/' + encodeURIComponent(slug))
+      .then(res => {
+        if (!active) return;
+        setMeta(res.craftsmanship || null);
+        setProducts(res.products || []);
         setLoading(false);
       })
-      .catch(err=>{
-        if(!active)return;
-        setFetchError(err.message||'Failed to load craftsmanship collection');
+      .catch(err => {
+        if (!active) return;
+        setFetchError(err.message || 'Failed to load craftsmanship collection');
         setLoading(false);
       });
-    return()=>{active=false;};
-  },[slug]);
+    return () => { active = false; };
+  }, [slug]);
 
-  useEffect(()=>{
-    if(meta?.name){
-      document.title=`${meta.seo_title||meta.name} | Veyora Jewels`;
+  useEffect(() => {
+    if (meta?.name) {
+      document.title = `${meta.seo_title || meta.name} | Veyora Jewels`;
     }
-  },[meta]);
+  }, [meta]);
 
-  const items=useMemo(()=>{
-    let list=grouped(products);
-    const priceFilter=params.get('price');
-    if(priceFilter)list=list.filter(p=>matchPrice(p.price,priceFilter));
-    const sort=params.get('sort');
-    if(sort==='price-asc')list.sort((a,b)=>a.price-b.price);
-    if(sort==='price-desc')list.sort((a,b)=>b.price-a.price);
+  const items = useMemo(() => {
+    let list = grouped(products);
+    const priceFilter = params.get('price');
+    if (priceFilter) list = list.filter(p => matchPrice(p.price, priceFilter));
+    const sort = params.get('sort');
+    if (sort === 'price-asc') list.sort((a, b) => a.price - b.price);
+    if (sort === 'price-desc') list.sort((a, b) => b.price - a.price);
     return list;
-  },[products,params.toString()]);
+  }, [products, params.toString()]);
 
   return <Layout>
     <CommonPLP
       eyebrow="HERITAGE CRAFTSMANSHIP"
-      title={meta?.name||slug.replace(/-/g,' ')}
-      description={meta?.description||'Handcrafted Indian craftsmanship passed down across generations of master artisans.'}
+      title={meta?.name || slug.replace(/-/g, ' ')}
+      description={meta?.description || 'Handcrafted Indian craftsmanship passed down across generations of master artisans.'}
       tabs={[
-        {label:'All jewellery',href:'/collections/all',active:false},
-        {label:'Gold',href:'/collections/gold',active:false},
-        {label:'Silver',href:'/collections/silver',active:false}
+        { label: 'All jewellery', href: '/collections/all', active: false },
+        { label: 'Gold', href: '/collections/gold', active: false },
+        { label: 'Silver', href: '/collections/silver', active: false }
       ]}
       priceBrackets={priceBrackets}
-      activePrice={params.get('price')||''}
-      onPriceChange={v=>update('price',v)}
+      activePrice={params.get('price') || ''}
+      onPriceChange={v => update('price', v)}
       items={items}
-      loading={loading||!accountReady}
-      error={fetchError||error}
-      sortBy={params.get('sort')||'featured'}
-      onSortChange={v=>update('sort',v)}
-      onRetry={()=>refreshCatalogue().catch(()=>{})}
+      loading={loading || !accountReady}
+      error={fetchError || error}
+      sortBy={params.get('sort') || 'featured'}
+      onSortChange={v => update('sort', v)}
+      onRetry={() => refreshCatalogue().catch(() => { })}
       ProductCardComponent={ProductCard}
       itemLabel="pieces"
     />
   </Layout>;
 }
 
-function NotFound(){return <Layout><section className="empty"><span className="eyebrow">A SMALL DETOUR</span><h1>This page is yet to be discovered.</h1><p>The link you followed may have changed, or the piece may have moved.</p><div style={{display:'flex',gap:'14px',justifyContent:'center',flexWrap:'wrap',marginTop:'20px'}}><Link className="button dark" to="/collections/all">Explore all jewellery</Link><Link className="underlink" to="/">Return to home</Link></div></section></Layout>}
-createRoot(document.getElementById('root')).render(<ErrorBoundary><BrowserRouter><Provider><Scroll/><Routes><Route path="/" element={<Home/>}/><Route path="/jewelry" element={<Collection/>}/><Route path="/jewelry/:slug" element={<Product/>}/><Route path="/coin" element={<CoinsPage/>}/><Route path="/coin/:slug" element={<CoinProduct/>}/><Route path="/kurta" element={<KurtasPage Layout={Layout} ProductCard={ProductCard}/>}/><Route path="/kurta/:slug" element={<KurtaDetailPage Layout={Layout} StructuredProduct={StructuredProduct} ProductCard={ProductCard}/>}/><Route path="/kurtas" element={<KurtasPage Layout={Layout} ProductCard={ProductCard}/>}/><Route path="/kurtas/:slug" element={<KurtaDetailPage Layout={Layout} StructuredProduct={StructuredProduct} ProductCard={ProductCard}/>}/><Route path="/collections/pearls" element={<Navigate to="/collections/all" replace/>}/><Route path="/collections/kurtas" element={<Navigate to="/kurtas" replace/>}/><Route path="/collections/kurta" element={<Navigate to="/kurtas" replace/>}/><Route path="/collections/:category" element={<Collection/>}/><Route path="/materials/:slug" element={<MaterialPage/>}/><Route path="/craftsmanship/:slug" element={<CraftsmanshipPage/>}/><Route path="/products/:slug" element={<Product/>}/><Route path="/coins/product/:sku" element={<CoinProduct/>}/><Route path="/coins" element={<CoinsPage/>}/> <Route path="/coins/:category" element={<CoinsPage/>}/><Route path="/account" element={<Account Layout={Layout} BagLines={BagLines} ProductCard={ProductCard} grouped={grouped}/>}/><Route path="/bag" element={<Bag/>}/><Route path="/checkout" element={<Checkout/>}/><Route path="/order/:id" element={<Order/>}/><Route path="/information/:page" element={<Information/>}/><Route path="/admin/*" element={<Admin/>}/><Route path="*" element={<NotFound/>}/></Routes></Provider></BrowserRouter></ErrorBoundary>);
+function NotFound() { return <Layout><section className="empty"><span className="eyebrow">A SMALL DETOUR</span><h1>This page is yet to be discovered.</h1><p>The link you followed may have changed, or the piece may have moved.</p><div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '20px' }}><Link className="button dark" to="/collections/all">Explore all jewellery</Link><Link className="underlink" to="/">Return to home</Link></div></section></Layout> }
+createRoot(document.getElementById('root')).render(<ErrorBoundary><BrowserRouter><Provider><Scroll /><Routes><Route path="/" element={<Home />} /><Route path="/jewelry" element={<Collection />} /><Route path="/jewelry/:slug" element={<Product />} /><Route path="/coin" element={<CoinsPage />} /><Route path="/coin/:slug" element={<CoinProduct />} /><Route path="/kurta" element={<KurtasPage Layout={Layout} ProductCard={ProductCard} />} /><Route path="/kurta/:slug" element={<KurtaDetailPage Layout={Layout} StructuredProduct={StructuredProduct} ProductCard={ProductCard} />} /><Route path="/kurtas" element={<KurtasPage Layout={Layout} ProductCard={ProductCard} />} /><Route path="/kurtas/:slug" element={<KurtaDetailPage Layout={Layout} StructuredProduct={StructuredProduct} ProductCard={ProductCard} />} /><Route path="/collections/pearls" element={<Navigate to="/collections/all" replace />} /><Route path="/collections/kurtas" element={<Navigate to="/kurtas" replace />} /><Route path="/collections/kurta" element={<Navigate to="/kurtas" replace />} /><Route path="/collections/:category" element={<Collection />} /><Route path="/materials/:slug" element={<MaterialPage />} /><Route path="/craftsmanship/:slug" element={<CraftsmanshipPage />} /><Route path="/products/:slug" element={<Product />} /><Route path="/coins/product/:sku" element={<CoinProduct />} /><Route path="/coins" element={<CoinsPage />} /> <Route path="/coins/:category" element={<CoinsPage />} /><Route path="/account" element={<Account Layout={Layout} BagLines={BagLines} ProductCard={ProductCard} grouped={grouped} />} /><Route path="/bag" element={<Bag />} /><Route path="/checkout" element={<Checkout />} /><Route path="/order/:id" element={<Order />} /><Route path="/information/:page" element={<Information />} /><Route path="/admin/*" element={<Admin />} /><Route path="*" element={<NotFound />} /></Routes></Provider></BrowserRouter></ErrorBoundary>);

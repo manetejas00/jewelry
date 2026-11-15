@@ -89,7 +89,6 @@ export class CoinResource {
       image: coin.image,
       image_kind: coin.image_kind,
       status: coin.status,
-      supplier: coin.supplier,
       seo_title: coin.seo_title,
       meta_description: coin.meta_description,
       images: coin.images || [],

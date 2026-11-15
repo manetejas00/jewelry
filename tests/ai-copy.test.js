@@ -75,8 +75,7 @@ function seedProduct() {
     pricing_mode: 'FIXED',
     fixed_price: 24000,
     stock: 4,
-    status: 'published',
-    supplier: 'Preview atelier'
+    status: 'published'
   });
 }
 

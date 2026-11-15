@@ -30,7 +30,7 @@ const products = [
     sku: 'MSK-002',
     code: 'msk-002-gulabi-crimson-rayon-kurta-set',
     name: 'Gulabi Crimson Red Rayon Chikankari Kurta & Palazzo Set',
-    category: 'Chicken Curry Kurtas',
+    category: 'Kurta',
     fabric: 'Premium Rayon',
     craftsmanship: 'Handcrafted Chikankari Needlework',
     work_details: 'Premium Rayon, Handcrafted White Chikankari Yoke, Embroidered Palazzo, 2 Pc',
@@ -68,7 +68,7 @@ const products = [
     sku: 'MSK-004',
     code: 'msk-004-firoza-peacock-blue-rayon-set',
     name: 'Firoza Peacock Blue Rayon Chikankari Kurta & Palazzo Set',
-    category: 'Chicken Curry Kurtas',
+    category: 'Kurta',
     fabric: 'Flowing Rayon',
     craftsmanship: 'White Contrast Chikankari',
     work_details: 'Flowing Rayon, White Contrast Dual Vertical Vines, Matching Palazzo Border, 2 Pc',
@@ -125,7 +125,7 @@ const products = [
     sku: 'MSK-007',
     code: 'msk-007-laila-scarlet-rayon-kurti',
     name: 'Laila Scarlet Red Rayon Hand-Embroidered Chikankari Kurti',
-    category: 'Chicken Curry Kurtas',
+    category: 'Kurta',
     fabric: 'Premium Spun Rayon',
     craftsmanship: 'Traditional White Needlecraft',
     work_details: 'Premium Spun Rayon, Dense White Chikankari Floral Yoke & Butis, 3/4 Sleeves, 1 Pc',
@@ -144,7 +144,7 @@ const products = [
     sku: 'MSK-008',
     code: 'msk-008-bahaar-sage-rayon-kurti',
     name: 'Bahaar Sage Green Rayon Everyday Chikankari Kurti',
-    category: 'Chicken Curry Kurtas',
+    category: 'Kurta',
     fabric: 'Lightweight Rayon',
     craftsmanship: 'Floral Shadow Needlework',
     work_details: 'Lightweight Rayon, Traditional White Floral Shadow Work, Straight Cut, 1 Pc',
@@ -277,7 +277,7 @@ const products = [
     sku: 'MSK-015',
     code: 'msk-015-mehr-yellow-rayon-kurti',
     name: 'Mehr Buttercup Yellow Rayon Tone-on-Tone Chikankari Kurti',
-    category: 'Chicken Curry Kurtas',
+    category: 'Kurta',
     fabric: 'Heavy Spun Rayon',
     craftsmanship: 'Pastel Tone-on-Tone Needlecraft',
     work_details: 'Heavy Spun Rayon, Pastel Yellow Floral Yoke Chikankari, Straight Fit, 1 Pc',
@@ -296,7 +296,7 @@ const products = [
     sku: 'MSK-016',
     code: 'msk-016-rania-magenta-rayon-set',
     name: 'Rania Berry Magenta Rayon Chikankari Kurta & Palazzo Set',
-    category: 'Chicken Curry Kurtas',
+    category: 'Kurta',
     fabric: 'Fluid Rayon',
     craftsmanship: 'White Floral Spray Embroidery',
     work_details: 'Fluid Rayon, White Contrast Chikankari Floral Spray, Side Slit Borders, Palazzo, 2 Pc',
@@ -410,7 +410,7 @@ const products = [
     sku: 'MSK-022',
     code: 'msk-022-zohra-scarlet-rayon-set',
     name: 'Zohra Scarlet Red Rayon Chikankari Kurta & Pant Set',
-    category: 'Chicken Curry Kurtas',
+    category: 'Kurta',
     fabric: 'Breathable Spun Rayon',
     craftsmanship: 'Teardrop Medallion Yoke & Hem Lace',
     work_details: 'Breathable Spun Rayon, High-Contrast White Embroidery, Straight Pant Included, 2 Pc',
@@ -467,7 +467,7 @@ const products = [
     sku: 'MSK-025',
     code: 'msk-025-aira-sky-blue-crepe-kurti',
     name: 'Aira Sky Blue Ditsy Floral Crepe Chikankari Kurti',
-    category: 'Chicken Curry Kurtas',
+    category: 'Kurta',
     fabric: 'Wrinkle-Resistant Poly Crepe',
     craftsmanship: 'White Yoke Embroidery Over Print',
     work_details: 'Wrinkle-Resistant Poly Crepe, All-Over Ditsy Floral Print, White Yoke Embroidery, 1 Pc',
@@ -486,7 +486,7 @@ const products = [
     sku: 'MSK-026',
     code: 'msk-026-tarana-black-rayon-set',
     name: 'Tarana Midnight Black Rayon Chikankari Kurta & Palazzo Set',
-    category: 'Chicken Curry Kurtas',
+    category: 'Kurta',
     fabric: 'Heavy Drape Rayon',
     craftsmanship: 'Dense White Floral Yoke & Palazzo Lace',
     work_details: 'Soft Flowing Rayon, Dense White Needlecraft, Flared Palazzo Bottom Included, 2 Pc',
@@ -562,7 +562,7 @@ const products = [
     sku: 'MSK-030',
     code: 'msk-030-basant-yellow-rayon-set',
     name: 'Basant Sunshine Yellow Rayon Chikankari Kurta & Palazzo Set',
-    category: 'Chicken Curry Kurtas',
+    category: 'Kurta',
     fabric: 'Spun Rayon',
     craftsmanship: 'Tonal Yellow Needlework & Scalloped Hem',
     work_details: 'Spun Rayon, Tonal Yellow Needlework, Scalloped Border Hemline, Embroidered Palazzo, 2 Pc',
@@ -632,7 +632,7 @@ async function run() {
   console.log(`Created CSV at: ${csvPath}`);
 
   // Backend bulk upload CSV
-  const backendHeaders = ['supplier', 'product_code', 'sku', 'name', 'category', 'description', 'fabric', 'craftsmanship', 'size', 'color', 'finish', 'image', 'pricing_mode', 'fixed_price', 'stock', 'status', 'source_timestamp'];
+  const backendHeaders = ['product_code', 'sku', 'name', 'category', 'description', 'fabric', 'craftsmanship', 'size', 'color', 'finish', 'image', 'pricing_mode', 'fixed_price', 'stock', 'status', 'source_timestamp'];
   const backendLines = [backendHeaders.join(',')];
   const timestamp = new Date().toISOString();
   
@@ -722,7 +722,6 @@ async function run() {
       fixed_price: p.selling_price,
       stock: 140, // 20 per size x 7 sizes
       status: 'published',
-      supplier: 'MSK Heritage Wholesale',
       image: heroImg,
       seo_title: `${p.name} | Lucknowi Chikankari`,
       meta_description: p.desc,
@@ -780,12 +779,11 @@ async function run() {
       // Also ensure it exists in the main products table for storefront display
       const existingProd = await db('products').where({ sku: variantSku }).first();
       const productRecord = {
-        supplier: 'MSK Heritage Wholesale',
         product_code: p.code,
         sku: variantSku,
         slug: size.code === 'XS' ? p.code : variantSlug,
         name: p.name,
-        category: 'Chicken Curry Kurtas',
+        category: 'Kurta',
         is_kurta: 1,
         description: p.desc,
         metal: p.fabric,

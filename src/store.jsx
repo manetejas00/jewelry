@@ -29,6 +29,10 @@ export function Provider({children}) {
     syncFailure.current = ''; setSyncError('');
   }
   useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')) {
+      setAccountReady(true);
+      return;
+    }
     let cancelled = false;
     const requestId = ++catalogueRequest.current;
     Promise.all([api('/products'),api('/coins').catch(()=>[]),api('/categories').catch(()=>[]),api('/config'),api('/account/session'),api('/offers').catch(()=>[])]).then(([p,cns,cats,c,account,o]) => {
@@ -40,6 +44,7 @@ export function Provider({children}) {
     return () => {cancelled = true;};
   }, []);
   async function refreshCatalogue({notify=false,fresh=false}={}) {
+    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')) return;
     if (fresh) bumpCatalogueReads();
     const requestId = ++catalogueRequest.current;
     const [pieces,coinsData,currentOffers] = await Promise.all([api('/products'),api('/coins').catch(()=>[]),api('/offers').catch(()=>[])]);
@@ -53,7 +58,13 @@ export function Provider({children}) {
     }
   }
   useEffect(()=>{
-    const reload=()=>{refreshCatalogue().catch(e=>setError(e.message));};
+    let lastReload = Date.now();
+    const reload=()=>{
+      if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')) return;
+      if (Date.now() - lastReload < 60000) return;
+      lastReload = Date.now();
+      refreshCatalogue().catch(e=>setError(e.message));
+    };
     const visible=()=>{if(document.visibilityState==='visible')reload();};
     window.addEventListener('focus',reload);document.addEventListener('visibilitychange',visible);
     const channel=typeof BroadcastChannel!=='undefined'?new BroadcastChannel('veyora-catalogue'):null;

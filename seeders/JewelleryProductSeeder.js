@@ -54,7 +54,6 @@ export async function JewelleryProductSeeder(k = db) {
         other_charge: item.other_charge || '0',
         stock: item.stock || 12,
         status: item.status || 'published',
-        supplier: item.supplier || 'Veyora Heritage Atelier',
         source_timestamp: timestamp,
         updated_at: timestamp,
         seo_title: `${item.name} | Veyora Jewels`,
@@ -82,11 +81,6 @@ export async function JewelleryProductSeeder(k = db) {
         inserted++;
       }
 
-      // Register SKU in supplier_skus
-      await t('supplier_skus')
-        .insert({ supplier: item.supplier, supplier_sku: item.sku, sku: item.sku })
-        .onConflict(['supplier', 'supplier_sku'])
-        .ignore();
 
       // Register primary hero image in product_images
       const hasImage = await t('product_images').where({ sku: item.sku, role: 'hero' }).first();

@@ -8,23 +8,23 @@ import { RATE_COLUMNS } from '../server/rates.js';
 export const stamp = new Date().toISOString();
 
 export const metalRates = [
-  ['Veyora Internal', 'Gold', '24K', 'INR', '10g', '100000', stamp.slice(0, 10), stamp],
-  ['Veyora Internal', 'Gold', '22K', 'INR', 'g', '9200', stamp.slice(0, 10), stamp],
-  ['Veyora Internal', 'Gold', '20K', 'INR', 'g', '8350', stamp.slice(0, 10), stamp],
-  ['Veyora Internal', 'Gold', '18K', 'INR', 'g', '7500', stamp.slice(0, 10), stamp],
-  ['Veyora Internal', 'Gold', '14K', 'INR', 'g', '5850', stamp.slice(0, 10), stamp],
-  ['Veyora Internal', 'Silver', '999', 'INR', 'kg', '120000', stamp.slice(0, 10), stamp],
-  ['Veyora Internal', 'Silver', '925', 'INR', 'g', '110', stamp.slice(0, 10), stamp]
+  ['Gold', '24K', 'INR', '10g', '100000', stamp.slice(0, 10), stamp],
+  ['Gold', '22K', 'INR', 'g', '9200', stamp.slice(0, 10), stamp],
+  ['Gold', '20K', 'INR', 'g', '8350', stamp.slice(0, 10), stamp],
+  ['Gold', '18K', 'INR', 'g', '7500', stamp.slice(0, 10), stamp],
+  ['Gold', '14K', 'INR', 'g', '5850', stamp.slice(0, 10), stamp],
+  ['Silver', '999', 'INR', 'kg', '120000', stamp.slice(0, 10), stamp],
+  ['Silver', '925', 'INR', 'g', '110', stamp.slice(0, 10), stamp]
 ];
 
 export const gold = [
-  ['Fictional Preview', '24K', 'INR', '10g', '100000', stamp.slice(0, 10), stamp],
-  ['Fictional Preview', '22K', 'INR', 'g', '9200', stamp.slice(0, 10), stamp],
-  ['Fictional Preview', '18K', 'INR', 'g', '7500', stamp.slice(0, 10), stamp]
+  ['24K', 'INR', '10g', '100000', stamp.slice(0, 10), stamp],
+  ['22K', 'INR', 'g', '9200', stamp.slice(0, 10), stamp],
+  ['18K', 'INR', 'g', '7500', stamp.slice(0, 10), stamp]
 ];
 
 const piece = (code, sku, name, cat, metal, purity, weight, size, image, mode, price, stock, making = '0') => [
-  'Fictional Preview', code, sku, name, cat,
+  code, sku, name, cat,
   `A fictional ${name.toLowerCase()} for the Veyora Jewels preview. Product materials and specifications are illustrative.`,
   metal, purity, weight, size, 'Gold', `/assets/products/${code}/hero.webp`, mode, price, making, '0', '0', '0', stock, 'published', stamp
 ];
@@ -39,21 +39,21 @@ export const products = [
   piece('velours-earrings', 'VEY-VE-01', 'Velours Pearl Earrings', 'Earrings', 'Gold', '18K', '3.500', 'One size', 'Velours Earring', 'FIXED', '28900', 6)
 ];
 
-export const goldJewellery = products.filter(p => p[6] === 'Gold');
+export const goldJewellery = products.filter(p => p[5] === 'Gold');
 export const silverJewellery = [
-  ['Veyora Heritage Atelier', 'tarkasi-filigree-choker', 'SIL-NK-01', 'Tarkasi Silver Filigree Choker', 'Necklaces', 'Delicate 925 sterling silver filigree choker handcrafted by Cuttack artisans.', 'Silver', '925', '28.500', 'Standard', 'Silver Finish', '/assets/products/tarkasi-silver-filigree-choker/hero.webp', 'FIXED', '18500', '0', '0', '0', '0', 10, 'published', stamp],
-  ['Veyora Heritage Atelier', 'chandrika-tribal-hasli', 'SIL-NK-02', 'Chandrika Tribal Silver Hasli', 'Necklaces', 'Rigid tribal silver collar necklace with antique oxidised finish and ghungroo droplets.', 'Silver', '925', '45.000', 'Standard', 'Oxidised Finish', '/assets/products/chandrika-tribal-oxidised-silver-hasli/hero.webp', 'FIXED', '24500', '0', '0', '0', '0', 8, 'published', stamp]
+  ['tarkasi-filigree-choker', 'SIL-NK-01', 'Tarkasi Silver Filigree Choker', 'Necklaces', 'Delicate 925 sterling silver filigree choker handcrafted by Cuttack artisans.', 'Silver', '925', '28.500', 'Standard', 'Silver Finish', '/assets/products/tarkasi-silver-filigree-choker/hero.webp', 'FIXED', '18500', '0', '0', '0', '0', 10, 'published', stamp],
+  ['chandrika-tribal-hasli', 'SIL-NK-02', 'Chandrika Tribal Silver Hasli', 'Necklaces', 'Rigid tribal silver collar necklace with antique oxidised finish and ghungroo droplets.', 'Silver', '925', '45.000', 'Standard', 'Oxidised Finish', '/assets/products/chandrika-tribal-oxidised-silver-hasli/hero.webp', 'FIXED', '24500', '0', '0', '0', '0', 8, 'published', stamp]
 ];
 
 export const coins = coinArtwork.map((a, i) => [
-  'Fictional Preview', 'DEMO-' + a.sku, a.name, a.metal, a.metal === 'Gold' ? 'Gold Coin' : 'Silver Coin',
+  'DEMO-' + a.sku, a.name, a.metal, a.metal === 'Gold' ? 'Gold Coin' : 'Silver Coin',
   a.purity, a.weight_g, i === 5 ? '55 x 30 mm Rectangular' : 'Round', '350',
   i === 1 ? 'FIXED' : 'METAL_LINKED', i === 1 ? '48000' : '', i === 2 ? 0 : 5,
   'Illustrative preview coin', a.image, 'draft', 'illustration', stamp
 ]);
 
 const kurtaPiece = (code, sku, name, desc, fabric, craft, size, color, finish, price, stock) => [
-  'Fictional Preview', code, sku, name, 'Chicken Curry Kurtas', desc, fabric, craft, size, color, finish,
+  code, sku, name, 'Kurta', desc, fabric, craft, size, color, finish,
   `/assets/products/${code}/hero.webp`, 'FIXED', price, stock, 'published', stamp
 ];
 
@@ -97,6 +97,8 @@ export function writeSamples() {
   }
 
   // Specialized jewellery kinds
+  fs.writeFileSync('samples/jewelry-template.csv', stringify([], { header: true, columns: schemas.products }));
+  fs.writeFileSync('samples/jewelry-example.csv', stringify(products, { header: true, columns: schemas.products }));
   fs.writeFileSync('samples/jewellery-template.csv', stringify([], { header: true, columns: schemas.products }));
   fs.writeFileSync('samples/jewellery-example.csv', stringify(products, { header: true, columns: schemas.products }));
   fs.writeFileSync('samples/gold-jewellery-template.csv', stringify([], { header: true, columns: schemas.products }));
@@ -104,7 +106,13 @@ export function writeSamples() {
   fs.writeFileSync('samples/silver-jewellery-template.csv', stringify([], { header: true, columns: schemas.products }));
   fs.writeFileSync('samples/silver-jewellery-example.csv', stringify(silverJewellery, { header: true, columns: schemas.products }));
 
+  // Coin singular kinds
+  fs.writeFileSync('samples/coin-template.csv', stringify([], { header: true, columns: schemas.coins }));
+  fs.writeFileSync('samples/coin-example.csv', stringify(coins, { header: true, columns: schemas.coins }));
+
   // Kurta specialized kinds
+  fs.writeFileSync('samples/kurta-template.csv', stringify([], { header: true, columns: schemas.kurtas }));
+  fs.writeFileSync('samples/kurta-example.csv', stringify(kurtas, { header: true, columns: schemas.kurtas }));
   fs.writeFileSync('samples/kurta-designs-template.csv', stringify([], { header: true, columns: schemas.kurtas }));
   fs.writeFileSync('samples/kurta-designs-example.csv', stringify(kurtas, { header: true, columns: schemas.kurtas }));
   fs.writeFileSync('samples/kurta-variants-template.csv', stringify([], { header: true, columns: schemas.kurtas }));

@@ -5,7 +5,7 @@ import { coinArtwork } from '../shared/coin-artwork.js';
 import { CoinCategorySeeder } from './CoinCategorySeeder.js';
 import { CoinVariantSeeder } from './CoinVariantSeeder.js';
 
-export const coinSupplier = 'Veyora Bullion Refinery';
+const MINT_NAME = 'Veyora Bullion Refinery';
 
 export async function CoinSeeder(k = db) {
   if (!await k.schema.hasTable('coins')) {
@@ -49,7 +49,7 @@ export async function CoinSeeder(k = db) {
         weight_g: String(coin.weight_g),
         dimension: coin.dimension,
         denomination,
-        mint: coinSupplier,
+        mint: MINT_NAME,
         collection,
         edition: '2026 Sovereign Edition',
         year_of_issue: 2026,
@@ -62,7 +62,6 @@ export async function CoinSeeder(k = db) {
         image: coin.image,
         image_kind: 'illustration',
         status: 'published',
-        supplier: coinSupplier,
         seo_title: `${coin.name} | Veyora Bullion`,
         meta_description: coin.description,
         source_timestamp: timestamp,

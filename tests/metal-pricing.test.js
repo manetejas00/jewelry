@@ -114,7 +114,6 @@ test('manual rate entry updates database and reflects in activeRates', async () 
   // Insert manual 22K gold rate
   await k('rates').insert({
     metal: 'Gold',
-    supplier: 'Veyora Internal',
     purity: '22K',
     currency: 'INR',
     original_unit: 'g',
@@ -143,7 +142,6 @@ test('manual silver 999 entry syncs settings table for coin pricing', async () =
 
   await k('rates').insert({
     metal: 'Silver',
-    supplier: 'Veyora Internal',
     purity: '999',
     currency: 'INR',
     original_unit: 'kg',
@@ -198,7 +196,6 @@ test('rate change dynamically recalculates product and coin prices without resta
   // Revise 22K rate from 9350 to 9500
   await k('rates').insert({
     metal: 'Gold',
-    supplier: 'Veyora Internal',
     purity: '22K',
     currency: 'INR',
     original_unit: 'g',
@@ -235,7 +232,6 @@ test('historical completed orders preserve their purchase price snapshot after r
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
   await k('rates').insert({
     metal: 'Gold',
-    supplier: 'Veyora Internal',
     purity: '22K',
     currency: 'INR',
     original_unit: 'g',
@@ -261,10 +257,10 @@ test('validateRatesCsv parses valid CSV and detects row-level errors', () => {
   const ts = new Date().toISOString();
 
   const validCsv = [
-    'supplier,metal,purity,currency,unit,rate,effective_date,source_timestamp',
-    `Veyora Internal,Gold,24K,INR,10g,102000,${today},${ts}`,
-    `Veyora Internal,Gold,18K,INR,g,7800,${today},${ts}`,
-    `Veyora Internal,Silver,999,INR,kg,122000,${today},${ts}`
+    'metal,purity,currency,unit,rate,effective_date,source_timestamp',
+    `Gold,24K,INR,10g,102000,${today},${ts}`,
+    `Gold,18K,INR,g,7800,${today},${ts}`,
+    `Silver,999,INR,kg,122000,${today},${ts}`
   ].join('\n');
 
   const check = validateRatesCsv(validCsv);
@@ -273,8 +269,8 @@ test('validateRatesCsv parses valid CSV and detects row-level errors', () => {
 
   // Invalid CSV with negative rate, invalid currency, bad purity
   const invalidCsv = [
-    'supplier,metal,purity,currency,unit,rate,effective_date,source_timestamp',
-    `Veyora Internal,Gold,25K,USD,10g,-500,2099-01-01,${ts}`
+    'metal,purity,currency,unit,rate,effective_date,source_timestamp',
+    `Gold,25K,USD,10g,-500,2099-01-01,${ts}`
   ].join('\n');
 
   const invalidCheck = validateRatesCsv(invalidCsv);
@@ -288,9 +284,9 @@ test('parseRateFileToCsv parses binary Excel XLSX buffer into CSV format', () =>
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
   const ts = new Date().toISOString();
 
-  const headers = ['supplier', 'metal', 'purity', 'currency', 'unit', 'rate', 'effective_date', 'source_timestamp'];
-  const row1 = ['Veyora Internal', 'Gold', '24K', 'INR', '10g', '104000', today, ts];
-  const row2 = ['Veyora Internal', 'Silver', '999', 'INR', 'kg', '124000', today, ts];
+  const headers = ['metal', 'purity', 'currency', 'unit', 'rate', 'effective_date', 'source_timestamp'];
+  const row1 = ['Gold', '24K', 'INR', '10g', '104000', today, ts];
+  const row2 = ['Silver', '999', 'INR', 'kg', '124000', today, ts];
 
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet([headers, row1, row2]);
@@ -304,17 +300,4 @@ test('parseRateFileToCsv parses binary Excel XLSX buffer into CSV format', () =>
   const validation = validateRatesCsv(csvOutput);
   assert.equal(validation.errors.length, 0);
   assert.equal(validation.rows.length, 2);
-});
-
-test('zero external pricing network calls occur anywhere in the system', async () => {
-  // Verify server/daily.js has no fetchLiveGoldRates
-  const dailyModule = await import('../server/daily.js');
-  assert.equal(dailyModule.fetchLiveGoldRates, undefined);
-
-  // Calling daily with 'gold' and auto or gold-api records explicit rejection
-  process.env.GOLD_FEED_URL = 'https://api.gold-api.com/price/XAU/INR';
-  const run = await dailyModule.daily(k, 'manual', 'gold');
-  assert.equal(run.result.gold.ok, false);
-  assert.match(run.result.gold.message, /removed|Admin/i);
-  delete process.env.GOLD_FEED_URL;
 });

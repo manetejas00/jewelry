@@ -1464,7 +1464,6 @@ const formattedItems = items.map((item, index) => {
     other_charge: '0',
     stock: 12,
     status: 'published',
-    supplier: 'Veyora Heritage Atelier',
     primary_material: item.primary_material,
     additional_materials: item.additional_materials,
     craftsmanship: item.craftsmanship,

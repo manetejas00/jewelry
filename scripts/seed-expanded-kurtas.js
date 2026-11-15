@@ -218,7 +218,6 @@ export async function seedExpandedKurtas() {
         const baseStock = 8 + ((sIdx * 3 + cIdx * 7 + sizeInfo.code.charCodeAt(0)) % 14);
 
         productRows.push({
-          supplier: 'Lucknow Heritage Maison',
           product_code: code,
           sku: variantSku,
           slug: variantSlug,
@@ -273,19 +272,6 @@ export async function seedExpandedKurtas() {
     // 4. Insert all kurta variants in batches
     for (let i = 0; i < productRows.length; i += batchSize) {
       await trx('products').insert(productRows.slice(i, i + batchSize));
-    }
-
-    // 5. Insert supplier SKUs
-    for (let i = 0; i < productRows.length; i += batchSize) {
-      const slice = productRows.slice(i, i + batchSize).map(r => ({
-        supplier: r.supplier,
-        supplier_sku: r.sku,
-        sku: r.sku
-      }));
-      await trx('supplier_skus')
-        .insert(slice)
-        .onConflict(['supplier', 'supplier_sku'])
-        .ignore();
     }
   });
 

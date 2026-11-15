@@ -3,7 +3,6 @@ import { COIN_CSV_SCHEMA } from '../Constants/CoinConstants.js';
 export class CoinMapper {
   static fromCsvRow(row, sourceTimestamp) {
     return {
-      supplier: row.supplier || 'Merchant',
       sku: row.sku,
       name: row.name,
       metal: row.metal || 'Gold',
@@ -25,7 +24,6 @@ export class CoinMapper {
 
   static toCsvRow(coin) {
     return {
-      supplier: coin.supplier || 'Merchant',
       sku: coin.sku,
       name: coin.name,
       metal: coin.metal,

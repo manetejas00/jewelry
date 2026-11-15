@@ -7,21 +7,18 @@ test('hero showcase: source code adheres strictly to sequence and timing specifi
   const heroFilePath = path.resolve('src/HeroBanner.jsx');
   const content = await fs.readFile(heroFilePath, 'utf8');
 
-  // 1. Verify exactly 7 slides in the sequence:
-  // Slide 1: Video
-  // Slide 2: Jewellery 1
-  // Slide 3: Jewellery 2
-  // Slide 4: Jewellery 3
-  // Slide 5: Kurta 1
-  // Slide 6: Kurta 2
-  // Slide 7: Kurta 3
+  // 1. Verify exactly 4 slides in the sequence:
+  // Slide 1: Video (hero.mp4)
+  // Slide 2: Kurta
+  // Slide 3: Jewelry
+  // Slide 4: Coins
   assert.ok(content.includes("type: 'video'"), 'Hero banner must include video slide');
-  assert.ok(content.includes("image: 'Pearls Collection'"), 'Must include Jewellery 1: Pearls Collection');
-  assert.ok(content.includes("image: 'Fine Jewelry Collection'"), 'Must include Jewellery 2: Fine Jewelry Collection');
-  assert.ok(content.includes("image: 'Lune Pearl Drop'"), 'Must include Jewellery 3: Lune Pearl Drop');
-  assert.ok(content.includes('/assets/banners/hero-kurta-1.webp'), 'Must include Kurta Image 1');
-  assert.ok(content.includes('/assets/banners/hero-kurta-2.webp'), 'Must include Kurta Image 2');
-  assert.ok(content.includes('/assets/banners/hero-kurta-3.webp'), 'Must include Kurta Image 3');
+  assert.ok(content.includes('/assets/banners/hero-kurta-desktop.webp'), 'Must include Kurta Desktop');
+  assert.ok(content.includes('/assets/banners/hero-kurta-mobile.webp'), 'Must include Kurta Mobile');
+  assert.ok(content.includes('/assets/banners/hero-jewelry-desktop.webp'), 'Must include Jewelry Desktop');
+  assert.ok(content.includes('/assets/banners/hero-jewelry-mobile.webp'), 'Must include Jewelry Mobile');
+  assert.ok(content.includes('/assets/banners/hero-coins-desktop.webp'), 'Must include Coins Desktop');
+  assert.ok(content.includes('/assets/banners/hero-coins-mobile.webp'), 'Must include Coins Mobile');
 
   // 2. Verify Video ended listener and 3s wait requirement:
   // "Listen to the actual ended event. Wait exactly 3 seconds after completion."
@@ -38,14 +35,17 @@ test('hero showcase: source code adheres strictly to sequence and timing specifi
   assert.ok(content.includes('prefers-reduced-motion'), 'Must check user reduced motion preference');
 });
 
-test('hero showcase: all 3 referenced kurta hero images exist on disk with valid dimensions', async () => {
-  const kurtaBanners = [
-    'public/assets/banners/hero-kurta-1.webp',
-    'public/assets/banners/hero-kurta-2.webp',
-    'public/assets/banners/hero-kurta-3.webp'
+test('hero showcase: all 6 referenced campaign hero images exist on disk with valid dimensions', async () => {
+  const banners = [
+    'public/assets/banners/hero-kurta-desktop.webp',
+    'public/assets/banners/hero-kurta-mobile.webp',
+    'public/assets/banners/hero-jewelry-desktop.webp',
+    'public/assets/banners/hero-jewelry-mobile.webp',
+    'public/assets/banners/hero-coins-desktop.webp',
+    'public/assets/banners/hero-coins-mobile.webp'
   ];
 
-  for (const bannerPath of kurtaBanners) {
+  for (const bannerPath of banners) {
     const fullPath = path.resolve(bannerPath);
     const stat = await fs.stat(fullPath);
     assert.ok(stat.isFile(), `Banner ${bannerPath} must exist as a file`);

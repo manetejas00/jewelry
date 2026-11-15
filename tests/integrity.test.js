@@ -20,7 +20,7 @@ before(async () => {
 after(async () => { await k.destroy(); });
 
 test('launch integrity fixes keep reviews, stock, offers and staff access consistent', async () => {
-  await k('products').insert({supplier:'Merchant', product_code:'jew-1', slug:'jew-1', sku:'JEW-1', name:'Jewellery piece', category:'Rings', metal:'Gold', purity:'22K', pricing_mode:'FIXED', fixed_price:10000, stock:2, status:'published', source_timestamp:stamp, updated_at:stamp});
+  await k('products').insert({product_code:'jew-1', slug:'jew-1', sku:'JEW-1', name:'Jewellery piece', category:'Rings', metal:'Gold', purity:'22K', pricing_mode:'FIXED', fixed_price:10000, stock:2, status:'published', source_timestamp:stamp, updated_at:stamp});
   await k('coins').insert({sku:'COIN-TEST-1', name:'Test coin', metal:'Gold', coin_type:'Gold Coin', purity:'24K', weight_g:1, pricing_mode:'FIXED', fixed_price:8000, stock:3, status:'published', created_at:stamp, updated_at:stamp});
   const product = await k('products').where({sku:'JEW-1'}).first();
   const coin = await k('coins').where({sku:'COIN-TEST-1'}).first();

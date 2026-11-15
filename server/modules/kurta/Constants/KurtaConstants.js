@@ -15,7 +15,6 @@ export const KURTA_STATUSES = ['published', 'draft'];
 export const KURTA_IMAGE_ROLES = ['hero', 'front', 'right', 'left', 'back', 'model', 'detail', 'modal'];
 
 export const KURTA_CSV_SCHEMA = [
-  'supplier',
   'product_code',
   'sku',
   'name',

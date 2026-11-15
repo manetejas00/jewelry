@@ -106,7 +106,6 @@ export class KurtaService {
       }
 
       const [kurtaId] = await t('kurtas').insert({
-        supplier: 'Lucknow Heritage Maison',
         product_code: cleanCode,
         sku: parentSku,
         slug: cleanCode,

@@ -269,7 +269,7 @@ async function run() {
   const startTime = Date.now();
 
   // Get all PDF-imported jewelry (this batch or all pending)
-  let query = db('jewelries').where({ supplier: 'PDF Import' });
+  let query = db('jewelries').whereNotNull('source_pdf');
   if (BATCH_ID) query = query.where({ import_batch: BATCH_ID });
 
   const jewelries = await query.select('*').orderBy('id', 'asc');

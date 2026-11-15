@@ -11,7 +11,6 @@ before(async () => {
   await migrate(k);
   // Insert test product
   await k('products').insert({
-    supplier: 'Test Supplier',
     product_code: 'test-ring',
     slug: 'test-ring',
     sku: 'TEST-R-12',

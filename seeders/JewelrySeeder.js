@@ -56,7 +56,6 @@ export async function JewelrySeeder(k = db, { data = jewelleryData } = {}) {
         other_charge: item.other_charge ? Number(item.other_charge) : 0,
         stock: item.stock != null ? item.stock : 12,
         status: item.status || 'published',
-        supplier: item.supplier || 'Veyora Heritage Atelier',
         image: item.image,
         seo_title: `${item.name} | Veyora Jewels`,
         meta_description: item.description,

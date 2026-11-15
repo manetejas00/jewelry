@@ -52,7 +52,7 @@ if(production&&(!process.env.SESSION_SECRET||process.env.SESSION_SECRET.length<3
 // Local preview bootstraps its disposable database. A hosted preview must not
 // run pending migrations or reseed itself on every Passenger restart; releases
 // apply migrations explicitly through the deployment workflow instead.
-if(preview){if(!production){await migrate();await seed();}}else if(await db('products').whereIn('supplier',['Fictional Preview','Veyora Preview Collection 100']).first()||await db('staff').where({email:'preview@veyora.local'}).first())throw validationError('Production cannot use the fictional preview database. Configure a clean production database.');
+if(preview){if(!production){await migrate();await seed();}}else if(await db('staff').where({email:'preview@veyora.local'}).first())throw validationError('Production cannot use the fictional preview database. Configure a clean production database.');
 app.disable('x-powered-by');
 app.set('trust proxy',Number(process.env.TRUST_PROXY||0));
 app.use(helmet({contentSecurityPolicy:production?{directives:{defaultSrc:["'self'"],scriptSrc:["'self'"],scriptSrcAttr:["'none'"],styleSrc:["'self'","'unsafe-inline'",'https://fonts.googleapis.com'],fontSrc:["'self'",'https://fonts.gstatic.com'],imgSrc:["'self'",'data:','blob:','https:'],connectSrc:["'self'"],objectSrc:["'none'"],frameAncestors:["'none'"]}}:false}));
@@ -178,14 +178,22 @@ app.post('/api/admin/login',rateLimit({windowMs:15*60000,limit:10}),route(async(
 app.get('/api/admin/session',auth(),(req,res)=>res.json({staff:req.session.staff,csrf:req.session.csrf}));
 app.post('/api/admin/logout',auth(),route(async(req,res)=>{const customer=req.session.customer,customerCsrf=req.session.customerCsrf,orderIds=req.session.orderIds;await new Promise((resolve,reject)=>req.session.regenerate(e=>e?reject(e):resolve()));if(customer){req.session.customer=customer;req.session.customerCsrf=customerCsrf;}req.session.orderIds=orderIds;res.json({ok:true});}));
 app.get('/api/admin/dashboard',auth(),route(async(req,res)=>{
- const [rates,batches,orders,rule,audits,products,coins,kurtas]=await Promise.all([
+ const hasJewelries = await db.schema.hasTable('jewelries').catch(()=>false);
+ const [rates,batches,orders,rule,audits,jewelryList,coins,kurtas]=await Promise.all([
   activeRates(db), db('import_batches').select('id','kind','status','summary','created_at','published_at').orderBy('id','desc').limit(30),
   db('orders').orderBy('created_at','desc').limit(100), db('pricing_rules').orderBy('id','desc').first(),
-  db('audit').orderBy('id','desc').limit(20), db('products'), db('coins').catch(()=>[]), db('kurtas').catch(()=>[])
+  db('audit').orderBy('id','desc').limit(20),
+  hasJewelries
+    ? db('jewelries').select('sku','name','status','category','image','stock')
+    : db('products').where(function(){
+        this.where('is_kurta',0).orWhere('is_kurta',false).orWhereNull('is_kurta');
+      }).select('sku','name','status','category','image','stock'),
+  db('coins').select('sku','name','status','image','stock').catch(()=>[]),
+  db('kurtas').select('sku','name','status','image','stock').catch(()=>[])
  ]);
  const todayBatches=batches.filter(b=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(b.created_at))===todayIndia());
- const jewelry=products.filter(p=>!p.is_kurta);
- const incomplete=[...products,...coins,...kurtas].filter(p=>!p.name||!p.sku||!p.image||p.stock==null).length;
+ const jewelry=jewelryList.filter(p=>!p.is_kurta&&!/kurta|chikankari|saree|ethnic|bottom/i.test(String(p.category||'')));
+ const incomplete=[...jewelry,...coins,...kurtas].filter(p=>!p.name||!p.sku||!p.image||p.stock==null).length;
  res.json({
   todayImports:{total:todayBatches.length,failed:todayBatches.filter(b=>b.status==='failed').length,published:todayBatches.filter(b=>b.status==='published').length},
   rates:Object.values(rates).map(r=>({...r,fresh:isFresh(r)})), batches:batches.map(b=>({...b,summary:parse(b.summary)})),
@@ -194,6 +202,16 @@ app.get('/api/admin/dashboard',auth(),route(async(req,res)=>{
  });
 }));
 app.get('/api/admin/products',auth(),route(async(req,res)=>{
+ const hasJewelries = await db.schema.hasTable('jewelries').catch(()=>false);
+ if (hasJewelries) {
+   const jCount = await db('jewelries').count('* as c').first();
+   const countVal = Number(jCount?.c ?? jCount?.['count(*)'] ?? 0);
+   if (countVal > 0) {
+     const { JewelryService } = await import('./modules/jewelry/Services/JewelryService.js');
+     const js = new JewelryService(db);
+     return res.json(await js.getAdminList());
+   }
+ }
  const products=await db('products').where(function(){
    this.where('is_kurta',0).orWhere('is_kurta',false).orWhereNull('is_kurta');
  }).where(function(){
@@ -231,7 +249,6 @@ app.post('/api/admin/products',auth(['owner','manager']),route(async(req,res)=>{
  const mode=pricing_mode==='FIXED'?'FIXED':'GOLD_LINKED';
  const nNow=now();
  const prodData={
-  supplier:'Merchant',
   product_code:cleanCode,
   slug,
   sku:cleanSku,
@@ -335,7 +352,7 @@ app.post('/api/admin/coins',auth(['owner','manager']),route(async(req,res)=>{
   description:description?String(description).trim().slice(0,5000):null,
   image:image?String(image).trim().slice(0,2000):null,
   status:['published','draft'].includes(status)?status:'published',
-  supplier:'Merchant',source_timestamp:nNow,image_kind:req.body.image_kind==='illustration'?'illustration':'photo',
+  source_timestamp:nNow,image_kind:req.body.image_kind==='illustration'?'illustration':'photo',
   created_at:nNow,
   updated_at:nNow
  };
@@ -347,7 +364,7 @@ app.post('/api/admin/coins',auth(['owner','manager']),route(async(req,res)=>{
 app.patch('/api/admin/coins/:sku',auth(['owner','manager']),route(async(req,res)=>{
  const coin=await db('coins').where({sku:req.params.sku}).first();
  if(!coin)return res.status(404).json({error:'Coin not found'});
- const invalid=validate('coins',exportCsv('coins',[{...coin,...req.body,sku:coin.sku,supplier:coin.supplier}])).errors[0];if(invalid)throw validationError(`${invalid.field}: ${invalid.correction}`);
+ const invalid=validate('coins',exportCsv('coins',[{...coin,...req.body,sku:coin.sku}])).errors[0];if(invalid)throw validationError(`${invalid.field}: ${invalid.correction}`);
  const patch={updated_at:now(),source_timestamp:now()};
  const fields=['name','metal','coin_type','purity','weight_g','dimension','making_charge','pricing_mode','fixed_price','stock','description','image','status','image_kind'];
  for(const f of fields){

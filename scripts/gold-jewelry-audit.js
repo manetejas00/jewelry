@@ -20,18 +20,9 @@ async function run() {
   const invCount = (await db('jewelry_inventory').count('* as n').first()).n;
   const catCount = (await db('jewelry_categories').count('* as n').first()).n;
 
-  // 2. By supplier
-  const bySupplier = await db('jewelries').groupBy('supplier').select('supplier').count('* as cnt');
-
-  // 3. Order items referencing jewelry
-  const hasOi = await db.schema.hasTable('order_items');
-  const orderedJewelry = hasOi
-    ? await db('order_items').where({ item_type: 'jewelry' }).distinct('item_id').pluck('item_id')
-    : [];
-
-  // 4. Sample of existing products (first 10)
+  // 2. Sample of existing products (first 10)
   const sampleProducts = await db('jewelries')
-    .select('id', 'sku', 'name', 'category', 'supplier', 'pricing_mode', 'fixed_price', 'selling_price', 'status')
+    .select('id', 'sku', 'name', 'category', 'pricing_mode', 'fixed_price', 'selling_price', 'status')
     .orderBy('id', 'asc')
     .limit(10);
 
@@ -100,24 +91,18 @@ async function run() {
     `| jewelry_inventory | ${invCount} |`,
     `| jewelry_categories | ${catCount} |`,
     '',
-    '## 2. Existing Jewelry Products by Supplier',
-    '',
-    '| Supplier | Count |',
-    '|---|---:|',
-    ...bySupplier.map(r => `| ${r.supplier} | ${r.cnt} |`),
-    '',
-    '## 3. Existing Jewelry Categories',
+    '## 2. Existing Jewelry Categories',
     '',
     '| ID | Slug | Name | Status |',
     '|---|---|---|---|',
     ...cats.map(c => `| ${c.id} | ${c.slug} | ${c.name} | ${c.status} |`),
     '',
-    '## 4. Sample Existing Products (First 10)',
+    '## 3. Sample Existing Products (First 10)',
     '',
-    '| ID | SKU | Name | Category | Supplier | Pricing Mode | Price |',
-    '|---|---|---|---|---|---|---:|',
+    '| ID | SKU | Name | Category | Pricing Mode | Price |',
+    '|---|---|---|---|---|---:|',
     ...sampleProducts.map(p =>
-      `| ${p.id} | ${p.sku} | ${p.name} | ${p.category} | ${p.supplier} | ${p.pricing_mode} | ${p.fixed_price || p.selling_price || '-'} |`
+      `| ${p.id} | ${p.sku} | ${p.name} | ${p.category} | ${p.pricing_mode} | ${p.fixed_price || p.selling_price || '-'} |`
     ),
     '',
     '## 5. Order Protection',

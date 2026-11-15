@@ -1,8 +1,6 @@
 import { db, now } from '../server/db.js';
 import { coinArtwork } from '../shared/coin-artwork.js';
 
-export const coinSupplier = 'Veyora Bullion Refinery';
-
 export async function CoinProductSeeder(k = db) {
   if (!await k.schema.hasTable('coins')) {
     throw Error('Run migrations before running CoinProductSeeder.');
@@ -40,7 +38,6 @@ export async function CoinProductSeeder(k = db) {
         image: coin.image,
         image_kind: 'illustration',
         status: 'published',
-        supplier: coinSupplier,
         source_timestamp: timestamp,
         updated_at: timestamp
       };

@@ -115,7 +115,7 @@ export const categoriesData = [
   },
   {
     slug: 'kurtas',
-    name: 'Chicken Curry Kurtas',
+    name: 'Kurta',
     description: 'Authentic handcrafted Lucknowi Chikankari kurtas in breathable pure mulmul cotton, chanderi, and georgette.',
     thumbnail: '/assets/products/lucknowi-ivory-chikankari-cotton-kurta/hero.webp',
     banner: '/assets/banners/festive-silver-coins.webp',
