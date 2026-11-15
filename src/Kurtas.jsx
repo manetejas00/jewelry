@@ -429,10 +429,10 @@ export function KurtaDetailPage({ Layout, StructuredProduct, ProductCard }) {
   const currentVariant = activeVariants.find(v => v.sku === selectedSku) || activeVariants[0] || kurtaData;
 
   useEffect(() => {
-    if (currentVariant) {
-      document.title = currentVariant.seo_title || `${currentVariant.name} | Veyora`;
+    if (currentVariant?.name || kurtaData?.name) {
+      document.title = currentVariant?.seo_title || kurtaData?.seo_title || `${currentVariant?.name || kurtaData?.name} | Veyora Jewels`;
     }
-  }, [currentVariant]);
+  }, [currentVariant, kurtaData]);
 
   if (loading && !kurtaData) {
     return (

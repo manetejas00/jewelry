@@ -96,45 +96,238 @@ export function validateReviewInput({ rating, title, comment, images }) {
  * Resolve product and canonical product ID (so sibling variants share reviews).
  */
 export async function resolveProduct(k, identifier) {
-  let product;
-  if (typeof identifier === 'number' || /^\d+$/.test(identifier)) {
-    product = await k('products').where({ id: Number(identifier) }).first();
-  } else {
-    product = await k('products').where({ slug: identifier }).orWhere({ product_code: identifier }).orWhere({ sku: identifier }).first();
-  }
-
-  if (!product) {
-    const hasCoins = await k.schema.hasTable('coins').catch(() => false);
-    if (hasCoins) {
-      const coin = (typeof identifier === 'number' || /^\d+$/.test(identifier))
-        ? await k('coins').where({ id: Number(identifier) }).first()
-        : await k('coins').where({ sku: identifier }).first();
-      if (coin) {
-        return {
-          product: { ...coin, product_code: coin.sku },
-          canonicalId: coin.id,
-          subjectType: 'coin'
-        };
-      }
-    }
+  if (identifier === null || identifier === undefined || identifier === '') {
     throw validationError('Product not found.', 404);
   }
 
-  // Canonical product is the first variant of this product_code
-  const canonical = await k('products')
-    .where({ product_code: product.product_code })
-    .orderBy('id', 'asc')
-    .first();
+  const isNumeric = typeof identifier === 'number' || /^\d+$/.test(String(identifier).trim());
+  const numId = isNumeric ? Number(identifier) : null;
+  const strId = String(identifier).trim();
 
-  return {
-    product,
-    canonicalId: canonical ? canonical.id : product.id,
-    subjectType: 'product'
-  };
+  // 1. Kurta Module (kurtas & kurta_variants)
+  const hasKurtas = await k.schema.hasTable('kurtas').catch(() => false);
+  if (hasKurtas) {
+    const hasKurtaVariants = await k.schema.hasTable('kurta_variants').catch(() => false);
+    if (hasKurtaVariants) {
+      let variant = null;
+      if (numId) {
+        variant = await k('kurta_variants').where({ id: numId }).first();
+      }
+      if (!variant) {
+        variant = await k('kurta_variants')
+          .where({ slug: strId })
+          .orWhere({ sku: strId })
+          .orWhere({ product_code: strId })
+          .first();
+      }
+      if (variant) {
+        const parentKurta = await k('kurtas').where({ id: variant.kurta_id }).first();
+        const base = parentKurta || variant;
+        return {
+          product: {
+            ...base,
+            ...variant,
+            id: variant.id,
+            kurta_id: variant.kurta_id,
+            product_code: base.product_code || variant.product_code || variant.sku,
+            name: base.name || variant.name || 'Kurta'
+          },
+          canonicalId: parentKurta ? parentKurta.id : variant.id,
+          subjectType: 'kurta'
+        };
+      }
+    }
+
+    let kurta = null;
+    if (numId) {
+      kurta = await k('kurtas').where({ id: numId }).first();
+    }
+    if (!kurta) {
+      kurta = await k('kurtas')
+        .where({ slug: strId })
+        .orWhere({ product_code: strId })
+        .orWhere({ sku: strId })
+        .first();
+    }
+    if (kurta) {
+      return {
+        product: {
+          ...kurta,
+          product_code: kurta.product_code || kurta.sku,
+          name: kurta.name || 'Kurta'
+        },
+        canonicalId: kurta.id,
+        subjectType: 'kurta'
+      };
+    }
+  }
+
+  // 2. Jewelry Module (jewelries & jewelry_variants)
+  const hasJewelries = await k.schema.hasTable('jewelries').catch(() => false);
+  if (hasJewelries) {
+    const hasJewelryVariants = await k.schema.hasTable('jewelry_variants').catch(() => false);
+    if (hasJewelryVariants) {
+      let variant = null;
+      if (numId) {
+        variant = await k('jewelry_variants').where({ id: numId }).first();
+      }
+      if (!variant) {
+        variant = await k('jewelry_variants')
+          .where({ sku: strId })
+          .orWhere({ product_code: strId })
+          .first();
+      }
+      if (variant) {
+        const parentJewelry = await k('jewelries').where({ id: variant.jewelry_id }).first();
+        const base = parentJewelry || variant;
+        return {
+          product: {
+            ...base,
+            ...variant,
+            id: variant.id,
+            jewelry_id: variant.jewelry_id,
+            product_code: base.product_code || variant.product_code || variant.sku,
+            name: base.name || variant.name || 'Jewelry'
+          },
+          canonicalId: parentJewelry ? parentJewelry.id : variant.id,
+          subjectType: 'jewelry'
+        };
+      }
+    }
+
+    let jewelry = null;
+    if (numId) {
+      jewelry = await k('jewelries').where({ id: numId }).first();
+    }
+    if (!jewelry) {
+      jewelry = await k('jewelries')
+        .where({ slug: strId })
+        .orWhere({ product_code: strId })
+        .orWhere({ sku: strId })
+        .first();
+    }
+    if (jewelry) {
+      return {
+        product: {
+          ...jewelry,
+          product_code: jewelry.product_code || jewelry.sku,
+          name: jewelry.name || 'Jewelry'
+        },
+        canonicalId: jewelry.id,
+        subjectType: 'jewelry'
+      };
+    }
+  }
+
+  // 3. Coins Module (coins & coin_variants)
+  const hasCoins = await k.schema.hasTable('coins').catch(() => false);
+  if (hasCoins) {
+    const hasCoinVariants = await k.schema.hasTable('coin_variants').catch(() => false);
+    if (hasCoinVariants && numId) {
+      const variant = await k('coin_variants').where({ id: numId }).first();
+      if (variant) {
+        const coin = await k('coins').where({ id: variant.coin_id }).first();
+        if (coin) {
+          return {
+            product: {
+              ...coin,
+              ...variant,
+              id: variant.id,
+              coin_id: variant.coin_id,
+              product_code: coin.sku,
+              name: coin.name || 'Coin'
+            },
+            canonicalId: coin.id,
+            subjectType: 'coin'
+          };
+        }
+      }
+    }
+
+    let coin = null;
+    if (numId) {
+      coin = await k('coins').where({ id: numId }).first();
+    }
+    if (!coin) {
+      coin = await k('coins')
+        .where({ sku: strId })
+        .orWhere({ slug: strId })
+        .first();
+    }
+    if (coin) {
+      return {
+        product: { ...coin, product_code: coin.sku, name: coin.name || 'Coin' },
+        canonicalId: coin.id,
+        subjectType: 'coin'
+      };
+    }
+  }
+
+  // 4. Products Table (legacy / combined fallback)
+  const hasProducts = await k.schema.hasTable('products').catch(() => false);
+  if (hasProducts) {
+    let product = null;
+    if (numId) {
+      product = await k('products').where({ id: numId }).first();
+    }
+    if (!product) {
+      product = await k('products')
+        .where({ slug: strId })
+        .orWhere({ product_code: strId })
+        .orWhere({ sku: strId })
+        .first();
+    }
+    if (product) {
+      const canonical = await k('products')
+        .where({ product_code: product.product_code })
+        .orderBy('id', 'asc')
+        .first();
+
+      return {
+        product,
+        canonicalId: canonical ? canonical.id : product.id,
+        subjectType: 'product'
+      };
+    }
+  }
+
+  throw validationError('Product not found.', 404);
 }
 
 function subjectQuery(query, subjectType, canonicalId) {
-  if (subjectType === 'coin') return query.where('reviews.coin_id', canonicalId).where('reviews.subject_type', 'coin');
+  if (subjectType === 'coin') {
+    return query.where(function () {
+      this.where('reviews.coin_id', canonicalId)
+        .orWhere(function () {
+          this.where('reviews.subject_type', 'coin').where('reviews.product_id', canonicalId);
+        });
+    });
+  }
+  if (subjectType === 'kurta') {
+    return query.where(function () {
+      this.where('reviews.kurta_id', canonicalId)
+        .orWhere(function () {
+          this.where('reviews.subject_type', 'kurta').where('reviews.product_id', canonicalId);
+        })
+        .orWhere(function () {
+          this.where('reviews.item_type', 'kurta').where('reviews.product_id', canonicalId);
+        });
+    });
+  }
+  if (subjectType === 'jewelry') {
+    return query.where(function () {
+      this.where('reviews.jewelry_id', canonicalId)
+        .orWhere(function () {
+          this.where('reviews.subject_type', 'jewelry').where('reviews.product_id', canonicalId);
+        })
+        .orWhere(function () {
+          this.where('reviews.item_type', 'jewelry').where('reviews.product_id', canonicalId);
+        })
+        .orWhere(function () {
+          this.whereNull('reviews.subject_type').where('reviews.product_id', canonicalId);
+        });
+    });
+  }
   return query.where('reviews.product_id', canonicalId).where(function () {
     this.where('reviews.subject_type', 'product').orWhereNull('reviews.subject_type');
   });
@@ -146,10 +339,65 @@ function subjectQuery(query, subjectType, canonicalId) {
 export async function checkVerifiedPurchase(k, customerId, productCode) {
   if (!customerId || !productCode) return false;
 
-  let skus = await k('products').where({ product_code: productCode }).pluck('sku');
+  let skus = [];
+
+  // Check products table
+  const hasProducts = await k.schema.hasTable('products').catch(() => false);
+  if (hasProducts) {
+    skus = await k('products').where({ product_code: productCode }).pluck('sku');
+  }
+
+  // Check kurtas and kurta_variants
+  if (!skus.length && await k.schema.hasTable('kurtas').catch(() => false)) {
+    const hasKurtaVariants = await k.schema.hasTable('kurta_variants').catch(() => false);
+    if (hasKurtaVariants) {
+      const kSkus = await k('kurta_variants').where({ product_code: productCode }).pluck('sku');
+      if (kSkus.length) skus = kSkus;
+      else {
+        const parent = await k('kurtas').where({ product_code: productCode }).first();
+        if (parent) {
+          skus = await k('kurta_variants').where({ kurta_id: parent.id }).pluck('sku');
+        }
+      }
+    }
+    if (!skus.length) {
+      const parent = await k('kurtas').where({ product_code: productCode }).first();
+      if (parent?.sku) skus = [parent.sku];
+    }
+  }
+
+  // Check jewelries and jewelry_variants
+  if (!skus.length && await k.schema.hasTable('jewelries').catch(() => false)) {
+    const hasJewelryVariants = await k.schema.hasTable('jewelry_variants').catch(() => false);
+    if (hasJewelryVariants) {
+      const jSkus = await k('jewelry_variants').where({ product_code: productCode }).pluck('sku');
+      if (jSkus.length) skus = jSkus;
+      else {
+        const parent = await k('jewelries').where({ product_code: productCode }).first();
+        if (parent) {
+          skus = await k('jewelry_variants').where({ jewelry_id: parent.id }).pluck('sku');
+        }
+      }
+    }
+    if (!skus.length) {
+      const parent = await k('jewelries').where({ product_code: productCode }).first();
+      if (parent?.sku) skus = [parent.sku];
+    }
+  }
+
+  // Check coins
+  if (!skus.length && await k.schema.hasTable('coins').catch(() => false)) {
+    const coin = await k('coins').where({ sku: productCode }).first();
+    if (coin) skus = [coin.sku];
+  }
+
   if (!skus.length) {
     skus = [productCode];
   }
+
+  const hasOrderItems = await k.schema.hasTable('order_items').catch(() => false);
+  const hasOrders = await k.schema.hasTable('orders').catch(() => false);
+  if (!hasOrderItems || !hasOrders) return false;
 
   const orderItem = await k('order_items')
     .join('orders', 'orders.id', 'order_items.order_id')
@@ -160,6 +408,9 @@ export async function checkVerifiedPurchase(k, customerId, productCode) {
   if (orderItem) return true;
 
   // Fallback: check by customer email in case orders were placed as guest before account creation
+  const hasCustomers = await k.schema.hasTable('customers').catch(() => false);
+  if (!hasCustomers) return false;
+
   const customer = await k('customers').where({ id: customerId }).first();
   if (!customer?.email) return false;
 
@@ -394,11 +645,13 @@ export async function submitReview(k, customerId, productIdOrSlug, reviewData) {
   const stamp = now();
 
   return await k.transaction(async t => {
-    // Insert review with pending status
-    const [reviewId] = await t('reviews').insert({
-      product_id: subjectType === 'coin' ? null : canonicalId,
-      coin_id: subjectType === 'coin' ? canonicalId : null,
-      subject_type: subjectType,
+    const hasSubjectType = await t.schema.hasColumn('reviews', 'subject_type').catch(() => false);
+    const hasItemType = await t.schema.hasColumn('reviews', 'item_type').catch(() => false);
+    const hasKurtaId = await t.schema.hasColumn('reviews', 'kurta_id').catch(() => false);
+    const hasJewelryId = await t.schema.hasColumn('reviews', 'jewelry_id').catch(() => false);
+    const hasCoinId = await t.schema.hasColumn('reviews', 'coin_id').catch(() => false);
+
+    const insertData = {
       user_id: customerId,
       rating: valid.rating,
       title: valid.title,
@@ -408,7 +661,26 @@ export async function submitReview(k, customerId, productIdOrSlug, reviewData) {
       created_at: stamp,
       updated_at: stamp,
       deleted_at: null
-    });
+    };
+
+    if (hasSubjectType) insertData.subject_type = subjectType;
+    if (hasItemType) insertData.item_type = subjectType;
+
+    if (subjectType === 'coin') {
+      if (hasCoinId) insertData.coin_id = canonicalId;
+      else insertData.product_id = canonicalId;
+    } else if (subjectType === 'kurta') {
+      if (hasKurtaId) insertData.kurta_id = canonicalId;
+      else insertData.product_id = canonicalId;
+    } else if (subjectType === 'jewelry') {
+      if (hasJewelryId) insertData.jewelry_id = canonicalId;
+      else insertData.product_id = canonicalId;
+    } else {
+      insertData.product_id = canonicalId;
+    }
+
+    // Insert review with pending status
+    const [reviewId] = await t('reviews').insert(insertData);
 
     // Insert images if present
     if (valid.images.length > 0) {
@@ -534,7 +806,7 @@ export async function getAllProductsRatingSummaries(k) {
   }
 
   const hasCoinColumn = await k.schema.hasColumn('reviews', 'coin_id').catch(() => false);
-  if (hasCoinColumn && await k.schema.hasTable('coins')) {
+  if (hasCoinColumn && await k.schema.hasTable('coins').catch(() => false)) {
     const coinRows = await k('reviews')
       .where({ status: 'approved', subject_type: 'coin' })
       .whereNull('deleted_at')
@@ -549,6 +821,58 @@ export async function getAllProductsRatingSummaries(k) {
         productCodeLookup.set(row.coin_id, summary);
         const sku = skuById.get(row.coin_id);
         if (sku) productCodeLookup.set(sku, summary);
+      }
+    }
+  }
+
+  const hasKurtaColumn = await k.schema.hasColumn('reviews', 'kurta_id').catch(() => false);
+  if (hasKurtaColumn && await k.schema.hasTable('kurtas').catch(() => false)) {
+    const kurtaRows = await k('reviews')
+      .where({ status: 'approved' })
+      .where(function () {
+        this.where('subject_type', 'kurta').orWhereNotNull('kurta_id');
+      })
+      .whereNull('deleted_at')
+      .whereNotNull('kurta_id')
+      .groupBy('kurta_id')
+      .select('kurta_id', k.raw('COUNT(*) as review_count'), k.raw('AVG(rating) as avg_rating'));
+    if (kurtaRows.length) {
+      const kurtas = await k('kurtas').whereIn('id', kurtaRows.map(row => row.kurta_id)).select('id', 'sku', 'product_code');
+      const kurtaById = new Map(kurtas.map(item => [item.id, item]));
+      for (const row of kurtaRows) {
+        const summary = { average: Number(Number(row.avg_rating).toFixed(1)), count: Number(row.review_count) };
+        productCodeLookup.set(row.kurta_id, summary);
+        const item = kurtaById.get(row.kurta_id);
+        if (item) {
+          if (item.product_code) productCodeLookup.set(item.product_code, summary);
+          if (item.sku) productCodeLookup.set(item.sku, summary);
+        }
+      }
+    }
+  }
+
+  const hasJewelryColumn = await k.schema.hasColumn('reviews', 'jewelry_id').catch(() => false);
+  if (hasJewelryColumn && await k.schema.hasTable('jewelries').catch(() => false)) {
+    const jRows = await k('reviews')
+      .where({ status: 'approved' })
+      .where(function () {
+        this.where('subject_type', 'jewelry').orWhereNotNull('jewelry_id');
+      })
+      .whereNull('deleted_at')
+      .whereNotNull('jewelry_id')
+      .groupBy('jewelry_id')
+      .select('jewelry_id', k.raw('COUNT(*) as review_count'), k.raw('AVG(rating) as avg_rating'));
+    if (jRows.length) {
+      const jewelries = await k('jewelries').whereIn('id', jRows.map(row => row.jewelry_id)).select('id', 'sku', 'product_code');
+      const jById = new Map(jewelries.map(item => [item.id, item]));
+      for (const row of jRows) {
+        const summary = { average: Number(Number(row.avg_rating).toFixed(1)), count: Number(row.review_count) };
+        productCodeLookup.set(row.jewelry_id, summary);
+        const item = jById.get(row.jewelry_id);
+        if (item) {
+          if (item.product_code) productCodeLookup.set(item.product_code, summary);
+          if (item.sku) productCodeLookup.set(item.sku, summary);
+        }
       }
     }
   }
@@ -605,7 +929,24 @@ export async function getAdminReviews(k, {
   let query = k('reviews')
     .join('customers', 'customers.id', 'reviews.user_id')
     .leftJoin('products', 'products.id', 'reviews.product_id')
-    .leftJoin('coins', 'coins.id', 'reviews.coin_id')
+    .leftJoin('coins', 'coins.id', 'reviews.coin_id');
+
+  const hasKurtasTable = await k.schema.hasTable('kurtas').catch(() => false);
+  const hasJewelriesTable = await k.schema.hasTable('jewelries').catch(() => false);
+  if (hasKurtasTable && await k.schema.hasColumn('reviews', 'kurta_id').catch(() => false)) {
+    query = query.leftJoin('kurtas', 'kurtas.id', 'reviews.kurta_id');
+  }
+  if (hasJewelriesTable && await k.schema.hasColumn('reviews', 'jewelry_id').catch(() => false)) {
+    query = query.leftJoin('jewelries', 'jewelries.id', 'reviews.jewelry_id');
+  }
+
+  const nameExpr = 'COALESCE(' + (hasKurtasTable ? 'kurtas.name, ' : '') + (hasJewelriesTable ? 'jewelries.name, ' : '') + 'products.name, coins.name)';
+  const slugExpr = 'COALESCE(' + (hasKurtasTable ? 'kurtas.slug, ' : '') + (hasJewelriesTable ? 'jewelries.slug, ' : '') + 'products.slug, coins.sku)';
+  const codeExpr = 'COALESCE(' + (hasKurtasTable ? 'kurtas.product_code, ' : '') + (hasJewelriesTable ? 'jewelries.product_code, ' : '') + 'products.product_code, coins.sku)';
+  const skuExpr = 'COALESCE(' + (hasKurtasTable ? 'kurtas.sku, ' : '') + (hasJewelriesTable ? 'jewelries.sku, ' : '') + 'products.sku, coins.sku)';
+  const imageExpr = 'COALESCE(' + (hasKurtasTable ? 'kurtas.image, ' : '') + (hasJewelriesTable ? 'jewelries.image, ' : '') + 'products.image, coins.image)';
+
+  query = query
     .whereNull('reviews.deleted_at')
     .select(
       'reviews.id',
@@ -620,11 +961,11 @@ export async function getAdminReviews(k, {
       'reviews.updated_at',
       'customers.name as customer_name',
       'customers.email as customer_email',
-      k.raw('COALESCE(products.name, coins.name) as product_name'),
-      k.raw('COALESCE(products.slug, coins.sku) as product_slug'),
-      k.raw('COALESCE(products.product_code, coins.sku) as product_code'),
-      k.raw('COALESCE(products.sku, coins.sku) as product_sku'),
-      k.raw('COALESCE(products.image, coins.image) as product_image')
+      k.raw(`${nameExpr} as product_name`),
+      k.raw(`${slugExpr} as product_slug`),
+      k.raw(`${codeExpr} as product_code`),
+      k.raw(`${skuExpr} as product_sku`),
+      k.raw(`${imageExpr} as product_image`)
     );
 
   if (status && status !== 'all') {
@@ -728,10 +1069,27 @@ export async function getAdminReviews(k, {
  * Admin: Get single review with full details.
  */
 export async function getAdminReviewById(k, reviewId) {
-  const row = await k('reviews')
+  let query = k('reviews')
     .join('customers', 'customers.id', 'reviews.user_id')
     .leftJoin('products', 'products.id', 'reviews.product_id')
-    .leftJoin('coins', 'coins.id', 'reviews.coin_id')
+    .leftJoin('coins', 'coins.id', 'reviews.coin_id');
+
+  const hasKurtasTable = await k.schema.hasTable('kurtas').catch(() => false);
+  const hasJewelriesTable = await k.schema.hasTable('jewelries').catch(() => false);
+  if (hasKurtasTable && await k.schema.hasColumn('reviews', 'kurta_id').catch(() => false)) {
+    query = query.leftJoin('kurtas', 'kurtas.id', 'reviews.kurta_id');
+  }
+  if (hasJewelriesTable && await k.schema.hasColumn('reviews', 'jewelry_id').catch(() => false)) {
+    query = query.leftJoin('jewelries', 'jewelries.id', 'reviews.jewelry_id');
+  }
+
+  const nameExpr = 'COALESCE(' + (hasKurtasTable ? 'kurtas.name, ' : '') + (hasJewelriesTable ? 'jewelries.name, ' : '') + 'products.name, coins.name)';
+  const slugExpr = 'COALESCE(' + (hasKurtasTable ? 'kurtas.slug, ' : '') + (hasJewelriesTable ? 'jewelries.slug, ' : '') + 'products.slug, coins.sku)';
+  const codeExpr = 'COALESCE(' + (hasKurtasTable ? 'kurtas.product_code, ' : '') + (hasJewelriesTable ? 'jewelries.product_code, ' : '') + 'products.product_code, coins.sku)';
+  const skuExpr = 'COALESCE(' + (hasKurtasTable ? 'kurtas.sku, ' : '') + (hasJewelriesTable ? 'jewelries.sku, ' : '') + 'products.sku, coins.sku)';
+  const imageExpr = 'COALESCE(' + (hasKurtasTable ? 'kurtas.image, ' : '') + (hasJewelriesTable ? 'jewelries.image, ' : '') + 'products.image, coins.image)';
+
+  const row = await query
     .where('reviews.id', Number(reviewId))
     .whereNull('reviews.deleted_at')
     .select(
@@ -748,11 +1106,11 @@ export async function getAdminReviewById(k, reviewId) {
       'reviews.updated_at',
       'customers.name as customer_name',
       'customers.email as customer_email',
-      k.raw('COALESCE(products.name, coins.name) as product_name'),
-      k.raw('COALESCE(products.slug, coins.sku) as product_slug'),
-      k.raw('COALESCE(products.product_code, coins.sku) as product_code'),
-      k.raw('COALESCE(products.sku, coins.sku) as product_sku'),
-      k.raw('COALESCE(products.image, coins.image) as product_image')
+      k.raw(`${nameExpr} as product_name`),
+      k.raw(`${slugExpr} as product_slug`),
+      k.raw(`${codeExpr} as product_code`),
+      k.raw(`${skuExpr} as product_sku`),
+      k.raw(`${imageExpr} as product_image`)
     )
     .first();
 

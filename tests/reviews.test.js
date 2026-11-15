@@ -473,3 +473,69 @@ test('ReviewSeeder populates realistic preview reviews from scratch and runs ide
     await freshDb.destroy();
   }
 });
+
+test('Kurta and Jewelry products resolve and support reviews seamlessly', async () => {
+  // Insert a test kurta and variant into k
+  const hasKurtas = await k.schema.hasTable('kurtas');
+  if (hasKurtas) {
+    const [kurtaId] = await k('kurtas').insert({
+      sku: 'KT-TEST-001',
+      product_code: 'kt-test-code',
+      slug: 'kt-test-slug',
+      name: 'Test Chikankari Kurta',
+      price: 1299,
+      fixed_price: 1299,
+      stock: 10,
+      status: 'published',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    });
+
+    const [variantId] = await k('kurta_variants').insert({
+      kurta_id: kurtaId,
+      product_code: 'kt-test-code',
+      sku: 'KT-TEST-001-M',
+      slug: 'kt-test-slug-m',
+      size: 'M',
+      color: 'White',
+      price: 1299,
+      fixed_price: 1299,
+      stock: 5,
+      status: 'published',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    });
+
+    // Test resolveProduct by variant ID, parent ID, and slug
+    const resByVariant = await resolveProduct(k, variantId);
+    assert.equal(resByVariant.canonicalId, kurtaId);
+    assert.equal(resByVariant.subjectType, 'kurta');
+
+    const resByKurtaId = await resolveProduct(k, kurtaId);
+    assert.equal(resByKurtaId.canonicalId, kurtaId);
+    assert.equal(resByKurtaId.subjectType, 'kurta');
+
+    const resBySlug = await resolveProduct(k, 'kt-test-slug');
+    assert.equal(resBySlug.canonicalId, kurtaId);
+    assert.equal(resBySlug.subjectType, 'kurta');
+
+    // Submit review using variant ID (as sent from PDP)
+    const review = await submitReview(k, customerA.id, variantId, {
+      rating: 5,
+      title: 'Beautiful embroidery',
+      comment: 'The Lucknowi shadow work on this kurta is exquisite and fine.'
+    });
+    assert.equal(review.rating, 5);
+    assert.equal(review.status, 'pending');
+
+    // Approve the review
+    await adminUpdateReviewStatus(k, review.id, 'approved');
+
+    // Fetch reviews by variant ID
+    const prodReviews = await getProductReviews(k, variantId);
+    assert.equal(prodReviews.summary.totalReviews, 1);
+    assert.equal(prodReviews.summary.averageRating, 5);
+    assert.equal(prodReviews.reviews.length, 1);
+    assert.equal(prodReviews.reviews[0].title, 'Beautiful embroidery');
+  }
+});
