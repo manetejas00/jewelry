@@ -3140,6 +3140,8 @@
   width: 100%;
   max-width: 100vw;
   position: relative;
+  /* Keep hero text above the photo, but inside this layer so it cannot cover the menu. */
+  z-index: 0;
   overflow: hidden;
   background: #10272a;
   color: #f3f0e6;

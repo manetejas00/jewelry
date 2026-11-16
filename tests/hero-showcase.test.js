@@ -72,6 +72,7 @@ test('hero showcase: video slide has visible CTA button, clearProps on animation
   // Verify CSS ensures visibility and stacking order
   assert.match(cssContent, /\.hero-cta-button/, 'CSS must declare .hero-cta-button');
   assert.match(cssContent, /\.hero-copy\s*\{[^}]*z-index:\s*10/, 'CSS .hero-copy must have z-index: 10');
+  assert.match(cssContent, /\.hero\s*\{[^}]*z-index:\s*0/, 'CSS .hero must be a stacking context below the navigation drawer');
 });
 
 test('hero showcase: hero banner takes full viewport height below header across breakpoints', async () => {
