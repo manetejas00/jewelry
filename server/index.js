@@ -198,7 +198,8 @@ app.get('/api/admin/dashboard',auth(),route(async(req,res)=>{
   todayImports:{total:todayBatches.length,failed:todayBatches.filter(b=>b.status==='failed').length,published:todayBatches.filter(b=>b.status==='published').length},
   rates:Object.values(rates).map(r=>({...r,fresh:isFresh(r)})), batches:batches.map(b=>({...b,summary:parse(b.summary)})),
   orders:presentOrders(orders,req.session.staff.role), rule, audits, preview,
-  productCounts:{total:jewelry.length+coins.length+kurtas.length,jewelry:jewelry.length,coins:coins.length,kurtas:kurtas.length,active:[...jewelry,...coins,...kurtas].filter(p=>p.status==='published'||p.status==='active').length,inactive:[...jewelry,...coins,...kurtas].filter(p=>!['published','active'].includes(p.status)).length,incomplete}
+  productCounts:{total:jewelry.length+coins.length+kurtas.length,jewelry:jewelry.length,coins:coins.length,kurtas:kurtas.length,active:[...jewelry,...coins,...kurtas].filter(p=>p.status==='published'||p.status==='active').length,inactive:[...jewelry,...coins,...kurtas].filter(p=>!['published','active'].includes(p.status)).length,incomplete},
+  maxAgeHours:Number(process.env.GOLD_MAX_AGE_HOURS||48)
  });
 }));
 app.get('/api/admin/products',auth(),route(async(req,res)=>{

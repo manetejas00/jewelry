@@ -49,6 +49,5 @@ export async function publishCoins(k,id,headers,staff){return k.transaction(asyn
  const row={...r,stock:Math.max(0,Number(r.stock)-Number(sold.qty||0)),fixed_price:r.fixed_price===''?null:r.fixed_price,updated_at:now()};
  if(old){const changed=Object.entries(row).some(([f,v])=>!['source_timestamp','updated_at'].includes(f)&&String(old[f]??'')!==String(v??''));await t('coins').where({sku:r.sku}).update(row);changed?updated++:unchanged++;}else{await t('coins').insert({...row,created_at:now()});created++;}
  }
- if(process.env.COIN_INVENTORY_MODE==='full')await t('coins').whereNotIn('sku',checked.rows.map(r=>r.sku)).update({stock:0,updated_at:now()});
  const summary={...parse(b.summary),created,updated,unchanged,rejected:0};await t('import_batches').where({id}).update({status:'published',published_at:now(),summary:json(summary)});await t('audit').insert({staff_id:staff,action:'publish_coins',details:json({batch:id,summary}),created_at:now()});await t('import_locks').where({name:'coins'}).del();return summary;
 },k.client.config.client==='mysql2'?{isolationLevel:'read committed'}:{});}

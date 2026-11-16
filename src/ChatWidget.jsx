@@ -1,5 +1,6 @@
 import useScrollLock from './useScrollLock.js';
 import React, {useEffect, useId, useRef, useState} from 'react';
+import {createPortal} from 'react-dom';
 import {Link} from 'react-router-dom';
 import {MessageCircle, Send, X, ChevronDown} from 'lucide-react';
 import {api, request} from './api.js';
@@ -132,7 +133,7 @@ export default function ChatWidget() {
   }
 
   return <div className="veyora-chat">
-    {open && <section id="veyora-chat-panel" ref={panelRef} className="veyora-chat-panel" role="dialog" aria-modal="false" aria-labelledby={titleId}>
+    {open && createPortal(<section id="veyora-chat-panel" ref={panelRef} className="veyora-chat-panel" role="dialog" aria-modal="false" aria-labelledby={titleId}>
       <header className="veyora-chat-header">
         <div>
           <img src="/assets/brand/logo.webp" alt="Veyora Jewels" className="chat-brand-logo"/>
@@ -192,10 +193,9 @@ export default function ChatWidget() {
           </div>
         </form>
       </>}
-    </section>}
-    <button type="button" className="veyora-chat-launcher" aria-expanded={open} aria-controls="veyora-chat-panel" onClick={() => setOpen(value => !value)}>
-      {open ? <X size={22}/> : <MessageCircle size={22}/>}
-      <span>{open ? 'Close chat' : 'Chat'}</span>
+    </section>, document.body)}
+    <button type="button" className="icon veyora-chat-launcher" aria-expanded={open} aria-controls="veyora-chat-panel" aria-label={open ? 'Close chat' : 'Chat'} onClick={() => setOpen(value => !value)}>
+      {open ? <X size={20}/> : <MessageCircle size={20}/>}
     </button>
   </div>;
 }

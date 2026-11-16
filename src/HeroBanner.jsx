@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUpRight, ArrowLeft, ArrowRight, Play } from 'lucide-react';
+import { ArrowUpRight, ArrowLeft, ArrowRight } from 'lucide-react';
 import gsap from 'gsap';
 import { brandedImageSource } from './brand-media.js';
 
@@ -22,7 +22,7 @@ export const slides = [
     to: '/collections/all',
     cta: 'Shop the collection',
     alt: 'Pearl jewellery campaign',
-    mobilePosition: '65% 20%'
+    mobilePosition: '84% center'
   },
   // 2. Kurta Collection — Slide 2
   {
@@ -75,7 +75,6 @@ export default function HeroBanner({ heroRef }) {
   const [index, setIndex] = useState(0);
   const [previous, setPrevious] = useState(0);
   const [incoming, setIncoming] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [reduce] = useState(() => (typeof window !== 'undefined' ? window.matchMedia('(prefers-reduced-motion: reduce)').matches : false));
 
   const indexRef = useRef(0);
@@ -164,19 +163,14 @@ export default function HeroBanner({ heroRef }) {
     const handleVisibilityChange = () => {
       isTabVisibleRef.current = !document.hidden;
       if (document.hidden) {
-        if (vid && isVideoSlide) {
-          vid.pause();
-          setIsPlaying(false);
-        }
+        if (vid && isVideoSlide) vid.pause();
         clearTimer();
       } else {
         // Resumed
         if (indexRef.current === 0 && isVideoSlide && vid) {
           vid.muted = true;
           vid.defaultMuted = true;
-          vid.play()
-            .then(() => setIsPlaying(true))
-            .catch(() => setIsPlaying(false));
+          vid.play().catch(() => {});
         } else if (indexRef.current > 0) {
           // Restart 3s timer for current image
           timerRef.current = setTimeout(() => {
@@ -207,7 +201,6 @@ export default function HeroBanner({ heroRef }) {
       }
 
       const handleVideoEnded = () => {
-        setIsPlaying(false);
         // Wait exactly 3 seconds after video completes, then transition to slide 1
         clearTimer();
         timerRef.current = setTimeout(() => {
@@ -217,12 +210,7 @@ export default function HeroBanner({ heroRef }) {
         }, 3000);
       };
 
-      const handlePlaying = () => setIsPlaying(true);
-      const handlePause = () => setIsPlaying(false);
-
       vid.addEventListener('ended', handleVideoEnded);
-      vid.addEventListener('playing', handlePlaying);
-      vid.addEventListener('pause', handlePause);
 
       const attemptPlay = () => {
         if (!vid || indexRef.current !== 0 || !isTabVisibleRef.current) return;
@@ -230,15 +218,10 @@ export default function HeroBanner({ heroRef }) {
         vid.defaultMuted = true;
         const playPromise = vid.play();
         if (playPromise !== undefined) {
-          playPromise
-            .then(() => {
-              setIsPlaying(true);
-            })
-            .catch(err => {
-              // Policy restricted autoplay until first touch/scroll
-              console.warn('Hero video autoplay waiting for user interaction:', err);
-              setIsPlaying(false);
-            });
+          playPromise.catch(err => {
+            // Policy restricted autoplay until first touch/scroll
+            console.warn('Hero video autoplay waiting for user interaction:', err);
+          });
         }
       };
 
@@ -259,9 +242,7 @@ export default function HeroBanner({ heroRef }) {
         if (indexRef.current === 0 && vid && vid.paused) {
           vid.muted = true;
           vid.defaultMuted = true;
-          vid.play()
-            .then(() => setIsPlaying(true))
-            .catch(() => {});
+          vid.play().catch(() => {});
         }
       };
 
@@ -274,8 +255,6 @@ export default function HeroBanner({ heroRef }) {
       return () => {
         document.removeEventListener('visibilitychange', handleVisibilityChange);
         vid.removeEventListener('ended', handleVideoEnded);
-        vid.removeEventListener('playing', handlePlaying);
-        vid.removeEventListener('pause', handlePause);
         vid.removeEventListener('canplay', attemptPlay);
         vid.removeEventListener('loadeddata', attemptPlay);
         window.removeEventListener('touchstart', onUserGesture);
@@ -308,9 +287,7 @@ export default function HeroBanner({ heroRef }) {
       const vid = videoRef.current;
       vid.muted = true;
       vid.defaultMuted = true;
-      if (vid.paused) {
-        vid.play().then(() => setIsPlaying(true)).catch(() => {});
-      }
+      if (vid.paused) vid.play().catch(() => {});
     }
   };
 
@@ -356,8 +333,8 @@ export default function HeroBanner({ heroRef }) {
         {!reduce && (
           <video
             ref={videoRef}
-            className={`${isVideoSlide ? 'is-active' : ''} slide-pos-jewelry`}
-            style={{ '--slide-mobile-pos': slides[0].mobilePosition || '65% 20%' }}
+            className={`${isVideoSlide ? 'is-active' : ''} slide-pos-video`}
+            style={{ '--slide-mobile-pos': slides[0].mobilePosition || '84% center' }}
             poster={brandedImageSource(slides[0].poster)}
             autoPlay
             muted
@@ -374,21 +351,6 @@ export default function HeroBanner({ heroRef }) {
         )}
         <div className="image-grain" />
       </div>
-
-      {isVideoSlide && !isPlaying && (
-        <button
-          type="button"
-          className="hero-play-indicator"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleHeroClick();
-          }}
-          aria-label="Play hero video"
-        >
-          <Play size={14} fill="currentColor" />
-          <span>Play Video</span>
-        </button>
-      )}
 
       <div className="hero-copy" ref={copyRef}>
         <div className="eyebrow">

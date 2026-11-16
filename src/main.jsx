@@ -6,7 +6,7 @@ import useScrollLock from './useScrollLock.js';
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { Search, ShoppingBag, UserRound, Menu, X, ArrowRight, ArrowUpRight, Plus, Minus, Heart, ChevronDown, Check, ArrowLeft, ShieldCheck, Package, Truck, SlidersHorizontal, LogOut, LayoutDashboard, Gem, ChartNoAxesCombined, Upload, Settings, Download, RefreshCw, AlertCircle, CheckCircle2, Eye, Coins as CoinsIcon, CircleDollarSign, Trash2, Sparkles, Play, Pause, Image as ImageIcon, Copy, Layers, Tag, Maximize2, Star, RotateCcw, MessageCircle, Shirt } from 'lucide-react';
+import { Search, ShoppingBag, UserRound, Menu, X, ArrowRight, ArrowUpRight, Plus, Minus, Heart, ChevronDown, Check, ArrowLeft, ShieldCheck, Package, Truck, SlidersHorizontal, LogOut, LayoutDashboard, Gem, ChartNoAxesCombined, Upload, Settings, Download, RefreshCw, AlertCircle, CheckCircle2, Eye, Coins as CoinsIcon, CircleDollarSign, Trash2, Sparkles, Image as ImageIcon, Copy, Layers, Tag, Maximize2, Star, RotateCcw, MessageCircle, Shirt } from 'lucide-react';
 import gsap from 'gsap';
 import './style.css';
 import ErrorBoundary from './ErrorBoundary.jsx';
@@ -240,6 +240,33 @@ function Header() {
   useScrollLock(menu, menuRef, { onEscape: () => setMenu(false) });
   useScrollLock(accountOpen, accountRef, { onEscape: () => setAccountOpen(false) });
   const hoverTimer = useRef(null);
+  const megaCloseTimer = useRef(null);
+  const openMegaRef = useRef(null);
+  const hoverNav = () => typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine) and (min-width: 901px)').matches;
+  const keepMegaOpen = key => {
+    if (!hoverNav()) return;
+    clearTimeout(megaCloseTimer.current);
+    if (!key) return;
+    // Crossing a neighbouring label on the way into the open panel should not swap it immediately.
+    if (!openMegaRef.current || openMegaRef.current === key) {
+      openMegaRef.current = key;
+      setOpenMega(key);
+      return;
+    }
+    megaCloseTimer.current = setTimeout(() => {
+      openMegaRef.current = key;
+      setOpenMega(key);
+    }, 180);
+  };
+  const releaseMega = () => {
+    if (!hoverNav()) return;
+    clearTimeout(megaCloseTimer.current);
+    megaCloseTimer.current = setTimeout(() => {
+      openMegaRef.current = null;
+      setOpenMega(null);
+    }, 280);
+  };
+  useEffect(() => () => clearTimeout(megaCloseTimer.current), []);
   const nav = useNavigate();
   const location = useLocation();
   const searchInputRef = useRef(null);
@@ -247,6 +274,18 @@ function Header() {
   useEffect(() => { setMenu(false); setSearch(false); setAccountOpen(false); }, [location.pathname, location.search]);
   useEffect(() => { let mounted = true; api('/navigation').then(data => { if (mounted) setNavigation(Array.isArray(data) ? data : []) }).catch(() => { }); return () => { mounted = false }; }, []);
   useEffect(() => { const media = window.matchMedia('(max-width:800px)'); const closeWide = () => { if (!media.matches) setMenu(false) }; media.addEventListener('change', closeWide); return () => media.removeEventListener('change', closeWide) }, []);
+  useEffect(() => {
+    const mobileNav = window.matchMedia('(max-width: 900px)');
+    const collapseHover = () => {
+      if (!mobileNav.matches) return;
+      clearTimeout(megaCloseTimer.current);
+      openMegaRef.current = null;
+      setOpenMega(null);
+    };
+    collapseHover();
+    mobileNav.addEventListener('change', collapseHover);
+    return () => mobileNav.removeEventListener('change', collapseHover);
+  }, []);
 
   useEffect(() => {
     if (!accountOpen) return;
@@ -303,7 +342,7 @@ function Header() {
         {menu ? <X size={22} /> : <Menu size={22} />}
       </button>
       <Brand />
-      <nav ref={menuRef} id="store-navigation" className={menu ? 'nav open' : 'nav'} aria-label="Main store navigation">
+      <nav ref={menuRef} id="store-navigation" className={menu ? 'nav open' : 'nav'} aria-label="Main store navigation" onMouseEnter={() => keepMegaOpen()} onMouseLeave={releaseMega}>
         <div className="mobile-nav-header">
           <span className="mobile-nav-brand">Maison Menu</span>
           <button
@@ -326,8 +365,7 @@ function Header() {
             <div
               key={item.href}
               className={'nav-parent ' + (isExpanded ? 'open' : '')}
-              onMouseEnter={() => hasChildren && typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches && setOpenMega(key)}
-              onMouseLeave={() => typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches && setOpenMega(null)}
+              onMouseEnter={() => hasChildren && keepMegaOpen(key)}
             >
               <div className="nav-item-row">
                 <Link
@@ -347,7 +385,10 @@ function Header() {
                     onClick={e => {
                       e.preventDefault();
                       e.stopPropagation();
-                      setOpenMega(isExpanded ? null : key);
+                      clearTimeout(megaCloseTimer.current);
+                      const next = isExpanded ? null : key;
+                      openMegaRef.current = next;
+                      setOpenMega(next);
                     }}
                   >
                     <ChevronDown size={15} />
@@ -447,6 +488,8 @@ function Header() {
       </nav>
       {menu && <div className="nav-backdrop" onClick={() => setMenu(false)} aria-hidden="true" />}
       <div className="header-tools">
+        <ChatWidget />
+        <InstallApp />
         <div
           className="account-menu-container"
           ref={accountRef}
@@ -547,7 +590,7 @@ function Header() {
   </>;
 }
 function Footer() { const { config } = useStore(); return <footer><div className="footer-top"><div><Brand /><p>For the moments that become memories.</p></div><div><h4>EXPLORE</h4><Link to="/kurtas">Kurta</Link><Link to="/collections/all">All jewellery</Link><Link to="/coins">Gold & Silver Coins</Link><Link to="/collections/saved">Your saved pieces</Link><Link to="/bag">Shopping bag</Link><Link to="/account">My account</Link></div><div><h4>HERE TO HELP</h4><Link to="/information/shipping">Delivery & returns</Link><Link to="/information/care">Jewellery care</Link><Link to="/information/contact">Contact us</Link></div><div><h4>A NOTE FROM THE MAISON</h4><p>Beautiful things take time.<br />Discover a collection made for yours.</p><Link to="/collections/all" className="footer-cta">Find your piece <ArrowUpRight size={17} /></Link></div></div><div className="footer-bottom"><span>© {new Date().getFullYear()} Veyora Jewels</span><span>India · INR ₹</span><Link to="/admin">Merchant studio ↗</Link></div>{config.preview && <p className="preview-note">Design preview · Fictional catalogue and prices · Reference imagery from the Maison Perle design brief</p>}</footer> }
-function Layout({ children }) { return <><Header /><main>{children}</main><Footer /><BagDrawer /><InstallApp /><ChatWidget /></> }
+function Layout({ children }) { return <><Header /><main>{children}</main><Footer /><BagDrawer /></> }
 function HomeKurtaShowcase() {
   const [kurtas, setKurtas] = useState([]);
   useEffect(() => {
@@ -1223,7 +1266,7 @@ function Admin() {
   const { config } = useStore();
   const [loginEmail, setLoginEmail] = useState(config.preview ? previewStaffAccounts[0].email : ''), [loginPassword, setLoginPassword] = useState(config.preview ? previewStaffAccounts[0].password : '');
   
-  const tabsNeedingData = ['Dashboard', 'Gold Rates', 'Imports', 'Pricing Rules', 'Settings'];
+  const tabsNeedingData = ['Dashboard', 'Gold Rates', 'Imports', 'Pricing Rules'];
   const tabsNeedingProducts = ['Dashboard', 'Jewelry', 'Products', 'Imports', 'Catalogue copy'];
 
   async function setOrderStatus(id, status) {
@@ -1265,7 +1308,7 @@ function Admin() {
     if (tabsNeedingProducts.includes(tab) && (!products || products.length === 0)) {
       api('/admin/products').then(setProducts).catch(e => setError(e.message));
     }
-  }, [tab, staff]); async function login(e) { e.preventDefault(); setError(''); try { const s = await api('/admin/login', Object.fromEntries(new FormData(e.target))); sessionStorage.setItem('csrf', s.csrf); setStaff(s.staff); await refresh() } catch (e) { setError(e.message) } } async function run(kind) { setBusy(true); setError(''); try { const r = await api('/admin/run', { kind }); await refresh(); if (Object.values(r.result).some(v => !v.ok)) setError(Object.entries(r.result).filter(([, v]) => !v.ok).map(([k, v]) => `${k}: ${v.message}`).join(' · ')) } catch (e) { setError(e.message) } finally { setBusy(false) } } if (!loaded) return <div className="empty">Opening merchant studio…</div>; if (!staff) return <div className="admin-login"><Link className="underlink" to="/"><ArrowLeft size={16} />Back to storefront</Link><div className="login-card"><Brand /><span className="eyebrow">THE MERCHANT STUDIO</span><h1>Welcome back.</h1><p>Your collections, thoughtfully managed.</p><form onSubmit={login}>{config.preview && <label>Sign in as<select aria-label="Preview staff account" value={loginEmail} onChange={e => { const account = previewStaffAccounts.find(a => a.email === e.target.value); if (!account) return; setLoginEmail(account.email); setLoginPassword(account.password) }}>{previewStaffAccounts.map(account => <option key={account.email} value={account.email}>{account.label}</option>)}</select></label>}<label>Email<input name="email" type="email" autoComplete="username" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} required /></label><label>Password<input name="password" type="password" autoComplete="current-password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} required /></label>{error && <p className="error">{error}</p>}<button className="button dark full">Sign in <ArrowRight size={17} /></button></form>{config.preview && <p className="small muted">Choose Owner or Catalogue copy. Production requires your own staff account.</p>}</div></div>; return <div className="admin-shell">
+  }, [tab, staff]); async function login(e) { e.preventDefault(); setError(''); try { const s = await api('/admin/login', Object.fromEntries(new FormData(e.target))); sessionStorage.setItem('csrf', s.csrf); setStaff(s.staff); await refresh() } catch (e) { setError(e.message) } } if (!loaded) return <div className="empty">Opening merchant studio…</div>; if (!staff) return <div className="admin-login"><Link className="underlink" to="/"><ArrowLeft size={16} />Back to storefront</Link><div className="login-card"><Brand /><span className="eyebrow">THE MERCHANT STUDIO</span><h1>Welcome back.</h1><p>Your collections, thoughtfully managed.</p><form onSubmit={login}>{config.preview && <label>Sign in as<select aria-label="Preview staff account" value={loginEmail} onChange={e => { const account = previewStaffAccounts.find(a => a.email === e.target.value); if (!account) return; setLoginEmail(account.email); setLoginPassword(account.password) }}>{previewStaffAccounts.map(account => <option key={account.email} value={account.email}>{account.label}</option>)}</select></label>}<label>Email<input name="email" type="email" autoComplete="username" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} required /></label><label>Password<input name="password" type="password" autoComplete="current-password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} required /></label>{error && <p className="error">{error}</p>}<button className="button dark full">Sign in <ArrowRight size={17} /></button></form>{config.preview && <p className="small muted">Choose Owner or Catalogue copy. Production requires your own staff account.</p>}</div></div>; return <div className="admin-shell">
     {mobileSidebarOpen && <div className="admin-sidebar-backdrop" onClick={() => setMobileSidebarOpen(false)} aria-hidden="true" />}
     <aside className={'admin-sidebar' + (mobileSidebarOpen ? ' open' : '')}>
       <div className="admin-sidebar-header">
@@ -1304,8 +1347,7 @@ function Admin() {
           <span>VEYORA / STUDIO / {activeRoute.label.toUpperCase()}</span>
         </div>
         <span className="test-badge">{(data?.preview ?? config.preview) ? 'PREVIEW ENVIRONMENT' : 'MERCHANT ENVIRONMENT'}</span>
-      </header><div className="admin-content"><div className="section-heading"><div><span className="eyebrow">YOUR MAISON, AT A GLANCE</span><h1>{tab==='Dashboard'?'A considered overview.':tab}</h1></div><button className="text-button" onClick={()=>refresh().catch(e=>setError(e.message))}><RefreshCw size={15}/>Refresh</button></div>{error&&<div className="error" role="alert">{error}</div>}{(tabsNeedingData.includes(tab) && !data)?<p>Loading studio…</p>:<>{tab==='Dashboard'&&<><div className="admin-stats"><Stat title="ACTIVE GOLD RATES" value={data.rates.length} detail={`${data.rates.filter(r=>r.fresh).length} within freshness limit`}/><Stat title="JEWELRY PIECES" value={products.filter(p=>!p.is_kurta&&!/kurta|chikankari|saree|ethnic|bottom/i.test(String(p.category||''))).length} detail={`${products.filter(p=>!p.is_kurta&&!/kurta|chikankari|saree|ethnic|bottom/i.test(String(p.category||''))&&p.stock===0).length} out of stock`}/><Stat title="TODAY’S IMPORTS" value={data.todayImports?.failed?'Needs review':'All clear'} detail={`${data.todayImports?.published||0} published · ${data.todayImports?.failed||0} failed`}/><Stat title="ORDERS" value={data.orders.length} detail={`${money(data.orders.reduce((s,o)=>s+Number(o.total),0))} total order value`}/></div><div className="admin-two"><div className="admin-panel"><div className="panel-title"><h3>Active gold rates</h3><button className="underlink" onClick={()=>setTab('Gold Rates')}>View rates ↗</button></div><RateTable rates={data.rates}/></div><div className="admin-panel"><h3>Needs your attention</h3>{data.feedSettings?.feedStatus==='stopped'&&<div className="attention" style={{borderLeft:'3px solid #c62828',paddingLeft:'12px'}}><AlertCircle size={19} color="#c62828"/><div><strong style={{color:'#c62828'}}>Feed Automation is STOPPED</strong><p>Background syncs and live rates are paused. <button className="underlink" onClick={()=>setTab('Settings')}>Open Settings to start ↗</button></p></div></div>}<div className="attention"><AlertCircle size={19}/><div><strong>{data.rates.some(r=>!r.fresh)?'Gold rates are stale':'Storefront active with Cash on Delivery'}</strong><p>Cash on Delivery is active. Store policies and catalogue photography can be reviewed anytime.</p></div></div><p className="small">Maximum rate age: {data.maxAgeHours} hours. Stale gold-linked items pause at checkout.</p></div></div><BatchTable batches={data.batches.slice(0,6)}/><div className="admin-panel"><h3>Recent staff activity</h3>{data.audits.slice(0,8).map(a=><p className="audit-line" key={a.id}><span>{a.action} · Staff {a.staff_id||'system'}</span><span>{date(a.created_at)}</span></p>)}</div></>}{tab==='Gold Rates'&&<GoldRatesAdmin readonly={staff.role==='viewer'} staff={staff} data={data} refreshParent={refresh}/>}{tab==='Categories'&&<CategoriesAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{(tab==='Jewelry'||tab==='Products')&&<><div className="notice">Imports preserve product names, descriptions and publication status by default. Stock is an absolute snapshot, adjusted for paid orders after its source timestamp.</div><details className="advanced-media"><summary>Manage multiple jewelry photos (optional)</summary><ImageUploader products={products} refreshParent={refresh}/></details><AdminProductList products={products.filter(p=>!p.is_kurta&&!/kurta|chikankari|saree|ethnic|bottom/i.test(String(p.category||'')))} readonly={staff.role==='viewer'} refresh={refresh} onOpenImports={()=>setTab('Imports')}/></>}{(tab==='Kurtas'||tab==='Chicken Curry Kurtas')&&<KurtasAdmin readonly={staff.role==='viewer'} ProductAngleManager={ProductAngleManager} ImportPanel={ImportPanel}/>}{tab==='Coins'&&<CoinsAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Offers'&&<OffersAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Reviews'&&<ReviewsAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Pricing Rules'&&<Rules rule={data.rule} readonly={staff.role!=='owner'} refresh={refresh}/ >}{tab==='Materials'&&<MaterialsAdmin readonly={staff.role==='viewer'}/>}{tab==='Craftsmanship'&&<CraftsmanshipAdmin readonly={staff.role==='viewer'}/>}{tab==='Collections'&&<CollectionsAdmin readonly={staff.role==='viewer'}/>}{tab==='AI Recommendations'&&<RecommendationsAdmin readonly={staff.role==='viewer'}/>}{tab==='Imports'&&<><div className="admin-two"><div className="admin-panel"><span className="eyebrow">FEED SYNCHRONIZATION</span><h3>Rates first. Catalogue second.</h3><p className="small muted">Feed sources are configured on the server. Current inventory mode: {(data.feedSettings||{}).inventoryMode||'manual'}. Synchronize feeds on demand below.</p><button className="button dark" disabled={busy||staff.role==='viewer'} onClick={()=>run(null)}>{busy?'Running…':'Run both feeds now'}<RefreshCw size={16}/></button></div><div className="admin-panel"><h3>Source connections</h3><p>Gold feed: <Status text={data.feedSettings.goldConfigured?'Configured':'Not configured'}/></p><p>Jewelry feed: <Status text={data.feedSettings.productsConfigured?'Configured':'Not configured'}/></p><p className="small muted">Private feed URLs and credentials never appear in this screen. Failed rate feeds retain the last verified rate.</p><button className="underlink" disabled={busy||staff.role==='viewer'} onClick={()=>run('products')}>Run jewelry feed only ↗</button></div></div><div className="admin-two"><ImportPanel kind="gold" refresh={refresh} readonly={staff.role==='viewer'}/><ImportPanel kind="products" refresh={refresh} readonly={staff.role==='viewer'}/><ImportPanel kind="coins" refresh={refresh} readonly={staff.role==='viewer'}/><ImportPanel kind="kurtas" refresh={refresh} readonly={staff.role==='viewer'}/></div><details className="advanced-media"><summary>Manage multiple jewelry photos (optional)</summary><ImageUploader products={products} refreshParent={refresh}/></details><FeedSettings data={data} refresh={refresh} readonly={staff.role!=='owner'}/><BatchTable batches={data.batches} retry={async b=>{try{await api(`/admin/import/${b.id}/publish`,{});await refresh()}catch(e){setError(e.message)}}} readonly={staff.role==='viewer'}/><div className="admin-panel"><h3>Workflow history</h3>{(data.runs||[]).length?(data.runs||[]).map(r=><div key={r.id} className="run-record"><strong>Run #{r.id} · {r.trigger} · {date(r.started_at)}</strong>{Object.entries(r.result).map(([k,v])=><p key={k}>{k}: {v.ok?`Succeeded · Source ${v.source_date} · Created ${v.created} / Updated ${v.updated} / Unchanged ${v.unchanged} / Rejected ${v.rejected}`:v.message}</p>)}</div>):<p className="small muted">No feed sync has been recorded yet.</p>}</div></>}{tab==='Orders'&&(()=>{const q=orderQuery.trim().toLowerCase();const orders=(data?.orders||[]).filter(o=>{if(orderStatusFilter!=='all'&&o.status!==orderStatusFilter)return false;if(orderPayFilter!=='all'&&o.payment_mode!==orderPayFilter)return false;if(!q)return true;const customer=orderCustomer(o);return [o.id,o.status,o.payment_mode,customer.name,customer.email].join(' ').toLowerCase().includes(q)});const filtering=orderQuery.trim()||orderStatusFilter!=='all'||orderPayFilter!=='all';return <div className="admin-panel"><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'12px',marginBottom:'16px'}}><div><h3 style={{margin:0}}>All Orders ({orders.length}{filtering?` of ${(data?.orders||[]).length}`:''})</h3><span className="small muted">{filtering?`${orders.length} matching`:`${(data?.orders||[]).length} total orders recorded`}</span></div>{staff.role!=='viewer'&&<a className="underlink" href="/api/admin/export/orders" download style={{display:'inline-flex',alignItems:'center',gap:'6px'}}>Export orders CSV ({(data?.orders||[]).length}) ↓</a>}</div><div className="admin-filter-bar"><div className="search-box"><Search size={14}/><input type="search" placeholder="Search order, customer, or email" value={orderQuery} onChange={e=>setOrderQuery(e.target.value)} aria-label="Search orders"/></div><select className="filter-select" value={orderStatusFilter} onChange={e=>setOrderStatusFilter(e.target.value)} aria-label="Filter orders by status"><option value="all">All statuses</option>{['confirmed','packed','shipped','delivered','cancelled'].map(status=><option key={status} value={status}>{status}</option>)}</select><select className="filter-select" value={orderPayFilter} onChange={e=>setOrderPayFilter(e.target.value)} aria-label="Filter orders by payment"><option value="all">All payments</option><option value="cod">Cash on delivery</option></select>{filtering&&<button type="button" className="reset-filter-btn" onClick={()=>{setOrderQuery('');setOrderStatusFilter('all');setOrderPayFilter('all')}}><RotateCcw size={13}/> Reset</button>}</div><div className="table-wrap"><table><thead><tr><th>Order</th><th>Customer</th><th>Placed (India)</th><th>Payment</th><th>Total</th><th>Status</th></tr></thead><tbody>{orders.map(o=>{const customer=orderCustomer(o);return <tr key={o.id}><td><Link to={'/order/'+o.id}>{o.id} ↗</Link></td><td>{customer.email?<>{customer.name}<small>{customer.email}</small></>:customer.name||'Customer'}</td><td>{date(o.created_at)}</td><td>{o.payment_mode}</td><td>{money(o.total)}</td><td>{staff.role==='viewer'?<Status text={o.status}/>:<select aria-label={`Status for ${o.id}`} value={o.status} disabled={busy} onChange={e=>setOrderStatus(o.id,e.target.value)}>{['confirmed','packed','shipped','delivered','cancelled'].map(status=><option key={status} value={status}>{status}</option>)}</select>}</td></tr>})}</tbody></table>{!(data?.orders||[]).length&&<p className="empty">Orders will appear here after checkout.</p>}{!!(data?.orders||[]).length&&!orders.length&&<p className="empty">No orders match these filters.</p>}</div></div>})()}{tab==='Customers'&&<CustomersAdmin role={staff.role}/>}{tab==='Catalogue copy'&&<AiCopy products={products} readonly={staff.role==='viewer'} onPublished={refresh}/>}{tab==='AI Chatbot'&&<ChatbotAdmin readonly={staff.role==='viewer'} canConfigure={staff.role==='owner'}/>}{tab==='Settings'&&<SettingsAdmin data={data} refresh={refresh} readonly={staff.role!=='owner'} owner={staff.role==='owner'}/>}</>}</div></main></div>}
-function ManualImports({refresh,readonly,batches=[]}){return <><p className="notice">All catalogue ingestion is manual. Upload a CSV/XLS/XLSX file, validate its preview, then explicitly publish it. No feed synchronization runs in the background.</p><div className="admin-two"><ImportPanel kind="products" refresh={refresh} readonly={readonly}/><ImportPanel kind="coins" refresh={refresh} readonly={readonly}/><ImportPanel kind="kurtas" refresh={refresh} readonly={readonly}/></div><BatchTable batches={batches} retry={async()=>{await refresh()}} readonly={readonly}/></>}
+      </header><div className="admin-content"><div className="section-heading"><div><span className="eyebrow">YOUR MAISON, AT A GLANCE</span><h1>{tab==='Dashboard'?'A considered overview.':tab}</h1></div><button className="text-button" onClick={()=>refresh().catch(e=>setError(e.message))}><RefreshCw size={15}/>Refresh</button></div>{error&&<div className="error" role="alert">{error}</div>}{(tabsNeedingData.includes(tab) && !data)?<p>Loading studio…</p>:<>{tab==='Dashboard'&&<><div className="admin-stats"><Stat title="ACTIVE GOLD RATES" value={data.rates.length} detail={`${data.rates.filter(r=>r.fresh).length} within freshness limit`}/><Stat title="JEWELRY PIECES" value={products.filter(p=>!p.is_kurta&&!/kurta|chikankari|saree|ethnic|bottom/i.test(String(p.category||''))).length} detail={`${products.filter(p=>!p.is_kurta&&!/kurta|chikankari|saree|ethnic|bottom/i.test(String(p.category||''))&&p.stock===0).length} out of stock`}/><Stat title="TODAY’S IMPORTS" value={data.todayImports?.failed?'Needs review':'All clear'} detail={`${data.todayImports?.published||0} published · ${data.todayImports?.failed||0} failed`}/><Stat title="ORDERS" value={data.orders.length} detail={`${money(data.orders.reduce((s,o)=>s+Number(o.total),0))} total order value`}/></div><div className="admin-two"><div className="admin-panel"><div className="panel-title"><h3>Active gold rates</h3><button className="underlink" onClick={()=>setTab('Gold Rates')}>View rates ↗</button></div><RateTable rates={data.rates}/></div><div className="admin-panel"><h3>Needs your attention</h3><div className="attention"><AlertCircle size={19}/><div><strong>{data.rates.some(r=>!r.fresh)?'Gold rates are stale':'Storefront active with Cash on Delivery'}</strong><p>Cash on Delivery is active. Store policies and catalogue photography can be reviewed anytime.</p></div></div><p className="small">Maximum rate age: {data.maxAgeHours} hours. Stale gold-linked items pause at checkout.</p></div></div><BatchTable batches={data.batches.slice(0,6)}/><div className="admin-panel"><h3>Recent staff activity</h3>{data.audits.slice(0,8).map(a=><p className="audit-line" key={a.id}><span>{a.action} · Staff {a.staff_id||'system'}</span><span>{date(a.created_at)}</span></p>)}</div></>}{tab==='Gold Rates'&&<GoldRatesAdmin readonly={staff.role==='viewer'} staff={staff} data={data} refreshParent={refresh}/>}{tab==='Categories'&&<CategoriesAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{(tab==='Jewelry'||tab==='Products')&&<><div className="notice">Imports preserve product names, descriptions and publication status by default. Stock is an absolute snapshot, adjusted for paid orders after its source timestamp.</div><details className="advanced-media"><summary>Manage multiple jewelry photos (optional)</summary><ImageUploader products={products} refreshParent={refresh}/></details><AdminProductList products={products.filter(p=>!p.is_kurta&&!/kurta|chikankari|saree|ethnic|bottom/i.test(String(p.category||'')))} readonly={staff.role==='viewer'} refresh={refresh} onOpenImports={()=>setTab('Imports')}/></>}{(tab==='Kurtas'||tab==='Chicken Curry Kurtas')&&<KurtasAdmin readonly={staff.role==='viewer'} ProductAngleManager={ProductAngleManager} ImportPanel={ImportPanel}/>}{tab==='Coins'&&<CoinsAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Offers'&&<OffersAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Reviews'&&<ReviewsAdmin readonly={staff.role==='viewer'} refreshParent={refresh}/>}{tab==='Pricing Rules'&&<Rules rule={data.rule} readonly={staff.role!=='owner'} refresh={refresh}/ >}{tab==='Materials'&&<MaterialsAdmin readonly={staff.role==='viewer'}/>}{tab==='Craftsmanship'&&<CraftsmanshipAdmin readonly={staff.role==='viewer'}/>}{tab==='Collections'&&<CollectionsAdmin readonly={staff.role==='viewer'}/>}{tab==='AI Recommendations'&&<RecommendationsAdmin readonly={staff.role==='viewer'}/>}{tab==='Imports'&&<><p className="notice">Catalogue updates are manual. Upload a file, review the preview, then publish it.</p><div className="admin-two"><ImportPanel kind="gold" refresh={refresh} readonly={staff.role==='viewer'}/><ImportPanel kind="products" refresh={refresh} readonly={staff.role==='viewer'}/><ImportPanel kind="coins" refresh={refresh} readonly={staff.role==='viewer'}/><ImportPanel kind="kurtas" refresh={refresh} readonly={staff.role==='viewer'}/></div><details className="advanced-media"><summary>Manage multiple jewelry photos (optional)</summary><ImageUploader products={products} refreshParent={refresh}/></details><BatchTable batches={data.batches||[]} retry={async b=>{try{await api(`/admin/import/${b.id}/publish`,{});await refresh()}catch(e){setError(e.message)}}} readonly={staff.role==='viewer'}/></>}{tab==='Orders'&&(()=>{const q=orderQuery.trim().toLowerCase();const orders=(data?.orders||[]).filter(o=>{if(orderStatusFilter!=='all'&&o.status!==orderStatusFilter)return false;if(orderPayFilter!=='all'&&o.payment_mode!==orderPayFilter)return false;if(!q)return true;const customer=orderCustomer(o);return [o.id,o.status,o.payment_mode,customer.name,customer.email].join(' ').toLowerCase().includes(q)});const filtering=orderQuery.trim()||orderStatusFilter!=='all'||orderPayFilter!=='all';return <div className="admin-panel"><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'12px',marginBottom:'16px'}}><div><h3 style={{margin:0}}>All Orders ({orders.length}{filtering?` of ${(data?.orders||[]).length}`:''})</h3><span className="small muted">{filtering?`${orders.length} matching`:`${(data?.orders||[]).length} total orders recorded`}</span></div>{staff.role!=='viewer'&&<a className="underlink" href="/api/admin/export/orders" download style={{display:'inline-flex',alignItems:'center',gap:'6px'}}>Export orders CSV ({(data?.orders||[]).length}) ↓</a>}</div><div className="admin-filter-bar"><div className="search-box"><Search size={14}/><input type="search" placeholder="Search order, customer, or email" value={orderQuery} onChange={e=>setOrderQuery(e.target.value)} aria-label="Search orders"/></div><select className="filter-select" value={orderStatusFilter} onChange={e=>setOrderStatusFilter(e.target.value)} aria-label="Filter orders by status"><option value="all">All statuses</option>{['confirmed','packed','shipped','delivered','cancelled'].map(status=><option key={status} value={status}>{status}</option>)}</select><select className="filter-select" value={orderPayFilter} onChange={e=>setOrderPayFilter(e.target.value)} aria-label="Filter orders by payment"><option value="all">All payments</option><option value="cod">Cash on delivery</option></select>{filtering&&<button type="button" className="reset-filter-btn" onClick={()=>{setOrderQuery('');setOrderStatusFilter('all');setOrderPayFilter('all')}}><RotateCcw size={13}/> Reset</button>}</div><div className="table-wrap"><table><thead><tr><th>Order</th><th>Customer</th><th>Placed (India)</th><th>Payment</th><th>Total</th><th>Status</th></tr></thead><tbody>{orders.map(o=>{const customer=orderCustomer(o);return <tr key={o.id}><td><Link to={'/order/'+o.id}>{o.id} ↗</Link></td><td>{customer.email?<>{customer.name}<small>{customer.email}</small></>:customer.name||'Customer'}</td><td>{date(o.created_at)}</td><td>{o.payment_mode}</td><td>{money(o.total)}</td><td>{staff.role==='viewer'?<Status text={o.status}/>:<select aria-label={`Status for ${o.id}`} value={o.status} disabled={busy} onChange={e=>setOrderStatus(o.id,e.target.value)}>{['confirmed','packed','shipped','delivered','cancelled'].map(status=><option key={status} value={status}>{status}</option>)}</select>}</td></tr>})}</tbody></table>{!(data?.orders||[]).length&&<p className="empty">Orders will appear here after checkout.</p>}{!!(data?.orders||[]).length&&!orders.length&&<p className="empty">No orders match these filters.</p>}</div></div>})()}{tab==='Customers'&&<CustomersAdmin role={staff.role}/>}{tab==='Catalogue copy'&&<AiCopy products={products} readonly={staff.role==='viewer'} onPublished={refresh}/>}{tab==='AI Chatbot'&&<ChatbotAdmin readonly={staff.role==='viewer'} canConfigure={staff.role==='owner'}/>}{tab==='Settings'&&<SettingsAdmin data={data} refresh={refresh} readonly={staff.role!=='owner'} owner={staff.role==='owner'}/>}</>}</div></main></div>}
 function Stat({title,value,detail}){return <div className="stat"><span className="eyebrow">{title}</span><strong>{value}</strong><small>{detail}</small></div>}
 function Status({text}){return <CommonStatusBadge status={text} label={text}/>}
 function RateTable({rates}){return <div className="table-wrap"><table><thead><tr><th>Purity</th><th>INR / gram</th><th>Original rate</th><th>Effective date</th><th>Status</th></tr></thead><tbody>{rates.map(r=><tr key={r.id}><td><strong>{r.purity}</strong></td><td>{money(r.inr_per_gram)}</td><td>{money(r.original_rate)} / {r.original_unit}</td><td>{r.effective_date}<small>{date(r.source_timestamp)}</small></td><td><Status text={r.fresh?'Verified':'stale — checkout paused'}/></td></tr>)}</tbody></table>{!rates.length&&<p>No approved rates. Import a rate file to begin.</p>}</div>}
@@ -1995,42 +2037,10 @@ function ProductRow({ p, readonly, refresh, onDelete }) {
     <ProductAngleManager product={p} readonly={readonly} refreshParent={refresh} />
   </>}</AdminCatalogueRow>;
 }
-function SettingsAdmin({ data, refresh, readonly, owner = false }) {
-  const [error, setError] = useState(''), [saved, setSaved] = useState(false), [busy, setBusy] = useState(false);
+function SettingsAdmin({ refresh, readonly, owner = false }) {
+  const [error, setError] = useState('');
   const [silverInput, setSilverInput] = useState('');
   const [silverSaved, setSilverSaved] = useState(false);
-
-  const feedSettings = data?.feedSettings || {};
-  const isStopped = feedSettings.feedStatus === 'stopped';
-  const isGoldOn = feedSettings.goldFeedEnabled !== false;
-  const isProductOn = feedSettings.productFeedEnabled !== false;
-
-  async function toggleMaster(newStatus) {
-    setBusy(true); setError(''); setSaved(false);
-    try {
-      await api('/admin/feed-toggle', { status: newStatus });
-      await refresh();
-    } catch (e) { setError(e.message) } finally { setBusy(false) }
-  }
-
-  async function toggleChannel(kind, currentVal) {
-    setBusy(true); setError(''); setSaved(false);
-    try {
-      await api('/admin/feed-toggle', { kind, enabled: !currentVal });
-      await refresh();
-    } catch (e) { setError(e.message) } finally { setBusy(false) }
-  }
-
-  async function saveSettings(e) {
-    e.preventDefault();
-    setBusy(true); setError(''); setSaved(false);
-    try {
-      const formData = Object.fromEntries(new FormData(e.target));
-      await api('/admin/feed-settings', formData);
-      setSaved(true);
-      await refresh();
-    } catch (e) { setError(e.message) } finally { setBusy(false) }
-  }
 
   async function saveSilver(e) {
     e.preventDefault();
@@ -2043,130 +2053,7 @@ function SettingsAdmin({ data, refresh, readonly, owner = false }) {
   }
 
   return <div className="settings-admin">
-    {/* Master Start / Stop Feed Toggle Banner */}
-    <div className={'feed-status-card ' + (isStopped ? 'stopped' : 'active')}>
-      <div className="feed-toggle-header">
-        <div>
-          <span className="eyebrow" style={{ letterSpacing: '1.5px', marginBottom: '6px', display: 'block', color: isStopped ? '#c62828' : '#2e7d32' }}>
-            FEED AUTOMATION ENGINE
-          </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            <h2 style={{ margin: 0, fontSize: '28px', color: isStopped ? '#c62828' : '#1b5e20' }}>
-              {isStopped ? 'Feeds Are Currently Stopped' : 'Feeds Are Active & Running'}
-            </h2>
-            <span className={'status-badge ' + (isStopped ? 'warning' : '')} style={{ fontSize: '10px', fontWeight: 700, padding: '5px 12px', borderRadius: '20px' }}>
-              {isStopped ? '🔴 STOPPED' : '🟢 RUNNING'}
-            </span>
-          </div>
-          <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--muted)', maxWidth: '540px', lineHeight: '1.6' }}>
-            {isStopped
-              ? 'Feed synchronization and live rate fetches are halted. No external requests or market rate updates will be made until started.'
-              : 'Feed synchronization and live gold spot rate updates are active.'}
-          </p>
-        </div>
-        <div>
-          <button
-            type="button"
-            disabled={busy || readonly}
-            className={'feed-toggle-switch ' + (isStopped ? 'start' : 'stop')}
-            onClick={() => toggleMaster(isStopped ? 'active' : 'stopped')}
-            style={{ padding: '12px 24px', fontSize: '13px', gap: '10px' }}
-          >
-            {isStopped ? <><Play size={18} /> Start Feed Automation</> : <><Pause size={18} /> Stop Feed Automation</>}
-          </button>
-        </div>
-      </div>
-    </div>
-
     {error && <div className="error" role="alert">{error}</div>}
-    {saved && <div className="notice" style={{ background: '#e8f5e9', borderColor: '#a5d6a7', color: '#1b5e20' }}>Settings updated and audited successfully.</div>}
-
-    {/* Individual Feed Channel Controls */}
-    <div className="feed-channel-grid">
-      <div className="feed-channel-card">
-        <div className="feed-channel-card-header">
-          <div>
-            <h4>Metal Pricing Control</h4>
-            <small style={{ color: 'var(--muted)' }}>Gold & Silver Internal Management</small>
-          </div>
-          <span className="channel-toggle-btn on" style={{ background: '#e8f5e9', color: '#2e7d32', cursor: 'default' }}>
-            ● Managed Internally
-          </span>
-        </div>
-        <p style={{ fontSize: '11px', color: 'var(--muted)', margin: '0 0 12px' }}>
-          Live external pricing APIs have been completely removed. Metal prices are managed exclusively via manual entry and bulk CSV/Excel import in Gold Rates.
-        </p>
-        <div style={{ fontSize: '10px', background: 'var(--paper)', padding: '8px 12px', borderRadius: '4px', wordBreak: 'break-all' }}>
-          <strong>Status: </strong>Official Admin-Approved Benchmarks Active
-        </div>
-      </div>
-
-      <div className="feed-channel-card">
-        <div className="feed-channel-card-header">
-          <div>
-            <h4>Product Catalogue & Inventory Feed</h4>
-            <small style={{ color: 'var(--muted)' }}>Jewellery Stock & Variant Sync</small>
-          </div>
-          <button
-            type="button"
-            disabled={busy || readonly}
-            className={'channel-toggle-btn ' + (isProductOn ? 'on' : 'off')}
-            onClick={() => toggleChannel('products', isProductOn)}
-          >
-            {isProductOn ? '● Enabled' : '○ Disabled'}
-          </button>
-        </div>
-        <p style={{ fontSize: '11px', color: 'var(--muted)', margin: '0 0 12px' }}>
-          Synchronizes jewellery pieces, making charges, and absolute inventory stock counts.
-        </p>
-        <div style={{fontSize:'10px',background:'var(--paper)',padding:'8px 12px',borderRadius:'4px',wordBreak:'break-all'}}>
-          <strong>Source: </strong>{feedSettings.productsConfigured?'Product Feed Configured':'Not configured'}
-        </div>
-      </div>
-    </div>
-
-    {/* Detailed Feed Configuration Form */}
-    <div className="admin-panel">
-      <h3>Inventory & Freshness Configuration</h3>
-      <p className="small muted">
-        Configure rate freshness windows and inventory overwrite permissions. Owner edits are recorded in staff audit logs.
-      </p>
-      <form onSubmit={saveSettings}>
-        <div className="form-grid">
-          <label>
-            Maximum gold-rate age (hours)
-            <input name="maxAgeHours" type="number" min="1" max="168" defaultValue={data.maxAgeHours || 48} disabled={readonly} />
-            <small className="muted" style={{ display: 'block', marginTop: '4px' }}>Rates older than this will pause gold-linked checkout.</small>
-          </label>
-          <label>
-            Inventory sync mode
-            <select name="inventoryMode" defaultValue={feedSettings.inventoryMode || 'incremental'} disabled={readonly}>
-              <option value="incremental">Incremental — omitted SKUs remain unchanged</option>
-              <option value="full">Full — omitted SKUs set to out of stock</option>
-            </select>
-          </label>
-          <label className="span-two">
-            Metal Pricing Management
-            <p className="small muted" style={{ margin: '4px 0 0' }}>
-              Gold and Silver benchmarks are managed in <Link to="/admin/gold-rates" className="underlink">Gold & Silver Rates</Link> with manual updates and CSV/Excel imports. No external live pricing APIs are called.
-            </p>
-          </label>
-          <label className="span-two">
-            Product CSV Feed URL
-            <input name="productUrl" type="url" placeholder="https://example.com/products.csv" defaultValue={feedSettings.productUrl||''} disabled={readonly}/>
-          </label>
-          <label className="span-two">
-            Allowed overwrite fields on import
-            <input name="overwriteFields" defaultValue={feedSettings.overwriteFields || 'stock,fixed_price,net_weight_g,making_flat,stone_charge,other_charge'} disabled={readonly} />
-          </label>
-        </div>
-        <button style={{ marginTop: 20 }} className="button dark" disabled={busy || readonly}>
-          Save Feed Settings <Check size={16} />
-        </button>
-      </form>
-    </div>
-
-    {/* Silver Bullion Benchmark */}
     <div className="admin-panel">
       <h3>999 Fine Silver Benchmark Rate</h3>
       <p className="small muted">Base spot rate per gram used to calculate prices for 999 fine silver coins and bullion bars.</p>
@@ -2185,7 +2072,6 @@ function SettingsAdmin({ data, refresh, readonly, owner = false }) {
     {owner && <StaffAccess />}
   </div>;
 }
-const FeedSettings = SettingsAdmin;
 function Rules({ rule, readonly, refresh }) {
   const { refreshCatalogue } = useStore();
   const [value, setValue] = useState({ ...rule, margin_type: rule.margin_type || 'PERCENT', margin_value: rule.margin_value ?? 0 });

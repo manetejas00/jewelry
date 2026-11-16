@@ -148,8 +148,6 @@ export async function publishImport(k,id,staff=null){
  const sold=await t('order_items').join('orders','orders.id','order_items.order_id').where('order_items.sku',r.sku).where('orders.created_at','>',r.source_timestamp).whereIn('orders.status',STOCK_HOLDING_STATUSES).sum('order_items.quantity as qty').first();row.stock=Math.max(0,Number(r.stock)-Number(sold.qty||0));
  if(old){const patch=productPatch(row,old);const changed=Object.entries(patch).some(([f,v])=>!['source_timestamp','updated_at'].includes(f)&&String(old[f]??'')!==String(v??''));await t('products').where({sku:r.sku}).update(patch);changed?updated++:unchanged++;}else{await t('products').insert(row);created++;}
  }}
- if(b.kind==='kurtas'&&process.env.KURTA_INVENTORY_MODE==='full')await t('products').where({is_kurta:true}).whereNotIn('sku',rows.map(r=>r.sku)).update({stock:0,updated_at:now()});
- if(b.kind==='products'&&process.env.INVENTORY_MODE==='full')await t('products').whereNotIn('sku',rows.map(r=>r.sku)).update({stock:0,updated_at:now()});
  const summary={...parse(b.summary),created,updated,unchanged,rejected:0};await t('import_batches').where({id}).update({status:'published',published_at:now(),summary:json(summary)});await t('audit').insert({staff_id:staff,action:`publish_${b.kind}`,details:json({batch:id,summary}),created_at:now()});await t('import_locks').where({name:b.kind}).del();return summary;
  },k.client.config.client==='mysql2'?{isolationLevel:'read committed'}:{});
 }
