@@ -1,4 +1,6 @@
 import OffersAdmin from './admin/OffersAdmin.jsx';
+import { announcementSlides, routeCatalogue } from './announcement.js';
+import { rememberCoupon, storedCoupon } from './coupon.js';
 import Modal from './components/Modal.jsx';
 import { money } from './format.js';
 import BrandedImage from './BrandedImage.jsx';
@@ -230,6 +232,34 @@ export function isStoreNavActive(item, pathname, products = []) {
   return false;
 }
 
+function AnnouncementBar({ offers = [] }) {
+  const location = useLocation();
+  const slides = useMemo(() => announcementSlides(offers, routeCatalogue(location.pathname)), [offers, location.pathname]);
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  useEffect(() => { setIndex(0); }, [location.pathname, slides.length]);
+  useEffect(() => {
+    if (paused || slides.length < 2) return undefined;
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+    const timer = setInterval(() => setIndex(current => (current + 1) % slides.length), 5000);
+    return () => clearInterval(timer);
+  }, [paused, slides.length]);
+  const slide = slides[index % slides.length] || slides[0];
+  if (!slide) return null;
+  const step = (delta) => setIndex(current => (current + delta + slides.length) % slides.length);
+  return <div className="announcement" role="region" aria-roledescription="carousel" aria-label="Store announcements" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocus={() => setPaused(true)} onBlur={() => setPaused(false)}>
+    {slides.length > 1 && <button type="button" className="announcement-arrow prev" aria-label="Previous announcement" onClick={() => step(-1)}><ArrowLeft size={14} /></button>}
+    <div className="announcement-slide" aria-live="polite">
+      <Link className="announcement-link" to={slide.href} onClick={() => { if (slide.code) rememberCoupon(slide.code); }}>
+        <Sparkles size={11} color="#f9ca24" />
+        <span className="announcement-copy">{slide.text}</span>
+        <span className="announcement-cta">{slide.cta} <ArrowRight size={12} /></span>
+      </Link>
+    </div>
+    {slides.length > 1 && <button type="button" className="announcement-arrow next" aria-label="Next announcement" onClick={() => step(1)}><ArrowRight size={14} /></button>}
+  </div>;
+}
+
 function Header() {
   const { bag, setBagOpen, saved, customer, logoutCustomer, syncError, refreshAccount, offers = [], products = [] } = useStore();
   const [menu, setMenu] = useState(false), [search, setSearch] = useState(false), [q, setQ] = useState('');
@@ -331,13 +361,8 @@ function Header() {
     }
   };
 
-  const bannerOffer = offers.find(o => o.show_in_banner && o.banner_headline) || offers[0];
-  const bannerTarget = bannerOffer ? (bannerOffer.applies_to === 'silver' ? '/coins/silver' : bannerOffer.applies_to === 'coins' ? '/coins' : '/collections/all') : '/collections/all';
-
   return <>
-    <Link to={bannerTarget} className="announcement" aria-label="Announcement banner">
-      {bannerOffer ? <><Sparkles size={11} color="#f9ca24" /> {bannerOffer.banner_headline} {bannerOffer.code ? <span>Code: {bannerOffer.code} <ArrowRight size={12} /></span> : <span>Offer auto-applied <ArrowRight size={12} /></span>}</> : <>A little wonder. An everyday heirloom. <span>Discover the collection <ArrowRight size={12} /></span></>}
-    </Link>
+    <AnnouncementBar offers={offers} />
     <header className="header">
       <button className="icon mobile-menu" aria-label={menu ? 'Close navigation menu' : 'Open navigation menu'} aria-expanded={menu} aria-controls="store-navigation" onClick={() => setMenu(!menu)}>
         {menu ? <X size={22} /> : <Menu size={22} />}
@@ -1070,7 +1095,7 @@ function Product() {
   );
 }
 function BagLines() { const { bag, setBag, setBagOpen } = useStore(); const change = (sku, n) => setBag(b => b.map(p => p.sku === sku ? { ...p, quantity: p.quantity + n } : p).filter(p => p.quantity > 0)); return bag.map(p => <div className="bag-line" key={p.sku}><Link onClick={() => setBagOpen(false)} to={(p.slug === 'coins' || p.kind === 'coin' || p.sku?.startsWith('COIN-')) ? '/coin/' + (p.slug && p.slug !== 'coins' ? p.slug : encodeURIComponent(p.sku)) : (p.is_kurta || p.kind === 'kurta' || p.category?.includes('Kurta')) ? '/kurta/' + (p.slug || p.product_code) : '/jewelry/' + (p.slug || p.sku)}><BrandedImage src={coinImage(p.image, true)} alt={p.name} /></Link><div><h3>{p.name}</h3><p>{p.size} · {p.sku}</p><strong>{p.price == null ? 'Price awaiting rate' : money(p.price)}</strong>{p.unavailable && <p className="error">Currently unavailable. Remove this piece to continue.</p>}<div className="quantity"><button aria-label={`Remove one ${p.name}`} onClick={() => change(p.sku, -1)}><Minus size={13} /></button><span>{p.quantity}</span><button aria-label={`Add one ${p.name}`} onClick={() => change(p.sku, 1)} disabled={p.quantity >= Math.min(20, p.stock ?? 20) || p.unavailable}><Plus size={13} /></button><button className="remove" onClick={() => setBag(b => b.filter(x => x.sku !== p.sku))}>Remove</button></div></div></div>) }
-function BagDrawer() { const { bagOpen, setBagOpen, bag } = useStore(); const nav = useNavigate(); if (!bagOpen) return null; return <Modal title={`Your bag (${bag.reduce((n, p) => n + p.quantity, 0)})`} onClose={() => setBagOpen(false)}>{bag.length ? <><BagLines /><div className="summary-line"><span>Estimated subtotal</span><strong>{money(bag.reduce((n, p) => n + p.price * p.quantity, 0))}</strong></div><p className="small muted">Current price, availability and delivery charges are checked at checkout.</p><button className="button dark full" onClick={() => { setBagOpen(false); nav('/checkout') }}>Continue to checkout <ArrowRight size={17} /></button><button className="text-button full" onClick={() => { setBagOpen(false); nav('/collections/all') }}>Continue discovering</button></> : <div className="empty"><ShoppingBag size={32} /><h3>A little room for wonder.</h3><p>Your bag is waiting for something special.</p><button className="button dark" onClick={() => { setBagOpen(false); nav('/collections/all') }}>Explore the collection</button></div>}</Modal> }
+function BagDrawer() { const { bagOpen, setBagOpen, bag } = useStore(); const nav = useNavigate(); if (!bagOpen) return null; return <Modal title={`Your bag (${bag.reduce((n, p) => n + p.quantity, 0)})`} onClose={() => setBagOpen(false)}>{bag.length ? <><BagLines /><div className="summary-line"><span>Estimated subtotal</span><strong>{money(bag.reduce((n, p) => n + p.price * p.quantity, 0))}</strong></div><p className="small muted">Current price, availability and delivery charges are checked at checkout.</p>{storedCoupon() && <p className="small">Coupon {storedCoupon()} will be checked at checkout.</p>}<button className="button dark full" onClick={() => { setBagOpen(false); nav('/checkout') }}>Continue to checkout <ArrowRight size={17} /></button><button className="text-button full" onClick={() => { setBagOpen(false); nav('/collections/all') }}>Continue discovering</button></> : <div className="empty"><ShoppingBag size={32} /><h3>A little room for wonder.</h3><p>Your bag is waiting for something special.</p><button className="button dark" onClick={() => { setBagOpen(false); nav('/collections/all') }}>Explore the collection</button></div>}</Modal> }
 function Bag() {
   const { bag } = useStore();
   const subtotal = bag.reduce((n, p) => n + p.price * p.quantity, 0);
@@ -1084,6 +1109,7 @@ function Bag() {
         <strong style={{ fontSize: '18px' }}>{money(subtotal)}</strong>
       </div>
       <p className="small muted">Metal rates, final delivery, and item availability are confirmed at checkout.</p>
+      {storedCoupon() && <p className="small">Coupon {storedCoupon()} will be checked at checkout.</p>}
       <div style={{ display: 'flex', gap: '18px', flexWrap: 'wrap', marginTop: '24px', alignItems: 'center' }}>
         <Link className="button dark" to="/checkout">Continue to checkout <ArrowRight size={17} /></Link>
         <Link className="underlink" to="/collections/all">Continue discovering <ArrowUpRight size={15} /></Link>
@@ -1098,7 +1124,8 @@ function Bag() {
 }
 function Checkout() {
   const { bag, setBag, config, customer, flushAccount, afterCheckout, refreshCatalogue } = useStore();
-  const [quote, setQuote] = useState(null), [error, setError] = useState(''), [busy, setBusy] = useState(false), [accepted, setAccepted] = useState(false), [changed, setChanged] = useState(false), [codeNote, setCodeNote] = useState(''), [offerCode, setOfferCode] = useState(''), [appliedOffer, setAppliedOffer] = useState('');
+  const savedCoupon = storedCoupon();
+  const [quote, setQuote] = useState(null), [error, setError] = useState(''), [busy, setBusy] = useState(false), [accepted, setAccepted] = useState(false), [changed, setChanged] = useState(false), [codeNote, setCodeNote] = useState(''), [offerCode, setOfferCode] = useState(savedCoupon), [appliedOffer, setAppliedOffer] = useState(savedCoupon);
   const key = useRef(crypto.randomUUID()), formRef = useRef();
   const nav = useNavigate();
   const placeholders = { name: 'e.g. Priya Sharma', email: 'e.g. priya@example.com', phone: '10-digit mobile number', pincode: '6-digit PIN code', address: 'Flat, house no., building, street', city: 'e.g. Mumbai' };
@@ -1137,9 +1164,10 @@ function Checkout() {
         <div className="form-grid">
           {[['name', 'Full name', 'text'], ['email', 'Email address', 'email'], ['phone', 'Mobile number', 'tel'], ['pincode', 'PIN code', 'text'], ['address', 'Address', 'text'], ['city', 'City', 'text']].map(([name, label, type]) => <label key={name} className={name === 'address' ? 'span-two' : ''}>{label}<input name={name} type={type} placeholder={placeholders[name]} title={name === 'phone' ? '10-digit mobile number' : name === 'pincode' ? '6-digit PIN code' : undefined} defaultValue={name === 'name' ? customer?.name : name === 'email' ? customer?.email : undefined} autoComplete={{ name: 'name', email: 'email', phone: 'tel', pincode: 'postal-code', address: 'street-address', city: 'address-level2' }[name]} required maxLength={name === 'phone' ? 10 : name === 'pincode' ? 6 : 200} pattern={name === 'phone' ? '[0-9]{10}' : name === 'pincode' ? '[0-9]{6}' : undefined} /></label>)}
         </div>
-        <label>Offer code <span className="muted">(optional)</span>
-          <span style={{ display: 'flex', gap: '8px' }}><input value={offerCode} onChange={e => setOfferCode(e.target.value.toUpperCase())} maxLength={50} autoComplete="off" placeholder="Leave blank if the offer applies automatically" /><button type="button" className="button" onClick={() => { setAppliedOffer(offerCode.trim()); setAccepted(false); }}>Apply</button></span>
+        <label>Coupon code <span className="muted">(optional)</span>
+          <span style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}><input value={offerCode} onChange={e => setOfferCode(e.target.value.toUpperCase())} maxLength={50} autoComplete="off" placeholder="Jewellery, coin, or kurta coupon" /><button type="button" className="button" onClick={() => { const code = offerCode.trim().toUpperCase(); setOfferCode(code); setAppliedOffer(code); rememberCoupon(code); setAccepted(false); }}>Apply</button>{appliedOffer && <button type="button" className="text-button" onClick={() => { setOfferCode(''); setAppliedOffer(''); rememberCoupon(''); setAccepted(false); }}>Remove</button>}</span>
         </label>
+        {appliedOffer && quote?.coupon && <p className={quote.coupon.applied ? 'small' : 'error'} role="status">{quote.coupon.message}{quote.coupon.applied ? ` You save ${money(quote.coupon.savings)}.` : ''}</p>}
         {config.otp?.requireCheckout && <div className="span-two"><label>Mobile verification code<input name="otp" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" minLength={6} maxLength={6} required /></label><button type="button" className="text-button" disabled={busy} onClick={async () => { const phone = new FormData(formRef.current).get('phone'); const channel = config.otp.channels.includes('sms') ? 'sms' : 'whatsapp'; setBusy(true); setError(''); try { const result = await api('/otp/send', { purpose: 'checkout', channel, destination: phone }); setCodeNote(result.message); } catch (err) { setError(err.message) } finally { setBusy(false) } }}>Send code</button>{codeNote && <p role="status">{codeNote}</p>}</div>}
         <div className="payment-method-box" style={{ background: 'var(--paper)', border: '1px solid var(--line)', padding: '16px 18px', borderRadius: '4px', margin: '22px 0 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
@@ -1161,6 +1189,7 @@ function Checkout() {
         {!quote && <p role="status">{error ? 'The total is unavailable. Update your bag and try again.' : 'Checking prices and availability…'}</p>}
         {quote?.lines.map(p => <div className="summary-product" key={p.sku}><BrandedImage src={coinImage(p.image, true)} alt={p.name} /><div><h4>{p.name}</h4><p>{p.size} · Qty {p.quantity}</p><span>{money(p.unit_price * p.quantity)}</span></div></div>)}
         <div className="summary-line"><span>Subtotal</span>{money(quote?.subtotal)}</div>
+        {quote?.coupon?.applied && <div className="summary-line"><span>Coupon {quote.coupon.code}</span><span>Saved {money(quote.coupon.savings)}</span></div>}
         <div className="summary-line"><span>Delivery</span>{quote?.shipping === 0 ? 'Complimentary' : money(quote?.shipping)}</div>
         <div className="summary-line total"><span>Total payable upon arrival</span>{money(quote?.total)}</div>
         <p className="small">Displayed total includes taxes & doorstep delivery charges. Payable upon arrival.</p>

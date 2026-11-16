@@ -24,7 +24,7 @@ function pricedKurtaVariant(variant, kurta, rule, offer) {
 
 export class KurtaResource {
   static toStorefrontCard(kurta, offers = [], ratings = new Map(), rule = null) {
-    const offer = matchOffer(kurta, offers);
+    const offer = matchOffer({...kurta, is_kurta:true}, offers);
     const sourceVariants = kurta.variants || [];
     const pricedVariants = sourceVariants.map(variant => pricedKurtaVariant(variant, kurta, rule, offer));
     const variants = pricedVariants.flatMap(variant => expandCombinedKurtaVariant(variant, { slug: kurta.slug }));
@@ -114,7 +114,7 @@ export class KurtaResource {
   }
 
   static toStorefrontDetail(kurta, offers = [], ratings = new Map(), options = {}, rule = null) {
-    const offer = matchOffer(kurta, offers, options.code);
+    const offer = matchOffer({...kurta, is_kurta:true}, offers, options.code);
     const variants = (kurta.variants || [])
       .map(variant => pricedKurtaVariant(variant, kurta, rule, offer))
       .flatMap(variant => expandCombinedKurtaVariant(variant, { slug: kurta.slug }));

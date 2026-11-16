@@ -62,16 +62,21 @@ export default function OffersAdmin({readonly,refreshParent}){
       <div>
         <h3>Promotional Offers & Festive Discounts</h3>
         <p className="small muted" style={{margin:'4px 0 0'}}>
-          Configure Mia-by-Tanishq styled festive offer badges, making charge discounts (% OFF ON MC), announcement bars, and in-grid promo cards. Applies across Jewellery Products & Bullion Coins.
+          Offers can apply on their own, or wait for a coupon code. Active banner lines rotate with jewellery, coins, and kurtas in the top bar. A coupon can be limited to one catalogue.
         </p>
       </div>
-      <button
-        className="button dark"
-        disabled={readonly}
-        onClick={()=>setIsCreating(true)}
-      >
-        <Plus size={16}/> Create Promotional Offer
-      </button>
+      <div style={{display:'flex',gap:'10px',flexWrap:'wrap'}}>
+        <button className="button" disabled={readonly} onClick={()=>{setEditingOffer({badge_text:'COUPON',discount_type:'total_percent',discount_value:10,applies_to:'all',code_required:1,show_in_banner:1,banner_headline:'A coupon is waiting on jewellery, coins, and kurtas'});setIsCreating(true);}}>
+          <Tag size={16}/> Create coupon
+        </button>
+        <button
+          className="button dark"
+          disabled={readonly}
+          onClick={()=>{setEditingOffer(null);setIsCreating(true);}}
+        >
+          <Plus size={16}/> Create Promotional Offer
+        </button>
+      </div>
     </div>
 
     {error&&<p className="error" style={{marginBottom:'16px'}}>{error}</p>}
@@ -90,12 +95,12 @@ export default function OffersAdmin({readonly,refreshParent}){
       <div className="stat">
         <span className="eyebrow">ANNOUNCEMENT BAR</span>
         <strong>{bannerOffer?'Live':'Off'}</strong>
-        <small>{bannerOffer?bannerOffer.name:'No banner selected'}</small>
+        <small>{bannerOffer?`${offers.filter(o=>o.status==='active'&&o.show_in_banner).length} in the carousel`:'No banner selected'}</small>
       </div>
       <div className="stat">
-        <span className="eyebrow">APPLIES ACROSS</span>
-        <strong>All & Coins</strong>
-        <small>Products, Bullion & Categories</small>
+        <span className="eyebrow">COUPONS</span>
+        <strong>{offers.filter(o => o.code && (o.code_required === 1 || o.code_required === true)).length}</strong>
+        <small>Codes entered at checkout</small>
       </div>
     </div>
 
@@ -108,7 +113,7 @@ export default function OffersAdmin({readonly,refreshParent}){
       {loading?<p className="empty">Loading promotional offers…</p>:!offers.length?<div className="empty">
         <Tag size={32}/>
         <p>No promotional offers configured yet. Create your first festive offer to attract customers.</p>
-        <button className="button dark" disabled={readonly} onClick={()=>setIsCreating(true)}>+ Create Offer</button>
+        <button className="button dark" disabled={readonly} onClick={()=>{setEditingOffer(null);setIsCreating(true);}}>+ Create Offer</button>
       </div>:<div className="table-wrap">
         <table>
           <thead>
@@ -126,7 +131,7 @@ export default function OffersAdmin({readonly,refreshParent}){
             {offers.map(o=><tr key={o.id}>
               <td>
                 <div style={{fontWeight:600}}>{o.name}</div>
-                <small style={{color:'var(--muted)'}}>{o.code?`Code: ${o.code}`:'Auto-applied (No code)'} · Priority: {o.priority}</small>
+                <small style={{color:'var(--muted)'}}>{o.code?`Coupon: ${o.code}${o.code_required?' · entered at checkout':' · optional'}`:'Auto-applied (no coupon)'} · Priority: {o.priority}</small>
               </td>
               <td>
                 <span className="offer-ribbon-badge" style={{position:'static',display:'inline-flex',borderRadius:'2px',padding:'4px 8px',fontSize:'9px',boxShadow:'none'}}>
@@ -143,9 +148,11 @@ export default function OffersAdmin({readonly,refreshParent}){
               </td>
               <td>
                 <span className="status-badge" style={{textTransform:'uppercase',fontSize:'8px'}}>
-                  {o.applies_to==='all'&&'All (Products & Coins)'}
-                  {o.applies_to==='products'&&'Jewellery Only'}
-                  {o.applies_to==='coins'&&'Coins Only'}
+                  {o.applies_to==='all'&&'Jewellery, coins, and kurtas'}
+                  {o.applies_to==='products'&&'Jewellery only'}
+                  {o.applies_to==='jewelry'&&'Jewellery only'}
+                  {o.applies_to==='kurtas'&&'Kurtas only'}
+                  {o.applies_to==='coins'&&'Coins only'}
                   {o.applies_to==='gold'&&'Gold Items Only'}
                   {o.applies_to==='silver'&&'Silver Items Only'}
                   {o.applies_to==='category'&&`Category: ${o.target_value}`}
@@ -247,7 +254,7 @@ function OfferModal({offer,onClose,onSaved}){
     payload.priority=Number(payload.priority)||10;
 
     try{
-      if(offer){
+      if(offer?.id){
         await api(`/admin/offers/${offer.id}`,payload,'PATCH');
       }else{
         await api('/admin/offers',payload,'POST');
@@ -256,7 +263,8 @@ function OfferModal({offer,onClose,onSaved}){
     }catch(err){setError(err.message);}finally{setBusy(false);}
   }
 
-  return <Modal title={offer?`Edit Offer: ${offer.name}`:'Create Promotional Offer'} onClose={onClose}>
+  const editing=Boolean(offer?.id);
+  return <Modal title={editing?`Edit offer: ${offer.name}`:(offer?.code_required?'Create coupon':'Create promotional offer')} onClose={onClose}>
     <form onSubmit={handleSubmit} style={{maxWidth:'640px'}}>
       {error&&<p className="error" style={{marginBottom:'16px'}}>{error}</p>}
 
@@ -276,8 +284,8 @@ function OfferModal({offer,onClose,onSaved}){
           <input name="name" required defaultValue={offer?.name||''} placeholder="e.g. Diwali & Dhanteras Festive Dhamaka"/>
         </label>
 
-        <label>Promo Code (Optional)
-          <input name="code" defaultValue={offer?.code||''} placeholder="e.g. FESTIVE50 (Leave blank for auto-applied)"/>
+        <label>Coupon code
+          <input name="code" defaultValue={offer?.code||''} placeholder="e.g. KURTA10 (leave blank for an automatic offer)"/>
         </label>
         <label>Starts
           <input name="starts_at" type="datetime-local" defaultValue={offer?.starts_at?offer.starts_at.slice(0,16):''}/>
@@ -287,7 +295,7 @@ function OfferModal({offer,onClose,onSaved}){
         </label>
         <label className="span-two">Checkout code
           <input type="hidden" name="code_required" value="0"/>
-          <span className="small"><input type="checkbox" name="code_required" value="1" defaultChecked={Boolean(offer?.code_required)}/> Require the promo code before this discount applies. Leave unchecked to keep showing it automatically.</span>
+          <span className="small"><input type="checkbox" name="code_required" value="1" defaultChecked={Boolean(offer?.code_required)}/> Require this coupon at checkout. Leave unchecked to apply the discount automatically.</span>
         </label>
 
         <label>Badge Ribbon Text
@@ -323,9 +331,10 @@ function OfferModal({offer,onClose,onSaved}){
 
         <label>Applies To (Target Audience)
           <select name="applies_to" value={appliesTo} onChange={e=>setAppliesTo(e.target.value)}>
-            <option value="all">All (Jewellery Products + Coins)</option>
-            <option value="products">Jewellery Products Only</option>
-            <option value="coins">Bullion Coins Only</option>
+            <option value="all">Jewellery, coins, and kurtas</option>
+            <option value="products">Jewellery only</option>
+            <option value="kurtas">Kurtas only</option>
+            <option value="coins">Coins only</option>
             <option value="gold">Gold Items Only (Jewellery & Coins)</option>
             <option value="silver">Silver Items Only (Jewellery & Coins)</option>
             <option value="category">Specific Category</option>
@@ -374,7 +383,7 @@ function OfferModal({offer,onClose,onSaved}){
         <div className="span-two" style={{display:'flex',gap:'24px',marginTop:'4px',flexWrap:'wrap'}}>
           <label className="checkbox" style={{margin:0}}>
             <input type="checkbox" name="show_in_banner" defaultChecked={offer?Boolean(offer.show_in_banner):true}/>
-            Display in top announcement bar
+            Show in the top announcement carousel
           </label>
           <label className="checkbox" style={{margin:0}}>
             <input type="checkbox" name="show_in_grid" defaultChecked={offer?Boolean(offer.show_in_grid):true}/>
@@ -386,7 +395,7 @@ function OfferModal({offer,onClose,onSaved}){
       <div style={{display:'flex',gap:'12px',justifyContent:'flex-end',marginTop:'24px'}}>
         <button type="button" className="text-button" onClick={onClose} disabled={busy}>Cancel</button>
         <button type="submit" className="button dark" disabled={busy}>
-          {busy?'Saving…':offer?'Save Changes':'Publish Offer'} <Check size={16}/>
+          {busy?'Saving…':editing?'Save changes':offer?.code_required?'Publish coupon':'Publish offer'} <Check size={16}/>
         </button>
       </div>
     </form>

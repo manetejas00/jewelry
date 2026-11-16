@@ -7,7 +7,7 @@ import {resetConfigured} from './password-reset.js';
 import {createOtpGateway} from './otp-gateway.js';
 import {otpAvailability} from './otp.js';
 import {registerSeo,pageMetadata,renderMetadata} from './seo.js';
-import {validateOffer} from './offers.js';
+import {validateOffer,OFFER_TARGETS} from './offers.js';
 import {commerceConfig} from './runtime.js';
 import {errorResponse, validationError} from './errors.js';
 import {listingThumbnailFile} from './listing-thumbnails.js';
@@ -121,11 +121,11 @@ app.post('/api/admin/offers',auth(['owner','manager']),route(async(req,res)=>{
     badge_text:String(badge_text).trim().slice(0,100),
     discount_type:['making_percent','total_percent','flat_amount','badge_only'].includes(discount_type)?discount_type:'making_percent',
     discount_value:Number(discount_value||0),
-    applies_to:['all','products','coins','gold','silver','category','sku'].includes(applies_to)?applies_to:'all',
+    applies_to:OFFER_TARGETS.includes(applies_to)?applies_to:'all',
     target_value:target_value?String(target_value).trim():null,
     banner_headline:banner_headline?String(banner_headline).trim().slice(0,250):null,
     banner_subtext:banner_subtext?String(banner_subtext).trim().slice(0,500):null,
-    status:status==='paused'?'paused':'active',
+    status:status==='paused'||status==='expired'?status:'active',
     priority:Number(priority||0),
     show_in_banner:show_in_banner!==undefined?show_in_banner:true,
     show_in_grid:show_in_grid!==undefined?show_in_grid:true,

@@ -49,7 +49,7 @@ export async function listKurtas(k, options = {}) {
 
   // Price all variants
   const pricedVariants = products.map(p => {
-    const offer = matchOffer(p, offers, options.code);
+    const offer = matchOffer({...p, is_kurta:true}, offers, options.code);
     let price = null;
     try { price = calculatePrice(p, rates[p.purity], rules, offer); } catch {}
     const prodImages = [...(imagesByProduct[p.sku] || []), ...(imagesByProduct[p.product_code] || [])]
@@ -183,7 +183,7 @@ export async function kurtaBySlug(k, slug, options = {}) {
   const ratingData = ratings.get(targetCode) || ratings.get(baseProduct.id) || null;
 
   const pricedVariants = variants.flatMap(v => {
-    const offer = matchOffer(v, offers, options.code);
+    const offer = matchOffer({...v, is_kurta:true}, offers, options.code);
     let price = null;
     try { price = calculatePrice(v, rates[v.purity], rules, offer); } catch {}
     return expandCombinedKurtaVariant({

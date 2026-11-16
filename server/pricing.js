@@ -23,28 +23,57 @@ export function offerIsCurrent(offer, nowMs=Date.now()){
   if(offer.ends_at && Date.parse(offer.ends_at)<nowMs)return false;
   return true;
 }
+export function itemCatalogue(item){
+  if(!item||typeof item!=='object')return 'jewelry';
+  if(item.is_kurta||item.kind==='kurta'||item.item_type==='kurta')return 'kurtas';
+  if(/kurta|chikankari/i.test(String(item.category||'')))return 'kurtas';
+  if(item.coin_type||item.kind==='coin'||item.item_type==='coin')return 'coins';
+  if(item.metal&&['Gold','Silver'].includes(item.metal)&&item.weight_g&&String(item.sku||'').startsWith('COIN-'))return 'coins';
+  return 'jewelry';
+}
+function offerApplies(offer, item, catalogue){
+  const app=offer.applies_to;
+  if(app==='all')return true;
+  if((app==='products'||app==='jewelry')&&catalogue==='jewelry')return true;
+  if(app==='kurtas'&&catalogue==='kurtas')return true;
+  if(app==='coins'&&catalogue==='coins')return true;
+  const metal=String(item?.metal||'').toLowerCase();
+  if(app==='gold'&&catalogue!=='kurtas'&&metal==='gold')return true;
+  if(app==='silver'&&catalogue!=='kurtas'&&metal==='silver')return true;
+  if(app==='category'&&offer.target_value&&item?.category&&item.category.toLowerCase()===String(offer.target_value).toLowerCase())return true;
+  if(app==='sku'&&offer.target_value&&(item?.sku===offer.target_value||item?.product_code===offer.target_value))return true;
+  return false;
+}
 export function matchOffer(item, offers=[], code=null){
   const wanted=code?String(code).trim().toUpperCase():'';
-  for(const o of offers){
-    if(!offerIsCurrent(o))continue;
+  const catalogue=itemCatalogue(item);
+  const current=(offers||[]).filter(offerIsCurrent);
+  if(wanted){
+    const coded=current.find(o=>String(o.code||'').trim().toUpperCase()===wanted&&offerApplies(o,item,catalogue));
+    if(coded)return coded;
+  }
+  for(const o of current){
     const codeRequired=o.code_required===true||o.code_required===1||o.code_required==='1';
-    if(codeRequired&&String(o.code||'').trim().toUpperCase()!==wanted)continue;
-    const app=o.applies_to;
-    if(app==='all')return o;
-    const isCoin=Boolean(item.coin_type||(item.metal&&['Gold','Silver'].includes(item.metal)&&item.weight_g&&item.sku?.startsWith('COIN-')));
-    if(app==='products'&&!isCoin)return o;
-    if(app==='coins'&&isCoin)return o;
-    const metal=(item.metal||'').toLowerCase();
-    if(app==='gold'&&metal==='gold')return o;
-    if(app==='silver'&&metal==='silver')return o;
-    if(app==='category'&&o.target_value&&item.category&&item.category.toLowerCase()===o.target_value.toLowerCase())return o;
-    if(app==='sku'&&o.target_value&&(item.sku===o.target_value||item.product_code===o.target_value))return o;
+    if(codeRequired)continue;
+    if(offerApplies(o,item,catalogue))return o;
   }
   return null;
 }
+export function describeCoupon(code, lines=[], offers=[]){
+  const wanted=String(code||'').trim().toUpperCase();
+  if(!wanted)return null;
+  const known=(offers||[]).find(o=>offerIsCurrent(o)&&String(o.code||'').trim().toUpperCase()===wanted);
+  if(!known)return {code:wanted,applied:false,savings:0,message:'That coupon code is not active.'};
+  const matched=(lines||[]).filter(line=>String(line.offer?.code||'').trim().toUpperCase()===wanted&&Number(line.discount_amount)>0);
+  const savings=matched.reduce((sum,line)=>sum+Number(line.discount_amount||0)*Number(line.quantity||1),0);
+  const rounded=Math.round(savings*100)/100;
+  if(rounded>0)return {code:wanted,applied:true,name:known.name,savings:rounded,message:`${known.name} is applied.`};
+  const scope=known.applies_to==='kurtas'?'kurtas':(known.applies_to==='coins'||known.applies_to==='silver')?'coins':(known.applies_to==='products'||known.applies_to==='jewelry')?'jewellery':known.applies_to==='gold'?'gold pieces':'eligible pieces';
+  return {code:wanted,applied:false,savings:0,message:`This coupon is for ${scope} and does not change this bag.`};
+}
 export function pricedOffer(offer, discountAmount){
   if(!offer||!(Number(discountAmount)>0))return null;
-  return {id:offer.id,name:offer.name,badge_text:offer.badge_text,discount_type:offer.discount_type,discount_value:Number(offer.discount_value)};
+  return {id:offer.id,name:offer.name,badge_text:offer.badge_text,discount_type:offer.discount_type,discount_value:Number(offer.discount_value),code:offer.code?String(offer.code).trim().toUpperCase():null};
 }
 
 export function calculatePrice(p,rate,rule={tax_percent:0,rounding:1,tax_treatment:'exclusive'},offer=null) {
@@ -461,7 +490,7 @@ export async function quote(k,items,options={}){
         slug: v.kurta_slug || v.slug
       }, { slug: v.kurta_slug || v.slug }));
       kurtaVariants = sized.map(v => {
-        const offer = matchOffer(v, offers, options.code);
+        const offer = matchOffer({...v, is_kurta:true, category:v.category||'Kurtas'}, offers, options.code);
         const priced = priceFixedCataloguePiece(v.price ?? v.fixed_price ?? 0, rule, offer);
         const total = priced?.total ?? (v.price != null ? Number(v.price) : Number(v.fixed_price || 0));
         return {
@@ -503,8 +532,9 @@ export async function quote(k,items,options={}){
    lines.push(line);
  }
  const shipping=subtotal>=Number(process.env.FREE_SHIPPING_INR||25000)?0:Number(process.env.SHIPPING_INR||250);
+ const offers=await activeOffers(k).catch(()=>[]);
  const result={lines,subtotal,shipping,total:Number(new Decimal(subtotal).add(shipping))};
- return {...result,token:fingerprint(result)};
+ return {...result,token:fingerprint(result),coupon:describeCoupon(options.code,lines,offers)};
 }
 async function pricingContext(k, catalogue){
   const [rates,rules,offers]=await Promise.all([activeRates(k),latestPricingRule(k, catalogue),activeOffers(k)]);

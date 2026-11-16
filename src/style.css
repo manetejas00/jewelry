@@ -3676,3 +3676,20 @@ img.is-brand-fallback,.product-photo img[src*="/assets/brand/"],.product-photo i
   .header-tools .bag-icon { gap: 2px; }
 }
 
+.announcement{position:relative;padding:0 36px;overflow:hidden}
+.announcement-slide{min-width:0;max-width:100%}
+.announcement-link{display:inline-flex;align-items:center;justify-content:center;gap:10px;max-width:100%;min-width:0;color:inherit}
+.announcement-copy{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.announcement-cta{display:inline-flex;align-items:center;gap:8px;color:#d3bf98;flex-shrink:0}
+.announcement-arrow{position:absolute;top:0;bottom:0;width:32px;display:inline-flex;align-items:center;justify-content:center;background:transparent;color:#d3bf98;padding:0}
+.announcement-arrow.prev{left:2px}
+.announcement-arrow.next{right:2px}
+.announcement-arrow:hover{color:#f1eee4}
+@media(max-width:500px){
+  .announcement .announcement-copy,.announcement .announcement-cta{display:inline-flex}
+  .announcement-link{font-size:9px;gap:6px}
+}
+@media(prefers-reduced-motion:reduce){
+  .announcement-slide{transition:none}
+}
+
