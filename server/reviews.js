@@ -1,5 +1,6 @@
 import {validationError} from './errors.js';
 import {now, parse} from './db.js';
+import {shareRead} from './read-share.js';
 
 /**
  * Sanitize text input to prevent XSS and strip potentially malicious HTML.
@@ -771,7 +772,10 @@ export async function updateCustomerReview(k, customerId, reviewId, reviewData) 
  * Get bulk rating summaries for all products.
  * Used by catalogue(k) to attach rating_average and rating_count.
  */
-export async function getAllProductsRatingSummaries(k) {
+export function getAllProductsRatingSummaries(k) {
+  return shareRead(k, 'rating-summaries', () => collectRatingSummaries(k));
+}
+async function collectRatingSummaries(k) {
   const hasReviews = await k.schema.hasTable('reviews').catch(() => false);
   if (!hasReviews) return new Map();
 

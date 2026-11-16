@@ -5,6 +5,7 @@ import { CoinMapper } from '../Mappers/CoinMapper.js';
 import { COIN_CSV_SCHEMA } from '../Constants/CoinConstants.js';
 import { calculateCoinPrice, activeRates, getSilverRate, activeOffers, matchOffer } from '../../../pricing.js';
 import { getAllProductsRatingSummaries } from '../../../reviews.js';
+import { shareRead } from '../../../read-share.js';
 import { validationError } from '../../../errors.js';
 import { stringify } from 'csv-stringify/sync';
 
@@ -14,7 +15,12 @@ export class CoinService {
     this.repo = new CoinRepository(db);
   }
 
-  async getPublishedCatalogue(options = {}) {
+  getPublishedCatalogue(options = {}) {
+    const key = 'coin-service-catalogue:' + (options.category || '') + ':' + (options.code || '');
+    return shareRead(this.db, key, () => this.readPublishedCatalogue(options));
+  }
+
+  async readPublishedCatalogue(options = {}) {
     const [coins, rates, silverRate, rule, offers, ratings] = await Promise.all([
       this.repo.listPublished(options),
       activeRates(this.db),

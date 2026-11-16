@@ -4,8 +4,12 @@ import Decimal from 'decimal.js';
 import crypto from 'node:crypto';
 import {calculateMargin} from './pricing-rules.js';
 import {getAllProductsRatingSummaries} from './reviews.js';
+import {shareRead} from './read-share.js';
 
-export async function activeOffers(k){
+export function activeOffers(k){
+  return shareRead(k, 'active-offers', () => readActiveOffers(k));
+}
+async function readActiveOffers(k){
   try{
     if(!k.schema||!(await k.schema.hasTable('offers')))return [];
     return await k('offers').where({status:'active'}).orderBy('priority','desc').orderBy('id','desc');
@@ -123,7 +127,10 @@ export function calculatePrice(p,rate,rule={tax_percent:0,rounding:1,tax_treatme
 }
 
 export const todayIndia=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-export async function activeRates(k){
+export function activeRates(k){
+  return shareRead(k, 'active-rates:' + todayIndia(), () => readActiveRates(k));
+}
+async function readActiveRates(k){
   const rows=await k('rates').where('effective_date','<=',todayIndia()).orderBy('source_timestamp','desc').orderBy('id','desc').limit(100);
   const result={};
   for(const r of rows){
@@ -250,7 +257,10 @@ export function calculateCoinPrice(c,rates,silverRate=null,rule={tax_percent:0,r
   };
 }
 
-export async function coinCatalogue(k, options={}){
+export function coinCatalogue(k, options={}){
+  return shareRead(k, 'coin-catalogue:' + (options.code || ''), () => readCoinCatalogue(k, options));
+}
+async function readCoinCatalogue(k, options={}){
   if(!k.schema||!(await k.schema.hasTable('coins')))return [];
   const hasImages=await k.schema.hasTable('product_images').catch(()=>false);
   const hasReviews=await k.schema.hasTable('reviews').catch(()=>false);
@@ -316,20 +326,35 @@ async function safeHasTable(k, table) {
   return k.schema.hasTable(table).catch(() => false);
 }
 
-export async function catalogue(k, options={}){
-  let jewelryItems = [];
-  if (await safeHasTable(k, 'jewelries')) {
+async function pricingShared(k){
+  const [rates, rule, offers, ratings] = await Promise.all([
+    activeRates(k),
+    k('pricing_rules').orderBy('id','desc').first(),
+    activeOffers(k).catch(() => []),
+    safeHasTable(k, 'reviews').then(has => has ? getAllProductsRatingSummaries(k) : new Map())
+  ]);
+  return { rates, rule, offers, ratings };
+}
+
+export function catalogue(k, options={}){
+  return shareRead(k, 'catalogue:' + (options.code || ''), () => readCatalogue(k, options));
+}
+async function readCatalogue(k, options={}){
+  const sharedPromise = pricingShared(k);
+  const jewelryPromise = (async () => {
+    if (!(await safeHasTable(k, 'jewelries'))) return [];
     const jCount = await k('jewelries').count('* as c').first();
     const countVal = Number(jCount?.c ?? jCount?.['count(*)'] ?? 0);
-    if (countVal > 0) {
-      const { JewelryService } = await import('./modules/jewelry/Services/JewelryService.js');
-      const js = new JewelryService(k);
-      jewelryItems = await js.getPublishedCatalogue(options);
-    }
-  }
+    if (!countVal) return [];
+    const shared = await sharedPromise;
+    const { JewelryService } = await import('./modules/jewelry/Services/JewelryService.js');
+    const js = new JewelryService(k);
+    return js.getPublishedCatalogue({ ...options, shared });
+  })();
   const hasImages=await safeHasTable(k, 'product_images');
-  const hasReviews=await safeHasTable(k, 'reviews');
-  const [products,rates,rules,images,offers,ratings]=await Promise.all([
+  const [shared, jewelryItems, products, images]=await Promise.all([
+    sharedPromise,
+    jewelryPromise,
     // Kurtas have their own catalogue endpoint and must never leak into the
     // jewellery collection, even if a legacy record has a jewellery-like name.
     k('products').where({status:'published'}).where(function(){ 
@@ -343,16 +368,13 @@ export async function catalogue(k, options={}){
             .whereNot('category','like','%Bottom%');
         });
     }),
-    activeRates(k),
-    k('pricing_rules').orderBy('id','desc').first(),
     hasImages?k('product_images')
       .select('id','product_code','sku','role','url','alt_text','sort_order')
       .where(function(){this.whereIn('sku',k('products').select('sku').where({status:'published'}))
         .orWhereIn('product_code',k('products').select('product_code').where({status:'published'}))})
-      .orderBy('sort_order','asc').orderBy('id','asc'):[],
-    activeOffers(k),
-    hasReviews?getAllProductsRatingSummaries(k):new Map()
+      .orderBy('sort_order','asc').orderBy('id','asc'):[]
   ]);
+  const {rates, rule: rules, offers, ratings} = shared;
   const imagesByProduct={};
   for(const img of images){
     const key=img.product_code||img.sku;

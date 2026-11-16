@@ -5,6 +5,7 @@ import { KurtaMapper } from '../Mappers/KurtaMapper.js';
 import { KURTA_CSV_SCHEMA, KURTA_SIZES } from '../Constants/KurtaConstants.js';
 import { activeOffers } from '../../../pricing.js';
 import { getAllProductsRatingSummaries } from '../../../reviews.js';
+import { shareRead } from '../../../read-share.js';
 import { validationError } from '../../../errors.js';
 import { stringify } from 'csv-stringify/sync';
 
@@ -14,7 +15,12 @@ export class KurtaService {
     this.repo = new KurtaRepository(db);
   }
 
-  async getPublishedCatalogue(options = {}) {
+  getPublishedCatalogue(options = {}) {
+    const key = 'kurta-catalogue:' + (options.category || '') + ':' + (options.code || '') + ':' + (options.color || '');
+    return shareRead(this.db, key, () => this.readPublishedCatalogue(options));
+  }
+
+  async readPublishedCatalogue(options = {}) {
     const [kurtas, offers, ratings] = await Promise.all([
       this.repo.listPublished(options),
       activeOffers(this.db).catch(() => []),

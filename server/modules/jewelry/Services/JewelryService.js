@@ -5,6 +5,7 @@ import { JewelryMapper } from '../Mappers/JewelryMapper.js';
 import { JEWELRY_CSV_SCHEMA } from '../Constants/JewelryConstants.js';
 import { calculatePrice, activeRates, activeOffers, matchOffer } from '../../../pricing.js';
 import { getAllProductsRatingSummaries } from '../../../reviews.js';
+import { shareRead } from '../../../read-share.js';
 import { validationError } from '../../../errors.js';
 import { parse as csvParse } from 'csv-parse/sync';
 import { stringify } from 'csv-stringify/sync';
@@ -16,13 +17,19 @@ export class JewelryService {
     this.repo = new JewelryRepository(db);
   }
 
-  async getPublishedCatalogue(options = {}) {
+  getPublishedCatalogue(options = {}) {
+    const key = 'jewelry-catalogue:' + (options.category || '') + ':' + (options.code || '');
+    return shareRead(this.db, key, () => this.readPublishedCatalogue(options));
+  }
+
+  async readPublishedCatalogue(options = {}) {
+    const shared = options.shared || null;
     const [jewelries, rates, rule, offers, ratings] = await Promise.all([
       this.repo.listPublished(options),
-      activeRates(this.db),
-      this.db('pricing_rules').orderBy('id', 'desc').first().catch(() => null),
-      activeOffers(this.db).catch(() => []),
-      this.db.schema.hasTable('reviews').then(has => has ? getAllProductsRatingSummaries(this.db) : new Map()).catch(() => new Map())
+      shared ? shared.rates : activeRates(this.db),
+      shared ? shared.rule : this.db('pricing_rules').orderBy('id', 'desc').first().catch(() => null),
+      shared ? shared.offers : activeOffers(this.db).catch(() => []),
+      shared ? shared.ratings : this.db.schema.hasTable('reviews').then(has => has ? getAllProductsRatingSummaries(this.db) : new Map()).catch(() => new Map())
     ]);
 
     return jewelries.map(j => {

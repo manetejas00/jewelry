@@ -45,6 +45,7 @@ import { createJewelryRouter } from './modules/jewelry/Routes/jewelryRoutes.js';
 import { createCoinRouter } from './modules/coin/Routes/coinRoutes.js';
 import { createKurtaRouter } from './modules/kurta/Routes/kurtaRoutes.js';
 import { storefrontNavigation } from './navigation.js';
+import { rememberSchema } from './read-share.js';
 
 const route=f=>(req,res,next)=>Promise.resolve(f(req,res,next)).catch(next);
 const app=express();const production=process.env.NODE_ENV==='production';
@@ -53,6 +54,7 @@ if(production&&(!process.env.SESSION_SECRET||process.env.SESSION_SECRET.length<3
 // run pending migrations or reseed itself on every Passenger restart; releases
 // apply migrations explicitly through the deployment workflow instead.
 if(preview){if(!production){await migrate();await seed();}}else if(await db('staff').where({email:'preview@veyora.local'}).first())throw validationError('Production cannot use the fictional preview database. Configure a clean production database.');
+rememberSchema(db);
 app.disable('x-powered-by');
 app.set('trust proxy',Number(process.env.TRUST_PROXY||0));
 app.use(helmet({contentSecurityPolicy:production?{directives:{defaultSrc:["'self'"],scriptSrc:["'self'"],scriptSrcAttr:["'none'"],styleSrc:["'self'","'unsafe-inline'",'https://fonts.googleapis.com'],fontSrc:["'self'",'https://fonts.gstatic.com'],imgSrc:["'self'",'data:','blob:','https:'],connectSrc:["'self'"],objectSrc:["'none'"],frameAncestors:["'none'"]}}:false}));
