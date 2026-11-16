@@ -467,3 +467,78 @@ export async function pricedCoinBySku(k, sku){
   const fresh=row.pricing_mode==='FIXED'||(isGold?isFresh(rates[row.purity]):Number(silver)>0);
   return {...row,price:price?.total,checkout_available:row.stock>0&&Number.isFinite(price?.total)&&fresh,description:row.description||row.name};
 }
+
+const PREVIEW_ROW_LIMIT = 80;
+const PREVIEW_FIELDS = {
+  products: ['sku','name','product_code','category','metal','purity','pricing_mode','fixed_price','net_weight_g','making_flat','making_percent','stone_charge','other_charge','is_kurta'],
+  jewelries: ['sku','name','product_code','category','metal','purity','pricing_mode','fixed_price','net_weight_g','making_charges','making_percent','stone_charge','other_charge'],
+  coins: ['sku','name','category','metal','purity','coin_type','pricing_mode','fixed_price','weight_g','making_charge'],
+  kurtas: ['sku','name','product_code','category','pricing_mode','fixed_price','price']
+};
+
+async function slimRows(k, table, wanted) {
+  if (!await k.schema.hasTable(table)) return [];
+  const info = await k(table).columnInfo();
+  const columns = wanted.filter(name => info[name]);
+  if (!columns.includes('sku') && !columns.includes('name')) return [];
+  return k(table).select(columns);
+}
+
+function quotedTotal(item, rates, silver, rule, offer) {
+  if (item.kind === 'Coin') return calculateCoinPrice(item, rates, silver, rule, offer);
+  return calculatePrice(item, item.kind === 'Kurta' ? null : rates[item.purity], rule, offer);
+}
+
+export async function previewPricingChanges(k, rule) {
+  const [rates, silver, offers, current, products, jewelries, coins, kurtas] = await Promise.all([
+    activeRates(k),
+    getSilverRate(k),
+    activeOffers(k),
+    k('pricing_rules').orderBy('id', 'desc').first(),
+    slimRows(k, 'products', PREVIEW_FIELDS.products),
+    slimRows(k, 'jewelries', PREVIEW_FIELDS.jewelries),
+    slimRows(k, 'coins', PREVIEW_FIELDS.coins),
+    slimRows(k, 'kurtas', PREVIEW_FIELDS.kurtas)
+  ]);
+  const seen = new Set();
+  const items = [];
+  const add = item => {
+    const key = `${item.kind}:${item.sku || item.product_code || item.name}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    items.push(item);
+  };
+  for (const row of jewelries) add({ ...row, kind: 'Jewellery', making_flat: row.making_flat ?? row.making_charges ?? 0 });
+  for (const row of coins) add({ ...row, kind: 'Coin' });
+  for (const row of kurtas) add({ ...row, kind: 'Kurta', pricing_mode: 'FIXED', fixed_price: row.fixed_price ?? row.price ?? 0 });
+  for (const row of products) {
+    if (row.is_kurta === 1 || row.is_kurta === true) continue;
+    add({ ...row, kind: 'Jewellery' });
+  }
+
+  const baseline = current || { tax_percent: 0, rounding: 1, tax_treatment: 'exclusive', margin_type: 'PERCENT', margin_value: 0 };
+  const changes = [];
+  let changed = 0, unchanged = 0, awaiting = 0;
+  for (const item of items) {
+    const offer = matchOffer(item, offers);
+    let before = null, after = null, margin = null, warning = null;
+    try {
+      before = quotedTotal(item, rates, silver, baseline, offer).total;
+      const next = quotedTotal(item, rates, silver, rule, offer);
+      after = next.total;
+      margin = next.margin;
+    } catch {
+      warning = 'Awaiting an approved metal rate';
+      awaiting += 1;
+    }
+    if (!warning && before === after) unchanged += 1;
+    else if (!warning) changed += 1;
+    if ((warning || before !== after) && changes.length < PREVIEW_ROW_LIMIT) {
+      changes.push({ sku: item.sku, name: item.name, kind: item.kind, before, after, margin, warning });
+    }
+  }
+  return {
+    summary: { compared: items.length, changed, unchanged, awaiting, shown: changes.length },
+    changes
+  };
+}

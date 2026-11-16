@@ -20,7 +20,7 @@ import crypto from 'node:crypto';
 import path from 'node:path';
 import fs from 'node:fs';
 import {db,migrate,preview,now,json,parse} from './db.js';
-import {catalogue,coinCatalogue,calculateCoinPrice,getSilverRate,activeRates,calculatePrice,isFresh,todayIndia,activeOffers,matchOffer,offerIsCurrent} from './pricing.js';
+import {catalogue,coinCatalogue,calculateCoinPrice,getSilverRate,activeRates,isFresh,todayIndia,offerIsCurrent,previewPricingChanges} from './pricing.js';
 import {exportCsv,validate} from './importer.js';
 import {presentOrders,updateOrderStatus} from './orders.js';
 import {staffIsActive,setStaffAccess,createStaff} from './staff-access.js';
@@ -196,7 +196,7 @@ app.get('/api/admin/dashboard',auth(),route(async(req,res)=>{
  const incomplete=[...jewelry,...coins,...kurtas].filter(p=>!p.name||!p.sku||!p.image||p.stock==null).length;
  res.json({
   todayImports:{total:todayBatches.length,failed:todayBatches.filter(b=>b.status==='failed').length,published:todayBatches.filter(b=>b.status==='published').length},
-  rates:Object.values(rates).map(r=>({...r,fresh:isFresh(r)})), batches:batches.map(b=>({...b,summary:parse(b.summary)})),
+  rates:Object.values(rates).map(r=>({...r,fresh:isFresh(r)})), batches:batches.map(b=>{const summary=parse(b.summary)||{};return {...b,summary:{created:summary.created||0,updated:summary.updated||0,unchanged:summary.unchanged||0,rejected:summary.rejected||0}};}),
   orders:presentOrders(orders,req.session.staff.role), rule, audits, preview,
   productCounts:{total:jewelry.length+coins.length+kurtas.length,jewelry:jewelry.length,coins:coins.length,kurtas:kurtas.length,active:[...jewelry,...coins,...kurtas].filter(p=>p.status==='published'||p.status==='active').length,inactive:[...jewelry,...coins,...kurtas].filter(p=>!['published','active'].includes(p.status)).length,incomplete},
   maxAgeHours:Number(process.env.GOLD_MAX_AGE_HOURS||48)
@@ -569,18 +569,13 @@ app.get('/api/admin/staff',auth(['owner']),route(async(req,res)=>res.json(await 
 app.post('/api/admin/staff',auth(['owner']),route(async(req,res)=>{const created=await createStaff(db,req.body);await audit(req,'staff_created',{id:created.id,email:created.email,role:created.role});res.status(201).json(created);}));
 app.post('/api/admin/staff/:id/access',auth(['owner']),route(async(req,res)=>{const result=await setStaffAccess(db,req.session.staff.id,req.params.id,req.body.disabled===true);await audit(req,'staff_access',result);res.json(result);}));
 registerImportRoutes(app, { db, route, auth, audit });
+app.get('/api/admin/rules',auth(),route(async(req,res)=>{
+ const rule=await db('pricing_rules').orderBy('id','desc').first();
+ res.json(rule||{tax_percent:0,rounding:1,tax_treatment:'exclusive',margin_type:'PERCENT',margin_value:0});
+}));
 app.post('/api/admin/rules/preview',auth(['owner']),route(async(req,res)=>{
  const rule=validatePricingRule(req.body);
- const [rates,silver,products,coins,current,offers]=await Promise.all([activeRates(db),getSilverRate(db),db('products'),db('coins'),db('pricing_rules').orderBy('id','desc').first(),activeOffers(db)]);
- const changes=[];
- for(const p of [...products,...coins]){
-  const coin=Boolean(p.coin_type),offer=matchOffer(p,offers);
-  const price=r=>coin?calculateCoinPrice(p,rates,silver,r,offer):calculatePrice(p,rates[p.purity],r,offer);
-  let before=null,after=null,margin=null,warning=null;
-  try{before=price(current).total;const next=price(rule);after=next.total;margin=next.margin;}catch{warning='Awaiting an approved metal rate';}
-  changes.push({sku:p.sku,name:p.name,kind:coin?'Coin':'Jewellery',before,after,margin,warning});
- }
- res.json(changes);
+ res.json(await previewPricingChanges(db,rule));
 }));
 function validateRule(input){return validatePricingRule(input);}
 app.post('/api/admin/rules',auth(['owner']),route(async(req,res)=>{const rule=validateRule(req.body);await db.transaction(async t=>{await t('pricing_rules').insert({...rule,changed_at:now(),changed_by:req.session.staff.id});await t('audit').insert({staff_id:req.session.staff.id,action:'pricing_rule',details:json(rule),created_at:now()});});invalidateSearchCache();res.json({ok:true});}));
