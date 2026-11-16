@@ -1,7 +1,7 @@
 import {validationError} from './errors.js';
 import {parse as csvParse} from 'csv-parse/sync';
 import {now,json,parse,preview} from './db.js';
-import {fingerprint,calculateCoinPrice,activeRates,getSilverRate,activeOffers,matchOffer} from './pricing.js';
+import {fingerprint,calculateCoinPrice,activeRates,getSilverRate,activeOffers,matchOffer,latestPricingRule} from './pricing.js';
 const decimal=(v,places=2)=>new RegExp(`^\\d+(\\.\\d{1,${places}})?$`).test(v)&&Number(v)<=999999999;
 export function validateCoins(text,headers){
  const errors=[];let rows=[];const bad=(row,field,value,correction)=>errors.push({row,field,value:String(value??''),correction});
@@ -32,7 +32,7 @@ export async function previewCoins(k,text,headers,staff){
  const checked=validateCoins(text,headers),checksum=fingerprint(text);
  const oldBatch=await k('import_batches').where({kind:'coins',checksum}).first();if(oldBatch)return {...oldBatch,summary:parse(oldBatch.summary),errors:await k('import_errors').where({batch_id:oldBatch.id}),duplicate:true};
  checked.errors.push(...await checkOwnership(k,checked.rows));
- const [rates,silver,rule,offers]=await Promise.all([activeRates(k),getSilverRate(k),k('pricing_rules').orderBy('id','desc').first(),activeOffers(k)]);
+ const [rates,silver,rule,offers]=await Promise.all([activeRates(k),getSilverRate(k),latestPricingRule(k, 'coin'),activeOffers(k)]);
  let created=0,updated=0;const changes=[];
  for(const r of checked.rows){const old=await k('coins').where({sku:r.sku}).first();old?updated++:created++;let before=null,after=null;try{if(old)before=calculateCoinPrice(old,rates,silver,rule,matchOffer(old,offers)).total;after=calculateCoinPrice(r,rates,silver,rule,matchOffer(r,offers)).total;}catch{}changes.push({sku:r.sku,name:r.name,before,after,stock:r.stock});}
  const summary={created,updated,unchanged:0,rejected:checked.errors.length,changes};const source_timestamp=checked.rows.map(r=>r.source_timestamp).filter(Boolean).sort()[0]||now();

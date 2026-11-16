@@ -1,5 +1,5 @@
 import { db, now } from './db.js';
-import { activeRates, calculatePrice, activeOffers, matchOffer } from './pricing.js';
+import { activeRates, calculatePrice, calculateCoinPrice, getSilverRate, activeOffers, matchOffer, latestPricingRule } from './pricing.js';
 import { listingThumbnail } from '../shared/listing-media.js';
 
 // In-memory cache with 15-minute TTL
@@ -85,11 +85,14 @@ export async function getProductRecommendations(k = db, targetSlugOrCode, option
     return { similar: [], youMayLike: [], completeLook: [], source: 'none' };
   }
 
-  const [allProducts, allCoins, rates, rule, offers] = await Promise.all([
+  const [allProducts, allCoins, rates, silverRate, jewelryRule, coinRule, kurtaRule, offers] = await Promise.all([
     k('products').where({ status: 'published' }).orderBy('id', 'asc'),
     k('coins').where({ status: 'published' }).orderBy('id', 'asc'),
     activeRates(k),
-    k('pricing_rules').orderBy('id', 'desc').first(),
+    getSilverRate(k),
+    latestPricingRule(k, 'jewelry'),
+    latestPricingRule(k, 'coin'),
+    latestPricingRule(k, 'kurta'),
     activeOffers(k)
   ]);
 
@@ -98,6 +101,7 @@ export async function getProductRecommendations(k = db, targetSlugOrCode, option
     const offer = matchOffer(p, offers);
     let price = null;
     try {
+      const rule = p.is_kurta ? kurtaRule : jewelryRule;
       price = calculatePrice(p, rates[p.purity], rule, offer);
     } catch {}
 
@@ -286,7 +290,7 @@ export async function getProductRecommendations(k = db, targetSlugOrCode, option
         weight_g: c.weight_g,
         image: c.image,
         thumbnail: c.image,
-        price: Number(c.fixed_price || 0),
+        price: (() => { try { return calculateCoinPrice(c, rates, silverRate, coinRule)?.total ?? Number(c.fixed_price || 0); } catch { return Number(c.fixed_price || 0); } })(),
         is_coin: true,
         stock: c.stock
       };

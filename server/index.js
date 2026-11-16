@@ -20,7 +20,7 @@ import crypto from 'node:crypto';
 import path from 'node:path';
 import fs from 'node:fs';
 import {db,migrate,preview,now,json,parse} from './db.js';
-import {catalogue,coinCatalogue,calculateCoinPrice,getSilverRate,activeRates,isFresh,todayIndia,offerIsCurrent,previewPricingChanges} from './pricing.js';
+import {catalogue,coinCatalogue,calculateCoinPrice,getSilverRate,activeRates,isFresh,todayIndia,offerIsCurrent,previewPricingChanges,latestPricingRule} from './pricing.js';
 import {exportCsv,validate} from './importer.js';
 import {presentOrders,updateOrderStatus} from './orders.js';
 import {staffIsActive,setStaffAccess,createStaff} from './staff-access.js';
@@ -39,7 +39,7 @@ import {registerPwa} from './pwa.js';
 import {registerMaterialRoutes} from './materials.js';
 import {registerCraftsmanshipRoutes} from './craftsmanship.js';
 import {registerCollectionRoutes} from './collections.js';
-import {registerRecommendationRoutes} from './recommendations.js';
+import {registerRecommendationRoutes, clearRecommendationCache} from './recommendations.js';
 import {registerRateRoutes} from './rates.js';
 import { createJewelryRouter } from './modules/jewelry/Routes/jewelryRoutes.js';
 import { createCoinRouter } from './modules/coin/Routes/coinRoutes.js';
@@ -183,7 +183,7 @@ app.get('/api/admin/dashboard',auth(),route(async(req,res)=>{
  const hasJewelries = await db.schema.hasTable('jewelries').catch(()=>false);
  const [rates,batches,orders,rule,audits,jewelryList,coins,kurtas]=await Promise.all([
   activeRates(db), db('import_batches').select('id','kind','status','summary','created_at','published_at').orderBy('id','desc').limit(30),
-  db('orders').orderBy('created_at','desc').limit(100), db('pricing_rules').orderBy('id','desc').first(),
+  db('orders').orderBy('created_at','desc').limit(100), latestPricingRule(db, 'jewelry'),
   db('audit').orderBy('id','desc').limit(20),
   hasJewelries
     ? db('jewelries').select('sku','name','status','category','image','stock')
@@ -307,7 +307,7 @@ app.delete('/api/admin/products/:sku',auth(['owner','manager']),route(async(req,
 }));
 app.get('/api/admin/coins',auth(),route(async(req,res)=>{
  const coins=await db('coins').orderBy('id','desc');
- const [rates,silverRate,rules]=await Promise.all([activeRates(db),getSilverRate(db),db('pricing_rules').orderBy('id','desc').first()]);
+ const [rates,silverRate,rules]=await Promise.all([activeRates(db),getSilverRate(db),latestPricingRule(db, 'coin')]);
  const hasImages=await db.schema.hasTable('product_images').catch(()=>false);
  const coinSkus=coins.map(c=>c.sku);
  const coinImages=hasImages&&coinSkus.length?await db('product_images').where(function(){
@@ -572,15 +572,20 @@ app.post('/api/admin/staff',auth(['owner']),route(async(req,res)=>{const created
 app.post('/api/admin/staff/:id/access',auth(['owner']),route(async(req,res)=>{const result=await setStaffAccess(db,req.session.staff.id,req.params.id,req.body.disabled===true);await audit(req,'staff_access',result);res.json(result);}));
 registerImportRoutes(app, { db, route, auth, audit });
 app.get('/api/admin/rules',auth(),route(async(req,res)=>{
- const rule=await db('pricing_rules').orderBy('id','desc').first();
- res.json(rule||{tax_percent:0,rounding:1,tax_treatment:'exclusive',margin_type:'PERCENT',margin_value:0});
+ const [jewelry, coin, kurta] = await Promise.all([
+  latestPricingRule(db, 'jewelry'),
+  latestPricingRule(db, 'coin'),
+  latestPricingRule(db, 'kurta')
+ ]);
+ res.json({ jewelry, coin, kurta });
 }));
 app.post('/api/admin/rules/preview',auth(['owner']),route(async(req,res)=>{
  const rule=validatePricingRule(req.body);
+ if (!rule.catalogue) throw validationError('Choose jewellery, coin, or kurta pricing.');
  res.json(await previewPricingChanges(db,rule));
 }));
 function validateRule(input){return validatePricingRule(input);}
-app.post('/api/admin/rules',auth(['owner']),route(async(req,res)=>{const rule=validateRule(req.body);await db.transaction(async t=>{await t('pricing_rules').insert({...rule,changed_at:now(),changed_by:req.session.staff.id});await t('audit').insert({staff_id:req.session.staff.id,action:'pricing_rule',details:json(rule),created_at:now()});});invalidateSearchCache();res.json({ok:true});}));
+app.post('/api/admin/rules',auth(['owner']),route(async(req,res)=>{const rule=validateRule(req.body);if(!rule.catalogue)throw validationError('Choose jewellery, coin, or kurta pricing.');await db.transaction(async t=>{await t('pricing_rules').insert({...rule,changed_at:now(),changed_by:req.session.staff.id});await t('audit').insert({staff_id:req.session.staff.id,action:'pricing_rule',details:json(rule),created_at:now()});});invalidateSearchCache();clearRecommendationCache();res.json({ok:true,catalogue:rule.catalogue});}));
 const aiCopyLimit=rateLimit({windowMs:60000,limit:8,message:{error:'Too many catalogue copy requests. Wait a minute and try again.'}});
 app.get('/api/admin/ai/skills',auth(),route(async(req,res)=>res.json(listCopySkills())));
 app.get('/api/admin/ai/drafts',auth(),route(async(req,res)=>res.json(await listCatalogueDrafts(db,{sku:req.query.sku,status:req.query.status}))));

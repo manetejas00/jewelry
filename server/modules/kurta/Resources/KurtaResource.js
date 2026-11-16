@@ -1,13 +1,36 @@
 import { KURTA_SIZES } from '../Constants/KurtaConstants.js';
 import { listingThumbnail } from '../../../../shared/listing-media.js';
+import { matchOffer, priceFixedCataloguePiece } from '../../../pricing.js';
+
+function pricedKurtaVariant(variant, kurta, rule, offer) {
+  const base = variant.price ?? variant.fixed_price ?? kurta.price ?? kurta.fixed_price ?? 0;
+  const priced = priceFixedCataloguePiece(base, rule, offer);
+  const total = priced?.total ?? Number(base || 0);
+  return {
+    ...variant,
+    name: variant.name || kurta.name,
+    product_code: variant.product_code || kurta.product_code,
+    slug: variant.slug || kurta.slug,
+    metal: variant.metal || kurta.fabric,
+    purity: variant.purity || kurta.material || 'Handcrafted Lucknowi Chikankari',
+    price: total,
+    original_price: priced?.original_total ?? null,
+    discount_amount: priced?.discount_amount ?? 0,
+    checkout_available: Number(variant.stock) > 0 && Number.isFinite(total),
+    breakdown: priced
+  };
+}
 
 export class KurtaResource {
-  static toStorefrontCard(kurta, offers = [], ratings = new Map()) {
-    const variants = kurta.variants || [];
+  static toStorefrontCard(kurta, offers = [], ratings = new Map(), rule = null) {
+    const offer = matchOffer(kurta, offers);
+    const sourceVariants = kurta.variants || [];
+    const variants = sourceVariants.map(variant => pricedKurtaVariant(variant, kurta, rule, offer));
     const images = kurta.images || [];
+    const entered = priceFixedCataloguePiece(kurta.price ?? kurta.fixed_price ?? 0, rule, offer);
 
-    let minPrice = kurta.price || kurta.fixed_price || 0;
-    let maxPrice = kurta.price || kurta.fixed_price || 0;
+    let minPrice = entered?.total ?? (kurta.price || kurta.fixed_price || 0);
+    let maxPrice = minPrice;
     let totalStock = kurta.stock || 0;
     const availableSizes = [];
 
@@ -88,8 +111,9 @@ export class KurtaResource {
     };
   }
 
-  static toStorefrontDetail(kurta, offers = [], ratings = new Map(), options = {}) {
-    const variants = kurta.variants || [];
+  static toStorefrontDetail(kurta, offers = [], ratings = new Map(), options = {}, rule = null) {
+    const offer = matchOffer(kurta, offers, options.code);
+    const variants = (kurta.variants || []).map(variant => pricedKurtaVariant(variant, kurta, rule, offer));
     const images = kurta.images || [];
     const distinctImages = images.filter((img, i, all) => all.findIndex(o => o.url === img.url) === i);
 

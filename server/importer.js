@@ -4,7 +4,7 @@ import {parse as csvParse} from 'csv-parse/sync';
 import {stringify} from 'csv-stringify/sync';
 import Decimal from 'decimal.js';
 import {validateCoins,previewCoins,publishCoins} from './coin-imports.js';
-import {fingerprint,calculatePrice,activeRates,isFresh,todayIndia} from './pricing.js';
+import {fingerprint,calculatePrice,activeRates,isFresh,todayIndia,latestPricingRule} from './pricing.js';
 import {STOCK_HOLDING_STATUSES} from './orders.js';
 import {now,parse,json,preview} from './db.js';
 
@@ -65,7 +65,7 @@ export async function previewImport(k,kind,text,staff=null){
  const last=await k('import_batches').where({kind,status:'published'}).orderBy('source_timestamp','desc').first();
  if(last && source_timestamp<last.source_timestamp)check.errors.push({row:1,field:'source_timestamp',value:source_timestamp,correction:'Upload a file at least as recent as the latest published source'});
  if(kind==='gold' && Date.now()-Date.parse(source_timestamp)>Number(process.env.GOLD_MAX_AGE_HOURS||48)*3600000)check.errors.push({row:1,field:'source_timestamp',value:source_timestamp,correction:'Supply fresh rates within the configured maximum age'});
- let created=0,updated=0;const changes=[];const rates=await activeRates(k);const rule=await k('pricing_rules').orderBy('id','desc').first();
+ let created=0,updated=0;const changes=[];const rates=await activeRates(k);const rule=await latestPricingRule(k, 'jewelry');
  if(kind==='products'||kind==='jewelry')for(const r of check.rows){const old=await k('products').where({sku:r.sku}).first();old?updated++:created++;let before=null,after=null;try{before=old?calculatePrice(old,rates[old.purity],rule).total:null;const effective=old?{...old,...productPatch(r,old)}:r;after=calculatePrice(effective,rates[effective.purity],rule).total}catch{}changes.push({sku:r.sku,name:r.name,before,after,stock:r.stock});}
  if(kind==='kurtas')for(const r of check.rows){const old=await k('products').where({sku:r.sku}).first();old?updated++:created++;let before=null,after=null;try{before=old?calculatePrice(old,null,rule).total:null;const effective={...r,pricing_mode:'FIXED',fixed_price:r.fixed_price};after=calculatePrice(effective,null,rule).total}catch{}changes.push({sku:r.sku,name:r.name,before,after,stock:r.stock});}
  if(kind==='gold')for(const r of check.rows){if(num(r.rate)&&['g','10g'].includes(r.unit)){const rate=normaliseRate(r);if(!isFresh(rate))check.errors.push({row:check.rows.indexOf(r)+2,field:'effective_date',value:r.effective_date,correction:'Rate effective date and source timestamp must both be within the freshness limit'});changes.push({sku:r.purity,before:rates[r.purity]?.inr_per_gram??null,after:rate.inr_per_gram,stock:'—'});created++;}}

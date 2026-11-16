@@ -594,7 +594,11 @@ function Layout({ children }) { return <><Header /><main>{children}</main><Foote
 function HomeKurtaShowcase() {
   const [kurtas, setKurtas] = useState([]);
   useEffect(() => {
-    api('/kurtas').then(setKurtas).catch(() => { });
+    let active = true;
+    const load = () => api('/kurtas').then(rows => { if (active) setKurtas(rows || []); }).catch(() => { });
+    load();
+    window.addEventListener('veyora-prices-updated', load);
+    return () => { active = false; window.removeEventListener('veyora-prices-updated', load); };
   }, []);
   if (!kurtas.length) return null;
   return <section className="featured section kurta-home-showcase">
@@ -2083,21 +2087,20 @@ function pricingRuleForm(rule = {}) {
     rounding: rule.rounding ?? 1
   };
 }
-function Rules({ readonly, reloadToken = 0 }) {
-  const { refreshCatalogue } = useStore();
+function CatalogueRule({ catalogue, title, note, readonly, reloadToken = 0 }) {
   const [value, setValue] = useState(() => pricingRuleForm());
   const [previewResult, setPreviewResult] = useState(null), [error, setError] = useState(''), [busy, setBusy] = useState(false), [message, setMessage] = useState('');
   const set = (key, v) => { setValue(s => ({ ...s, [key]: v })); setPreviewResult(null); setMessage(''); };
   useEffect(() => {
     let active = true;
-    api('/admin/rules').then(rule => {
-      if (active) setValue(pricingRuleForm(rule));
+    api('/admin/rules').then(rules => {
+      if (active) setValue(pricingRuleForm(rules?.[catalogue] || {}));
     }).catch(e => { if (active) setError(e.message); });
     return () => { active = false; };
-  }, [reloadToken]);
+  }, [reloadToken, catalogue]);
   async function previewChanges() {
     setBusy(true); setError(''); setMessage('');
-    try { setPreviewResult(await api('/admin/rules/preview', value)); }
+    try { setPreviewResult(await api('/admin/rules/preview', { ...value, catalogue })); }
     catch (e) { setError(e.message); }
     finally { setBusy(false); }
   }
@@ -2105,35 +2108,47 @@ function Rules({ readonly, reloadToken = 0 }) {
     e.preventDefault();
     setBusy(true); setError('');
     try {
-      await api('/admin/rules', value);
-      await refreshCatalogue({ notify: true });
+      await api('/admin/rules', { ...value, catalogue });
+      if (typeof BroadcastChannel !== 'undefined') {
+        const channel = new BroadcastChannel('veyora-catalogue');
+        channel.postMessage({ type: 'prices-updated' });
+        channel.close();
+      }
+      window.dispatchEvent(new Event('veyora-prices-updated'));
       setPreviewResult(null);
-      setMessage('Pricing rule saved with the margin and tax shown here. Storefront prices have been refreshed.');
+      setMessage(`${title} saved. Storefront prices for this catalogue now use this margin and tax.`);
     } catch (e) { setError(e.message); }
     finally { setBusy(false); }
   }
   const changes = Array.isArray(previewResult) ? previewResult : previewResult?.changes || null;
   const summary = previewResult && !Array.isArray(previewResult) ? previewResult.summary : null;
   return <div className="admin-panel rules">
-    <h3>Margin, tax & rounding</h3>
+    <h3>{title}</h3>
     <p className="formula">Base subtotal + margin − applicable offers → tax treatment → rounding</p>
-    <p>Choose a fixed rupee amount per piece or a percentage of the base subtotal. Margin applies to jewellery and coins, including fixed-price pieces. Gold-linked base subtotal includes metal, making, stones and other charges. Making-charge offers discount only making charges.</p>
+    <p>{note}</p>
     <form onSubmit={publish}><div className="form-grid">
       <label>Margin type<select value={value.margin_type} onChange={e => set('margin_type', e.target.value)} disabled={readonly || busy}><option value="FIXED">Fixed amount (₹ per piece)</option><option value="PERCENT">Percentage of base subtotal (%)</option></select></label>
       <label>{value.margin_type === 'FIXED' ? 'Fixed margin (₹ per piece)' : 'Margin percentage (%)'}<input type="number" step="0.01" min="0" max={value.margin_type === 'PERCENT' ? 1000 : 999999999.99} value={value.margin_value} onChange={e => set('margin_value', e.target.value)} disabled={readonly || busy} required /></label>
       <label>Tax percentage<input type="number" step="0.01" min="0" max="100" value={value.tax_percent} onChange={e => set('tax_percent', e.target.value)} disabled={readonly || busy} required /></label>
       <label>Tax treatment<select value={value.tax_treatment} onChange={e => set('tax_treatment', e.target.value)} disabled={readonly || busy}><option value="exclusive">Add tax to subtotal</option><option value="inclusive">Subtotal includes tax</option></select></label>
       <label>Round final linked price to<select value={value.rounding} onChange={e => set('rounding', e.target.value)} disabled={readonly || busy}><option value="0.01">₹0.01</option><option value="1">₹1</option><option value="10">₹10</option><option value="100">₹100</option></select></label>
-    </div><p className="small muted">A ₹10,000 base plus ₹500 fixed margin becomes ₹10,500; a 10% margin becomes ₹11,000 before other applicable adjustments. Fixed-price pieces already have a merchant selling price: margin is added to it without applying tax a second time. Zero margin and zero tax keep the merchant price unchanged.</p>
+    </div>
       {error && <p className="error" role="alert">{error}</p>}{message && <p className="notice" role="status">{message}</p>}
       <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-        <button className="button dark" disabled={readonly || busy}>{busy ? 'Please wait…' : 'Save pricing rule'}<Check size={16} /></button>
+        <button className="button dark" disabled={readonly || busy}>{busy ? 'Please wait…' : 'Save this catalogue'}<Check size={16} /></button>
         <button type="button" className="button" disabled={readonly || busy} onClick={previewChanges}>{busy ? 'Please wait…' : 'Preview price changes'}<Eye size={16} /></button>
       </div>
     </form>
     {summary && <p className="small">{summary.compared} pieces compared. {summary.changed} prices change. {summary.unchanged} stay the same. {summary.awaiting} are awaiting a metal rate.{summary.changed > summary.shown ? ` Showing the first ${summary.shown}.` : ''}</p>}
     {changes && !!changes.length && <div className="table-wrap"><table><thead><tr><th>Piece / SKU</th><th>Old price</th><th>Margin</th><th>New price</th></tr></thead><tbody>{changes.map(c => <tr key={`${c.kind}-${c.sku}`}><td>{c.name}<small>{c.sku} · {c.kind}</small></td><td>{c.before === null ? 'Awaiting rate' : money(c.before)}</td><td>{c.margin === null ? '—' : money(c.margin)}</td><td>{c.after === null ? 'Awaiting rate' : money(c.after)}</td></tr>)}</tbody></table></div>}
   </div>;
+}
+function Rules({ readonly, reloadToken = 0 }) {
+  return <>
+    <CatalogueRule catalogue="jewelry" title="Jewellery pricing" note="This margin and tax apply only to jewellery. A fixed rupee margin is added to a fixed selling price. Gold-linked prices add the margin to metal, making, stones and other charges, then apply this tax and rounding. Coin and kurta prices stay on their own rules." readonly={readonly} reloadToken={reloadToken} />
+    <CatalogueRule catalogue="coin" title="Coin pricing" note="This margin and tax apply only to gold and silver coins. Jewellery and kurta prices do not change when you save this rule." readonly={readonly} reloadToken={reloadToken} />
+    <CatalogueRule catalogue="kurta" title="Kurta pricing" note="This margin applies only to kurtas. A ₹769 entered price with a fixed ₹1,000 margin shows ₹1,769. The amount stored on the kurta stays the entered price. Fixed kurta prices do not have tax added a second time." readonly={readonly} reloadToken={reloadToken} />
+  </>;
 }
 
 function CoinsAdmin({ readonly, refreshParent }) {

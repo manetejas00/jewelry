@@ -59,16 +59,17 @@ export function Provider({children}) {
   }
   useEffect(()=>{
     let lastReload = Date.now();
-    const reload=()=>{
+    const reload=({force=false}={})=>{
       if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')) return;
-      if (Date.now() - lastReload < 60000) return;
+      if (!force && Date.now() - lastReload < 60000) return;
       lastReload = Date.now();
-      refreshCatalogue().catch(e=>setError(e.message));
+      refreshCatalogue({fresh:force}).catch(e=>setError(e.message));
+      window.dispatchEvent(new Event('veyora-prices-updated'));
     };
     const visible=()=>{if(document.visibilityState==='visible')reload();};
     window.addEventListener('focus',reload);document.addEventListener('visibilitychange',visible);
     const channel=typeof BroadcastChannel!=='undefined'?new BroadcastChannel('veyora-catalogue'):null;
-    if(channel)channel.onmessage=event=>{if(event.data?.origin===tabId.current)return;reload();};
+    if(channel)channel.onmessage=event=>{if(event.data?.origin===tabId.current)return;if(event.data?.type==='prices-updated')reload({force:true});};
     return()=>{window.removeEventListener('focus',reload);document.removeEventListener('visibilitychange',visible);channel?.close();};
   },[]);
   useEffect(() => {if (toast) {const timer = setTimeout(() => setToast(''),3500);return () => clearTimeout(timer);}}, [toast]);

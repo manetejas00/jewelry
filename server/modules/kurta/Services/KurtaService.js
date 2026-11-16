@@ -3,7 +3,7 @@ import { KurtaResource } from '../Resources/KurtaResource.js';
 import { KurtaRequest } from '../Requests/KurtaRequest.js';
 import { KurtaMapper } from '../Mappers/KurtaMapper.js';
 import { KURTA_CSV_SCHEMA, KURTA_SIZES } from '../Constants/KurtaConstants.js';
-import { activeOffers } from '../../../pricing.js';
+import { activeOffers, latestPricingRule } from '../../../pricing.js';
 import { getAllProductsRatingSummaries } from '../../../reviews.js';
 import { shareRead } from '../../../read-share.js';
 import { validationError } from '../../../errors.js';
@@ -21,25 +21,27 @@ export class KurtaService {
   }
 
   async readPublishedCatalogue(options = {}) {
-    const [kurtas, offers, ratings] = await Promise.all([
+    const [kurtas, offers, ratings, rule] = await Promise.all([
       this.repo.listPublished(options),
       activeOffers(this.db).catch(() => []),
-      this.db.schema.hasTable('reviews').then(has => has ? getAllProductsRatingSummaries(this.db) : new Map()).catch(() => new Map())
+      this.db.schema.hasTable('reviews').then(has => has ? getAllProductsRatingSummaries(this.db) : new Map()).catch(() => new Map()),
+      latestPricingRule(this.db, 'kurta')
     ]);
 
-    return kurtas.map(k => KurtaResource.toStorefrontCard(k, offers, ratings));
+    return kurtas.map(k => KurtaResource.toStorefrontCard(k, offers, ratings, rule));
   }
 
   async getPublishedBySlug(slug, options = {}) {
     const kurta = await this.repo.getBySlug(slug);
     if (!kurta || kurta.status !== 'published') return null;
 
-    const [offers, ratings] = await Promise.all([
+    const [offers, ratings, rule] = await Promise.all([
       activeOffers(this.db).catch(() => []),
-      this.db.schema.hasTable('reviews').then(has => has ? getAllProductsRatingSummaries(this.db) : new Map()).catch(() => new Map())
+      this.db.schema.hasTable('reviews').then(has => has ? getAllProductsRatingSummaries(this.db) : new Map()).catch(() => new Map()),
+      latestPricingRule(this.db, 'kurta')
     ]);
 
-    return KurtaResource.toStorefrontDetail(kurta, offers, ratings, options);
+    return KurtaResource.toStorefrontDetail(kurta, offers, ratings, options, rule);
   }
 
   async getByCode(productCode) {

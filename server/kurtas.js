@@ -1,7 +1,7 @@
 import { validationError } from './errors.js';
 import { listingThumbnail } from '../shared/listing-media.js';
 import { getAllProductsRatingSummaries } from './reviews.js';
-import { activeOffers, matchOffer, calculatePrice, isFresh, activeRates } from './pricing.js';
+import { activeOffers, matchOffer, calculatePrice, isFresh, activeRates, latestPricingRule } from './pricing.js';
 import { now } from './db.js';
 
 import { KURTA_SIZES } from '../shared/kurta-sizes.js';
@@ -29,7 +29,7 @@ export async function listKurtas(k, options = {}) {
         .orWhere('category', 'like', '%Kurta%');
     }).where({ status: 'published' }).orderBy('id', 'asc'),
     activeRates(k),
-    k('pricing_rules').orderBy('id', 'desc').first(),
+    latestPricingRule(k, 'kurta'),
     hasImages ? k('product_images')
       .select('id', 'product_code', 'sku', 'role', 'url', 'alt_text', 'sort_order')
       .orderBy('sort_order', 'asc').orderBy('id', 'asc') : [],
@@ -167,7 +167,7 @@ export async function kurtaBySlug(k, slug, options = {}) {
   const [variants, rates, rules, images, offers, ratings] = await Promise.all([
     k('products').where({ product_code: targetCode }).orderBy('id', 'asc'),
     activeRates(k),
-    k('pricing_rules').orderBy('id', 'desc').first(),
+    latestPricingRule(k, 'kurta'),
     k('product_images').where(function() {
       this.where({ product_code: targetCode }).orWhereIn('sku', k('products').select('sku').where({ product_code: targetCode }));
     }).orderBy('sort_order', 'asc').orderBy('id', 'asc'),

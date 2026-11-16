@@ -257,6 +257,30 @@ export function calculateCoinPrice(c,rates,silverRate=null,rule={tax_percent:0,r
   };
 }
 
+const emptyPricingRule = catalogue => ({ tax_percent: 0, rounding: 1, tax_treatment: 'exclusive', margin_type: 'PERCENT', margin_value: 0, catalogue: catalogue || null });
+
+export function latestPricingRule(k, catalogue) {
+  return shareRead(k, 'pricing-rule:' + (catalogue || 'latest'), () => readLatestPricingRule(k, catalogue));
+}
+
+async function readLatestPricingRule(k, catalogue) {
+  if (!k?.schema || !(await k.schema.hasTable('pricing_rules').catch(() => false))) return emptyPricingRule(catalogue);
+  const hasCatalogue = await k.schema.hasColumn('pricing_rules', 'catalogue').catch(() => false);
+  if (hasCatalogue && ['jewelry', 'coin', 'kurta'].includes(catalogue)) {
+    const row = await k('pricing_rules').where({ catalogue }).orderBy('id', 'desc').first();
+    if (row) return row;
+    return emptyPricingRule(catalogue);
+  }
+  const legacy = await k('pricing_rules').orderBy('id', 'desc').first();
+  return legacy || emptyPricingRule(catalogue);
+}
+
+export function priceFixedCataloguePiece(amount, rule, offer = null) {
+  const base = Number(amount);
+  if (!Number.isFinite(base)) return null;
+  return calculatePrice({ pricing_mode: 'FIXED', fixed_price: base, net_weight_g: 0 }, null, rule || {}, offer);
+}
+
 export function coinCatalogue(k, options={}){
   return shareRead(k, 'coin-catalogue:' + (options.code || ''), () => readCoinCatalogue(k, options));
 }
@@ -268,7 +292,7 @@ async function readCoinCatalogue(k, options={}){
     k('coins').where({status:'published'}),
     activeRates(k),
     getSilverRate(k),
-    k('pricing_rules').orderBy('id','desc').first(),
+    latestPricingRule(k, 'coin'),
     hasImages?k('product_images')
       .select('id','product_code','sku','role','url','alt_text','sort_order')
       .where(function(){
@@ -329,7 +353,7 @@ async function safeHasTable(k, table) {
 async function pricingShared(k){
   const [rates, rule, offers, ratings] = await Promise.all([
     activeRates(k),
-    k('pricing_rules').orderBy('id','desc').first(),
+    latestPricingRule(k, 'jewelry'),
     activeOffers(k).catch(() => []),
     safeHasTable(k, 'reviews').then(has => has ? getAllProductsRatingSummaries(k) : new Map())
   ]);
@@ -423,18 +447,24 @@ export async function quote(k,items,options={}){
   try {
     if (k.schema && await k.schema.hasTable('kurta_variants')) {
       const vars = await k('kurta_variants').where({ status: 'published' });
-      kurtaVariants = vars.map(v => ({
-        ...v,
-        dimension: v.size,
-        size: v.size,
-        image: v.image,
-        checkout_available: v.stock > 0,
-        price: v.price != null ? Number(v.price) : Number(v.fixed_price || 0),
-        original_price: null,
-        discount_amount: 0,
-        offer: null,
-        breakdown: { total: v.price != null ? Number(v.price) : Number(v.fixed_price || 0), mode: 'FIXED' }
-      }));
+      const [rule, offers] = await Promise.all([latestPricingRule(k, 'kurta'), activeOffers(k).catch(() => [])]);
+      kurtaVariants = vars.map(v => {
+        const offer = matchOffer(v, offers, options.code);
+        const priced = priceFixedCataloguePiece(v.price ?? v.fixed_price ?? 0, rule, offer);
+        const total = priced?.total ?? (v.price != null ? Number(v.price) : Number(v.fixed_price || 0));
+        return {
+          ...v,
+          dimension: v.size,
+          size: v.size,
+          image: v.image,
+          checkout_available: Number(v.stock) > 0 && Number.isFinite(total),
+          price: total,
+          original_price: priced?.original_total ?? null,
+          discount_amount: priced?.discount_amount ?? 0,
+          offer: priced?.offer || null,
+          breakdown: priced || { total, mode: 'FIXED' }
+        };
+      });
     }
   } catch {}
   const allItems=[...products,...coins,...kurtaVariants];
@@ -462,14 +492,14 @@ export async function quote(k,items,options={}){
  const result={lines,subtotal,shipping,total:Number(new Decimal(subtotal).add(shipping))};
  return {...result,token:fingerprint(result)};
 }
-async function pricingContext(k){
-  const [rates,rules,offers]=await Promise.all([activeRates(k),k('pricing_rules').orderBy('id','desc').first(),activeOffers(k)]);
+async function pricingContext(k, catalogue){
+  const [rates,rules,offers]=await Promise.all([activeRates(k),latestPricingRule(k, catalogue),activeOffers(k)]);
   return {rates,rules,offers};
 }
 export async function pricedProductBySlug(k, slug){
   const row=await k('products').where({slug,status:'published'}).first();
   if(!row)return null;
-  const {rates,rules,offers}=await pricingContext(k);
+  const {rates,rules,offers}=await pricingContext(k, 'jewelry');
   const offer=matchOffer(row,offers);
   let price=null;
   try{price=calculatePrice(row,rates[row.purity],rules,offer);}catch{}
@@ -480,7 +510,7 @@ export async function pricedCoinBySku(k, sku){
   if(!await k.schema.hasTable('coins'))return null;
   const row=await k('coins').where({sku,status:'published'}).first();
   if(!row)return null;
-  const {rates,rules,offers}=await pricingContext(k);
+  const {rates,rules,offers}=await pricingContext(k, 'coin');
   const silver=await getSilverRate(k);
   const offer=matchOffer(row,offers);
   let price=null;
@@ -512,15 +542,16 @@ function quotedTotal(item, rates, silver, rule, offer) {
 }
 
 export async function previewPricingChanges(k, rule) {
+  const catalogue = ['jewelry', 'coin', 'kurta'].includes(rule?.catalogue) ? rule.catalogue : 'jewelry';
   const [rates, silver, offers, current, products, jewelries, coins, kurtas] = await Promise.all([
     activeRates(k),
     getSilverRate(k),
     activeOffers(k),
-    k('pricing_rules').orderBy('id', 'desc').first(),
-    slimRows(k, 'products', PREVIEW_FIELDS.products),
-    slimRows(k, 'jewelries', PREVIEW_FIELDS.jewelries),
-    slimRows(k, 'coins', PREVIEW_FIELDS.coins),
-    slimRows(k, 'kurtas', PREVIEW_FIELDS.kurtas)
+    latestPricingRule(k, catalogue),
+    catalogue === 'jewelry' ? slimRows(k, 'products', PREVIEW_FIELDS.products) : [],
+    catalogue === 'jewelry' ? slimRows(k, 'jewelries', PREVIEW_FIELDS.jewelries) : [],
+    catalogue === 'coin' ? slimRows(k, 'coins', PREVIEW_FIELDS.coins) : [],
+    catalogue === 'kurta' ? slimRows(k, 'kurtas', PREVIEW_FIELDS.kurtas) : []
   ]);
   const seen = new Set();
   const items = [];

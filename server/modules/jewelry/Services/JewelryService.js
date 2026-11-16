@@ -3,7 +3,7 @@ import { JewelryResource } from '../Resources/JewelryResource.js';
 import { JewelryRequest } from '../Requests/JewelryRequest.js';
 import { JewelryMapper } from '../Mappers/JewelryMapper.js';
 import { JEWELRY_CSV_SCHEMA } from '../Constants/JewelryConstants.js';
-import { calculatePrice, activeRates, activeOffers, matchOffer } from '../../../pricing.js';
+import { calculatePrice, activeRates, activeOffers, matchOffer, latestPricingRule } from '../../../pricing.js';
 import { getAllProductsRatingSummaries } from '../../../reviews.js';
 import { shareRead } from '../../../read-share.js';
 import { validationError } from '../../../errors.js';
@@ -27,7 +27,7 @@ export class JewelryService {
     const [jewelries, rates, rule, offers, ratings] = await Promise.all([
       this.repo.listPublished(options),
       shared ? shared.rates : activeRates(this.db),
-      shared ? shared.rule : this.db('pricing_rules').orderBy('id', 'desc').first().catch(() => null),
+      shared ? shared.rule : latestPricingRule(this.db, 'jewelry'),
       shared ? shared.offers : activeOffers(this.db).catch(() => []),
       shared ? shared.ratings : this.db.schema.hasTable('reviews').then(has => has ? getAllProductsRatingSummaries(this.db) : new Map()).catch(() => new Map())
     ]);
@@ -53,7 +53,7 @@ export class JewelryService {
 
     const [rates, rule, offers, ratings] = await Promise.all([
       activeRates(this.db),
-      this.db('pricing_rules').orderBy('id', 'desc').first().catch(() => null),
+      latestPricingRule(this.db, 'jewelry'),
       activeOffers(this.db).catch(() => []),
       this.db.schema.hasTable('reviews').then(has => has ? getAllProductsRatingSummaries(this.db) : new Map()).catch(() => new Map())
     ]);

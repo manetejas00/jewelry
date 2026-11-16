@@ -3,7 +3,7 @@ import { CoinResource } from '../Resources/CoinResource.js';
 import { CoinRequest } from '../Requests/CoinRequest.js';
 import { CoinMapper } from '../Mappers/CoinMapper.js';
 import { COIN_CSV_SCHEMA } from '../Constants/CoinConstants.js';
-import { calculateCoinPrice, activeRates, getSilverRate, activeOffers, matchOffer } from '../../../pricing.js';
+import { calculateCoinPrice, activeRates, getSilverRate, activeOffers, matchOffer, latestPricingRule } from '../../../pricing.js';
 import { getAllProductsRatingSummaries } from '../../../reviews.js';
 import { shareRead } from '../../../read-share.js';
 import { validationError } from '../../../errors.js';
@@ -25,7 +25,7 @@ export class CoinService {
       this.repo.listPublished(options),
       activeRates(this.db),
       getSilverRate(this.db),
-      this.db('pricing_rules').orderBy('id', 'desc').first().catch(() => null),
+      latestPricingRule(this.db, 'coin'),
       activeOffers(this.db).catch(() => []),
       this.db.schema.hasTable('reviews').then(has => has ? getAllProductsRatingSummaries(this.db) : new Map()).catch(() => new Map())
     ]);
@@ -52,7 +52,7 @@ export class CoinService {
     const [rates, silverRate, rule, offers, ratings] = await Promise.all([
       activeRates(this.db),
       getSilverRate(this.db),
-      this.db('pricing_rules').orderBy('id', 'desc').first().catch(() => null),
+      latestPricingRule(this.db, 'coin'),
       activeOffers(this.db).catch(() => []),
       this.db.schema.hasTable('reviews').then(has => has ? getAllProductsRatingSummaries(this.db) : new Map()).catch(() => new Map())
     ]);

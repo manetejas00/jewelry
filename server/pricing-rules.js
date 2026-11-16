@@ -16,5 +16,10 @@ export function validatePricingRule(input) {
   const value = new Decimal(raw);
   if (value.gt(margin_type === 'PERCENT' ? 1000 : '999999999.99')) throw validationError('Margin exceeds the supported limit.');
   if (margin_type === 'FIXED' && value.decimalPlaces() > 2) throw validationError('Fixed margin allows at most two decimal places.');
-  return {tax_percent:tax,rounding,tax_treatment:input.tax_treatment,margin_type,margin_value:value.toNumber()};
+  const result = {tax_percent:tax,rounding,tax_treatment:input.tax_treatment,margin_type,margin_value:value.toNumber()};
+  if (input.catalogue != null && input.catalogue !== '') {
+    if (!['jewelry','coin','kurta'].includes(input.catalogue)) throw validationError('Choose jewellery, coin, or kurta pricing.');
+    result.catalogue = input.catalogue;
+  }
+  return result;
 }
