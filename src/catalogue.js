@@ -10,6 +10,12 @@ export function isCoinPiece(item) {
   return Boolean(item?.is_coin || item?.coin_type) || String(item?.sku || '').startsWith('COIN-');
 }
 
+export function catalogueKind(item) {
+  if (isCoinPiece(item)) return 'coin';
+  if (isKurtaPiece(item)) return 'kurta';
+  return 'jewelry';
+}
+
 export function saveId(item) {
   if (!item) return '';
   if (isCoinPiece(item)) return item.sku || item.product_code || '';

@@ -113,7 +113,7 @@ export function CommonPLP({
           >
             <SlidersHorizontal size={16} /> Filter & refine {hasActiveFilters && `(${activeChips.length})`}
           </button>
-          <span>{items.length} {itemLabel}</span>
+          <span>{items.length} {items.length === 1 && itemLabel.endsWith('s') ? itemLabel.slice(0, -1) : itemLabel}</span>
           <label>
             Sort by{' '}
             <select

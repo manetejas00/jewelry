@@ -1,10 +1,16 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { saveId, savedCatalogue } from '../src/catalogue.js';
+import { catalogueKind, saveId, savedCatalogue } from '../src/catalogue.js';
 
 const jewelry = { sku: 'VEY-NK-001', product_code: 'aaradhya-kundan-bridal-choker', name: 'Aaradhya', category: 'Necklaces', price: 285000, stock: 2 };
 const kurta = { sku: 'CCK-MSK-001-XS', product_code: 'msk-001-noor', slug: 'noor', name: 'Noor', category: 'Cotton Chikankari', is_kurta: true, price: 1299, stock: 4, variants: [{ sku: 'CCK-MSK-001-M', product_code: 'msk-001-noor' }] };
 const coin = { sku: 'COIN-AU-1G', slug: 'coin-au-1g', name: '1g Gold', coin_type: 'Gold Coin', price: 10175, stock: 3 };
+
+test('saved filters can tell jewellery, kurtas, and coins apart', () => {
+  assert.equal(catalogueKind(jewelry), 'jewelry');
+  assert.equal(catalogueKind(kurta), 'kurta');
+  assert.equal(catalogueKind(coin), 'coin');
+});
 
 test('saveId uses the product code for jewellery and kurtas, and the SKU for coins', () => {
   assert.equal(saveId(jewelry), 'aaradhya-kundan-bridal-choker');

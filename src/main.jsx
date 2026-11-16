@@ -40,7 +40,7 @@ const media = name => 'https://cdnstatic.tencentcs.com/edgeone/pages/product-act
 import { api } from './api.js';
 import { Provider, useStore } from './store.jsx';
 import Account from './Account.jsx';
-import { grouped, saveId, savedCatalogue } from './catalogue.js';
+import { catalogueKind, grouped, saveId, savedCatalogue } from './catalogue.js';
 import { coinImage } from './media.js';
 import ListingImage from './ListingImage.jsx';
 import { galleryPhotos } from './image-zoom.js';
@@ -48,6 +48,7 @@ import { SearchAutocomplete } from './SearchAutocomplete.jsx';
 import InstallApp from './InstallApp.jsx';
 import StaffAccess from './StaffAccess.jsx';
 const priceBrackets = [{ label: 'All prices', value: '' }, { label: 'Under ₹20,000', value: '0-20000' }, { label: '₹20,000 – ₹30,000', value: '20000-30000' }, { label: '₹30,000 – ₹50,000', value: '30000-50000' }, { label: 'Above ₹50,000', value: '50000-' }];
+const savedPriceBrackets = [{ label: 'All prices', value: '' }, { label: 'Under ₹5,000', value: '0-5000' }, { label: '₹5,000 – ₹20,000', value: '5000-20000' }, { label: '₹20,000 – ₹1,00,000', value: '20000-100000' }, { label: 'Above ₹1,00,000', value: '100000-' }];
 const matchPrice = (price, bracket) => { if (!bracket) return true; if (price === null || price === undefined) return false; if (bracket.includes('-')) { const [minStr, maxStr] = bracket.split('-'); if (minStr && price < Number(minStr)) return false; if (maxStr && price > Number(maxStr)) return false; return true; } return price <= Number(bracket); };
 function Scroll() { const loc = useLocation(); useEffect(() => { if (!loc.pathname.startsWith('/collections')) window.scrollTo(0, 0); }, [loc.pathname]); return null }
 function Brand() { return <Link className="brand" to="/" aria-label="Veyora Jewels home"><img className="brand-logo" src="/assets/brand/logo.webp" alt="Veyora Jewels" width="150" height="100" /></Link> }
@@ -752,7 +753,7 @@ function Collection() {
   const listRef = useRef();
   const q = params.get('q') || '';
   useEffect(() => {
-    document.title = `${q ? `Search: “${q}”` : category === 'all' ? 'All jewellery' : category} | Veyora Jewels`;
+    document.title = `${q ? `Search: “${q}”` : category === 'all' ? 'All jewellery' : category === 'saved' ? 'Saved pieces' : category} | Veyora Jewels`;
     if (listRef.current && !matchMedia('(prefers-reduced-motion: reduce)').matches) gsap.fromTo(listRef.current, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: .5 });
     const key = 'scroll:' + location.pathname + location.search;
     requestAnimationFrame(() => window.scrollTo(0, Number(sessionStorage.getItem(key) || 0)));
@@ -824,7 +825,8 @@ function Collection() {
       ? (category === 'all' ? [...jewelleryItems, ...coinItems] : jewelleryItems)
       : jewelleryItems;
 
-  let items = baseList.filter(p => matchesSearch(p, p.is_coin) && (!params.get('purity') || p.purity === params.get('purity')) && (!params.get('stock') || p.stock > 0) && matchPrice(p.price, params.get('price')));
+  const savedKind = category === 'saved' ? (params.get('kind') || 'all') : '';
+  let items = baseList.filter(p => matchesSearch(p, p.is_coin) && (!params.get('purity') || p.purity === params.get('purity')) && (!params.get('stock') || p.stock > 0) && matchPrice(p.price, params.get('price')) && (!savedKind || savedKind === 'all' || catalogueKind(p) === savedKind));
   if (params.get('sort') === 'price-asc') items.sort((a, b) => a.price - b.price);
   if (params.get('sort') === 'price-desc') items.sort((a, b) => b.price - a.price);
   const title = q ? `Search results for “${q}”` : categoryMeta?.name || ({
@@ -833,36 +835,52 @@ function Collection() {
     silver: 'The Silver Collection',
     saved: 'Your saved pieces'
   }[category] || category.replace(/-/g, ' '));
-  const categoryDescription = q ? `Showing items matching “${q}”.` : categoryMeta?.description || ({
+  const categoryDescription = q ? `Showing items matching “${q}”.` : category === 'saved' ? 'Kurtas, coins, and jewellery you have kept close.' : categoryMeta?.description || ({
     all: 'Considered pieces. Quiet statements. Endlessly you.',
     gold: 'Hallmarked 18K and 22K yellow gold fine jewellery crafted with timeless heritage and contemporary precision.',
     silver: 'Fine 925 sterling silver artisan jewellery finished with anti-tarnish rhodium and lustrous hand polishing.'
   }[category] || 'Considered pieces. Quiet statements. Endlessly you.');
   const gridOffer = offers.find(o => o.show_in_grid) || offers[0];
 
-  const tabs = [
+  const savedCounts = savedItems.reduce((counts, item) => {
+    counts[catalogueKind(item)] += 1;
+    counts.all += 1;
+    return counts;
+  }, { all: 0, jewelry: 0, kurta: 0, coin: 0 });
+  const savedHref = kind => {
+    const next = new URLSearchParams(params);
+    if (kind && kind !== 'all') next.set('kind', kind);
+    else next.delete('kind');
+    const query = next.toString();
+    return query ? `/collections/saved?${query}` : '/collections/saved';
+  };
+  const savedCount = count => accountReady ? ` (${count})` : '';
+  const tabs = category === 'saved' ? [
+    { label: `All saved${savedCount(savedCounts.all)}`, href: savedHref('all'), active: savedKind === 'all' },
+    { label: `Jewellery${savedCount(savedCounts.jewelry)}`, href: savedHref('jewelry'), active: savedKind === 'jewelry' },
+    { label: `Kurtas${savedCount(savedCounts.kurta)}`, href: savedHref('kurta'), active: savedKind === 'kurta' },
+    { label: `Coins${savedCount(savedCounts.coin)}`, href: savedHref('coin'), active: savedKind === 'coin' }
+  ] : [
     { label: 'All jewellery', href: '/collections/all', active: category === 'all' },
     { label: 'Earrings', href: '/collections/earrings', active: category === 'earrings' },
     { label: 'Necklaces', href: '/collections/necklaces', active: category === 'necklaces' },
     { label: 'Rings', href: '/collections/rings', active: category === 'rings' },
     { label: 'Bracelets', href: '/collections/bracelets', active: category === 'bracelets' },
     ...(category === 'gold' ? [{ label: 'Gold Collection', href: '/collections/gold', active: true }] : []),
-    ...(category === 'silver' ? [{ label: 'Silver Collection', href: '/collections/silver', active: true }] : []),
-    ...(category === 'saved' ? [{ label: `Saved pieces (${saved.length})`, href: '/collections/saved', active: true }] : [])
+    ...(category === 'silver' ? [{ label: 'Silver Collection', href: '/collections/silver', active: true }] : [])
   ];
 
-  const facets = [
-    {
-      key: 'purity',
-      label: 'Purity',
-      allLabel: 'All purities',
-      options: [
-        { label: '18K', value: '18K' },
-        { label: '22K', value: '22K' },
-        { label: '925', value: '925' }
-      ]
-    }
-  ];
+  const purityFacet = {
+    key: 'purity',
+    label: 'Purity',
+    allLabel: 'All purities',
+    options: [
+      { label: '18K', value: '18K' },
+      { label: '22K', value: '22K' },
+      { label: '925', value: '925' }
+    ]
+  };
+  const facets = category === 'saved' && savedKind !== 'jewelry' ? [] : [purityFacet];
 
   return <Layout>
     <CommonPLP
@@ -870,7 +888,7 @@ function Collection() {
       title={title}
       description={categoryDescription}
       tabs={tabs}
-      priceBrackets={priceBrackets}
+      priceBrackets={category === 'saved' ? savedPriceBrackets : priceBrackets}
       activePrice={params.get('price') || ''}
       onPriceChange={v => update('price', v)}
       items={items}
@@ -888,6 +906,8 @@ function Collection() {
       onClearFilters={() => setParams({})}
       facets={facets}
       onRetry={() => refreshCatalogue().catch(() => { })}
+      emptyTitle={category === 'saved' && !saved.length ? 'Nothing saved yet' : 'No pieces found'}
+      emptyMessage={category === 'saved' && !saved.length ? 'Tap the heart on a kurta, coin, or jewellery piece and it will wait here.' : 'Try clearing your filters or explore our full collection.'}
       ProductCardComponent={ProductCard}
       visible={visible}
       onLoadMore={() => setVisible(n => n + 24)}
@@ -1360,7 +1380,7 @@ function Stat({title,value,detail}){return <div className="stat"><span className
 function Status({text}){return <CommonStatusBadge status={text} label={text}/>}
 function RateTable({rates}){return <div className="table-wrap"><table><thead><tr><th>Purity</th><th>INR / gram</th><th>Original rate</th><th>Effective date</th><th>Status</th></tr></thead><tbody>{rates.map(r=><tr key={r.id}><td><strong>{r.purity}</strong></td><td>{money(r.inr_per_gram)}</td><td>{money(r.original_rate)} / {r.original_unit}</td><td>{r.effective_date}<small>{date(r.source_timestamp)}</small></td><td><Status text={r.fresh?'Verified':'stale — checkout paused'}/></td></tr>)}</tbody></table>{!rates.length&&<p>No approved rates. Import a rate file to begin.</p>}</div>}
 function BatchTable({batches,retry,readonly}){return <div className="admin-panel"><h3>Import history</h3><div className="table-wrap"><table><thead><tr><th>Batch</th><th>Source timestamp</th><th>Status</th><th>Created / Updated / Rejected</th><th>Actions</th></tr></thead><tbody>{batches.map(b=><tr key={b.id}><td>#{b.id} · {b.kind}</td><td>{date(b.source_timestamp)}</td><td><Status text={b.status}/></td><td>{b.summary?.created ?? 0} / {b.summary?.updated ?? 0} / {b.summary?.rejected ?? 0}</td><td>{b.status==='failed'?<a className="underlink" href={`/api/admin/import/${b.id}/errors`}>Errors CSV ↓</a>:b.status==='staged'&&retry&&!readonly?<button className="underlink" onClick={()=>retry(b)}>Publish / retry ↗</button>:'—'}</td></tr>)}</tbody></table></div></div>}
-function ImportPanel({kind,refresh,readonly}){const [batch,setBatch]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[success,setSuccess]=useState('');const prefix=kind==='gold'?'gold-rates':kind==='products'||kind==='jewelry'?'jewelry':kind;async function upload(e){const file=e.target.files[0];if(!file)return;setError('');setSuccess('');setBatch(null);setBusy(true);try{if(file.size>5*1024*1024)throw Error('Maximum file size is 5 MB');const payload=/\.csv$/i.test(file.name)?{kind,csv:await file.text()}:{kind,file:await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)})};const b=await api('/admin/import/preview',payload);setBatch(b);await refresh()}catch(e){setError(e.message)}finally{setBusy(false);e.target.value=''}}async function publish(){setBusy(true);try{await api(`/admin/import/${batch.id}/publish`,{});setBatch(null);setSuccess('Import published. Catalogue updated.');await refresh()}catch(e){setError(e.message)}finally{setBusy(false)}}return <div className="admin-panel import-panel"><Upload size={23}/><h3>{kind==='gold'?'Gold rates':kind==='coins'?'Import Coins':kind==='kurtas'?'Import Kurtas':'Import Jewelry'}</h3><p className="small muted">Manual CSV, XLS, or XLSX upload. Validate, review, then confirm—nothing is synchronized automatically.</p><div className="download-links"><a href={`/api/admin/samples/${prefix}-template.csv`}><Download size={14}/>CSV template</a><a href={`/api/admin/samples/${prefix}-example.csv`}><Download size={14}/>Example</a><a href={`/api/admin/export/${kind==='products'?'jewelry':kind}`} download><Download size={14}/>Export current CSV</a></div><label className="upload-zone"><Upload size={22}/><strong>{busy?'Validating…':'Choose a CSV or Excel file'}</strong><span>Manual upload · 5 MB maximum</span><input disabled={busy||readonly} type="file" accept=".csv,.xls,.xlsx,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={upload}/></label>{error&&<p className="error" role="alert">{error}</p>}{success&&<p role="status" className="notice">{success}</p>}{batch&&<div className="import-preview"><Status text={`Batch #${batch.id} · ${batch.status}${batch.duplicate?' · duplicate':''}`}/><p>{batch.summary.created} new · {batch.summary.updated} updates · {batch.summary.rejected} errors</p>{batch.errors?.length>0?<><p className="error">No changes published. Correct the file and upload it again.</p>{batch.errors.slice(0,5).map((e,i)=><p className="small" key={i}>Row {e.row} · {e.field}: {e.value} → {e.correction}</p>)}<a className="underlink" href={`/api/admin/import/${batch.id}/errors`}>Download error report ↓</a></>:<><div className="table-wrap"><table><thead><tr><th>SKU</th><th>Old</th><th>New</th><th>Stock</th></tr></thead><tbody>{batch.summary.changes?.map(c=><tr key={c.sku}><td>{c.sku}</td><td>{c.before===null?'New':money(c.before)}</td><td>{c.after===null?'Awaiting rate':money(c.after)}</td><td>{c.stock}</td></tr>)}</tbody></table></div>{batch.status==='staged'&&<button disabled={busy||readonly} className="button dark full" onClick={publish}>Confirm & publish <Check size={16}/></button>}</>}</div>}</div>}
+function ImportPanel({kind,refresh,readonly}){const [batch,setBatch]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[success,setSuccess]=useState('');const prefix=kind==='gold'?'gold-rates':kind==='products'||kind==='jewelry'?'jewelry':kind;async function upload(e){const file=e.target.files[0];if(!file)return;setError('');setSuccess('');setBatch(null);setBusy(true);try{if(file.size>5*1024*1024)throw Error('Maximum file size is 5 MB');const payload=/\.csv$/i.test(file.name)?{kind,csv:await file.text()}:{kind,file:await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)})};const b=await api('/admin/import/preview',payload);setBatch(b);await refresh()}catch(e){setError(e.message)}finally{setBusy(false);e.target.value=''}}async function publish(){setBusy(true);try{await api(`/admin/import/${batch.id}/publish`,{});setBatch(null);setSuccess('Import published. Catalogue updated.');await refresh()}catch(e){setError(e.message)}finally{setBusy(false)}}return <div className="admin-panel import-panel"><Upload size={23}/><h3>{kind==='gold'?'Gold rates':kind==='coins'?'Import Coins':kind==='kurtas'?'Import Kurtas':'Import Jewelry'}</h3><p className="small muted">Manual CSV, XLS, or XLSX upload. Validate, review, then confirm—nothing is synchronized automatically.</p>{kind==='kurtas'&&<p className="small muted">Each row is one size: XS (34), S (36), M (38), L (40), XL (42), XXL (44) or XXXL (46).</p>}{(kind==='products'||kind==='jewelry'||kind==='coins'||kind==='kurtas')&&<p className="small muted">Optional photo columns: image_front, image_back, image_right, image_left, image_detail and image_model. The image column stays the main photo. Leave an angle blank to keep its current photo.</p>}<div className="download-links"><a href={`/api/admin/samples/${prefix}-template.csv`}><Download size={14}/>CSV template</a><a href={`/api/admin/samples/${prefix}-example.csv`}><Download size={14}/>Example</a><a href={`/api/admin/export/${kind==='products'?'jewelry':kind}`} download><Download size={14}/>Export current CSV</a></div><label className="upload-zone"><Upload size={22}/><strong>{busy?'Validating…':'Choose a CSV or Excel file'}</strong><span>Manual upload · 5 MB maximum</span><input disabled={busy||readonly} type="file" accept=".csv,.xls,.xlsx,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={upload}/></label>{error&&<p className="error" role="alert">{error}</p>}{success&&<p role="status" className="notice">{success}</p>}{batch&&<div className="import-preview"><Status text={`Batch #${batch.id} · ${batch.status}${batch.duplicate?' · duplicate':''}`}/><p>{batch.summary.created} new · {batch.summary.updated} updates · {batch.summary.rejected} errors</p>{batch.errors?.length>0?<><p className="error">No changes published. Correct the file and upload it again.</p>{batch.errors.slice(0,5).map((e,i)=><p className="small" key={i}>Row {e.row} · {e.field}: {e.value} → {e.correction}</p>)}<a className="underlink" href={`/api/admin/import/${batch.id}/errors`}>Download error report ↓</a></>:<><div className="table-wrap"><table><thead><tr><th>SKU</th><th>Old</th><th>New</th><th>Stock</th></tr></thead><tbody>{batch.summary.changes?.map(c=><tr key={c.sku}><td>{c.sku}</td><td>{c.before===null?'New':money(c.before)}</td><td>{c.after===null?'Awaiting rate':money(c.after)}</td><td>{c.stock}</td></tr>)}</tbody></table></div>{batch.status==='staged'&&<button disabled={busy||readonly} className="button dark full" onClick={publish}>Confirm & publish <Check size={16}/></button>}</>}</div>}</div>}
 function ProductAngleManager({product,readonly,refreshParent}){
   const [busyRole,setBusyRole]=useState(null);
   const [error,setError]=useState('');
@@ -2230,7 +2250,7 @@ function CoinsAdmin({ readonly, refreshParent }) {
     } catch (err) { setError(err.message); setUploading(false) }
   }
 
-  const coins = data?.coins || [];
+  const coins = Array.isArray(data) ? data : (data?.coins || []);
   const filteredCoins = coins.filter(c => {
     if (subTab === 'gold' && (c.metal || '').toLowerCase() !== 'gold' && !(c.coin_type || '').toLowerCase().includes('gold')) return false;
     if (subTab === 'silver' && (c.metal || '').toLowerCase() !== 'silver' && !(c.coin_type || '').toLowerCase().includes('silver')) return false;
