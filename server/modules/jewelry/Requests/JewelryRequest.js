@@ -5,6 +5,15 @@ import {
   JEWELRY_PRICING_MODES,
   JEWELRY_STATUSES
 } from '../Constants/JewelryConstants.js';
+import { catalogSizeForStorage } from '../../../../shared/kurta-sizes.js';
+
+function checkedSize(body) {
+  const kurta = /kurta/i.test(String(body.category || ''));
+  if ((body.size == null || String(body.size).trim() === '') && !kurta) return;
+  const checked = catalogSizeForStorage(body.size, { kurta });
+  if (checked.error) throw validationError(checked.error);
+  body.size = checked.size;
+}
 
 export class JewelryRequest {
   static validateCreate(body) {
@@ -53,6 +62,7 @@ export class JewelryRequest {
       throw validationError(`Status must be one of: ${JEWELRY_STATUSES.join(', ')}`);
     }
 
+    checkedSize(body);
     return true;
   }
 
@@ -69,6 +79,7 @@ export class JewelryRequest {
         throw validationError('Stock must be an integer >= 0');
       }
     }
+    checkedSize(body);
     return true;
   }
 }

@@ -7,6 +7,7 @@ import { calculateCoinPrice, activeRates, getSilverRate, activeOffers, matchOffe
 import { getAllProductsRatingSummaries } from '../../../reviews.js';
 import { shareRead } from '../../../read-share.js';
 import { validationError } from '../../../errors.js';
+import { catalogSizeForStorage } from '../../../../shared/kurta-sizes.js';
 import { stringify } from 'csv-stringify/sync';
 
 export class CoinService {
@@ -110,7 +111,11 @@ export class CoinService {
       coin_type: String(body.coin_type || `${body.metal || 'Gold'} Coin`).trim().slice(0, 100),
       purity: String(body.purity || '24K').trim().slice(0, 50),
       weight_g: Number(body.weight_g || 0),
-      dimension: body.dimension ? String(body.dimension).trim().slice(0, 100) : null,
+      dimension: (() => {
+        const checked = catalogSizeForStorage(body.dimension, { kurta: false });
+        if (checked.error) throw validationError(checked.error);
+        return checked.size ? checked.size.slice(0, 100) : null;
+      })(),
       denomination: body.denomination ? String(body.denomination).trim().slice(0, 50) : null,
       mint: body.mint ? String(body.mint).trim().slice(0, 100) : 'MMTC-PAMP',
       collection: body.collection ? String(body.collection).trim().slice(0, 100) : null,

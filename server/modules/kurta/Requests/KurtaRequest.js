@@ -1,5 +1,6 @@
 import { validationError } from '../../../errors.js';
 import { KURTA_STATUSES } from '../Constants/KurtaConstants.js';
+import { kurtaSizeStockError } from '../../../../shared/kurta-sizes.js';
 
 export class KurtaRequest {
   static validateCreate(body = {}) {
@@ -28,6 +29,9 @@ export class KurtaRequest {
     if (body.status && !KURTA_STATUSES.includes(body.status)) {
       throw validationError(`Status must be one of: ${KURTA_STATUSES.join(', ')}`);
     }
+
+    const sizeError = kurtaSizeStockError(body);
+    if (sizeError) throw validationError(sizeError);
 
     return true;
   }
@@ -60,6 +64,9 @@ export class KurtaRequest {
     if (body.status !== undefined && !KURTA_STATUSES.includes(body.status)) {
       throw validationError(`Status must be one of: ${KURTA_STATUSES.join(', ')}`);
     }
+
+    const sizeError = kurtaSizeStockError(body);
+    if (sizeError) throw validationError(sizeError);
 
     return true;
   }

@@ -1,4 +1,5 @@
 import { KURTA_SIZES } from '../Constants/KurtaConstants.js';
+import { expandCombinedKurtaVariant, variantMatchesKurtaSize } from '../../../../shared/kurta-sizes.js';
 import { listingThumbnail } from '../../../../shared/listing-media.js';
 import { matchOffer, priceFixedCataloguePiece } from '../../../pricing.js';
 
@@ -25,7 +26,8 @@ export class KurtaResource {
   static toStorefrontCard(kurta, offers = [], ratings = new Map(), rule = null) {
     const offer = matchOffer(kurta, offers);
     const sourceVariants = kurta.variants || [];
-    const variants = sourceVariants.map(variant => pricedKurtaVariant(variant, kurta, rule, offer));
+    const pricedVariants = sourceVariants.map(variant => pricedKurtaVariant(variant, kurta, rule, offer));
+    const variants = pricedVariants.flatMap(variant => expandCombinedKurtaVariant(variant, { slug: kurta.slug }));
     const images = kurta.images || [];
     const entered = priceFixedCataloguePiece(kurta.price ?? kurta.fixed_price ?? 0, rule, offer);
 
@@ -34,10 +36,10 @@ export class KurtaResource {
     let totalStock = kurta.stock || 0;
     const availableSizes = [];
 
-    if (variants.length > 0) {
-      minPrice = Math.min(...variants.map(v => v.price || v.fixed_price || 0));
-      maxPrice = Math.max(...variants.map(v => v.price || v.fixed_price || 0));
-      totalStock = variants.reduce((acc, v) => acc + (v.stock || 0), 0);
+    if (pricedVariants.length > 0) {
+      minPrice = Math.min(...pricedVariants.map(v => v.price || v.fixed_price || 0));
+      maxPrice = Math.max(...pricedVariants.map(v => v.price || v.fixed_price || 0));
+      totalStock = pricedVariants.reduce((acc, v) => acc + (v.stock || 0), 0);
       for (const v of variants) {
         if (v.stock > 0 && !availableSizes.includes(v.size)) {
           availableSizes.push(v.size);
@@ -63,7 +65,7 @@ export class KurtaResource {
     }
 
     const sizes = KURTA_SIZES.map(s => {
-      const v = variants.find(item => item.size && item.size.startsWith(s.code));
+      const v = variants.find(item => variantMatchesKurtaSize(item.size, s.code));
       return {
         ...s,
         sku: v?.sku,
@@ -113,7 +115,9 @@ export class KurtaResource {
 
   static toStorefrontDetail(kurta, offers = [], ratings = new Map(), options = {}, rule = null) {
     const offer = matchOffer(kurta, offers, options.code);
-    const variants = (kurta.variants || []).map(variant => pricedKurtaVariant(variant, kurta, rule, offer));
+    const variants = (kurta.variants || [])
+      .map(variant => pricedKurtaVariant(variant, kurta, rule, offer))
+      .flatMap(variant => expandCombinedKurtaVariant(variant, { slug: kurta.slug }));
     const images = kurta.images || [];
     const distinctImages = images.filter((img, i, all) => all.findIndex(o => o.url === img.url) === i);
 

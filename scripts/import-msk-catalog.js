@@ -632,30 +632,37 @@ async function run() {
   console.log(`Created CSV at: ${csvPath}`);
 
   // Backend bulk upload CSV
-  const backendHeaders = ['product_code', 'sku', 'name', 'category', 'description', 'fabric', 'craftsmanship', 'size', 'color', 'finish', 'image', 'pricing_mode', 'fixed_price', 'stock', 'status', 'source_timestamp'];
+  const backendHeaders = ['product_code', 'sku', 'name', 'category', 'description', 'fabric', 'craftsmanship', 'size', 'color', 'finish', 'image', 'pricing_mode', 'fixed_price', 'stock', 'status', 'source_timestamp', 'image_front', 'image_back', 'image_right', 'image_left', 'image_detail', 'image_model'];
   const backendLines = [backendHeaders.join(',')];
   const timestamp = new Date().toISOString();
   
   for (const p of products) {
-    backendLines.push([
-      '"MSK Heritage Wholesale"',
-      `"${p.code}"`,
-      `"CCK-${p.sku}"`,
-      `"${p.name.replace(/"/g, '""')}"`,
-      `"${p.category}"`,
-      `"${p.desc.replace(/"/g, '""')}"`,
-      `"${p.fabric}"`,
-      `"${p.craftsmanship}"`,
-      '"XS,S,M,L,XL,XXL,XXXL"',
-      `"${p.color}"`,
-      '"Hand Embroidered"',
-      `"/assets/products/${p.code}/hero.webp"`,
-      '"FIXED"',
-      p.selling_price.toFixed(2),
-      25,
-      '"published"',
-      `"${timestamp}"`
-    ].join(','));
+    for (const sizeInfo of KURTA_SIZES) {
+      backendLines.push([
+        `"${p.code}"`,
+        `"CCK-${p.sku}-${sizeInfo.code}"`,
+        `"${p.name.replace(/"/g, '""')}"`,
+        `"${p.category}"`,
+        `"${p.desc.replace(/"/g, '""')}"`,
+        `"${p.fabric}"`,
+        `"${p.craftsmanship}"`,
+        `"${sizeInfo.label}"`,
+        `"${p.color}"`,
+        '"Hand Embroidered"',
+        `"/assets/products/${p.code}/hero.webp"`,
+        '"FIXED"',
+        p.selling_price.toFixed(2),
+        25,
+        '"published"',
+        `"${timestamp}"`,
+        '""',
+        '""',
+        '""',
+        '""',
+        '""',
+        '""'
+      ].join(','));
+    }
   }
   const backendCsvPath = path.resolve('samples/msk-kurtas-bulk-upload.csv');
   fs.writeFileSync(backendCsvPath, backendLines.join('\n'), 'utf8');

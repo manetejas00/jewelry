@@ -40,6 +40,8 @@ test('jewelry: requests validate create and update schemas strictly', () => {
   assert.throws(() => JewelryRequest.validateCreate({ name: 'Ring', sku: 'R1', net_weight_g: 4.5, stock: -1 }), /Stock must be an integer >= 0/);
 
   assert.equal(JewelryRequest.validateCreate({ name: 'Aurelia Ring', sku: 'AUR-001', net_weight_g: 4.5 }), true);
+  assert.equal(JewelryRequest.validateCreate({ name: 'Aurelia Ring', sku: 'AUR-001', net_weight_g: 4.5, size: '12' }), true);
+  assert.throws(() => JewelryRequest.validateCreate({ name: 'Ring', sku: 'R1', net_weight_g: 4.5, size: 'XS,S,M,L,XL,XXL,XXXL' }), /one size per row/);
   assert.equal(JewelryRequest.validateUpdate({ name: 'Aurelia Grand Ring', stock: 15 }), true);
 });
 

@@ -1,4 +1,6 @@
 import { db, now } from '../server/db.js';
+import { validationError } from '../server/errors.js';
+import { storedKurtaSize, KURTA_SIZE_CORRECTION } from '../shared/kurta-sizes.js';
 
 export async function KurtaVariantSeeder(k = db, kurtaId, variants = []) {
   if (!await k.schema.hasTable('kurta_variants')) {
@@ -16,6 +18,8 @@ export async function KurtaVariantSeeder(k = db, kurtaId, variants = []) {
       .first();
 
     let variantId;
+    const label = storedKurtaSize(v.size);
+    if (!label) throw validationError(`Kurta variant ${v.sku || v.product_code || ''} needs one size. ${KURTA_SIZE_CORRECTION}`);
 
     if (!existing) {
       const [newId] = await k('kurta_variants').insert({
@@ -23,7 +27,7 @@ export async function KurtaVariantSeeder(k = db, kurtaId, variants = []) {
         product_code: v.product_code,
         sku: v.sku,
         slug: v.slug || `${v.product_code}-${v.sku.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
-        size: v.size,
+        size: label,
         color: v.color || null,
         color_code: v.color_code || null,
         hex_color: v.hex_color || null,
@@ -53,7 +57,7 @@ export async function KurtaVariantSeeder(k = db, kurtaId, variants = []) {
       }
     } else {
       await k('kurta_variants').where({ id: existing.id }).update({
-        size: v.size !== undefined ? v.size : existing.size,
+        size: label,
         color: v.color !== undefined ? v.color : existing.color,
         color_code: v.color_code !== undefined ? v.color_code : existing.color_code,
         hex_color: v.hex_color !== undefined ? v.hex_color : existing.hex_color,

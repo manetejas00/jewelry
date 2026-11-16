@@ -9,9 +9,72 @@ import {
   ArrowUpRight
 } from 'lucide-react';
 import { money } from '../catalogue.js';
+import { expandCombinedKurtaVariant, kurtaSizeCode } from '../../shared/kurta-sizes.js';
 import { api } from '../api.js';
 import ProductMagicZoom from '../ProductMagicZoom.jsx';
 import { RatingBadge, ProductReviewsSection } from '../Reviews.jsx';
+
+function kurtaChoices(variants) {
+  return (variants || []).flatMap(variant => expandCombinedKurtaVariant(variant));
+}
+
+function KurtaSizeSelector({ product, variants, selectedSku, onSkuSelect, onOpenSizeGuide }) {
+  const choices = kurtaChoices(variants);
+  const selected = choices.find(variant => variant.sku === (selectedSku || product.sku)) || choices[0];
+  return (
+    <div className="kurta-size-selector" style={{ margin: '20px 0' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+        <label style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+          Select Kurta Size (XS to XXXL)
+        </label>
+        {onOpenSizeGuide && (
+          <button
+            type="button"
+            className="underlink"
+            onClick={onOpenSizeGuide}
+            style={{ fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+          >
+            Size Guide & Measurements ↗
+          </button>
+        )}
+      </div>
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        {choices.map(variant => {
+          const isSelected = variant.sku === (selected?.sku || selectedSku || product.sku);
+          const isOutOfStock = Number(variant.stock) === 0;
+          const code = kurtaSizeCode(variant.size) || String(variant.size || variant.sku);
+          return (
+            <button
+              key={variant.sku}
+              type="button"
+              disabled={isOutOfStock}
+              onClick={() => onSkuSelect && onSkuSelect(variant.sku)}
+              style={{
+                minWidth: '54px',
+                padding: '8px 14px',
+                fontSize: '13px',
+                fontWeight: isSelected ? 700 : 500,
+                borderRadius: '3px',
+                border: isSelected ? '2px solid var(--ink)' : '1px solid var(--line)',
+                background: isSelected ? 'var(--ink)' : isOutOfStock ? '#f5f5f5' : '#fff',
+                color: isSelected ? '#fff' : isOutOfStock ? '#999' : 'var(--ink)',
+                cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+                textDecoration: isOutOfStock ? 'line-through' : 'none',
+                transition: 'all 0.15s ease'
+              }}
+              title={isOutOfStock ? `${code} is out of stock` : `Select size ${code} (${variant.stock} in stock)`}
+            >
+              {code}
+            </button>
+          );
+        })}
+      </div>
+      <span className="small muted" style={{ display: 'block', marginTop: '6px' }}>
+        Selected: <strong>{selected?.size || product.size}</strong>{Number(selected?.stock ?? product.stock) > 0 ? ` · ${selected?.stock ?? product.stock} ready in stock` : ' — Currently out of stock'}
+      </span>
+    </div>
+  );
+}
 
 export function CommonPDP({
   product: p,
@@ -69,6 +132,11 @@ export function CommonPDP({
   const hasDiscount = p.original_price && p.original_price > p.price;
   const isCoin = sizeType === 'coin' || p.is_coin || p.sku?.startsWith('COIN-');
   const isKurta = sizeType === 'kurta' || p.is_kurta;
+  const selectedKurta = isKurta ? (kurtaChoices(variants).find(variant => variant.sku === (selectedSku || p.sku)) || kurtaChoices(variants)[0]) : null;
+  const stockCount = selectedKurta ? Number(selectedKurta.stock || 0) : Number(p.stock || 0);
+  const bagPiece = selectedKurta
+    ? { ...p, sku: selectedKurta.sku, size: selectedKurta.size, stock: stockCount, price: selectedKurta.price ?? p.price, slug: p.slug || selectedKurta.slug }
+    : p;
 
   return (
     <>
@@ -217,57 +285,13 @@ export function CommonPDP({
 
           {/* Size / Sizing Options */}
           {sizeType === 'kurta' ? (
-            <div className="kurta-size-selector" style={{ margin: '20px 0' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <label style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                  Select Kurta Size (XS to XXXL)
-                </label>
-                {onOpenSizeGuide && (
-                  <button
-                    type="button"
-                    className="underlink"
-                    onClick={onOpenSizeGuide}
-                    style={{ fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                  >
-                    Size Guide & Measurements ↗
-                  </button>
-                )}
-              </div>
-
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                {variants.map(v => {
-                  const isSelected = v.sku === (selectedSku || p.sku);
-                  const isOutOfStock = v.stock === 0;
-                  return (
-                    <button
-                      key={v.sku}
-                      type="button"
-                      disabled={isOutOfStock}
-                      onClick={() => onSkuSelect && onSkuSelect(v.sku)}
-                      style={{
-                        minWidth: '54px',
-                        padding: '8px 14px',
-                        fontSize: '13px',
-                        fontWeight: isSelected ? 700 : 500,
-                        borderRadius: '3px',
-                        border: isSelected ? '2px solid var(--ink)' : '1px solid var(--line)',
-                        background: isSelected ? 'var(--ink)' : isOutOfStock ? '#f5f5f5' : '#fff',
-                        color: isSelected ? '#fff' : isOutOfStock ? '#999' : 'var(--ink)',
-                        cursor: isOutOfStock ? 'not-allowed' : 'pointer',
-                        textDecoration: isOutOfStock ? 'line-through' : 'none',
-                        transition: 'all 0.15s ease'
-                      }}
-                      title={isOutOfStock ? `${v.size} is out of stock` : `Select size ${v.size} (${v.stock} in stock)`}
-                    >
-                      {v.size ? v.size.split(' ')[0] : v.sku}
-                    </button>
-                  );
-                })}
-              </div>
-              <span className="small muted" style={{ display: 'block', marginTop: '6px' }}>
-                Selected: <strong>{p.size}</strong> {p.stock > 0 ? `(${p.stock} ready in stock)` : '— Currently Out of Stock'}
-              </span>
-            </div>
+            <KurtaSizeSelector
+              product={p}
+              variants={variants}
+              selectedSku={selectedSku}
+              onSkuSelect={onSkuSelect}
+              onOpenSizeGuide={onOpenSizeGuide}
+            />
           ) : sizeType === 'coin' ? (
             <div style={{ margin: '18px 0' }}>
               <div className="size-label"><label htmlFor="coin-weight">Weight</label></div>
@@ -308,23 +332,23 @@ export function CommonPDP({
           ) : null}
 
           {/* Stock Indicator */}
-          <p className={'stock ' + (!p.checkout_available || p.stock === 0 ? 'unavailable' : '')}>
+          <p className={'stock ' + (!p.checkout_available || stockCount === 0 ? 'unavailable' : '')}>
             <span />
-            {p.stock === 0
+            {stockCount === 0
               ? 'Currently out of stock'
               : !p.checkout_available
               ? 'Awaiting fresh verified rate'
-              : `${p.stock} available · Ready for your next chapter`}
+              : `${stockCount} available · Ready for your next chapter`}
           </p>
 
           {/* Add to Bag and Wishlist Row */}
           <div className="add-row">
             <button
               className="button dark"
-              disabled={!p.checkout_available || p.stock === 0}
-              onClick={() => onAdd && onAdd(p)}
+              disabled={!p.checkout_available || stockCount === 0}
+              onClick={() => onAdd && onAdd(bagPiece)}
             >
-              {p.stock === 0
+              {stockCount === 0
                 ? 'Out of stock'
                 : p.checkout_available
                 ? 'Add to shopping bag'

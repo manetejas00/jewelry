@@ -7,6 +7,8 @@ import {validateCoins,previewCoins,publishCoins} from './coin-imports.js';
 import {fingerprint,calculatePrice,activeRates,isFresh,todayIndia,latestPricingRule} from './pricing.js';
 import {STOCK_HOLDING_STATUSES} from './orders.js';
 import {now,parse,json,preview} from './db.js';
+import {catalogSizeForStorage, KURTA_SIZE_CORRECTION, storedKurtaSize} from '../shared/kurta-sizes.js';
+import {IMPORT_ANGLE_COLUMNS, catalogueImageError, stripImportAngles, resolveStoredImage, exportImageFields, saveImportedCatalogueImages} from '../shared/catalogue-images.js';
 
 export function ensureCsv(input) {
   if (!input) return '';
@@ -18,7 +20,10 @@ export function ensureCsv(input) {
   }
   return String(input);
 }
-export const schemas={gold:['purity','currency','unit','rate','effective_date','source_timestamp'],products:['product_code','sku','name','category','description','metal','purity','net_weight_g','size','finish','image','pricing_mode','fixed_price','making_flat','making_percent','stone_charge','other_charge','stock','status','source_timestamp'],jewelry:['product_code','sku','name','category','description','metal','purity','net_weight_g','size','finish','image','pricing_mode','fixed_price','making_flat','making_percent','stone_charge','other_charge','stock','status','source_timestamp'],coins:['sku','name','metal','coin_type','purity','weight_g','dimension','making_charge','pricing_mode','fixed_price','stock','description','image','status','image_kind','source_timestamp'],kurtas:['product_code','sku','name','category','description','fabric','craftsmanship','size','color','finish','image','pricing_mode','fixed_price','stock','status','source_timestamp']};
+const productColumns=['product_code','sku','name','category','description','metal','purity','net_weight_g','size','finish','image','pricing_mode','fixed_price','making_flat','making_percent','stone_charge','other_charge','stock','status','source_timestamp',...IMPORT_ANGLE_COLUMNS];
+const coinColumns=['sku','name','metal','coin_type','purity','weight_g','dimension','making_charge','pricing_mode','fixed_price','stock','description','image','status','image_kind','source_timestamp',...IMPORT_ANGLE_COLUMNS];
+const kurtaColumns=['product_code','sku','name','category','description','fabric','craftsmanship','size','color','finish','image','pricing_mode','fixed_price','stock','status','source_timestamp',...IMPORT_ANGLE_COLUMNS];
+export const schemas={gold:['purity','currency','unit','rate','effective_date','source_timestamp'],products:productColumns,jewelry:productColumns,coins:coinColumns,kurtas:kurtaColumns};
 const num=v=>/^\d+(\.\d{1,4})?$/.test(v) && Number(v)<=9999999999;
 const timestamp=v=>/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/.test(v)&&!isNaN(Date.parse(v));
 const purities=['24K','22K','18K','14K'];
@@ -38,6 +43,8 @@ export function validate(kind,text){
  if(!num(r.fixed_price)||Number(r.fixed_price)<=0)error(n,'fixed_price',r.fixed_price,'Kurta fixed price must be a positive decimal');
  if(!/^\d+(\.\d{1,2})?$/.test(r.fixed_price))error(n,'fixed_price',r.fixed_price,'Currency allows at most two decimal places');
  if(r.image && ((!/^https:\/\//.test(r.image)&&!/^\/(uploads|assets)\/[a-zA-Z0-9_./-]+\.(png|jpe?g|webp|gif|svg)$/i.test(r.image))||r.image.includes('..')))error(n,'image',r.image,'Use HTTPS or a saved /uploads/ or /assets/ image');
+ const kurtaSize=catalogSizeForStorage(r.size,{kurta:true});
+ if(kurtaSize.error)error(n,'size',r.size,kurtaSize.error);else r.size=kurtaSize.size;
  }else{
  if(!['FIXED','GOLD_LINKED'].includes(r.pricing_mode))error(n,'pricing_mode',r.pricing_mode,'Use FIXED or GOLD_LINKED');
  if(!['published','draft'].includes(r.status))error(n,'status',r.status,'Use published or draft');if(!/^\d+$/.test(r.stock)||Number(r.stock)>100000000)error(n,'stock',r.stock,'Use a non-negative integer stock snapshot');
@@ -48,14 +55,18 @@ export function validate(kind,text){
  if(r.pricing_mode==='FIXED'&&(!num(r.fixed_price)||Number(r.fixed_price)<=0))error(n,'fixed_price',r.fixed_price,'Fixed products need a positive selling price');
  if(r.pricing_mode==='GOLD_LINKED') {if(r.metal.toLowerCase()!=='gold')error(n,'metal',r.metal,'Gold-linked pricing requires gold');if(!purities.includes(r.purity))error(n,'purity',r.purity,'Supply a supported purity-specific gold rate');if(!num(r.net_weight_g)||Number(r.net_weight_g)<=0)error(n,'net_weight_g',r.net_weight_g,'Supply a positive gold weight in grams');if(r.fixed_price!=='')error(n,'fixed_price',r.fixed_price,'Leave empty for gold-linked pricing');}
  if(r.image && ((!/^https:\/\//.test(r.image)&&!/^\/(uploads|assets)\/[a-zA-Z0-9_./-]+\.(png|jpe?g|webp|gif|svg)$/i.test(r.image))||r.image.includes('..')))error(n,'image',r.image,'Use HTTPS or a saved /uploads/ or /assets/ image');
+ const listedSize=catalogSizeForStorage(r.size,{kurta:/kurta/i.test(String(r.category||''))});
+ if(listedSize.error)error(n,'size',r.size,listedSize.error);else if(/kurta/i.test(String(r.category||'')))r.size=listedSize.size;
  }
+ for(const field of IMPORT_ANGLE_COLUMNS){const imageError=catalogueImageError(r[field]);if(imageError)error(n,field,r[field],imageError);}
  if(timestamp(r.source_timestamp))r.source_timestamp=new Date(r.source_timestamp).toISOString();
  const key=kind==='gold'?r.purity:r.sku;if(seen.has(key))error(n,kind==='gold'?'purity':'sku',key,'Remove duplicate entries');seen.add(key);
  });return {rows,errors};
 }
 export function normaliseRate(r){return {...r,original_unit:r.unit,original_rate:r.rate,inr_per_gram:new Decimal(r.rate).div(r.unit==='10g'?10:1).toFixed(4)};}
 // Imports are merchant initiated. A file is a complete edit for the fields it supplies.
-function productPatch(row,old){const patch={source_timestamp:row.source_timestamp,updated_at:now()};for(const f of schemas.products)if(!['sku','product_code','source_timestamp'].includes(f)&&row[f]!==undefined)patch[f]=row[f]===''?null:row[f];return patch;}
+const productSkip=new Set(['sku','product_code','source_timestamp',...IMPORT_ANGLE_COLUMNS]);
+function productPatch(row,old){const patch={source_timestamp:row.source_timestamp,updated_at:now()};for(const f of schemas.products)if(!productSkip.has(f)&&row[f]!==undefined)patch[f]=row[f]===''?null:row[f];return patch;}
 export async function previewImport(k,kind,text,staff=null){
  text=ensureCsv(text);
  if(kind==='coins')return previewCoins(k,text,schemas.coins,staff);
@@ -90,6 +101,8 @@ export async function publishImport(k,id,staff=null){
  if(await t('products').where({slug}).whereNot({sku:r.sku}).first())slug=`${slug}-${Math.floor(Math.random()*10000)}`;
  const sold=await t('order_items').join('orders','orders.id','order_items.order_id').where('order_items.sku',r.sku).where('orders.created_at','>',r.source_timestamp).whereIn('orders.status',STOCK_HOLDING_STATUSES).sum('order_items.quantity as qty').first();
  const effectiveStock=Math.max(0,Number(r.stock)-Number(sold?.qty||0));
+ const label=storedKurtaSize(r.size);
+ if(!label)throw validationError(KURTA_SIZE_CORRECTION);
  const row={
   product_code:r.product_code,
   sku:r.sku,
@@ -101,10 +114,10 @@ export async function publishImport(k,id,staff=null){
   metal:r.fabric||r.metal||'Pure Mulmul Cotton',
   purity:r.craftsmanship||r.purity||'Handcrafted Lucknowi Chikankari',
   net_weight_g:null,
-  size:r.size||'M (38)',
+  size:label,
   color:r.color||'Ivory',
   finish:r.finish||'Hand Embroidered',
-  image:r.image||`/assets/products/${r.product_code}/hero.webp`,
+  image:resolveStoredImage(r, old?.image||'', `/assets/products/${r.product_code}/hero.webp`),
   pricing_mode:'FIXED',
   fixed_price:String(Number(r.fixed_price).toFixed(2)),
   making_flat:'0.00',
@@ -142,15 +155,21 @@ export async function publishImport(k,id,staff=null){
   await t('products').insert(row);
   created++;
  }
+ await saveImportedCatalogueImages(t, r, 'kurtas');
  }else{
  const old=await t('products').where({sku:r.sku}).forUpdate().first();if(old && r.source_timestamp<old.source_timestamp)throw validationError('SKU has newer data; preview again');
- let slug=String(r.product_code||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'piece';if(await t('products').where({slug}).whereNot({sku:r.sku}).first())slug=`${slug}-${String(r.sku).toLowerCase().replace(/[^a-z0-9]+/g,'-')}`;const row={...r,slug,updated_at:now()};for(const f of ['net_weight_g','fixed_price','making_flat','making_percent','stone_charge','other_charge'])row[f]=r[f]===''?null:r[f];
+ let slug=String(r.product_code||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'piece';if(await t('products').where({slug}).whereNot({sku:r.sku}).first())slug=`${slug}-${String(r.sku).toLowerCase().replace(/[^a-z0-9]+/g,'-')}`;const row={...stripImportAngles(r),slug,updated_at:now()};row.image=resolveStoredImage(r, old?.image||'', '');for(const f of ['net_weight_g','fixed_price','making_flat','making_percent','stone_charge','other_charge'])row[f]=r[f]===''?null:r[f];
  const sold=await t('order_items').join('orders','orders.id','order_items.order_id').where('order_items.sku',r.sku).where('orders.created_at','>',r.source_timestamp).whereIn('orders.status',STOCK_HOLDING_STATUSES).sum('order_items.quantity as qty').first();row.stock=Math.max(0,Number(r.stock)-Number(sold.qty||0));
  if(old){const patch=productPatch(row,old);const changed=Object.entries(patch).some(([f,v])=>!['source_timestamp','updated_at'].includes(f)&&String(old[f]??'')!==String(v??''));await t('products').where({sku:r.sku}).update(patch);changed?updated++:unchanged++;}else{await t('products').insert(row);created++;}
+ await saveImportedCatalogueImages(t, r, b.kind);
  }}
  const summary={...parse(b.summary),created,updated,unchanged,rejected:0};await t('import_batches').where({id}).update({status:'published',published_at:now(),summary:json(summary)});await t('audit').insert({staff_id:staff,action:`publish_${b.kind}`,details:json({batch:id,summary}),created_at:now()});await t('import_locks').where({name:b.kind}).del();return summary;
  },k.client.config.client==='mysql2'?{isolationLevel:'read committed'}:{});
 }
 export const errorCsv=errors=>stringify(errors,{header:true,columns:['row','field','value','correction'],escape_formulas:true});
-export const exportCsv=(kind,rows)=>{if(kind==='gold')return stringify(rows.map(r=>({purity:r.purity,currency:r.currency,unit:r.original_unit||r.unit,rate:r.original_rate||r.rate,effective_date:r.effective_date,source_timestamp:r.source_timestamp})),{header:true,columns:schemas.gold,escape_formulas:true});if(kind==='coins')return stringify(rows.map(r=>Object.fromEntries(schemas.coins.map(col=>[col,col==='source_timestamp'?now():col==='image_kind'?(r[col]||'photo'):r[col]??'']))),{header:true,columns:schemas.coins,escape_formulas:true});if(kind==='kurtas')return stringify(rows.map(r=>({product_code:r.product_code||'',sku:r.sku,name:r.name,category:r.category||'Kurtas',description:r.description||'',fabric:r.fabric||r.metal||'Pure Mulmul Cotton',craftsmanship:r.craftsmanship||r.purity||'Handcrafted Lucknowi Chikankari',size:r.size||'M (38)',color:r.color||'Ivory',finish:r.finish||'Hand Embroidered',image:r.image||'',pricing_mode:'FIXED',fixed_price:r.fixed_price!=null?String(r.fixed_price):'',stock:r.stock!=null?String(r.stock):'0',status:r.status||'published',source_timestamp:r.source_timestamp||now()})),{header:true,columns:schemas.kurtas,escape_formulas:true});return stringify(rows.map(r=>Object.fromEntries(schemas.products.map(col=>[col,r[col]??'']))),{header:true,columns:schemas.products,escape_formulas:true});};
+function exportValue(row, col, angles){
+ if(IMPORT_ANGLE_COLUMNS.includes(col))return angles[col]||'';
+ return row[col]??'';
+}
+export const exportCsv=(kind,rows)=>{if(kind==='gold')return stringify(rows.map(r=>({purity:r.purity,currency:r.currency,unit:r.original_unit||r.unit,rate:r.original_rate||r.rate,effective_date:r.effective_date,source_timestamp:r.source_timestamp})),{header:true,columns:schemas.gold,escape_formulas:true});if(kind==='coins')return stringify(rows.map(r=>{const angles=exportImageFields(r);return Object.fromEntries(schemas.coins.map(col=>[col,col==='source_timestamp'?now():col==='image_kind'?(r[col]||'photo'):exportValue(r,col,angles)]));}),{header:true,columns:schemas.coins,escape_formulas:true});if(kind==='kurtas')return stringify(rows.map(r=>({product_code:r.product_code||'',sku:r.sku,name:r.name,category:r.category||'Kurtas',description:r.description||'',fabric:r.fabric||r.metal||'Pure Mulmul Cotton',craftsmanship:r.craftsmanship||r.purity||'Handcrafted Lucknowi Chikankari',size:r.size||'M (38)',color:r.color||'Ivory',finish:r.finish||'Hand Embroidered',image:r.image||'',pricing_mode:'FIXED',fixed_price:r.fixed_price!=null?String(r.fixed_price):'',stock:r.stock!=null?String(r.stock):'0',status:r.status||'published',source_timestamp:r.source_timestamp||now(),...exportImageFields(r)})),{header:true,columns:schemas.kurtas,escape_formulas:true});return stringify(rows.map(r=>{const angles=exportImageFields(r);return Object.fromEntries(schemas.products.map(col=>[col,exportValue(r,col,angles)]));}),{header:true,columns:schemas.products,escape_formulas:true});};
 export const ordersCsv=rows=>stringify(rows.map(o=>{const c=parse(o.customer);return {order_id:o.id,created_at:o.created_at,status:o.status,payment_mode:o.payment_mode,customer_name:c.name||'',customer_email:c.email||'',customer_phone:c.phone||'',city:c.city||'',pincode:c.pincode||'',address:c.address||'',subtotal:o.subtotal,shipping:o.shipping,total:o.total};}),{header:true,columns:['order_id','created_at','status','payment_mode','customer_name','customer_email','customer_phone','city','pincode','address','subtotal','shipping','total'],escape_formulas:true});

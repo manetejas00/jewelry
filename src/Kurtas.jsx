@@ -17,6 +17,7 @@ import { useStore } from './store.jsx';
 import { api } from './api.js';
 import { money } from './catalogue.js';
 import { KURTA_SIZES } from './kurta-constants.js';
+import { expandCombinedKurtaVariant } from '../shared/kurta-sizes.js';
 import useScrollLock from './useScrollLock.js';
 import CommonPLP from './components/CommonPLP.jsx';
 import CommonPDP from './components/CommonPDP.jsx';
@@ -423,7 +424,8 @@ export function KurtaDetailPage({ Layout, StructuredProduct, ProductCard }) {
   const activeVariants = useMemo(() => {
     if (!allVariants.length) return [];
     const forColor = allVariants.filter(v => v.color === activeColorName);
-    return forColor.length ? forColor : allVariants.slice(0, 7);
+    const base = forColor.length ? forColor : allVariants.slice(0, 7);
+    return base.flatMap(variant => expandCombinedKurtaVariant(variant));
   }, [allVariants, activeColorName]);
 
   const currentVariant = activeVariants.find(v => v.sku === selectedSku) || activeVariants[0] || kurtaData;

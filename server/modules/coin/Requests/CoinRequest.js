@@ -5,6 +5,13 @@ import {
   COIN_PRICING_MODES,
   COIN_STATUSES
 } from '../Constants/CoinConstants.js';
+import { catalogSizeForStorage } from '../../../../shared/kurta-sizes.js';
+
+function checkedDimension(body) {
+  if (body.dimension == null || body.dimension === '') return;
+  const checked = catalogSizeForStorage(body.dimension, { kurta: false });
+  if (checked.error) throw validationError(checked.error);
+}
 
 export class CoinRequest {
   static validateCreate(body) {
@@ -44,6 +51,7 @@ export class CoinRequest {
       throw validationError(`Status must be one of: ${COIN_STATUSES.join(', ')}`);
     }
 
+    checkedDimension(body);
     return true;
   }
 
@@ -66,6 +74,7 @@ export class CoinRequest {
         throw validationError('Stock must be an integer >= 0');
       }
     }
+    checkedDimension(body);
     return true;
   }
 }

@@ -2,9 +2,18 @@ import {validationError} from './errors.js';
 import crypto from 'node:crypto';
 import {quote} from './pricing.js';
 import {now,json,parse} from './db.js';
+import {parentKurtaSku} from '../shared/kurta-sizes.js';
 import {invalidateSearchCache} from './search.js';
 import {sendOrderMail} from './order-mail.js';
 export const STOCK_HOLDING_STATUSES = ['paid','confirmed','placed','packed','shipped','delivered'];
+async function kurtaVariantForSku(t, sku) {
+  if (!await t.schema.hasTable('kurta_variants')) return null;
+  const exact = await t('kurta_variants').where({sku}).first();
+  if (exact) return exact;
+  const parent = parentKurtaSku(sku);
+  if (!parent) return null;
+  return t('kurta_variants').where({sku: parent}).first();
+}
 const ORDER_STATUSES = ['confirmed','packed','shipped','delivered','cancelled'];
 export function requireSignedInCsrf(req) {
  if (!req.session?.customer) return;
@@ -83,9 +92,9 @@ export async function updateOrderStatus(k, id, status) {
         }
       }
       if (await t.schema.hasTable('kurta_variants')) {
-        const kv = await t('kurta_variants').where({sku: item.sku}).first();
+        const kv = await kurtaVariantForSku(t, item.sku);
         if (kv) {
-          await t('kurta_variants').where({sku: item.sku}).increment('stock', item.quantity);
+          await t('kurta_variants').where({sku: kv.sku}).increment('stock', item.quantity);
           await t('kurtas').where({id: kv.kurta_id}).increment('stock', item.quantity);
           if (await t.schema.hasTable('kurta_inventory')) {
             await t('kurta_inventory').insert({
@@ -120,12 +129,13 @@ export async function checkout(k,{items,token,customer,idempotencyKey,paymentMod
  const result=await k.transaction(async t=>{const existing=await t('orders').where({idempotency_key:idempotencyKey}).first();if(existing){if((existing.customer_id??null)!==accountId||existing.retry_fingerprint!==retryFingerprint)throw validationError('Payment retry belongs to a different customer.');return {id:existing.id,total:Number(existing.total),duplicate:true};}
  if(!Array.isArray(items)||!items.length||items.length>50||items.some(i=>!i||typeof i.sku!=='string'))throw validationError('Invalid shopping bag');
  const skus=items.map(i=>i.sku);
+ const kurtaLockSkus=[...new Set(skus.flatMap(sku => [sku, parentKurtaSku(sku)].filter(Boolean)))];
  if (await t.schema.hasTable('jewelries')) await t('jewelries').whereIn('sku', skus).orderBy('sku').forUpdate();
  if (await t.schema.hasTable('jewelry_variants')) await t('jewelry_variants').whereIn('sku', skus).orderBy('sku').forUpdate();
  if (await t.schema.hasTable('coins')) await t('coins').whereIn('sku', skus).orderBy('sku').forUpdate();
  if (await t.schema.hasTable('coin_variants')) await t('coin_variants').whereIn('sku', skus).orderBy('sku').forUpdate();
- if (await t.schema.hasTable('kurtas')) await t('kurtas').whereIn('sku', skus).orderBy('sku').forUpdate();
- if (await t.schema.hasTable('kurta_variants')) await t('kurta_variants').whereIn('sku', skus).orderBy('sku').forUpdate();
+ if (await t.schema.hasTable('kurtas')) await t('kurtas').whereIn('sku', kurtaLockSkus).orderBy('sku').forUpdate();
+ if (await t.schema.hasTable('kurta_variants')) await t('kurta_variants').whereIn('sku', kurtaLockSkus).orderBy('sku').forUpdate();
  if (await t.schema.hasTable('products')) await t('products').whereIn('sku', skus).orderBy('sku').forUpdate();
  const fresh=await quote(t,items,{code:offerCode||null});if(fresh.token!==token){const e=validationError('The price has changed. Please review and accept the updated total.');e.status=409;e.quote=fresh;throw e;}
  const id=`VEY-${crypto.randomBytes(6).toString('hex').toUpperCase()}`;
@@ -190,9 +200,9 @@ export async function checkout(k,{items,token,customer,idempotencyKey,paymentMod
     }
   }
   if (updated !== 1 && await t.schema.hasTable('kurta_variants')) {
-    const kv = await t('kurta_variants').where({sku: line.sku}).first();
+    const kv = await kurtaVariantForSku(t, line.sku);
     if (kv) {
-      updated = await t('kurta_variants').where({sku: line.sku}).where('stock', '>=', line.quantity).decrement('stock', line.quantity);
+      updated = await t('kurta_variants').where({sku: kv.sku}).where('stock', '>=', line.quantity).decrement('stock', line.quantity);
       if (updated === 1) {
         await t('kurtas').where({id: kv.kurta_id}).where('stock', '>=', line.quantity).decrement('stock', line.quantity);
         if (await t.schema.hasTable('kurta_inventory')) {
@@ -226,9 +236,9 @@ export async function checkout(k,{items,token,customer,idempotencyKey,paymentMod
    if (await t.schema.hasTable('coins') && await t('coins').where({sku: line.sku}).first()) {
      itemType = 'coin';
      itemId = (await t('coins').where({sku: line.sku}).first()).id;
-   } else if (await t.schema.hasTable('kurta_variants') && await t('kurta_variants').where({sku: line.sku}).first()) {
+   } else if (await t.schema.hasTable('kurta_variants') && await kurtaVariantForSku(t, line.sku)) {
      itemType = 'kurta';
-     itemId = (await t('kurta_variants').where({sku: line.sku}).first()).kurta_id;
+     itemId = (await kurtaVariantForSku(t, line.sku)).kurta_id;
    } else if (await t.schema.hasTable('jewelries') && await t('jewelries').where({sku: line.sku}).first()) {
      itemType = 'jewelry';
      itemId = (await t('jewelries').where({sku: line.sku}).first()).id;

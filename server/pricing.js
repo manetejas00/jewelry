@@ -1,4 +1,5 @@
 import {validationError} from './errors.js';
+import {expandCombinedKurtaVariant, kurtaSizeCode} from '../shared/kurta-sizes.js';
 import {listingThumbnail} from '../shared/listing-media.js';
 import Decimal from 'decimal.js';
 import crypto from 'node:crypto';
@@ -446,9 +447,20 @@ export async function quote(k,items,options={}){
   let kurtaVariants = [];
   try {
     if (k.schema && await k.schema.hasTable('kurta_variants')) {
-      const vars = await k('kurta_variants').where({ status: 'published' });
+      const hasParents = await k.schema.hasTable('kurtas');
+      const vars = hasParents
+        ? await k('kurta_variants')
+          .leftJoin('kurtas', 'kurtas.id', 'kurta_variants.kurta_id')
+          .where('kurta_variants.status', 'published')
+          .select('kurta_variants.*', 'kurtas.name as kurta_name', 'kurtas.slug as kurta_slug')
+        : await k('kurta_variants').where({ status: 'published' });
       const [rule, offers] = await Promise.all([latestPricingRule(k, 'kurta'), activeOffers(k).catch(() => [])]);
-      kurtaVariants = vars.map(v => {
+      const sized = vars.flatMap(v => expandCombinedKurtaVariant({
+        ...v,
+        name: v.name || v.kurta_name,
+        slug: v.kurta_slug || v.slug
+      }, { slug: v.kurta_slug || v.slug }));
+      kurtaVariants = sized.map(v => {
         const offer = matchOffer(v, offers, options.code);
         const priced = priceFixedCataloguePiece(v.price ?? v.fixed_price ?? 0, rule, offer);
         const total = priced?.total ?? (v.price != null ? Number(v.price) : Number(v.fixed_price || 0));
@@ -467,10 +479,12 @@ export async function quote(k,items,options={}){
       });
     }
   } catch {}
-  const allItems=[...products,...coins,...kurtaVariants];
+  const catalogueItems = products.flatMap(item => item.is_kurta ? expandCombinedKurtaVariant(item) : [item]);
+  const allItems=[...kurtaVariants,...catalogueItems,...coins];
   let subtotal=0;const lines=[];
   for(const i of items){
-    const p=allItems.find(p=>p.sku===i.sku);
+    const matches = allItems.filter(item => item.sku === i.sku);
+    const p = matches.find(item => kurtaSizeCode(item.size)) || matches[0];
     if(!Number.isInteger(i.quantity)||i.quantity<1||i.quantity>20)throw validationError('Invalid quantity');
     if(!p||!p.checkout_available||p.stock<i.quantity)throw validationError(`${p?.name||i.sku} is unavailable. Please update your bag.`);
     const line={

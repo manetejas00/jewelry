@@ -4,6 +4,7 @@ import crypto from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {db,now} from '../server/db.js';
 import {schemas,validate,exportCsv} from '../server/importer.js';
+import {IMPORT_ANGLE_COLUMNS} from '../shared/catalogue-images.js';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 export const productData=JSON.parse(fs.readFileSync(new URL('./data/products-100.json',import.meta.url),'utf8'));
@@ -22,7 +23,7 @@ export function validateProductData(data=productData){
  }
  const rows=data.map(row=>({...row,source_timestamp:now()}));
  const checked=validate('products',exportCsv('products',rows));if(checked.errors.length)throw Error(`Invalid product data: ${checked.errors[0].field}: ${checked.errors[0].correction}`);
- return rows.map(row=>Object.fromEntries([...schemas.products,'slug'].map(key=>[key,row[key]])));
+ return rows.map(row=>Object.fromEntries([...schemas.products,'slug'].filter(key=>!IMPORT_ANGLE_COLUMNS.includes(key)).map(key=>[key,row[key]])));
 }
 
 export async function ProductSeeder(k=db,{data=productData}={}){

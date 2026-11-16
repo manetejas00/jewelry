@@ -4,7 +4,8 @@ import { getAllProductsRatingSummaries } from './reviews.js';
 import { activeOffers, matchOffer, calculatePrice, isFresh, activeRates, latestPricingRule } from './pricing.js';
 import { now } from './db.js';
 
-import { KURTA_SIZES } from '../shared/kurta-sizes.js';
+import { KURTA_SIZES, expandCombinedKurtaVariant, variantMatchesKurtaSize, kurtaSizesInValue, kurtaSkuSizeCode, kurtaSizeStockError } from '../shared/kurta-sizes.js';
+import { splitCombinedKurtaSizes } from './modules/kurta/split-combined-sizes.js';
 export { KURTA_SIZES };
 
 export async function listKurtas(k, options = {}) {
@@ -116,6 +117,9 @@ export async function listKurtas(k, options = {}) {
   }
 
   for (const fam of familyMap.values()) {
+    fam.variants = fam.variants.flatMap(variant => expandCombinedKurtaVariant(variant, { slug: fam.slug }));
+    fam.availableSizes = [...new Set(fam.variants.filter(variant => variant.stock > 0).map(variant => variant.size))];
+    if (fam.variants[0]) fam.size = fam.variants[0].size;
     // Unique colours for the style
     const colorMap = new Map();
     for (const v of fam.variants) {
@@ -135,7 +139,7 @@ export async function listKurtas(k, options = {}) {
     fam.colors = [...colorMap.values()];
 
     fam.sizes = KURTA_SIZES.map(s => {
-      const v = fam.variants.find(item => item.size.startsWith(s.code));
+      const v = fam.variants.find(item => variantMatchesKurtaSize(item.size, s.code));
       return {
         ...s,
         sku: v?.sku,
@@ -178,11 +182,11 @@ export async function kurtaBySlug(k, slug, options = {}) {
   const distinctImages = images.filter((img, i, all) => all.findIndex(o => o.url === img.url) === i);
   const ratingData = ratings.get(targetCode) || ratings.get(baseProduct.id) || null;
 
-  const pricedVariants = variants.map(v => {
+  const pricedVariants = variants.flatMap(v => {
     const offer = matchOffer(v, offers, options.code);
     let price = null;
     try { price = calculatePrice(v, rates[v.purity], rules, offer); } catch {}
-    return {
+    return expandCombinedKurtaVariant({
       ...v,
       is_kurta: true,
       price: price?.total ?? Number(v.fixed_price || 0),
@@ -191,7 +195,7 @@ export async function kurtaBySlug(k, slug, options = {}) {
       offer: price?.offer || offer || null,
       breakdown: price,
       checkout_available: v.stock > 0
-    };
+    });
   });
 
   const rep = pricedVariants.find(v => v.slug === cleanSlug) || pricedVariants.find(v => v.stock > 0) || pricedVariants[0];
@@ -329,6 +333,9 @@ export async function createKurta(k, payload) {
     images = []
   } = payload;
 
+  const sizeError = kurtaSizeStockError(payload);
+  if (sizeError) throw validationError(sizeError);
+
   if (!name || typeof name !== 'string' || !name.trim()) {
     throw validationError('Product name is required');
   }
@@ -426,6 +433,8 @@ export async function createKurta(k, payload) {
 }
 
 export async function updateKurta(k, productCode, payload) {
+  const sizeError = kurtaSizeStockError(payload);
+  if (sizeError) throw validationError(sizeError);
   const cleanCode = String(productCode).trim();
   const existing = await k('products').where({ product_code: cleanCode }).first();
   if (!existing) throw validationError('Kurta not found', 404);
@@ -461,19 +470,23 @@ export async function updateKurta(k, productCode, payload) {
   return k.transaction(async (t) => {
     await t('products').where({ product_code: cleanCode }).update(patch);
 
-    // Update size-wise stocks if provided
+    let rows = await t('products').where({ product_code: cleanCode });
+    if (rows.some(row => kurtaSizesInValue(row.size).length > 1)) {
+      await splitCombinedKurtaSizes(t);
+      rows = await t('products').where({ product_code: cleanCode });
+    }
+
     for (const sizeInfo of KURTA_SIZES) {
       const stockVal = sizeMap[sizeInfo.label] ?? sizeMap[sizeInfo.code];
-      if (stockVal !== undefined) {
-        await t('products')
-          .where({ product_code: cleanCode })
-          .andWhere(function() {
-            this.where({ size: sizeInfo.label }).orWhere('sku', 'like', `%-${sizeInfo.code}`);
-          })
-          .update({
-            stock: Math.max(0, parseInt(stockVal, 10)),
-            updated_at: timestamp
-          });
+      if (stockVal === undefined) continue;
+      const parsed = Math.max(0, parseInt(stockVal, 10) || 0);
+      const matches = rows.filter(row => variantMatchesKurtaSize(row.size, sizeInfo.code) || kurtaSkuSizeCode(row.sku) === sizeInfo.code);
+      for (const match of matches) {
+        await t('products').where({ id: match.id }).update({
+          stock: parsed,
+          size: sizeInfo.label,
+          updated_at: timestamp
+        });
       }
     }
 

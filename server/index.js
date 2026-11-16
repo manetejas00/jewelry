@@ -22,6 +22,7 @@ import fs from 'node:fs';
 import {db,migrate,preview,now,json,parse} from './db.js';
 import {catalogue,coinCatalogue,calculateCoinPrice,getSilverRate,activeRates,isFresh,todayIndia,offerIsCurrent,previewPricingChanges,latestPricingRule} from './pricing.js';
 import {exportCsv,validate} from './importer.js';
+import {catalogSizeForStorage, kurtaSizesInValue, KURTA_SIZE_CORRECTION, storedKurtaSize} from '../shared/kurta-sizes.js';
 import {presentOrders,updateOrderStatus} from './orders.js';
 import {staffIsActive,setStaffAccess,createStaff} from './staff-access.js';
 import {validatePricingRule} from './pricing-rules.js';
@@ -240,7 +241,7 @@ app.get('/api/admin/products',auth(),route(async(req,res)=>{
  }
  res.json(products.map(p=>({...p,images:[...(imagesByProduct[p.sku]||[]),...(imagesByProduct[p.product_code]||[])].filter((img,i,all)=>all.findIndex(other=>other.url===img.url)===i)})));
 }));
-app.patch('/api/admin/products/:sku',auth(['owner','manager']),route(async(req,res)=>{const {name,description,status,image,stock,category,net_weight_g,fixed_price}=req.body;if(typeof name!=='string'||!name.trim()||!['published','draft'].includes(status))throw validationError('Name and valid publication status required');const patch={name:String(name).slice(0,200),description:String(description||'').slice(0,5000),status,updated_at:now()};if(typeof image==='string'&&image.trim())patch.image=String(image).trim().slice(0,2000);if(stock!==undefined){const parsedStock=Number.parseInt(stock,10);if(!Number.isInteger(parsedStock)||parsedStock<0)throw validationError('Stock must be a whole number of zero or more');patch.stock=parsedStock;}if(category)patch.category=String(category).slice(0,100);if(net_weight_g!==undefined&&net_weight_g!==''&&net_weight_g!==null){const weight=Number(net_weight_g);if(!Number.isFinite(weight)||weight<0)throw validationError('Weight must be a non-negative number');patch.net_weight_g=weight;}if(fixed_price!==undefined&&fixed_price!==''&&fixed_price!==null){const price=Number(fixed_price);if(!Number.isFinite(price)||price<0)throw validationError('Price must be a non-negative number');patch.fixed_price=price;}await db.transaction(async t=>{const count=await t('products').where({sku:req.params.sku}).update(patch);if(!count)throw validationError('Product not found',404);if(patch.image){const hero=await t('product_images').where({sku:req.params.sku,role:'hero'}).whereNull('product_code').first();const photo={url:patch.image,alt_text:patch.name,updated_at:now()};if(hero)await t('product_images').where({id:hero.id}).update(photo);else await t('product_images').insert({...photo,sku:req.params.sku,product_code:null,role:'hero',sort_order:-1,created_at:now()});}});await audit(req,'edit_product',{sku:req.params.sku,hasImage:!!image});res.json({ok:true});}));
+app.patch('/api/admin/products/:sku',auth(['owner','manager']),route(async(req,res)=>{const {name,description,status,image,stock,category,net_weight_g,fixed_price,size}=req.body;if(typeof name!=='string'||!name.trim()||!['published','draft'].includes(status))throw validationError('Name and valid publication status required');const patch={name:String(name).slice(0,200),description:String(description||'').slice(0,5000),status,updated_at:now()};if(size!=null&&String(size).trim()!==''){if(kurtaSizesInValue(size).length>1)throw validationError(KURTA_SIZE_CORRECTION);if(/kurta/i.test(String(category||''))){const label=storedKurtaSize(size);if(!label)throw validationError(KURTA_SIZE_CORRECTION);patch.size=label;}}if(typeof image==='string'&&image.trim())patch.image=String(image).trim().slice(0,2000);if(stock!==undefined){const parsedStock=Number.parseInt(stock,10);if(!Number.isInteger(parsedStock)||parsedStock<0)throw validationError('Stock must be a whole number of zero or more');patch.stock=parsedStock;}if(category)patch.category=String(category).slice(0,100);if(net_weight_g!==undefined&&net_weight_g!==''&&net_weight_g!==null){const weight=Number(net_weight_g);if(!Number.isFinite(weight)||weight<0)throw validationError('Weight must be a non-negative number');patch.net_weight_g=weight;}if(fixed_price!==undefined&&fixed_price!==''&&fixed_price!==null){const price=Number(fixed_price);if(!Number.isFinite(price)||price<0)throw validationError('Price must be a non-negative number');patch.fixed_price=price;}await db.transaction(async t=>{const count=await t('products').where({sku:req.params.sku}).update(patch);if(!count)throw validationError('Product not found',404);if(patch.image){const hero=await t('product_images').where({sku:req.params.sku,role:'hero'}).whereNull('product_code').first();const photo={url:patch.image,alt_text:patch.name,updated_at:now()};if(hero)await t('product_images').where({id:hero.id}).update(photo);else await t('product_images').insert({...photo,sku:req.params.sku,product_code:null,role:'hero',sort_order:-1,created_at:now()});}});await audit(req,'edit_product',{sku:req.params.sku,hasImage:!!image});res.json({ok:true});}));
 app.post('/api/admin/products',auth(['owner','manager']),route(async(req,res)=>{
  const {sku,product_code,name,category,metal,purity,net_weight_g,size,finish,pricing_mode,fixed_price,making_flat,making_percent,stone_charge,other_charge,stock,description,image,status}=req.body;
  if(!sku||!name)throw validationError('SKU and Name are required');
@@ -253,6 +254,8 @@ app.post('/api/admin/products',auth(['owner','manager']),route(async(req,res)=>{
  if(await db('products').where({slug}).first())slug=`${slug}-${cleanSku.toLowerCase().replace(/[^a-z0-9]+/g,'-')}`;
  const mode=pricing_mode==='FIXED'?'FIXED':'GOLD_LINKED';
  const nNow=now();
+ const sizeCheck=catalogSizeForStorage(size,{kurta:/kurta/i.test(String(category||''))});
+ if(sizeCheck.error)throw validationError(sizeCheck.error);
  const prodData={
   product_code:cleanCode,
   slug,
@@ -263,7 +266,7 @@ app.post('/api/admin/products',auth(['owner','manager']),route(async(req,res)=>{
   metal:String(metal||'Gold').trim().slice(0,50),
   purity:String(purity||'18K').trim().slice(0,50),
   net_weight_g:net_weight_g!==undefined&&net_weight_g!==''&&net_weight_g!==null?String(net_weight_g):(mode==='GOLD_LINKED'?'1.0':''),
-  size:size?String(size).trim().slice(0,50):null,
+  size:sizeCheck.size?sizeCheck.size.slice(0,50):null,
   finish:finish?String(finish).trim().slice(0,50):null,
   image:image?String(image).trim().slice(0,2000):'',
   pricing_mode:mode,
@@ -392,6 +395,7 @@ app.patch('/api/admin/coins/:sku',auth(['owner','manager']),route(async(req,res)
 app.delete('/api/admin/coins/:sku',auth(['owner','manager']),route(async(req,res)=>{
  const coin=await db('coins').where({sku:req.params.sku}).first();
  if(!coin)return res.status(404).json({error:'Coin not found'});
+ if(await db.schema.hasTable('coin_images'))await db('coin_images').where({sku:req.params.sku}).orWhere({coin_id:coin.id}).del();
  await db('coins').where({sku:req.params.sku}).del();
  await db('product_images').where(function(){this.where({sku:req.params.sku}).orWhere({product_code:req.params.sku});}).del();
  await audit(req,'delete_coin',{sku:req.params.sku});

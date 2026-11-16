@@ -34,6 +34,8 @@ test('coin: requests validate create and update input strictly', () => {
   assert.throws(() => CoinRequest.validateCreate({ name: 'Gold Coin', sku: 'C1', metal: 'Gold', weight_g: -1 }), /Positive weight in grams is required/);
 
   assert.equal(CoinRequest.validateCreate({ name: '24K Gold Coin 10g', sku: 'COIN-AU-10G', metal: 'Gold', weight_g: 10 }), true);
+  assert.equal(CoinRequest.validateCreate({ name: '24K Gold Coin 10g', sku: 'COIN-AU-10G', metal: 'Gold', weight_g: 10, dimension: '22 mm' }), true);
+  assert.throws(() => CoinRequest.validateCreate({ name: '24K Gold Coin 10g', sku: 'COIN-AU-10G', metal: 'Gold', weight_g: 10, dimension: 'XS,S,M,L,XL,XXL,XXXL' }), /one size per row/);
   assert.equal(CoinRequest.validateUpdate({ stock: 20 }), true);
 });
 

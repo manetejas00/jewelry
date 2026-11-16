@@ -1,1 +1,1 @@
-sku,name,metal,coin_type,purity,weight_g,dimension,making_charge,pricing_mode,fixed_price,stock,description,image,status,image_kind,source_timestamp
+sku,name,metal,coin_type,purity,weight_g,dimension,making_charge,pricing_mode,fixed_price,stock,description,image,status,image_kind,source_timestamp,image_front,image_back,image_right,image_left,image_detail,image_model

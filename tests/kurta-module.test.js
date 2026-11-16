@@ -33,6 +33,9 @@ test('kurta: requests validate create and update input strictly', () => {
 
   assert.equal(KurtaRequest.validateCreate({ name: 'Chanderi Silk Kurta', price: 4990 }), true);
   assert.equal(KurtaRequest.validateUpdate({ price: 5490 }), true);
+  assert.throws(() => KurtaRequest.validateCreate({ name: 'Kurta', price: 10, sizes: { 'XS,S,M,L,XL,XXL,XXXL': 25 } }), /one size per row/);
+  assert.throws(() => KurtaRequest.validateUpdate({ size: 'Free size' }), /one size per row/);
+  assert.equal(KurtaRequest.validateUpdate({ sizes: { 'M (38)': 4 } }), true);
 });
 
 test('kurta: service lists published kurtas and formats family cards with colors and sizes', async () => {
@@ -136,6 +139,13 @@ test('kurta: complete CRUD lifecycle with 7-size auto-variant creation', async (
   const afterRestoreM = afterRestore.variants.find(v => v.size.startsWith('M'));
   assert.equal(afterRestoreM.stock, 15, 'M size stock must restore to 15');
 
+  const isolated = await service.updateKurta(code, { sizes: { 'S (36)': 1, 'XL (42)': 2 } }, 1);
+  assert.equal(isolated.variants.find(v => v.size === 'S (36)').stock, 1);
+  assert.equal(isolated.variants.find(v => v.size === 'XS (34)').stock, 10);
+  assert.equal(isolated.variants.find(v => v.size === 'XL (42)').stock, 2);
+  assert.equal(isolated.variants.find(v => v.size === 'XXL (44)').stock, 6);
+  assert.equal(isolated.variants.find(v => v.size === 'XXXL (46)').stock, 4);
+
   // 5. Export CSV
   const csv = await service.exportCsv();
   assert.ok(typeof csv === 'string');
@@ -147,4 +157,31 @@ test('kurta: complete CRUD lifecycle with 7-size auto-variant creation', async (
 
   const afterDelete = await service.getByCode(code);
   assert.equal(afterDelete, null);
+});
+
+test('kurta edit splits a combined size instead of saving it', async () => {
+  const service = new KurtaService(db);
+  const created = await service.createKurta({ name: 'Packed Edit Kurta', product_code: 'packed-edit-kurta', price: 1000, sizes: { 'M (38)': 3 } }, 1);
+  const stamp = new Date().toISOString();
+  await db('kurta_variants').where({ kurta_id: created.id }).delete();
+  await db('kurta_variants').insert({
+    kurta_id: created.id,
+    product_code: created.product_code,
+    sku: 'PACKED-EDIT',
+    slug: 'packed-edit-kurta-combined',
+    size: 'XS,S,M,L,XL,XXL,XXXL',
+    price: 1000,
+    fixed_price: 1000,
+    stock: 4,
+    status: 'published',
+    created_at: stamp,
+    updated_at: stamp
+  });
+
+  const updated = await service.updateKurta(created.product_code, { sizes: { 'M (38)': 2 } }, 1);
+  assert.equal(updated.variants.some(v => String(v.size).includes(',')), false);
+  assert.equal(updated.variants.length, 7);
+  assert.equal(updated.variants.find(v => v.size === 'M (38)').stock, 2);
+  assert.equal(updated.variants.find(v => v.size === 'XS (34)').stock, 4);
+  await service.deleteKurta(created.product_code);
 });

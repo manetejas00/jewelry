@@ -1,1 +1,1 @@
-product_code,sku,name,category,description,fabric,craftsmanship,size,color,finish,image,pricing_mode,fixed_price,stock,status,source_timestamp
+product_code,sku,name,category,description,fabric,craftsmanship,size,color,finish,image,pricing_mode,fixed_price,stock,status,source_timestamp,image_front,image_back,image_right,image_left,image_detail,image_model

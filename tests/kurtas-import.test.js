@@ -173,6 +173,60 @@ test('kurta stock snapshot deducts later paid orders', async () => {
   }
 });
 
+test('kurta import stores one canonical size and rejects a combined list', async () => {
+  const codeOnly = validate('kurtas', csv([{ ...sampleKurta, size: 'XS' }]));
+  assert.deepEqual(codeOnly.errors, []);
+  assert.equal(codeOnly.rows[0].size, 'XS (34)');
+
+  const packed = validate('kurtas', csv([{ ...sampleKurta, size: 'XS,S,M,L,XL,XXL,XXXL' }]));
+  assert.ok(packed.errors.some(e => e.field === 'size' && /one size per row/i.test(e.correction)));
+
+  const unknown = validate('kurtas', csv([{ ...sampleKurta, size: 'Free size' }]));
+  assert.ok(unknown.errors.some(e => e.field === 'size'));
+
+  const product = column => Object.assign(Object.fromEntries(schemas.products.map(name => [name, ''])), {
+    product_code: 'ring-size',
+    sku: 'RING-SIZE',
+    name: 'Ring',
+    category: 'Rings',
+    metal: 'Gold',
+    purity: '18K',
+    net_weight_g: '2.500',
+    size: column,
+    pricing_mode: 'GOLD_LINKED',
+    making_flat: '0',
+    making_percent: '0',
+    stone_charge: '0',
+    other_charge: '0',
+    stock: '1',
+    status: 'published',
+    source_timestamp: stamp
+  });
+  const productCsv = row => stringify([row], { header: true, columns: schemas.products });
+  assert.equal(validate('products', productCsv(product('12'))).errors.some(e => e.field === 'size'), false);
+  assert.equal(validate('products', productCsv(product('Medium'))).errors.some(e => e.field === 'size'), false);
+  assert.ok(validate('products', productCsv(product('XS,S,M,L,XL,XXL,XXXL'))).errors.some(e => e.field === 'size'));
+  const kurtaProduct = validate('products', productCsv({ ...product('M'), category: 'Kurtas' }));
+  assert.deepEqual(kurtaProduct.errors, []);
+  assert.equal(kurtaProduct.rows[0].size, 'M (38)');
+
+  const k = createDb(':memory:');
+  try {
+    await migrate(k);
+    const staged = await previewImport(k, 'kurtas', csv([{ ...sampleKurta, size: 'xs' }]));
+    assert.equal(staged.status, 'staged');
+    await publishImport(k, staged.id);
+    assert.equal((await k('products').where({ sku: sampleKurta.sku }).first()).size, 'XS (34)');
+
+    const rejected = await previewImport(k, 'kurtas', csv([{ ...sampleKurta, sku: 'CCK-PACKED', size: 'XS, S, M, L, XL, XXL, XXXL' }]));
+    assert.equal(rejected.status, 'failed');
+    assert.equal(await k('products').where({ sku: 'CCK-PACKED' }).first(), undefined);
+    await assert.rejects(publishImport(k, rejected.id));
+  } finally {
+    await k.destroy();
+  }
+});
+
 test('sample kurta files exist and conform to schemas.kurtas', () => {
   const templatePath = 'samples/kurtas-template.csv';
   const examplePath = 'samples/kurtas-example.csv';

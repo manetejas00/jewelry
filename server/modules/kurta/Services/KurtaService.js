@@ -3,6 +3,8 @@ import { KurtaResource } from '../Resources/KurtaResource.js';
 import { KurtaRequest } from '../Requests/KurtaRequest.js';
 import { KurtaMapper } from '../Mappers/KurtaMapper.js';
 import { KURTA_CSV_SCHEMA, KURTA_SIZES } from '../Constants/KurtaConstants.js';
+import { kurtaSizesInValue, kurtaSkuSizeCode, variantMatchesKurtaSize, parentKurtaSku, sizedKurtaSku } from '../../../../shared/kurta-sizes.js';
+import { splitCombinedKurtaSizes } from '../split-combined-sizes.js';
 import { activeOffers, latestPricingRule } from '../../../pricing.js';
 import { getAllProductsRatingSummaries } from '../../../reviews.js';
 import { shareRead } from '../../../read-share.js';
@@ -268,24 +270,49 @@ export class KurtaService {
     if (meta_description !== undefined) patch.meta_description = meta_description ? String(meta_description).trim() : null;
 
     return this.db.transaction(async t => {
-      // Update sizes in variants if supplied
+      let variants = await t('kurta_variants').where({ kurta_id: existing.id });
+      if (variants.some(variant => kurtaSizesInValue(variant.size).length > 1)) {
+        await splitCombinedKurtaSizes(t);
+        variants = await t('kurta_variants').where({ kurta_id: existing.id });
+      }
+
       for (const sizeInfo of KURTA_SIZES) {
         const stockVal = sizeMap[sizeInfo.label] ?? sizeMap[sizeInfo.code];
-        if (stockVal !== undefined) {
-          const parsed = Math.max(0, parseInt(stockVal, 10));
-          await t('kurta_variants')
-            .where({ kurta_id: existing.id })
-            .andWhere(function() {
-              this.where({ size: sizeInfo.label }).orWhere('sku', 'like', `%-${sizeInfo.code}`);
-            })
-            .update({
-              stock: parsed,
-              price: patch.price !== undefined ? patch.price : existing.price,
-              fixed_price: patch.fixed_price !== undefined ? patch.fixed_price : existing.fixed_price,
-              status: patch.status !== undefined ? patch.status : existing.status,
-              updated_at: nowStr
-            });
+        if (stockVal === undefined) continue;
+        const parsed = Math.max(0, parseInt(stockVal, 10) || 0);
+        const matches = variants.filter(variant => variantMatchesKurtaSize(variant.size, sizeInfo.code) || kurtaSkuSizeCode(variant.sku) === sizeInfo.code);
+        const variantPatch = {
+          stock: parsed,
+          size: sizeInfo.label,
+          price: patch.price !== undefined ? patch.price : existing.price,
+          fixed_price: patch.fixed_price !== undefined ? patch.fixed_price : existing.fixed_price,
+          status: patch.status !== undefined ? patch.status : existing.status,
+          updated_at: nowStr
+        };
+        if (matches.length) {
+          for (const match of matches) {
+            await t('kurta_variants').where({ id: match.id }).update(variantPatch);
+            match.stock = parsed;
+            match.size = sizeInfo.label;
+          }
+          continue;
         }
+        const stem = parentKurtaSku(variants[0]?.sku) || existing.sku || existing.product_code;
+        const sku = sizedKurtaSku(stem, sizeInfo.code);
+        if (!sku || sku.length > 100 || await t('kurta_variants').where({ sku }).first()) continue;
+        const slugBase = `${existing.product_code}-${sizeInfo.code.toLowerCase()}`;
+        let slug = slugBase.slice(0, 150);
+        if (await t('kurta_variants').where({ slug }).first()) slug = `${slugBase}-${existing.id}`.slice(0, 150);
+        await t('kurta_variants').insert({
+          kurta_id: existing.id,
+          product_code: existing.product_code,
+          sku,
+          slug,
+          finish: 'Hand Embroidered',
+          image: existing.image || null,
+          created_at: nowStr,
+          ...variantPatch
+        });
       }
 
       // Recompute total stock from variants

@@ -7,6 +7,7 @@ import { calculatePrice, activeRates, activeOffers, matchOffer, latestPricingRul
 import { getAllProductsRatingSummaries } from '../../../reviews.js';
 import { shareRead } from '../../../read-share.js';
 import { validationError } from '../../../errors.js';
+import { catalogSizeForStorage } from '../../../../shared/kurta-sizes.js';
 import { parse as csvParse } from 'csv-parse/sync';
 import { stringify } from 'csv-stringify/sync';
 import crypto from 'node:crypto';
@@ -142,11 +143,13 @@ export class JewelryService {
       const [id] = await t('jewelries').insert(insertData);
 
       // Create default primary variant
+      const sizeCheck = catalogSizeForStorage(body.size, { kurta: /kurta/i.test(String(body.category || insertData.category || '')) });
+      if (sizeCheck.error) throw validationError(sizeCheck.error);
       const [varId] = await t('jewelry_variants').insert({
         jewelry_id: id,
         product_code: cleanCode,
         sku: cleanSku,
-        size: body.size || 'Standard',
+        size: sizeCheck.size || 'Standard',
         finish: body.finish || 'Polished',
         metal: insertData.metal,
         purity: insertData.purity,

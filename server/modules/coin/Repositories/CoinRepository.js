@@ -92,6 +92,9 @@ export class CoinRepository {
     const coin = await this.getBySku(sku);
     if (!coin) return false;
     await this.db('coin_images').where({ coin_id: coin.id }).del();
+    if (await this.db.schema.hasTable('product_images')) {
+      await this.db('product_images').where({ sku }).orWhere({ product_code: sku }).del();
+    }
     await this.db('coin_variants').where({ coin_id: coin.id }).del();
     await this.db('coin_inventory').where({ coin_id: coin.id }).del();
     await CoinModel.delete(this.db, coin.id);
