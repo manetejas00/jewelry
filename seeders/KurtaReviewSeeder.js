@@ -74,7 +74,7 @@ const authenticImpressions = [
   }
 ];
 
-export async function KurtaReviewSeeder(k = db, { clean = true } = {}) {
+export async function KurtaReviewSeeder(k = db, { clean = true, recordOrders = true } = {}) {
   const hasReviews = await k.schema.hasTable('reviews').catch(() => false);
   if (!hasReviews) {
     throw new Error('Table "reviews" does not exist. Run database migrations first.');
@@ -145,6 +145,7 @@ export async function KurtaReviewSeeder(k = db, { clean = true } = {}) {
   }
 
   const customerEmails = seededKurtaCustomers.map(c => c.email);
+  const usedProductCustomers = new Set();
   let totalReviewsInserted = 0;
   let totalOrdersInserted = 0;
   let totalImagesInserted = 0;
@@ -219,8 +220,8 @@ export async function KurtaReviewSeeder(k = db, { clean = true } = {}) {
         }
       }
 
-      // Create simulated verified order
-      if (isVerified && hasOrders && hasOrderItems && customerId) {
+      // Create simulated verified order when a caller still wants preview orders.
+      if (recordOrders && isVerified && hasOrders && hasOrderItems && customerId) {
         const orderId = `ORD-KURTA-${kurta.id}-${rIdx + 1}`;
         const orderExists = await k('orders').where({ id: orderId }).first();
         if (!orderExists) {
@@ -282,7 +283,11 @@ export async function KurtaReviewSeeder(k = db, { clean = true } = {}) {
         deleted_at: null
       };
 
-      if (hasProductIdCol) reviewPayload.product_id = legacyProductId;
+      if (hasProductIdCol) {
+        const pairKey = legacyProductId && customerId ? `${legacyProductId}:${customerId}` : '';
+        reviewPayload.product_id = pairKey && usedProductCustomers.has(pairKey) ? null : legacyProductId;
+        if (pairKey && reviewPayload.product_id) usedProductCustomers.add(pairKey);
+      }
       if (hasCoinIdCol) reviewPayload.coin_id = null;
       if (hasJewelryIdCol) reviewPayload.jewelry_id = null;
       if (hasKurtaIdCol) reviewPayload.kurta_id = kurta.id;
