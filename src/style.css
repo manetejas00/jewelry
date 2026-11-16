@@ -173,7 +173,7 @@
   transform: translateX(4px);
   font-weight: 500;
 }
-.mega-menu-card {
+.nav .mega-menu-card {
   background: #f1ede3;
   border: 1px solid rgba(220, 220, 209, 0.8);
   border-radius: 6px;
@@ -181,17 +181,24 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  white-space: normal;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
   text-decoration: none;
 }
-.mega-menu-card:hover {
+.nav .mega-menu-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 10px 24px rgba(24, 44, 44, 0.1);
+  color: inherit;
+}
+.nav .mega-menu-card:after,
+.nav .mega-menu-card:hover:after {
+  display: none;
 }
 .mega-menu-card img {
   width: 100%;
-  aspect-ratio: 16/10;
+  aspect-ratio: 4 / 5;
   object-fit: cover;
+  object-position: center;
   border-radius: 4px;
 }
 .mega-card-tag {
@@ -233,7 +240,7 @@
     grid-template-columns: repeat(3, minmax(0, 1fr)) 240px;
     gap: 24px;
   }
-  .mega-menu-card {
+  .nav .mega-menu-card {
     padding: 12px;
   }
   .mega-card-title {
