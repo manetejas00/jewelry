@@ -609,7 +609,7 @@ function HomeKurtaShowcase() {
       {kurtas.slice(0, 4).map(k => <article className="product-card" key={k.product_code || k.sku}>
         <div className="product-photo">
           <Link className="product-card-link" to={`/kurtas/${k.slug || k.product_code}`} aria-label={`View ${k.name}`}>
-            <img src={k.thumbnail || k.image} alt={k.name} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <ListingImage product={k} alt={k.name} />
           </Link>
           <span className="product-label">HANDCRAFTED CHIKANKARI</span>
         </div>
