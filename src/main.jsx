@@ -40,7 +40,7 @@ const media = name => 'https://cdnstatic.tencentcs.com/edgeone/pages/product-act
 import { api } from './api.js';
 import { Provider, useStore } from './store.jsx';
 import Account from './Account.jsx';
-import { grouped } from './catalogue.js';
+import { grouped, saveId, savedCatalogue } from './catalogue.js';
 import { coinImage } from './media.js';
 import ListingImage from './ListingImage.jsx';
 import { galleryPhotos } from './image-zoom.js';
@@ -729,7 +729,7 @@ function ProductCard({ p }) {
         </span>
       )}
       {isGoldLinked && !p.offer?.badge_text && <span className="gold-linked-badge" title="Dynamic price linked to official metal rates"><Sparkles size={10} /> {isCoin ? 'DAILY METAL RATE' : 'GOLD-LINKED RATE'}</span>}
-      {!isCoin && <button className={'save-piece icon ' + (saved.includes(p.product_code) ? 'selected' : '')} aria-label={`Save ${p.name}`} aria-pressed={saved.includes(p.product_code)} onClick={() => toggleSave(p.product_code)}><Heart size={18} /></button>}
+      <button className={'save-piece icon ' + (saved.includes(saveId(p)) ? 'selected' : '')} aria-label={`Save ${p.name}`} aria-pressed={saved.includes(saveId(p))} onClick={() => toggleSave(saveId(p))}><Heart size={18} /></button>
       <span className="product-label">{p.stock === 0 ? 'CURRENTLY UNAVAILABLE' : isCoin ? `${p.purity} ${p.metal.toUpperCase()}` : isKurta ? 'KURTAS' : p.category === 'Rings' ? 'YOUR EVERYDAY SIGNATURE' : 'SIGNATURE PIECE'}</span>
     </div>
     <CardInfo product={p} href={activeHref}
@@ -744,7 +744,7 @@ function ProductCard({ p }) {
 function Collection() {
   const { category = 'all', gender: routeGender, jewelryCategory } = useParams();
   if (category === 'kurtas' || category === 'kurta') return <Navigate to="/kurtas" replace />;
-  const { products, coins = [], saved, offers = [], error, accountReady, refreshCatalogue } = useStore();
+  const { products, coins = [], kurtas = [], saved, offers = [], error, accountReady, refreshCatalogue } = useStore();
   const [params, setParams] = useSearchParams();
   const [filters, setFilters] = useState(false);
   const [visible, setVisible] = useState(24);
@@ -800,7 +800,8 @@ function Collection() {
 
   const selectedJewelryCategory = jewelryCategory || category;
   const selectedGender = routeGender ? routeGender[0].toUpperCase() + routeGender.slice(1) : params.get('gender');
-  const jewelleryItems = grouped(products.filter(p => {
+  const savedItems = category === 'saved' ? savedCatalogue({ products, kurtas, coins, saved }) : [];
+  const jewelleryItems = category === 'saved' ? [] : grouped(products.filter(p => {
     // Keep the storefront boundary intact if a stale API response contains a
     // legacy Kurta record. Kurtas are rendered only by /kurtas.
     const legacyKurtaCategory = ['kurtas', 'kurta', 'chicken curry kurtas'];
@@ -811,16 +812,17 @@ function Collection() {
     if (selectedJewelryCategory === 'all') return true;
     if (category === 'gold') return (p.metal || '').toLowerCase() === 'gold' || (p.collections || []).includes('gold');
     if (category === 'silver') return (p.metal || '').toLowerCase() === 'silver' || (p.collections || []).includes('silver');
-    if (category === 'saved') return saved.includes(p.product_code);
     const pCatLower = (p.category || '').toLowerCase();
     const pCatSlug = pCatLower.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     return pCatLower === selectedJewelryCategory || pCatSlug === selectedJewelryCategory || pCatLower === selectedJewelryCategory.replace(/-/g, ' ');
   }));
   const coinItems = (coins || []).map(c => ({ ...c, is_coin: true }));
 
-  const baseList = q
-    ? (category === 'all' ? [...jewelleryItems, ...coinItems] : jewelleryItems)
-    : jewelleryItems;
+  const baseList = category === 'saved'
+    ? savedItems
+    : q
+      ? (category === 'all' ? [...jewelleryItems, ...coinItems] : jewelleryItems)
+      : jewelleryItems;
 
   let items = baseList.filter(p => matchesSearch(p, p.is_coin) && (!params.get('purity') || p.purity === params.get('purity')) && (!params.get('stock') || p.stock > 0) && matchPrice(p.price, params.get('price')));
   if (params.get('sort') === 'price-asc') items.sort((a, b) => a.price - b.price);
@@ -990,8 +992,8 @@ function Product() {
           { label: p.name }
         ]}
         onAdd={add}
-        isSaved={saved.includes(p.product_code)}
-        onToggleSave={() => toggleSave(p.product_code)}
+        isSaved={saved.includes(saveId(p))}
+        onToggleSave={() => toggleSave(saveId(p))}
         sizeType={p.category === 'Rings' ? 'ring' : 'standard'}
         onOpenSizeGuide={() => setGuide(true)}
         specs={specs}
@@ -2517,7 +2519,7 @@ function CoinProduct() {
   const { sku, slug } = useParams();
   const identifier = slug || sku;
   const navigate = useNavigate();
-  const { add, catalogueRevision } = useStore();
+  const { add, saved, toggleSave, catalogueRevision } = useStore();
   const [coins, setCoins] = useState([]);
   const [loading, setLoading] = useState(true), [error, setError] = useState(''), [retry, setRetry] = useState(0);
   useEffect(() => {
@@ -2577,6 +2579,8 @@ function CoinProduct() {
           { label: p.name }
         ]}
         onAdd={() => add({ ...p, size: `${p.weight_g}g (${p.purity})`, slug: 'coins' })}
+        isSaved={saved.includes(saveId(p))}
+        onToggleSave={() => toggleSave(saveId(p))}
         sizeType="coin"
         specs={specs}
         priceDetailsNode={priceDetailsNode}
