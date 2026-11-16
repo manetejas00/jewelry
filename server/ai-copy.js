@@ -51,6 +51,13 @@ export function listCopySkills() {
   return Object.entries(copySkills).map(([id, skill]) => ({id, label: skill.label}));
 }
 
+const copyCatalogues = [
+  ['kurtas', 'kurta'],
+  ['jewelries', 'jewelry'],
+  ['coins', 'coin'],
+  ['products', 'product']
+];
+
 export function productFacts(product) {
   return {
     sku: product.sku,
@@ -58,12 +65,38 @@ export function productFacts(product) {
     name: product.name,
     category: product.category,
     description: product.description || '',
-    metal: product.metal,
-    purity: product.purity,
+    metal: product.metal || product.fabric || null,
+    purity: product.purity || product.material || null,
     net_weight_g: product.net_weight_g,
     size: product.size,
     finish: product.finish
   };
+}
+
+export async function listCopyItems(k) {
+  const items = [];
+  const seen = new Set();
+  for (const [table, catalogue] of copyCatalogues) {
+    if (!(await k.schema.hasTable(table).catch(() => false))) continue;
+    const rows = await k(table).select('sku', 'name', 'slug').orderBy('name');
+    for (const row of rows) {
+      if (!row?.sku || seen.has(row.sku)) continue;
+      seen.add(row.sku);
+      items.push({sku: row.sku, name: row.name || row.sku, slug: row.slug || '', catalogue});
+    }
+  }
+  return items;
+}
+
+export async function findCopyItem(k, sku) {
+  const clean = String(sku || '');
+  if (!clean) return null;
+  for (const [table, catalogue] of copyCatalogues) {
+    if (!(await k.schema.hasTable(table).catch(() => false))) continue;
+    const item = await k(table).where({sku: clean}).first();
+    if (item) return {table, catalogue, item};
+  }
+  return null;
 }
 
 export function unsupportedClaims(source, generated) {
@@ -213,8 +246,9 @@ async function recordFailure(k, fields, error) {
 export async function createCatalogueDraft(k, {sku, skill, tone = 'Luxury', staffId, env, fetchImpl}) {
   await ensureTable(k);
   if (!copySkills[skill]) throw validationError('Unknown catalogue copy skill');
-  const product = await k('products').where({sku: String(sku || '')}).first();
-  if (!product) throw validationError('Product not found', 404);
+  const subject = await findCopyItem(k, sku);
+  const product = subject?.item;
+  if (!product) throw validationError('Item not found', 404);
   const chosenTone = tone || 'Luxury';
   const pending = await k('ai_drafts').where({sku: product.sku, skill, status: 'pending'}).first();
   if (pending) throw validationError(`A pending draft already exists for this product and skill (draft ${pending.id}). Review it before running the skill again.`, 409);
@@ -275,8 +309,10 @@ export async function approveCatalogueDraft(k, id, {applyName = false, applyDesc
   }
   if (!published.length) throw validationError('Choose the name, the description, the search text, or any combination');
   await k.transaction(async t => {
-    const count = await t('products').where({sku: draft.sku}).update(patch);
-    if (!count) throw validationError('Product not found', 404);
+    const subject = await findCopyItem(t, draft.sku);
+    if (!subject) throw validationError('Item not found', 404);
+    const count = await t(subject.table).where({sku: draft.sku}).update(patch);
+    if (!count) throw validationError('Item not found', 404);
     const reviewed = await t('ai_drafts').where({id, status: 'pending'}).update({status: 'approved', reviewed_at: now(), reviewed_by: staffId || null, published_fields: json(published)});
     if (!reviewed) throw validationError('Draft is not awaiting review', 409);
     await t('audit').insert({staff_id: staffId || null, action: 'ai_draft_approved', details: json({id, sku: draft.sku, published}), created_at: now()});

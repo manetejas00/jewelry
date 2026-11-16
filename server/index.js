@@ -29,10 +29,12 @@ import {coinArtwork} from '../shared/coin-artwork.js';
 import {seed} from '../scripts/seed.js';
 import {saveUploadedImage,ensureThumbnail,thumbnailUrl,isSafeMediaUrl} from './thumbnails.js';
 import {searchCatalogue,invalidateSearchCache} from './search.js';
-import {listCopySkills, createCatalogueDraft, approveCatalogueDraft, rejectCatalogueDraft, listCatalogueDrafts} from './ai-copy.js';
+import {listCopySkills, approveCatalogueDraft, rejectCatalogueDraft, listCatalogueDrafts, listCopyItems} from './ai-copy.js';
+import {enqueueJob, scheduleDrain, presentJob} from './jobs.js';
+import {jobHandlers} from './job-handlers.js';
+import {runHousekeeping} from './maintenance.js';
 import {registerCustomerAdminRoutes} from './customer-admin.js';
 import {registerChatRoutes} from './chat/routes.js';
-import {purgeRetainedChats} from './chat/service.js';
 import {listActiveCategories,categoryBySlug,adminListCategories,createCategory,updateCategory,deleteCategory} from './categories.js';
 import {listKurtas,kurtaBySlug,adminListKurtas,createKurta,updateKurta,deleteKurta} from './kurtas.js';
 import {registerPwa} from './pwa.js';
@@ -588,10 +590,25 @@ function validateRule(input){return validatePricingRule(input);}
 app.post('/api/admin/rules',auth(['owner']),route(async(req,res)=>{const rule=validateRule(req.body);if(!rule.catalogue)throw validationError('Choose jewellery, coin, or kurta pricing.');await db.transaction(async t=>{await t('pricing_rules').insert({...rule,changed_at:now(),changed_by:req.session.staff.id});await t('audit').insert({staff_id:req.session.staff.id,action:'pricing_rule',details:json(rule),created_at:now()});});invalidateSearchCache();clearRecommendationCache();res.json({ok:true,catalogue:rule.catalogue});}));
 const aiCopyLimit=rateLimit({windowMs:60000,limit:8,message:{error:'Too many catalogue copy requests. Wait a minute and try again.'}});
 app.get('/api/admin/ai/skills',auth(),route(async(req,res)=>res.json(listCopySkills())));
+app.get('/api/admin/copy-items',auth(),route(async(req,res)=>res.json(await listCopyItems(db))));
+app.get('/api/admin/jobs/:id',auth(),route(async(req,res)=>{
+  const job=await db('jobs').where({id:Number(req.params.id)}).first();
+  if(!job)return res.status(404).json({error:'Job not found'});
+  res.json(presentJob(job));
+}));
 app.get('/api/admin/ai/drafts',auth(),route(async(req,res)=>res.json(await listCatalogueDrafts(db,{sku:req.query.sku,status:req.query.status}))));
 app.post('/api/admin/ai/drafts',aiCopyLimit,auth(['owner','manager']),route(async(req,res)=>{
-  const draft=await createCatalogueDraft(db,{sku:req.body.sku,skill:req.body.skill,tone:req.body.tone,staffId:req.session.staff.id});
-  res.status(201).json(draft);
+  const sku=String(req.body.sku||'');
+  const skill=String(req.body.skill||'');
+  if(!listCopySkills().some(item=>item.id===skill))throw validationError('Unknown catalogue copy skill');
+  const {job,duplicate}=await enqueueJob(db,{
+    type:'copy.draft',
+    dedupeKey:`copy.draft:${sku}:${skill}`,
+    maxAttempts:1,
+    payload:{sku,skill,tone:req.body.tone||'Luxury',staffId:req.session.staff.id}
+  });
+  scheduleDrain(db,jobHandlers);
+  res.status(202).json({queued:true,duplicate,job:presentJob(job)});
 }));
 app.post('/api/admin/ai/drafts/:id/approve',auth(['owner','manager']),route(async(req,res)=>{
   const draft=await approveCatalogueDraft(db,Number(req.params.id),{applyName:req.body.apply_name===true,applyDescription:req.body.apply_description===true,applySearch:req.body.apply_search===true,acknowledgeWarnings:req.body.acknowledge_warnings===true,staffId:req.session.staff.id});
@@ -630,5 +647,5 @@ app.use((err,req,res,next)=>{
 });
 const port=Number(process.env.PORT||3000);const httpServer=app.listen(port,production?'0.0.0.0':'127.0.0.1',()=>console.log(`Veyora Jewels: http://localhost:${port} (${preview?'fictional preview':'production'})`));
 
-const cleanup=setInterval(()=>Promise.all([db('sessions').where('expires','<',Date.now()).del(),db('password_resets').where('expires','<',Date.now()).del(),purgeRetainedChats(db)]).catch(()=>console.error(JSON.stringify({event:'session_cleanup_failed'}))),3600000);cleanup.unref();
+const cleanup=setInterval(()=>runHousekeeping(db).catch(()=>console.error(JSON.stringify({event:'session_cleanup_failed'}))),3600000);cleanup.unref();
 for(const signal of ['SIGTERM','SIGINT'])process.once(signal,()=>{clearInterval(cleanup);httpServer.close(async()=>{await db.destroy();process.exit(0)});setTimeout(()=>process.exit(1),10000).unref();});

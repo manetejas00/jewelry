@@ -11,9 +11,13 @@ function draftText(draft) {
   return draft.output || {};
 }
 
-export default function AiCopy({products, readonly, onPublished}) {
+const catalogueNames = {kurta: 'Kurta', jewelry: 'Jewellery', coin: 'Coin', product: 'Catalogue'};
+
+export default function AiCopy({readonly, onPublished}) {
+  const [items, setItems] = useState([]);
+  const [itemsReady, setItemsReady] = useState(false);
   const [skill, setSkill] = useState(skills[0][0]);
-  const [sku, setSku] = useState(products[0]?.sku || '');
+  const [sku, setSku] = useState('');
   const [tone, setTone] = useState('Luxury');
   const [drafts, setDrafts] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
@@ -28,7 +32,7 @@ export default function AiCopy({products, readonly, onPublished}) {
   const [notice, setNotice] = useState('');
 
   const selected = drafts.find(draft => draft.id === selectedId) || null;
-  const product = products.find(item => item.sku === (selected?.sku || sku));
+  const product = items.find(item => item.sku === (selected?.sku || sku));
   const output = selected ? draftText(selected) : null;
   const warnings = output?.warnings || [];
 
@@ -39,12 +43,16 @@ export default function AiCopy({products, readonly, onPublished}) {
   }
 
   useEffect(() => {
-    load().catch(e => setError(e.message));
+    let active = true;
+    request('/admin/copy-items').then(rows => {
+      if (!active) return;
+      const list = Array.isArray(rows) ? rows : [];
+      setItems(list);
+      setSku(current => current || list[0]?.sku || '');
+    }).catch(e => { if (active) setError(e.message); }).finally(() => { if (active) setItemsReady(true); });
+    load().catch(e => { if (active) setError(e.message); });
+    return () => { active = false; };
   }, []);
-
-  useEffect(() => {
-    if (!sku && products[0]?.sku) setSku(products[0].sku);
-  }, [products, sku]);
 
   useEffect(() => {
     if (!selected?.output) return;
@@ -86,15 +94,32 @@ export default function AiCopy({products, readonly, onPublished}) {
     };
   }
 
+  async function waitForJob(id) {
+    for (let attempt = 0; attempt < 45; attempt++) {
+      const job = await request(`/admin/jobs/${id}`);
+      if (job.status === 'done' || job.status === 'failed') return job;
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    throw Error('The draft is still running. It will appear in this list when it finishes.');
+  }
+
   async function run(e) {
     e.preventDefault();
     setBusy(true);
     setError('');
     setNotice('');
     try {
-      const draft = await request('/admin/ai/drafts', {sku, skill, tone}, 'POST', 90000);
-      setNotice('Draft ready for review. The live catalogue is unchanged.');
-      await load(draft.id);
+      const accepted = await request('/admin/ai/drafts', {sku, skill, tone}, 'POST', 20000);
+      if (accepted.queued) {
+        setNotice('Drafting in the background. The live catalogue is unchanged.');
+        const finished = await waitForJob(accepted.job.id);
+        if (finished.status === 'failed') throw Error(finished.last_error || 'The draft could not be created.');
+        setNotice('Draft ready for review. The live catalogue is unchanged.');
+        await load(finished.result?.id);
+      } else {
+        setNotice('Draft ready for review. The live catalogue is unchanged.');
+        await load(accepted.id);
+      }
     } catch (err) {
       setError(err.message);
       await load().catch(() => {});
@@ -121,6 +146,8 @@ export default function AiCopy({products, readonly, onPublished}) {
         });
         setNotice('Published text is now on the product.');
         if (onPublished) await onPublished();
+        const rows = await request('/admin/copy-items');
+        if (Array.isArray(rows)) setItems(rows);
       }
       await load(selected.id);
     } catch (err) {
@@ -187,8 +214,9 @@ export default function AiCopy({products, readonly, onPublished}) {
         </select>
       </label>
       <label>Item / Piece
-        <select value={sku} onChange={e => setSku(e.target.value)} disabled={busy || !products.length}>
-          {products.map(item => <option key={item.sku} value={item.sku}>{item.name} · {item.sku}{item.slug ? ` · ${item.slug}` : ''}</option>)}
+        <select value={sku} onChange={e => setSku(e.target.value)} disabled={busy || !items.length}>
+          {!items.length && <option value="">{itemsReady ? 'No items yet' : 'Loading items…'}</option>}
+          {items.map(item => <option key={`${item.catalogue}-${item.sku}`} value={item.sku}>{item.name} · {item.sku} · {catalogueNames[item.catalogue] || 'Item'}</option>)}
         </select>
       </label>
       <label>Tone
@@ -255,12 +283,14 @@ export default function AiCopy({products, readonly, onPublished}) {
       <thead><tr><th>Select</th><th>Draft</th><th>Item / Piece</th><th>Slug</th><th>Skill</th><th>Status</th></tr></thead>
       <tbody>{drafts.map(draft => {
         const pending = draft.status === 'pending';
-        const slug = products.find(item => item.sku === draft.sku)?.slug || '';
+        const match = items.find(item => item.sku === draft.sku);
+        const slug = match?.slug || '';
+        const href = match?.catalogue === 'kurta' ? `/kurta/${slug}` : match?.catalogue === 'coin' ? `/coin/${slug}` : `/jewelry/${slug}`;
         return <tr key={draft.id}>
           <td><input type="checkbox" checked={pending && checked.has(draft.id)} disabled={!pending || busy || readonly} onChange={() => toggleDraft(draft.id)} aria-label={`Select draft ${draft.id}`}/></td>
           <td><button type="button" className="underlink" onClick={() => setSelectedId(draft.id)}>#{draft.id}</button></td>
           <td>{draft.sku}</td>
-          <td>{slug ? <a href={`/products/${slug}`} target="_blank" rel="noreferrer">{slug}</a> : '—'}</td>
+          <td>{slug ? <a href={href} target="_blank" rel="noreferrer">{slug}</a> : '—'}</td>
           <td>{skills.find(([id]) => id === draft.skill)?.[1] || draft.skill}</td>
           <td>{draft.status}</td>
         </tr>;

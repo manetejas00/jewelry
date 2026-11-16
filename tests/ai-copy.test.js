@@ -9,15 +9,18 @@ import {
   createCatalogueDraft,
   approveCatalogueDraft,
   rejectCatalogueDraft,
-  listCatalogueDrafts
+  listCatalogueDrafts,
+  listCopyItems,
+  findCopyItem
 } from '../server/ai-copy.js';
 
-function memoryDb() {
-  const tables = {products: [], ai_drafts: [], audit: []};
+function memoryDb(extra = {}) {
+  const tables = {products: [], ai_drafts: [], audit: [], ...extra};
   let nextId = 1;
   function query(name) {
     const state = {filters: [], sort: null, max: Infinity};
     const api = {
+      select() { return api; },
       where(filter) { state.filters.push(filter); return api; },
       orderBy(column, direction) { state.sort = {column, direction}; return api; },
       limit(max) { state.max = max; return api; },
@@ -208,4 +211,31 @@ test('catalogue copy drafts publish only after approval', async () => {
   assert.equal(withSearch.name, unchanged.name);
   const history = await listCatalogueDrafts(k, {sku: 'AI-RING'});
   assert.ok(history.some(row => row.status === 'rejected'));
+});
+
+test('catalogue copy lists a kurta and publishes onto the kurta record', async () => {
+  const db = memoryDb({kurtas: []});
+  await db('kurtas').insert({
+    sku: 'KT-NAZM',
+    product_code: 'nazm',
+    slug: 'nazm-kurti',
+    name: 'Nazm kurti',
+    description: 'Soft orchid pink muslin kurti.',
+    fabric: 'Muslin',
+    material: 'Chikankari'
+  });
+  const items = await listCopyItems(db);
+  assert.deepEqual(items.map(item => item.catalogue), ['kurta']);
+  assert.equal(items[0].sku, 'KT-NAZM');
+  const found = await findCopyItem(db, 'KT-NAZM');
+  assert.equal(found.table, 'kurtas');
+  const draft = await createCatalogueDraft(db, {
+    sku: 'KT-NAZM',
+    skill: 'product-title-optimization',
+    staffId: 3,
+    env: {AI_API_KEY: 'test'},
+    fetchImpl: async () => ({ok: true, status: 200, json: async () => ({choices: [{message: {content: JSON.stringify({proposed_name: 'Nazm orchid kurti'})}}]})})
+  });
+  await approveCatalogueDraft(db, draft.id, {applyName: true, staffId: 3});
+  assert.equal((await db('kurtas').where({sku: 'KT-NAZM'}).first()).name, 'Nazm orchid kurti');
 });
