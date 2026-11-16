@@ -3677,7 +3677,8 @@ img.is-brand-fallback,.product-photo img[src*="/assets/brand/"],.product-photo i
 }
 
 .announcement{position:relative;padding:0 36px;overflow:hidden}
-.announcement-slide{min-width:0;max-width:100%}
+.announcement-slide{min-width:0;max-width:100%;animation:announcement-in .45s ease}
+@keyframes announcement-in{from{opacity:0}to{opacity:1}}
 .announcement-link{display:inline-flex;align-items:center;justify-content:center;gap:10px;max-width:100%;min-width:0;color:inherit}
 .announcement-copy{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .announcement-cta{display:inline-flex;align-items:center;gap:8px;color:#d3bf98;flex-shrink:0}

@@ -236,27 +236,26 @@ function AnnouncementBar({ offers = [] }) {
   const location = useLocation();
   const slides = useMemo(() => announcementSlides(offers, routeCatalogue(location.pathname)), [offers, location.pathname]);
   const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
-  useEffect(() => { setIndex(0); }, [location.pathname, slides.length]);
+  const count = slides.length;
+  useEffect(() => { setIndex(0); }, [location.pathname, count]);
   useEffect(() => {
-    if (paused || slides.length < 2) return undefined;
-    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
-    const timer = setInterval(() => setIndex(current => (current + 1) % slides.length), 5000);
+    if (count < 2) return undefined;
+    const timer = setInterval(() => setIndex(current => (current + 1) % count), 4000);
     return () => clearInterval(timer);
-  }, [paused, slides.length]);
-  const slide = slides[index % slides.length] || slides[0];
+  }, [count]);
+  const slide = slides[index % count] || slides[0];
   if (!slide) return null;
-  const step = (delta) => setIndex(current => (current + delta + slides.length) % slides.length);
-  return <div className="announcement" role="region" aria-roledescription="carousel" aria-label="Store announcements" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocus={() => setPaused(true)} onBlur={() => setPaused(false)}>
-    {slides.length > 1 && <button type="button" className="announcement-arrow prev" aria-label="Previous announcement" onClick={() => step(-1)}><ArrowLeft size={14} /></button>}
-    <div className="announcement-slide" aria-live="polite">
+  const step = (delta) => setIndex(current => (current + delta + count) % count);
+  return <div className="announcement" role="region" aria-roledescription="carousel" aria-label="Store announcements">
+    {count > 1 && <button type="button" className="announcement-arrow prev" aria-label="Previous announcement" onClick={() => step(-1)}><ArrowLeft size={14} /></button>}
+    <div className="announcement-slide" key={`${slide.id}-${index}`}>
       <Link className="announcement-link" to={slide.href} onClick={() => { if (slide.code) rememberCoupon(slide.code); }}>
         <Sparkles size={11} color="#f9ca24" />
         <span className="announcement-copy">{slide.text}</span>
         <span className="announcement-cta">{slide.cta} <ArrowRight size={12} /></span>
       </Link>
     </div>
-    {slides.length > 1 && <button type="button" className="announcement-arrow next" aria-label="Next announcement" onClick={() => step(1)}><ArrowRight size={14} /></button>}
+    {count > 1 && <button type="button" className="announcement-arrow next" aria-label="Next announcement" onClick={() => step(1)}><ArrowRight size={14} /></button>}
   </div>;
 }
 

@@ -43,8 +43,8 @@ test('the announcement carousel keeps a slide for jewellery, coins, and kurtas',
   const home = announcementSlides([{id:7, show_in_banner:1, banner_headline:'Kurta week', code:'KURTA10', applies_to:'kurtas'}], routeCatalogue('/'));
   assert.deepEqual(home.map(slide => slide.id), ['jewelry', 'coins', 'kurtas', 'offer-7']);
   const kurtas = announcementSlides([{id:7, show_in_banner:1, banner_headline:'Kurta week', code:'KURTA10', applies_to:'kurtas'}], routeCatalogue('/kurtas'));
-  assert.deepEqual(kurtas.map(slide => slide.catalogue), ['kurtas', 'kurtas']);
-  assert.equal(kurtas[1].cta, 'Code: KURTA10');
+  assert.deepEqual(kurtas.map(slide => slide.id), ['kurtas', 'jewelry', 'coins', 'offer-7']);
+  assert.equal(kurtas.find(slide => slide.id === 'offer-7').cta, 'Code: KURTA10');
   assert.equal(routeCatalogue('/coins/silver'), 'coins');
   assert.equal(routeCatalogue('/jewelry/ring'), 'jewelry');
 });

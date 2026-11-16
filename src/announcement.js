@@ -36,9 +36,15 @@ function bannerSlides(offers = []) {
   }));
 }
 
+function orderedCatalogues(catalogue) {
+  if (!catalogue || catalogue === 'all') return CATALOGUE_SLIDES;
+  return [
+    ...CATALOGUE_SLIDES.filter(slide => slide.catalogue === catalogue),
+    ...CATALOGUE_SLIDES.filter(slide => slide.catalogue !== catalogue)
+  ];
+}
+
 export function announcementSlides(offers = [], catalogue = 'all') {
-  const slides = [...CATALOGUE_SLIDES, ...bannerSlides(offers)];
-  if (!catalogue || catalogue === 'all') return slides;
-  const focused = slides.filter(slide => slide.catalogue === catalogue || slide.catalogue === 'all');
-  return focused.length ? focused : slides;
+  const banners = bannerSlides(offers).filter(slide => !catalogue || catalogue === 'all' || slide.catalogue === catalogue || slide.catalogue === 'all');
+  return [...orderedCatalogues(catalogue), ...banners];
 }
